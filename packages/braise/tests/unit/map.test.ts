@@ -34,10 +34,10 @@ describe('carte (document 02 §3)', () => {
     }
   });
 
-  it('8 points d\'intérieur au moins, à 20 tuiles du centre et à 15 tuiles les uns des autres', () => {
+  it('22 lieux, à 20 tuiles du centre et à bonne distance les uns des autres', () => {
     for (const seed of [1, 2, 3, 4]) {
       const map = generateMap(new Rng(seed), t, region);
-      expect(map.pois.length).toBeGreaterThanOrEqual(8);
+      expect(map.pois.length).toBe(22);
       expect(map.pois.filter((p) => p.kind === 'brazier').length).toBeGreaterThanOrEqual(2);
       expect(map.pois.filter((p) => p.kind === 'spring').length).toBeGreaterThanOrEqual(1);
       expect(map.pois.filter((p) => p.kind === 'cache').length).toBeGreaterThanOrEqual(1);
@@ -46,7 +46,7 @@ describe('carte (document 02 §3)', () => {
         expect(Math.hypot(p.x - center, p.y - center) / map.tile).toBeGreaterThanOrEqual(20);
         expect(isSolidAt(map, p.x, p.y)).toBe(false);
         for (const q of map.pois) {
-          if (q !== p) expect(Math.hypot(p.x - q.x, p.y - q.y) / map.tile).toBeGreaterThanOrEqual(15);
+          if (q !== p) expect(Math.hypot(p.x - q.x, p.y - q.y) / map.tile).toBeGreaterThanOrEqual(t.events.poiMinApartTiles);
         }
       }
     }

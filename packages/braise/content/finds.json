@@ -1,0 +1,14 @@
+[
+  { "id": "find.boots", "icon": "icon-find-boots", "bonus": { "speedShare": 0.12 } },
+  { "id": "find.lantern-glass", "icon": "icon-find-lantern-glass", "bonus": { "glowShare": 0.3 } },
+  { "id": "find.holed-coin", "icon": "icon-find-holed-coin", "bonus": { "luck": 0.2 } },
+  { "id": "find.purse", "icon": "icon-find-purse", "bonus": { "greed": 0.25 } },
+  { "id": "find.notebook", "icon": "icon-find-notebook", "bonus": { "wisdom": 0.2 } },
+  { "id": "find.scarf", "icon": "icon-find-scarf", "bonus": { "revives": 1 } },
+  { "id": "find.flask", "icon": "icon-find-flask", "bonus": { "flasks": 1 } },
+  { "id": "find.cards", "icon": "icon-find-cards", "bonus": { "cards": 1 } },
+  { "id": "find.flint", "icon": "icon-find-flint", "bonus": { "power": 0.12 } },
+  { "id": "find.winder", "icon": "icon-find-winder", "bonus": { "cadence": 0.1 } },
+  { "id": "find.blanket", "icon": "icon-find-blanket", "bonus": { "armor": 15 } },
+  { "id": "find.door-nail", "icon": "icon-find-door-nail", "bonus": { "eliteDamage": 0.2 } }
+]

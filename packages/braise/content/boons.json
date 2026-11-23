@@ -1,0 +1,8 @@
+[
+  { "id": "boon.wisdom", "icon": "icon-boon-wisdom", "bonus": { "wisdom": 0.15 } },
+  { "id": "boon.stride", "icon": "icon-boon-stride", "bonus": { "speedShare": 0.08 } },
+  { "id": "boon.glow", "icon": "icon-boon-glow", "bonus": { "glowShare": 0.2 } },
+  { "id": "boon.edge", "icon": "icon-boon-edge", "bonus": { "power": 0.1 } },
+  { "id": "boon.breath", "icon": "icon-boon-breath", "bonus": { "maxHpShare": 0.12 } },
+  { "id": "boon.vein", "icon": "icon-boon-vein", "bonus": { "luck": 0.1 } }
+]

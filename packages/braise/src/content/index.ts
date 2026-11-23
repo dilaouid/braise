@@ -5,18 +5,20 @@ import evolutionsJson from '../../content/evolutions.json';
 import relicsJson from '../../content/relics.json';
 import enemiesJson from '../../content/enemies.json';
 import altarJson from '../../content/altar.json';
+import boonsJson from '../../content/boons.json';
+import findsJson from '../../content/finds.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
 import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
 import {
-  altarBoostSchema, classSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
+  altarBoostSchema, boonSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
   regionSchema, relicSchema, weaponSchema,
-  type AltarBoostRaw, type Attribute, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
+  type AltarBoostRaw, type Attribute, type BoonDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
   type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
 
-export type { Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw } from './schema.ts';
+export type { Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, FindDef } from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
 export const DAMAGE_TYPES = ['physical', 'fire', 'lightning', 'frost'] as const;
@@ -99,6 +101,10 @@ export interface GameData {
   regions: Record<string, RegionDef>;
   classes: Record<string, ClassDef>;
   altar: AltarBoostRaw[];
+  /** Les buffs de totem. */
+  boons: BoonDef[];
+  /** Les trouvailles des trésors et des caches. */
+  finds: FindDef[];
 }
 
 /** Les données brutes telles qu'elles sont dans `content/`. */
@@ -110,6 +116,8 @@ export const RAW = {
   relics: relicsJson as unknown,
   enemies: enemiesJson as unknown,
   altar: altarJson as unknown,
+  boons: boonsJson as unknown,
+  finds: findsJson as unknown,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
   fr: frJson as unknown as Record<string, string>,
@@ -142,9 +150,11 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   const relicsRaw = check(z.array(relicSchema), raw.relics, 'relics.json', errors);
   const enemiesRaw = check(z.array(enemySchema), raw.enemies, 'enemies.json', errors);
   const altar = check(z.array(altarBoostSchema), raw.altar, 'altar.json', errors);
+  const boons = check(z.array(boonSchema), raw.boons, 'boons.json', errors);
+  const finds = check(z.array(findSchema), raw.finds, 'finds.json', errors);
   const regionsRaw = raw.regions.map((r, i) => check(regionSchema, r, `regions[${i}]`, errors));
   const classesRaw = raw.classes.map((c, i) => check(classSchema, c, `classes[${i}]`, errors));
-  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar
+  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds
     || regionsRaw.includes(null) || classesRaw.includes(null)) {
     return { data: null, errors };
   }
@@ -160,6 +170,10 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   unique(relicsRaw.map((r) => r.id), 'relics.json');
   unique(enemiesRaw.map((e) => e.id), 'enemies.json');
   unique(altar.map((a) => a.id), 'altar.json');
+  unique(boons.map((b) => b.id), 'boons.json');
+  unique(finds.map((f) => f.id), 'finds.json');
+  for (const d of [...boons, ...finds]) if (Object.keys(d.bonus).length === 0) errors.push(`${d.id}: aucun effet`);
+  if (boons.length < tuning.events.totem.choices) errors.push('boons.json: moins de buffs que de choix par totem');
 
   const weaponIndex = new Map<string, number>();
   weaponsRaw.forEach((w, i) => weaponIndex.set(w.id, i));
@@ -260,6 +274,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     };
   }
   ref(enemyIndex, tuning.events.brazier.waveEnemy, 'tuning/expedition.json (braséro)');
+  ref(enemyIndex, tuning.events.totem.waveEnemy, 'tuning/expedition.json (totem)');
 
   const classes: Record<string, ClassDef> = {};
   for (const c of classesRaw as ClassRaw[]) {
@@ -287,6 +302,10 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${a.id}.name`);
     needText(`${a.id}.desc`);
   }
+  for (const d of [...boons, ...finds]) {
+    needText(`${d.id}.name`);
+    needText(`${d.id}.desc`);
+  }
   for (const r of Object.values(regions)) needText(`${r.id}.name`);
   for (const c of Object.values(classes)) {
     needText(`${c.id}.name`);
@@ -297,7 +316,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   }
 
   if (errors.length > 0) return { data: null, errors };
-  return { data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar }, errors };
+  return { data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds }, errors };
 }
 
 let cached: GameData | null = null;

@@ -148,7 +148,7 @@ export interface PickupStore {
 
 /** Un point d'intérêt de la carte. */
 export interface Poi {
-  kind: 'brazier' | 'spring' | 'cache' | 'portal';
+  kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'totem' | 'smith' | 'herbalist' | 'treasure';
   x: number;
   y: number;
   /** 0 : intact · 1 : en cours · 2 : terminé. */
@@ -157,6 +157,10 @@ export interface Poi {
   discovered: boolean;
   /** L'élite qui garde une cache (0 : aucun). */
   guardUid: number;
+  /** Les offres d'un Ferrailleur, tirées à sa première ouverture. */
+  offers: Card[] | null;
+  /** Faux tant que le héros n'est pas ressorti du cercle d'une boutique qu'il vient de fermer. */
+  armed: boolean;
 }
 
 /** Un décor posé sur une tuile pleine. */

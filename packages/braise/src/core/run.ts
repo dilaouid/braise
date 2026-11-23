@@ -321,7 +321,7 @@ function onBossDeath(run: Run): void {
   e.count = 0;
   run.enemyShots.count = 0;
   run.telegraphs.count = 0;
-  run.map.pois.push({ kind: 'portal', x: d.arenaX, y: d.arenaY, state: 0, progress: 0, discovered: true, guardUid: 0 });
+  run.map.pois.push({ kind: 'portal', x: d.arenaX, y: d.arenaY, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
 }
 
 /**
