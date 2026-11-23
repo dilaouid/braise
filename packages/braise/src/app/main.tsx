@@ -7,6 +7,7 @@ import { InputManager } from '@owl/kit/input';
 import { createSaveStore } from '@owl/kit/save';
 import { render } from 'preact';
 import { AudioManager } from '../audio/audio.ts';
+import { introCinematic } from '../content/cinematic.ts';
 import { loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
 import { banishCard, closeChest, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
@@ -16,12 +17,13 @@ import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Run } from '../co
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { applyRunResult, buildSheet, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
+import { CinematicPlayer } from '../render/cinematic.ts';
 import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  chest, confirm, device, ending, holdProgress, hud, lastSeed, levelUp, notice, overlay, pauseReason, pauseStats, refs,
-  save, saveRev, screen, t, type Actions, type HudState, type Screen,
+  INTRO_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, ending, holdProgress, hud, lastSeed, levelUp, notice, overlay, pauseReason,
+  pauseStats, refs, save, saveRev, screen, t, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
 const CLASS = 'class.ash-blade';
@@ -77,6 +79,11 @@ async function boot(): Promise<void> {
   let fps = 0;
   let fpsAt = 0;
   const stepInput = idleInput();
+  /** La cinématique en cours, où aller après, et le maintien de B pour la passer. */
+  let cine: CinematicPlayer | null = null;
+  let cineAfter: 'camp' | 'title' = 'camp';
+  let cineHoldMs = 0;
+  let cinePaused = false;
 
   function applySettings(): void {
     const s = current.settings;
@@ -162,14 +169,70 @@ async function boot(): Promise<void> {
     if (on) persist();
   }
 
+  function enterCamp(): void {
+    current.heroes[CLASS] ??= newHero();
+    current.activeHero = CLASS;
+    audio.playMusic('music-camp');
+    setScreen('camp');
+  }
+
+  /** Lance une cinématique. Pendant le chargement, l'écran reste noir. */
+  function playIntro(after: 'camp' | 'title'): void {
+    cineAfter = after;
+    cineHoldMs = 0;
+    cineSkip.value = 0;
+    cineCard.value = null;
+    cineCaption.value = null;
+    audio.stopMusic();
+    setScreen('cinematic');
+    void CinematicPlayer.load(introCinematic(), import.meta.env.BASE_URL, {
+      sfx: (name, volume) => audio.play(name, volume),
+      music: (name) => audio.playMusic(name, false),
+      stopMusic: () => audio.stopMusic(),
+      musicRate: (to, over) => audio.setMusicRate(to, over),
+      card: (key) => (cineCard.value = key),
+      caption: (key) => (cineCaption.value = key),
+    })
+      .then((player) => {
+        if (screen.value === 'cinematic') cine = player;
+        else player.destroy();
+      })
+      .catch((err) => {
+        // Une cinématique qui ne charge pas ne bloque pas le jeu.
+        console.error('Cinématique impossible', err);
+        endIntro();
+      });
+  }
+
+  function endIntro(): void {
+    cine?.destroy();
+    cine = null;
+    cineCard.value = null;
+    cineCaption.value = null;
+    cineSkip.value = 0;
+    audio.stopMusic();
+    if (!current.account.unlocks.includes(INTRO_SEEN)) {
+      current.account.unlocks.push(INTRO_SEEN);
+      changed();
+      persist();
+    }
+    if (cineAfter === 'camp') enterCamp();
+    else setScreen('title');
+  }
+
   const actions: Actions = {
     start() {
       audio.unlock();
       audio.play('ui-confirm');
-      current.heroes[CLASS] ??= newHero();
-      current.activeHero = CLASS;
-      audio.playMusic('music-camp');
-      setScreen('camp');
+      // Le prologue se joue une fois, au tout premier départ d'une sauvegarde neuve (document 15 §1).
+      const fresh = Object.keys(current.heroes).length === 0 && !current.account.unlocks.includes(INTRO_SEEN);
+      if (fresh) playIntro('camp');
+      else enterCamp();
+    },
+    prologue() {
+      audio.unlock();
+      audio.play('ui-confirm');
+      playIntro('title');
     },
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
@@ -319,10 +382,14 @@ async function boot(): Promise<void> {
   input.onDisconnect = () => setPaused(true, t('pause.disconnected'));
   host.onPause(() => {
     setPaused(true, t('pause.blur'));
+    cinePaused = true;
     audio.suspend(true);
     persist();
   });
-  host.onResume(() => audio.suspend(false));
+  host.onResume(() => {
+    cinePaused = false;
+    audio.suspend(false);
+  });
   window.addEventListener('pointerdown', () => audio.unlock(), { once: true });
   window.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -530,6 +597,21 @@ async function boot(): Promise<void> {
     const f = input.frame;
     const playing = screen.value === 'run' && run !== null;
 
+    if (screen.value === 'cinematic') {
+      // Passer tout : B maintenu (un appui court ne fait rien). A passe à l'image suivante.
+      const hold = introCinematic().skipHoldMs;
+      if (f.held.back && now >= guardUntil) cineHoldMs += dt;
+      else cineHoldMs = 0;
+      const k = Math.min(1, cineHoldMs / hold);
+      if (k !== cineSkip.value) cineSkip.value = k;
+      if (cine && !cinePaused && f.pressed.confirm && now >= guardUntil) cine.next();
+      if (cine && !cinePaused) cine.update(dt);
+      if (cine) renderer.app.renderer.render(cine.root);
+      if (cineHoldMs >= hold || cine?.finished) endIntro();
+      requestAnimationFrame(frame);
+      return;
+    }
+
     if (playing && run && overlay.value === 'none' && !paused) {
       if (f.pressed.pause && now >= guardUntil) setPaused(true);
       if (f.pressed.skill) pendSkill = true;
@@ -618,6 +700,25 @@ async function boot(): Promise<void> {
     },
     actions,
     input,
+    /** La cinématique en cours : son temps, son plan, et une avance rapide pour les captures. */
+    cinematic: {
+      get time(): number | null {
+        return cine ? cine.elapsed : null;
+      },
+      get shot(): string | null {
+        return cine ? cine.shotId : null;
+      },
+      advance(seconds: number): void {
+        for (let ms = 0; cine && ms < seconds * 1000; ms += 50) cine.update(50);
+      },
+      next(): void {
+        cine?.next();
+      },
+      /** Fige la cinématique (vrai) ou la relance (faux). */
+      freeze(on: boolean): void {
+        cinePaused = on;
+      },
+    },
     /**
      * Avance la partie de `steps` pas avec le robot actif, sans attendre l'affichage.
      * Sert aux captures d'écran et aux essais quand l'onglet est en arrière-plan.

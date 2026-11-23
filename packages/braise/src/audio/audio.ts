@@ -28,6 +28,7 @@ export class AudioManager {
   private wantedMusic = '';
   private gemChain = 0;
   private gemLast = 0;
+  private rateTimer = 0;
 
   /** Charge la liste des sons (public/audio/index.json) et télécharge les effets. */
   async load(base: string): Promise<void> {
@@ -134,12 +135,27 @@ export class AudioManager {
     this.play('gem', 0.45, Math.pow(2, this.gemChain / 12), 35);
   }
 
-  /** Lance une musique en boucle, avec un fondu depuis la précédente. */
-  playMusic(name: string): void {
+  /** Lance une musique, en boucle par défaut, avec un fondu depuis la précédente. */
+  playMusic(name: string, loop = true): void {
     this.wantedMusic = name;
     if (!this.ctx || this.musicName === name) return;
     const file = this.files[name];
+    this.fadeOutMusic();
+    this.musicName = name;
+    if (!file) return;
+    const el = new Audio(`${this.base}audio/${file}`);
+    el.loop = loop;
+    el.preservesPitch = false;
+    el.volume = Math.min(1, this.volumes.master * this.volumes.music);
+    void el.play().catch(() => {
+      this.musicName = '';
+    });
+    this.music = el;
+  }
+
+  private fadeOutMusic(): void {
     const old = this.music;
+    window.clearInterval(this.rateTimer);
     if (old) {
       const step = (): void => {
         old.volume = Math.max(0, old.volume - 0.05);
@@ -149,15 +165,31 @@ export class AudioManager {
       step();
     }
     this.music = null;
-    this.musicName = name;
-    if (!file) return;
-    const el = new Audio(`${this.base}audio/${file}`);
-    el.loop = true;
-    el.volume = Math.min(1, this.volumes.master * this.volumes.music);
-    void el.play().catch(() => {
-      this.musicName = '';
-    });
-    this.music = el;
+  }
+
+  /** Arrête la musique en fondu. */
+  stopMusic(): void {
+    this.wantedMusic = '';
+    this.musicName = '';
+    this.fadeOutMusic();
+  }
+
+  /**
+   * Change la vitesse de la musique en cours, progressivement, en `overSeconds` secondes.
+   * La hauteur suit : une boîte à musique qui ralentit se désaccorde (document 15, plan 4).
+   */
+  setMusicRate(to: number, overSeconds: number): void {
+    const el = this.music;
+    window.clearInterval(this.rateTimer);
+    if (!el) return;
+    const from = el.playbackRate;
+    const steps = Math.max(1, Math.round(overSeconds * 20));
+    let i = 0;
+    this.rateTimer = window.setInterval(() => {
+      i++;
+      el.playbackRate = from + (to - from) * (i / steps);
+      if (i >= steps) window.clearInterval(this.rateTimer);
+    }, 50);
   }
 
   /** Met la musique en sourdine pendant une pause. */

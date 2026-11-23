@@ -88,6 +88,20 @@ export class SimPad {
   }
 }
 
+/**
+ * Passe la cinématique d'intro (document 15), qui se joue au premier départ d'une sauvegarde neuve :
+ * B (ou Échap) maintenu un peu plus d'une seconde.
+ */
+export async function skipIntro(page: Page, pad?: SimPad): Promise<void> {
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
+  await settle(page);
+  if (pad) await pad.down('B');
+  else await page.keyboard.down('Escape');
+  await page.waitForTimeout(1400);
+  if (pad) await pad.up('B');
+  else await page.keyboard.up('Escape');
+}
+
 /** Attend `n` images affichées par le jeu. */
 export function waitFrames(page: Page, n: number): Promise<void> {
   return page.evaluate((count) => new Promise<void>((done) => {
