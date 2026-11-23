@@ -238,8 +238,9 @@ export function TotemScreen(): JSX.Element | null {
 
 /** La boutique d'un marchand : acheter ne ferme pas, B ferme. */
 export function ShopScreen(): JSX.Element | null {
-  const ref = useFocusScope('shop');
   const shop = shopState.value;
+  // Un focus mémorisé par sorte de marchand : celui du Ferrailleur ne suit pas chez l'Herboriste.
+  const ref = useFocusScope(`shop-${shop?.kind ?? 'none'}`);
   useHandlers({ back: () => actions().closeShop() });
   if (!shop) return null;
   const data = gameData();

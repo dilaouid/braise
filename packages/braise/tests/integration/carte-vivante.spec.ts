@@ -110,6 +110,10 @@ test('totem, Ferrailleur, Herboriste et trésor à la manette seule', async ({ p
   await until(page, pad, 'shop');
   await expectFocus(page, 'item0');
   await capture(page, info, SHOTS, '03-ferrailleur');
+  // On achète la dernière carte : elle disparaît, et le focus doit retomber sur une carte restante.
+  await pad.press('RIGHT');
+  await pad.press('RIGHT');
+  await expectFocus(page, 'item2');
   await settle(page);
   await pad.press('A');
   const afterSmith = await placesView(page);

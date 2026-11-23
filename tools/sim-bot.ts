@@ -38,6 +38,8 @@ if (noPlaces) {
   ev.smith.count = 0;
   ev.herbalist.count = 0;
   ev.treasure.count = 0;
+  // La référence est le jeu d'avant : les caches n'y donnaient pas de trouvaille (de l'or à la place).
+  data.finds.length = 0;
 }
 const save = newSave(0);
 const hero = newHero();

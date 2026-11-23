@@ -361,7 +361,9 @@ async function boot(): Promise<void> {
       if (!run || performance.now() < guardUntil) return;
       if (buyItem(run, index)) {
         syncShop();
-        guard(150);
+        // La carte achetée peut disparaître : une fois l'écran repeint, le focus retombe sur ce qui reste.
+        requestAnimationFrame(() => requestAnimationFrame(() => focus.ensure()));
+        guard(250);
       } else {
         audio.play('refuse');
       }

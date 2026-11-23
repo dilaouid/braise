@@ -2,7 +2,7 @@ import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeBoon } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
-import { PK_GEM, PK_RED_GEM, type Poi, type Run, type StepInput } from './types.ts';
+import { PK_GEM, PK_RED_GEM, SERVICES, type Poi, type Run, type StepInput } from './types.ts';
 
 /** Un robot : il remplit l'instantané d'actions à partir de l'état de la partie. */
 export type Bot = (run: Run, input: StepInput) => void;
@@ -337,8 +337,6 @@ export interface SimOptions {
   pickCard?: (run: Run) => number;
   /** Buff choisi à chaque totem (0 : toujours le premier). */
   pickBoon?: (run: Run) => number;
-  /** Vrai pour que le robot n'achète rien chez les marchands. */
-  noShopping?: boolean;
   /** Nombre maximum de pas (par défaut : 20 minutes). */
   maxSteps?: number;
   /** Appelé à chaque pas, après la simulation. */
@@ -372,13 +370,17 @@ export function simulate(run: Run, options: SimOptions): Run {
       continue;
     }
     if (run.phase === 'shop') {
-      // Le robot achète l'article abordable le moins cher, tant qu'il y en a un.
+      // Le robot n'achète que ce qui le rend plus fort : une arme ou une relique, une fiole, et un baume
+      // s'il est blessé. Il ne sait pas se servir d'une relance ni d'un bannissement.
       const items = shopItems(run);
       let best = -1;
       for (let i = 0; i < items.length; i++) {
-        if (canBuy(run, items[i]!) && (best < 0 || items[i]!.price < items[best]!.price)) best = i;
+        const item = items[i]!;
+        const service = item.card ? '' : SERVICES[item.service]!;
+        const useful = item.card !== null || service === 'flask' || (service === 'balm' && run.hero.hp < run.hero.stats.maxHp * 0.5);
+        if (useful && canBuy(run, item) && (best < 0 || item.price < items[best]!.price)) best = i;
       }
-      if (best < 0 || options.noShopping || !buyItem(run, best)) closeShop(run);
+      if (best < 0 || !buyItem(run, best)) closeShop(run);
       continue;
     }
     input.moveX = 0; input.moveY = 0; input.aimX = 0; input.aimY = 0;
@@ -424,7 +426,11 @@ export function hashRun(run: Run): number {
   }
   for (const b of run.boons) mix(b);
   for (const f of run.finds) mix(f);
-  mix(hero.goldSpent); mix(run.smithBuys);
+  mix(hero.goldSpent); mix(run.smithBuys); mix(run.extraFlasks); mix(run.pendingFinds);
+  for (const n of run.serviceBuys) mix(n);
+  for (const poi of run.map.pois) {
+    mix(poi.state); mix(poi.progress);
+  }
   mix(run.rngSpawn.state); mix(run.rngDraw.state); mix(run.rngCombat.state);
   return h >>> 0;
 }
