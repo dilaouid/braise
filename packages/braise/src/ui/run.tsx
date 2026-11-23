@@ -4,7 +4,7 @@ import type { Card } from '../core/types.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import { SettingsScreen } from './screens.tsx';
 import {
-  actions, chest, fmt, fmtTime, gameData, hud, levelUp, pauseReason, pauseStats, roman, t,
+  actions, chest, findState, fmt, fmtTime, gameData, hud, levelUp, pauseReason, pauseStats, roman, runExtras, shopState, t, totemState,
 } from './store.ts';
 
 /** Un anneau de rechargement, en pixels : il se remplit dans le sens des aiguilles. */
@@ -206,6 +206,95 @@ export function ChestScreen(): JSX.Element | null {
   );
 }
 
+/** Le totem chargé : un buff à choisir parmi ceux qu'il propose. Pas de retour possible. */
+export function TotemScreen(): JSX.Element | null {
+  const ref = useFocusScope('totem');
+  const boons = totemState.value;
+  if (!boons) return null;
+  const data = gameData();
+  return (
+    <div class="backdrop levelup totem" ref={ref}>
+      <h1 class="gold">{t('totem.title')}</h1>
+      <div class="cards">
+        {boons.map((b, i) => {
+          const def = data.boons[b]!;
+          return (
+            <button
+              type="button" key={`${def.id}-${i}`} class="card card-boon" data-focus={`boon${i}`} data-index={i}
+              data-focus-default={i === 0 ? '' : undefined} onClick={() => actions().takeBoon(i)}
+            >
+              <span class="card-icon"><Icon name={def.icon} /></span>
+              <span class="card-name">{t(`${def.id}.name`)}</span>
+              <span class="card-tag">{t('place.totem')}</span>
+              <span class="card-text">{t(`${def.id}.desc`)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('totem.take')]]} />
+    </div>
+  );
+}
+
+/** La boutique d'un marchand : acheter ne ferme pas, B ferme. */
+export function ShopScreen(): JSX.Element | null {
+  const ref = useFocusScope('shop');
+  const shop = shopState.value;
+  useHandlers({ back: () => actions().closeShop() });
+  if (!shop) return null;
+  const data = gameData();
+  return (
+    <div class="backdrop levelup shop" ref={ref}>
+      <h1 class="gold">{t(`shop.${shop.kind}.title`)}</h1>
+      <p class="shop-gold"><Icon name="icon-gold" /> {t('shop.gold', { gold: fmt(shop.gold) })}</p>
+      {shop.items.length === 0 ? <p class="dim">{t('shop.empty')}</p> : null}
+      <div class="cards">
+        {shop.items.map((item, i) => {
+          const service = item.card ? null : (['flask', 'balm', 'reroll', 'banish'] as const)[item.service]!;
+          const c = item.card
+            ? cardTexts(item.card)
+            : { name: t(`service.${service}.name`), tag: '', text: t(`service.${service}.desc`), icon: `icon-service-${service}` };
+          const kind = item.card ? item.card.kind : 'service';
+          return (
+            <button
+              type="button" key={`item${i}`} class={`card card-${kind} ${item.can ? '' : 'card-off'}`} data-focus={`item${i}`} data-index={i}
+              data-focus-default={i === 0 ? '' : undefined} onClick={() => actions().buy(i)}
+            >
+              <span class="card-icon"><Icon name={c.icon} /></span>
+              <span class="card-name">{c.name}</span>
+              <span class="card-tag">{c.tag}</span>
+              <span class="card-text">{c.text}</span>
+              <span class="card-price"><Icon name="icon-gold" /> {t('shop.price', { price: fmt(item.price) })}</span>
+            </button>
+          );
+        })}
+      </div>
+      <MenuButton id="leave" label={t('shop.leave')} onPress={() => actions().closeShop()} default={shop.items.length === 0} />
+      <HelpBar items={[['nav', t('ui.move')], shop.items.length > 0 && ['confirm', t('shop.buy')], ['back', t('shop.leave')]]} />
+    </div>
+  );
+}
+
+/** La trouvaille d'un trésor ou d'une cache. */
+export function FindScreen(): JSX.Element | null {
+  const ref = useFocusScope('find');
+  const f = findState.value;
+  useHandlers({ back: () => actions().closeFind() });
+  if (!f) return null;
+  const def = f.find >= 0 ? gameData().finds[f.find]! : null;
+  return (
+    <div class="backdrop chest find" ref={ref}>
+      <Panel class="chest-panel" active>
+        <h1 class="gold">{t('find.title')}</h1>
+        <span class="card-icon find-icon"><Icon name={def ? def.icon : 'icon-gold'} /></span>
+        <h2 class="gold">{def ? t(`${def.id}.name`) : t('find.empty.name')}</h2>
+        <p>{def ? t(`${def.id}.desc`) : t('find.empty.desc', { gold: f.gold })}</p>
+        <MenuButton id="ok" label={t('find.close')} onPress={() => actions().closeFind()} default />
+      </Panel>
+    </div>
+  );
+}
+
 export function PauseScreen(): JSX.Element {
   const ref = useFocusScope('pause');
   const [view, setView] = useState<'menu' | 'settings' | 'abandon'>('menu');
@@ -220,6 +309,7 @@ export function PauseScreen(): JSX.Element {
   const h = hud.value;
   const stats = pauseStats.value;
   const data = gameData();
+  const extras = runExtras.value;
   if (view === 'settings') return <SettingsScreen inRun onClose={() => setView('menu')} />;
   return (
     <div class="backdrop pause" ref={ref}>
@@ -239,6 +329,12 @@ export function PauseScreen(): JSX.Element {
             <div class="slots">
               {h?.relics.map((r, i) => <span class="slot relic" key={i}><Icon name={r.icon} /><Pips value={r.level} max={r.max} /></span>)}
             </div>
+            {extras.boons.length + extras.finds.length > 0 ? (
+              <div class="slots extras" title={t('pause.boons')}>
+                {extras.boons.map((b, i) => <span class="slot boon" key={`b${i}`}><Icon name={data.boons[b]!.icon} /></span>)}
+                {extras.finds.map((f, i) => <span class="slot find" key={`f${i}`}><Icon name={data.finds[f]!.icon} /></span>)}
+              </div>
+            ) : null}
             {stats ? (
               <div class="stats">
                 <p><span>{t('stat.maxHp')}</span><b>{stats.maxHp}</b></p>

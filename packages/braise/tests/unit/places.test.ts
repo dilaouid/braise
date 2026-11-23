@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { activeBot, hashRun, simulate } from '../../src/core/bots.ts';
+import { activeBot, explorerBot, hashRun, plannedPick, simulate } from '../../src/core/bots.ts';
 import { closeChest, takeCard } from '../../src/core/levelup.ts';
 import { buyItem, closeFind, closeShop, resumeRun, shopItems, takeBoon } from '../../src/core/places.ts';
 import { computeResult } from '../../src/core/rewards.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
-import { SERVICES, type Poi, type Run } from '../../src/core/types.ts';
-import { data, makeImmortal, makeRun } from './helpers.ts';
+import { EV, SERVICES, type Poi, type Run } from '../../src/core/types.ts';
+import { data, makeImmortal, makeRun, makeSave } from './helpers.ts';
 
 const ev = data.tuning.events;
 
@@ -352,6 +352,49 @@ describe('marchands', () => {
     expect(res.goldSpent).toBe(60);
     expect(res.goldCollected).toBe(Math.round(40 * (1 + run.hero.stats.greed)));
   });
+});
+
+describe('le boss et la carte', () => {
+  it('une alerte est émise une seule fois, à la minute réglée', () => {
+    const run = fresh(61);
+    run.time = ev.bossWarningMinute * 60 - 0.05;
+    const input = idleInput();
+    let warnings = 0;
+    for (let i = 0; i < 30; i++) {
+      stepRun(run, input);
+      for (let k = 0; k < run.evCount; k++) if (run.evType[k] === EV.bossWarning) warnings++;
+      run.evCount = 0;
+    }
+    expect(warnings).toBe(1);
+  });
+
+  it('un lieu dans l\'arène reste utilisable pendant le boss', () => {
+    const run = fresh(62);
+    run.time = data.tuning.durationMin * 60;
+    play(run, 2);
+    expect(run.director.bossSpawned).toBe(true);
+    run.map.pois.push({ kind: 'treasure', x: run.hero.x, y: run.hero.y, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
+    play(run, 2);
+    expect(run.phase).toBe('find');
+  });
+});
+
+describe('robot explorateur', () => {
+  it('il va de lieu en lieu, charge des totems et achète, sans jamais bloquer la partie', () => {
+    let boons = 0;
+    let spent = 0;
+    let finds = 0;
+    for (const seed of [201, 202, 203]) {
+      const run = simulate(makeRun(seed, makeSave(10), true), { bot: explorerBot, pickCard: plannedPick, maxSteps: 20 * 3600 });
+      expect(run.phase === 'dead' || run.phase === 'victory', `graine ${seed} : ${run.phase} à ${run.time.toFixed(0)} s`).toBe(true);
+      boons += run.boons.length;
+      finds += run.finds.length;
+      spent += run.hero.goldSpent;
+    }
+    expect(boons).toBeGreaterThanOrEqual(3);
+    expect(finds).toBeGreaterThanOrEqual(3);
+    expect(spent).toBeGreaterThan(0);
+  }, 120000);
 });
 
 describe('déterminisme', () => {

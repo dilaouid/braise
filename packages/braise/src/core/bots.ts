@@ -2,7 +2,7 @@ import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeBoon } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
-import { PK_GEM, PK_RED_GEM, type Run, type StepInput } from './types.ts';
+import { PK_GEM, PK_RED_GEM, type Poi, type Run, type StepInput } from './types.ts';
 
 /** Un robot : il remplit l'instantané d'actions à partir de l'état de la partie. */
 export type Bot = (run: Run, input: StepInput) => void;
@@ -11,6 +11,8 @@ const DIRS = 16;
 /** Seuils de prudence du robot actif (réglés par simulation). */
 export const BOT_TUNE = { calm: 0.0045, hurt: 0.0015, go: 0.006, fleeReach: 50, touch: 22, lead: 0.22 };
 const best = { x: 0, y: 0, danger: 0 };
+/** Le point autour duquel le robot reste : le centre de la carte, ou le lieu qu'il vise. */
+const anchor = { on: false, x: 0, y: 0 };
 
 /** Le danger en un point : ennemis proches, projectiles, attaques annoncées, obstacles, bords. */
 function dangerAt(run: Run, x: number, y: number): number {
@@ -52,9 +54,9 @@ function dangerAt(run: Run, x: number, y: number): number {
   const size = run.map.size * run.map.tile;
   const d = run.director;
   const arena = d.bossSpawned && !d.bossDead;
-  const cx = arena ? d.arenaX : size / 2;
-  const cy = arena ? d.arenaY : size / 2;
-  const limit = arena ? d.arenaR * 0.62 : size * 0.36;
+  const cx = arena ? d.arenaX : anchor.on ? anchor.x : size / 2;
+  const cy = arena ? d.arenaY : anchor.on ? anchor.y : size / 2;
+  const limit = arena ? d.arenaR * 0.62 : anchor.on ? 24 : size * 0.36;
   const od = Math.hypot(cx - x, cy - y);
   if (od > limit) danger += (od - limit) * 0.00006;
   return danger;
@@ -209,6 +211,77 @@ export const activeBot: Bot = (run, input) => {
   input.skill = close >= 3;
   input.ultimate = close >= 4;
   input.dash = touching >= 3 || (hurt && touching >= 1);
+};
+
+/** Le lieu que l'explorateur vise : le plus proche qui a encore quelque chose à donner. */
+function nextPlace(run: Run): Poi | null {
+  const hero = run.hero;
+  const ev = run.data.tuning.events;
+  let found: Poi | null = null;
+  let foundD = Infinity;
+  for (const poi of run.map.pois) {
+    if (poi.state === 2 || poi.kind === 'portal') continue;
+    if (poi.kind === 'spring' && hero.hp > hero.stats.maxHp * 0.6) continue;
+    if (poi.kind === 'smith') {
+      if (hero.gold < ev.smith.basePrice + ev.smith.priceStep * run.smithBuys) continue;
+      if (poi.offers && poi.offers.length === 0) continue;
+    }
+    if (poi.kind === 'herbalist') {
+      // Il n'y va que pour une fiole : c'est le seul service qui le rend plus fort à coup sûr.
+      const flask = ev.herbalist.services.flask;
+      if (hero.gold < flask.base + flask.step * run.serviceBuys[0]!) continue;
+    }
+    const d = Math.hypot(poi.x - hero.x, poi.y - hero.y);
+    if (d < foundD) {
+      foundD = d;
+      found = poi;
+    }
+  }
+  return found;
+}
+
+/**
+ * Un joueur qui explore : il se bat comme le robot actif, mais va de lieu en lieu tant qu'il est en
+ * forme, reste dans les cercles à charger, et s'arrête chez les marchands quand il a de quoi payer.
+ */
+export const explorerBot: Bot = (run, input) => {
+  const hero = run.hero;
+  const d = run.director;
+  const target = d.bossSpawned ? null : nextPlace(run);
+  anchor.on = target !== null;
+  if (target) {
+    anchor.x = target.x;
+    anchor.y = target.y;
+  }
+  activeBot(run, input);
+  anchor.on = false;
+  if (!target || hero.hp < hero.stats.maxHp * 0.5) return;
+  // Rien ne le serre de près : il marche vers le lieu, en contournant les obstacles.
+  const e = run.enemies;
+  for (let i = 0; i < e.count; i++) {
+    const reach = run.enemyRadius[e.kind[i]!]! + 26;
+    if ((hero.x - e.x[i]!) ** 2 + (hero.y - e.y[i]!) ** 2 < reach * reach) return;
+  }
+  if (inTelegraph(run)) return;
+  const dx = target.x - hero.x;
+  const dy = target.y + 4 - hero.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 8) {
+    input.moveX = 0;
+    input.moveY = 0;
+    return;
+  }
+  const base = Math.atan2(dy, dx);
+  for (let k = 0; k < 9; k++) {
+    // Tout droit, puis de plus en plus de côté, en alternant gauche et droite.
+    const a = base + (k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * (Math.PI / 8));
+    const ux = Math.cos(a);
+    const uy = Math.sin(a);
+    if (isSolidAt(run.map, hero.x + ux * 12, hero.y + uy * 12) || isSolidAt(run.map, hero.x + ux * 28, hero.y + uy * 28)) continue;
+    input.moveX = ux;
+    input.moveY = uy;
+    return;
+  }
 };
 
 /** Vrai si le héros est dans le tracé d'une attaque annoncée. */

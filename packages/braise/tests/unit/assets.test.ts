@@ -73,6 +73,12 @@ describe('assets (documents 10 et 11)', () => {
     need.push('pickup-gem-small', 'pickup-gem-medium', 'pickup-gem-large', 'pickup-gem-red', 'pickup-gold', 'pickup-ash', 'pickup-drop',
       'pickup-coffre', 'pickup-call', 'shot-spark', 'shot-arrow', 'shot-brand', 'shot-enemy', 'fx-flame', 'fx-puff', 'fx-firefly',
       'font-digits', 'ui-arrow', 'poi-brasero', 'poi-source', 'poi-cache', 'poi-portail', 'icon-gold', 'icon-ashes', 'icon-flask', 'icon-dash');
+    // La carte vivante : lieux, buffs de totem, trouvailles, services de l'Herboriste.
+    need.push('poi-totem', 'poi-ferrailleur', 'poi-herboriste', 'poi-tresor',
+      'icon-boon-wisdom', 'icon-boon-stride', 'icon-boon-glow', 'icon-boon-edge', 'icon-boon-breath', 'icon-boon-vein',
+      'icon-find-boots', 'icon-find-lantern-glass', 'icon-find-holed-coin', 'icon-find-purse', 'icon-find-notebook', 'icon-find-scarf',
+      'icon-find-flask', 'icon-find-cards', 'icon-find-flint', 'icon-find-winder', 'icon-find-blanket', 'icon-find-door-nail',
+      'icon-service-flask', 'icon-service-balm', 'icon-service-reroll', 'icon-service-banish');
     for (const name of need) expect(has(name), `image manquante dans l'atlas : ${name}`).toBe(true);
   });
 

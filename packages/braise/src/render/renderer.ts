@@ -191,8 +191,8 @@ export class GameRenderer {
     };
     this.enemySprites = pool(CAP_ENEMIES, this.entities);
     this.propSprites = pool(MAX_PROPS, this.entities, 0.5, 0.92);
-    this.poiSprites = pool(14, this.entities, 0.5, 0.8);
-    this.poiFlames = pool(14, this.entities, 0.5, 1);
+    this.poiSprites = pool(28, this.entities, 0.5, 0.8);
+    this.poiFlames = pool(28, this.entities, 0.5, 1);
     this.pickupSprites = pool(CAP_PICKUPS, this.pickups);
     this.shotSprites = pool(CAP_SHOTS, this.shots);
     this.enemyShotSprites = pool(CAP_ENEMY_SHOTS, this.shots);
@@ -531,6 +531,33 @@ export class GameRenderer {
       } else if (poi.kind === 'cache') {
         s.texture = this.atlas.get('poi-cache');
         if (poi.state === 2) s.tint = 0x6b7285;
+      } else if (poi.kind === 'totem') {
+        s.texture = this.atlas.get('poi-totem');
+        if (poi.state === 2) {
+          s.tint = 0x6b7285;
+        } else {
+          g.circle(poi.x, poi.y, ev.totem.radius).stroke({ width: 1, color: C.teal, alpha: 0.35 + Math.sin(time * 4) * 0.1 });
+          if (poi.state === 1) {
+            const frac = Math.min(1, poi.progress / ev.totem.seconds);
+            g.moveTo(poi.x, poi.y).arc(poi.x, poi.y, ev.totem.radius, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2).closePath()
+              .fill({ color: C.teal, alpha: 0.14 });
+          }
+          this.light(lightX(poi.x), lightY(poi.y - 6), 40);
+        }
+      } else if (poi.kind === 'smith' || poi.kind === 'herbalist') {
+        const cfg = poi.kind === 'smith' ? ev.smith : ev.herbalist;
+        s.texture = this.atlas.get(poi.kind === 'smith' ? 'poi-ferrailleur' : 'poi-herboriste');
+        g.circle(poi.x, poi.y, cfg.radius).stroke({ width: 1, color: C.emberPale, alpha: 0.4 });
+        if (poi.progress > 0) {
+          const frac = Math.min(1, poi.progress / cfg.dwell);
+          g.moveTo(poi.x, poi.y).arc(poi.x, poi.y, cfg.radius, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2).closePath()
+            .fill({ color: C.emberPale, alpha: 0.2 });
+        }
+        this.light(lightX(poi.x), lightY(poi.y - 4), 54);
+      } else if (poi.kind === 'treasure') {
+        s.texture = this.atlas.get('poi-tresor');
+        if (poi.state === 2) s.tint = 0x6b7285;
+        else this.light(lightX(poi.x), lightY(poi.y), 30);
       } else {
         s.texture = this.atlas.get('poi-portail');
         s.position.set(poi.x, poi.y + 22);
@@ -887,7 +914,8 @@ export class GameRenderer {
     let target: { x: number; y: number } | null = null;
     let best = Infinity;
     for (const poi of run.map.pois) {
-      if (poi.state === 2) continue;
+      // Les marchands ne sont jamais « à faire » : la flèche ne les montre pas.
+      if (poi.state === 2 || poi.kind === 'smith' || poi.kind === 'herbalist') continue;
       if (poi.kind === 'portal') {
         target = poi;
         break;
