@@ -4,7 +4,8 @@ import { heroXpForNext } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman, save, saveRev, t,
+  INTRO_SEEN, actions, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
+  save, saveRev, t,
 } from './store.ts';
 
 const CLASS = 'class.ash-blade';
@@ -22,6 +23,8 @@ function Currencies(): JSX.Element {
 
 export function Title(): JSX.Element {
   const ref = useFocusScope('title');
+  saveRev.value;
+  const seen = save.value?.account.unlocks.includes(INTRO_SEEN) ?? false;
   return (
     <div class="screen title" ref={ref}>
       <div class="logo">
@@ -31,7 +34,30 @@ export function Title(): JSX.Element {
       <button type="button" class="press" data-focus="start" data-focus-default onClick={() => actions().start()}>
         {t('ui.press')} <Btn g="confirm" /> {t('ui.toStart')}
       </button>
+      {seen ? (
+        <button type="button" class="press press-small" data-focus="prologue" onClick={() => actions().prologue()}>
+          {t('title.prologue')}
+        </button>
+      ) : null}
       {notice.value ? <p class="notice">{notice.value}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * La cinématique (document 15) : l'image est dessinée par le rendu, l'interface n'affiche que
+ * le carton de texte et l'anneau du maintien pour passer.
+ */
+export function CinematicScreen(): JSX.Element {
+  const card = cineCard.value;
+  const hold = cineSkip.value;
+  return (
+    <div class="screen cinematic">
+      {card ? <p class="cine-card" key={card}>{t(card)}</p> : null}
+      <div class={`cine-skip${hold > 0 ? ' active' : ''}`}>
+        <span class="cine-ring" style={{ '--hold': String(hold) }} />
+        <Btn g="back" /> {t('cine.skip')}
+      </div>
     </div>
   );
 }

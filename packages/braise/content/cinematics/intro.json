@@ -1,0 +1,224 @@
+{
+  "id": "intro",
+  "skipHoldMs": 1000,
+  "assets": {
+    "rue": { "src": "decor-rue.png" },
+    "facade": { "src": "decor-facade-sans-chat.png" },
+    "desert": { "src": "decor-desert.png" },
+    "annee-a": { "src": "decor-annee-a.png" },
+    "annee-b": { "src": "decor-annee-b.png" },
+    "annee-c": { "src": "decor-annee-c.png" },
+    "cendre": { "src": "decor-cendre-lanterne.png" },
+    "moon-marche": { "src": "anim-moon-marche-{i}.png", "frames": [1, 8] },
+    "moon-course": { "src": "anim-moon-course2-{i}.png", "frames": [1, 8] },
+    "moon-cendre": { "src": "anim-moon-cendre-{i}.png", "frames": [1, 8] },
+    "moon-cape": { "src": "anim-moon-cape-{i}.png", "frames": [1, 8] },
+    "moon-assis": { "src": "moon-assis-1.png" },
+    "moon-lame": { "src": "moon-lame-1.png" },
+    "cream": { "src": "cream.png" },
+    "cream-marche": { "src": "anim-cream-marche-{i}.png", "frames": [1, 8] },
+    "cream-gratte": { "src": "anim-cream-gratte-{i}.png", "frames": [1, 8] },
+    "elio": { "src": "anim-elio-signe-{i}.png", "frames": [1, 8] },
+    "porte": { "src": "porte2-1.png" },
+    "mains": { "src": "mains-lanterne.png" },
+    "eteint": { "src": "eteint-0.png" }
+  },
+  "shots": [
+    {
+      "id": "p1-carton",
+      "duration": 3,
+      "card": "cine.intro.card.village",
+      "fadeIn": 0.6,
+      "fadeOut": 0.6,
+      "layers": [],
+      "cues": [{ "at": 0, "music": "music-intro-a" }]
+    },
+    {
+      "id": "p2-rue",
+      "duration": 8,
+      "fadeIn": 0.8,
+      "camera": { "from": [-8, -12], "to": [-40, -12] },
+      "layers": [
+        { "type": "image", "asset": "rue", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "moon-marche", "at": [150, 357], "to": [330, 357], "fps": 8 }
+      ],
+      "cues": [
+        { "at": 0.5, "sfx": "intro-pas-paves", "volume": 0.5 },
+        { "at": 1.2, "sfx": "intro-cloche", "volume": 0.7 },
+        { "at": 2.1, "sfx": "intro-pas-paves", "volume": 0.5 },
+        { "at": 3.7, "sfx": "intro-pas-paves", "volume": 0.5 },
+        { "at": 5.3, "sfx": "intro-pas-paves", "volume": 0.5 }
+      ]
+    },
+    {
+      "id": "p3-maison",
+      "duration": 8,
+      "layers": [
+        { "type": "image", "asset": "facade", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "elio", "at": [370, 30], "anchor": [0, 0], "fps": 6, "start": 2.4, "end": 6.4, "frame": 0 },
+        { "type": "image", "asset": "cream", "at": [393, 232] }
+      ],
+      "cues": [{ "at": 3.6, "sfx": "intro-miaou", "volume": 0.6 }]
+    },
+    {
+      "id": "p4-horizon",
+      "duration": 7,
+      "camera": { "from": [-40, -12], "to": [-24, -12] },
+      "layers": [
+        { "type": "image", "asset": "rue", "at": [0, 0], "anchor": [0, 0] },
+        {
+          "type": "smoke", "area": [230, 70, 260, 90], "drift": [0, -5], "count": 26, "radius": [10, 26],
+          "alpha": [0, 0.75], "start": 1, "end": 7, "colors": ["#454a5c", "#6b7285", "#2a2d3a"]
+        },
+        { "type": "image", "asset": "moon-marche", "at": [330, 357], "frame": 0, "flip": true }
+      ],
+      "cues": [
+        { "at": 0.6, "sfx": "intro-cloche", "volume": 0.6 },
+        { "at": 1.5, "musicRate": { "to": 0.55, "over": 5 } }
+      ]
+    },
+    {
+      "id": "p5-fumee",
+      "duration": 8,
+      "fadeOut": 0.6,
+      "camera": { "from": [-24, -12], "to": [-48, -12] },
+      "layers": [
+        { "type": "image", "asset": "rue", "at": [0, 0], "anchor": [0, 0], "desat": { "start": 0, "end": 6, "from": "left" } },
+        { "type": "image", "asset": "moon-course", "at": [200, 357], "to": [600, 357], "fps": 12, "start": 0.3, "end": 8 },
+        {
+          "type": "smoke", "area": [-40, 0, 760, 384], "drift": [14, -2], "count": 130, "radius": [20, 46],
+          "alpha": [0.75, 0.95], "front": { "from": -60, "to": 760 }, "start": 0, "end": 8,
+          "colors": ["#454a5c", "#6b7285", "#2a2d3a", "#9aa3b5"]
+        }
+      ],
+      "cues": [
+        { "at": 0, "sfx": "intro-grondement-fumee", "volume": 0.9 },
+        { "at": 0.4, "musicStop": true },
+        { "at": 1.5, "sfx": "intro-souffle-course", "volume": 0.8 },
+        { "at": 3, "sfx": "intro-grondement-fumee", "volume": 0.9 },
+        { "at": 3.5, "sfx": "intro-souffle-course", "volume": 0.8 },
+        { "at": 5.5, "sfx": "intro-souffle-course", "volume": 0.7 }
+      ]
+    },
+    {
+      "id": "p6-noir",
+      "duration": 4,
+      "layers": [],
+      "cues": [
+        { "at": 1, "sfx": "intro-toux", "volume": 0.8 },
+        { "at": 2.6, "sfx": "intro-pas-cendre", "volume": 0.6 }
+      ]
+    },
+    {
+      "id": "p7-porte",
+      "duration": 12,
+      "fadeIn": 1.5,
+      "fadeOut": 0.8,
+      "layers": [
+        { "type": "image", "asset": "desert", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "porte", "at": [400, 302] },
+        { "type": "image", "asset": "moon-cendre", "at": [100, 304], "to": [352, 304], "fps": 6, "start": 0, "end": 8.5, "cold": true },
+        { "type": "image", "asset": "moon-cendre", "at": [352, 304], "frame": 0, "start": 8.5, "cold": true },
+        {
+          "type": "smoke", "area": [-40, 270, 720, 50], "drift": [6, 0], "count": 30, "radius": [8, 18],
+          "alpha": [0.35, 0.35], "start": 0, "end": 12, "colors": ["#6b7285", "#9aa3b5"]
+        },
+        {
+          "type": "smoke", "area": [380, 200, 40, 100], "drift": [2, -6], "count": 10, "radius": [6, 14],
+          "alpha": [0, 0.6], "start": 9.4, "end": 12, "colors": ["#9aa3b5", "#6b7285"]
+        }
+      ],
+      "cues": [
+        { "at": 0.8, "sfx": "intro-pas-cendre", "volume": 0.5 },
+        { "at": 2.8, "sfx": "intro-pas-cendre", "volume": 0.5 },
+        { "at": 4.8, "sfx": "intro-pas-cendre", "volume": 0.5 },
+        { "at": 6.8, "sfx": "intro-pas-cendre", "volume": 0.5 },
+        { "at": 8.6, "music": "music-intro-b" },
+        { "at": 9.2, "sfx": "intro-porte-grince", "volume": 0.8 }
+      ]
+    },
+    {
+      "id": "p8-carton",
+      "duration": 3,
+      "card": "cine.intro.card.year",
+      "fadeIn": 0.6,
+      "fadeOut": 0.6,
+      "layers": []
+    },
+    {
+      "id": "p9a-mur",
+      "duration": 5,
+      "fadeIn": 0.8,
+      "fadeOut": 0.6,
+      "layers": [
+        { "type": "image", "asset": "annee-a", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "moon-assis", "at": [110, 300], "cold": true },
+        { "type": "image", "asset": "cream", "at": [178, 300] },
+        { "type": "image", "asset": "eteint", "at": [700, 304], "to": [-80, 304], "start": 0.4, "end": 5, "flip": true }
+      ],
+      "cues": [
+        { "at": 0, "sfx": "intro-vent", "volume": 0.5 },
+        { "at": 1.8, "sfx": "intro-grognement", "volume": 0.6 }
+      ]
+    },
+    {
+      "id": "p9b-plaine",
+      "duration": 5,
+      "fadeIn": 0.6,
+      "fadeOut": 0.6,
+      "layers": [
+        { "type": "image", "asset": "annee-b", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "moon-cape", "at": [150, 316], "to": [320, 316], "fps": 7, "cold": true },
+        { "type": "image", "asset": "cream-marche", "at": [235, 316], "to": [405, 316], "fps": 8 }
+      ],
+      "cues": [
+        { "at": 0.3, "sfx": "intro-vent", "volume": 0.4 },
+        { "at": 1, "sfx": "intro-pas-cendre", "volume": 0.4 },
+        { "at": 3, "sfx": "intro-pas-cendre", "volume": 0.4 }
+      ]
+    },
+    {
+      "id": "p9c-ruine",
+      "duration": 5,
+      "fadeIn": 0.6,
+      "fadeOut": 0.8,
+      "layers": [
+        { "type": "image", "asset": "annee-c", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "moon-lame", "at": [250, 332], "cold": true }
+      ],
+      "cues": [{ "at": 0, "sfx": "intro-vent", "volume": 0.3 }]
+    },
+    {
+      "id": "p10-lanterne",
+      "duration": 12,
+      "fadeIn": 0.8,
+      "layers": [
+        { "type": "image", "asset": "cendre", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "image", "asset": "cream-gratte", "at": [404, 222], "fps": 8, "flip": true, "end": 6.5 },
+        { "type": "fill", "color": "#0b0f1a", "alpha": [0, 0.7], "start": 5.5, "end": 6.5 },
+        { "type": "image", "asset": "mains", "at": [320, 360], "start": 6, "fadeIn": 0.8 },
+        { "type": "light", "at": [325, 222], "radius": [0, 70], "start": 9, "end": 11, "warm": 0.55 }
+      ],
+      "cues": [
+        { "at": 0.8, "sfx": "intro-patte-gratte", "volume": 0.6 },
+        { "at": 2.6, "sfx": "intro-patte-gratte", "volume": 0.6 },
+        { "at": 4.2, "sfx": "intro-patte-gratte", "volume": 0.6 },
+        { "at": 5, "musicStop": true },
+        { "at": 6.8, "sfx": "intro-verre-tinte", "volume": 0.7 },
+        { "at": 8.2, "music": "music-intro-c" },
+        { "at": 9, "sfx": "intro-flamme", "volume": 0.8 }
+      ]
+    },
+    {
+      "id": "p11-lueur",
+      "duration": 5,
+      "fadeOut": 0.8,
+      "layers": [
+        { "type": "fill", "color": "#0b0f1a", "alpha": [1, 1] },
+        { "type": "light", "at": [320, 190], "radius": [70, 240], "start": 0, "end": 2.5, "warm": 0.5 },
+        { "type": "eyes", "area": [24, 24, 592, 312], "count": 9, "start": 1.2, "interval": 0.3, "avoid": [320, 190, 150] }
+      ],
+      "cues": [{ "at": 2.6, "sfx": "intro-grognement", "volume": 0.8 }]
+    }
+  ]
+}

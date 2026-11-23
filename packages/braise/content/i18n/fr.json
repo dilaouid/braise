@@ -105,6 +105,10 @@
 
   "ui.press": "Appuie sur",
   "ui.toStart": "pour commencer",
+  "title.prologue": "Revoir le prologue",
+  "cine.skip": "Maintenir pour passer",
+  "cine.intro.card.village": "Un village, en France.",
+  "cine.intro.card.year": "Un an plus tard.",
   "ui.continue": "Continuer",
   "ui.newGame": "Nouvelle partie",
   "ui.settings": "Réglages",

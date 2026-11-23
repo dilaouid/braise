@@ -7,7 +7,7 @@ import type { Card, ChestResult } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
-export type Screen = 'boot' | 'title' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
+export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'pause';
 export type Device = 'keyboard' | 'gamepad';
 
@@ -54,6 +54,8 @@ export interface ConfirmState {
 /** Les actions que l'interface peut demander. Fournies par `app`, jamais l'inverse. */
 export interface Actions {
   start(): void;
+  /** Rejoue le prologue depuis l'écran titre. */
+  prologue(): void;
   goto(screen: Screen): void;
   depart(seed?: number): void;
   buyAltar(id: string): void;
@@ -101,6 +103,12 @@ export const notice = signal<string | null>(null);
 export const holdProgress = signal(0);
 export const lastSeed = signal<number | null>(null);
 export const replaySeed = signal(false);
+/** La cinématique : le carton affiché (clé de fr.json) et la progression du maintien pour passer, de 0 à 1. */
+export const cineCard = signal<string | null>(null);
+export const cineSkip = signal(0);
+
+/** Ce qu'une sauvegarde garde quand le prologue a été vu (dans `account.unlocks`). */
+export const INTRO_SEEN = 'seen.intro';
 
 /** Références partagées, posées par `app` au démarrage. */
 export const refs: {

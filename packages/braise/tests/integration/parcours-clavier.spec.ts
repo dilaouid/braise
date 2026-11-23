@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectFocus, runView, settle, watch } from './harness.ts';
+import { FR, expectFocus, runView, settle, skipIntro, watch } from './harness.ts';
 
 /** Le même jeu au clavier seul : menus, départ maintenu, pause. */
 test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }) => {
@@ -8,6 +8,15 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
   await expect(page.locator('.screen.title')).toBeVisible();
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
+
+  // Sauvegarde neuve : le prologue se joue. Un appui court sur Échap ne le passe pas, un maintien oui.
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
+  await expect(page.locator('.cine-card')).toHaveText(FR['cine.intro.card.village']!);
+  await settle(page);
+  await page.keyboard.press('Escape', { delay: 60 });
+  await page.waitForTimeout(300);
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
+  await skipIntro(page);
 
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expectFocus(page, 'depart');

@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
 import { ChestScreen, Hud, LevelUp, PauseScreen } from './run.tsx';
-import { Altar, Camp, EndScreen, SettingsScreen, Title } from './screens.tsx';
+import { Altar, Camp, CinematicScreen, EndScreen, SettingsScreen, Title } from './screens.tsx';
 import { actions, overlay, screen } from './store.ts';
 
 /** La racine de l'interface : un écran, et au plus un calque par-dessus. */
@@ -10,6 +10,7 @@ export function App(): JSX.Element {
   return (
     <>
       {s === 'title' ? <Title /> : null}
+      {s === 'cinematic' ? <CinematicScreen /> : null}
       {s === 'camp' ? <Camp /> : null}
       {s === 'altar' ? <Altar /> : null}
       {s === 'settings' ? <SettingsScreen onClose={() => actions().goto('camp')} /> : null}

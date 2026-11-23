@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, fixtureSave, saveView, settle, storageKey, watch } from './harness.ts';
+import { FR, SimPad, capture, expectFocus, fixtureSave, saveView, settle, skipIntro, storageKey, watch } from './harness.ts';
 
 const SHOTS = 'sauvegardes';
 const CLASS = 'class.ash-blade';
@@ -106,6 +106,7 @@ test('une sauvegarde plus récente que le jeu est refusée, et rien n\'est écra
   // Le jeu reste jouable sur une partie neuve, mais n'écrit rien par-dessus.
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
+  await skipIntro(page);
   await expect(page.locator('.screen.camp')).toBeVisible();
   await page.keyboard.press('ArrowDown', { delay: 60 });
   await page.keyboard.press('ArrowDown', { delay: 60 });
@@ -125,6 +126,7 @@ test('une sauvegarde illisible n\'empêche pas de jouer', async ({ page }) => {
   await expect(page.locator('.screen.title')).toBeVisible();
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
+  await skipIntro(page);
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expect(page.locator('.camp-info')).toContainText(FR['camp.hero']!.replace('{level}', '1'));
 });
