@@ -11,6 +11,7 @@ import { data, makeImmortal, makeTutorial, tutoMarker as marker } from './helper
 const CRAWLER = data.enemies.findIndex((e) => e.id === 'enemy.crawler');
 const WATCHER = data.enemies.findIndex((e) => e.id === 'boss.watcher');
 const T = data.tuning.tileSize;
+const tutoPoint = (name: string): { x: number; y: number } => marker(name);
 
 function place(run: Run, p: { x: number; y: number }): void {
   run.hero.x = p.x;
@@ -239,6 +240,18 @@ describe('conditions d\'attente', () => {
     closeShop(run);
     steps(run, 5);
     expect(passed(run)).toBe(false);
+  });
+
+  it('buy : un achat fait avant que la leçon commence compte', () => {
+    const run = makeTutorial(1, [placeAt('smith', 'r5smith'), wait('time', undefined, 3), wait('buy', 'r5smith'), MARK, wait('time', undefined, 999)]);
+    run.hero.gold = 160;
+    place(run, tutoPoint('r5smith'));
+    for (let i = 0; i < 120 && run.phase === 'playing'; i++) steps(run, 1);
+    expect(buyItem(run, 0)).toBe(true);
+    closeShop(run);
+    place(run, tutoPoint('r5in'));
+    steps(run, 60 * 4);
+    expect(passed(run)).toBe(true);
   });
 
   it('totem puis boon : la vague vient du script, pas du totem', () => {

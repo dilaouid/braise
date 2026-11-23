@@ -83,7 +83,7 @@ export function newTutorialState(def: TutorialDef): TutorialState {
     banner: null, bannerGlyph: null, bark: null, barkT: 0,
     notes: emptyNotes(), base: emptyNotes(), waitT: 0,
     checkpointStep: 0, checkpointX: def.start.x, checkpointY: def.start.y,
-    gates, deaths: 0, done: false,
+    played: new Uint8Array(def.steps.length), gates, deaths: 0, done: false,
   };
 }
 
@@ -263,14 +263,17 @@ function waitDone(run: Run, tu: TutorialState, step: Extract<TutorialStep, { do:
     case 'healed': return n.flask > b.flask || hero.hp >= hero.stats.maxHp || hero.flasks <= 0;
     case 'full': return hero.hp >= hero.stats.maxHp;
     case 'find': return n.find > b.find;
-    // Si la boutique a été refermée et que l'or ne suffit plus, la leçon est passée plutôt que bloquée.
-    case 'buy': return n.buy > b.buy || (n.shopClosed > b.shopClosed && hero.gold < smithPrice(run));
+    // Un achat fait avant la leçon compte : le joueur a déjà compris. Et si la boutique a été refermée
+    // sans que l'or suffise, la leçon est passée plutôt que bloquée.
+    case 'buy': return n.buy > 0 || (n.shopClosed > b.shopClosed && hero.gold < smithPrice(run));
     case 'boon': return n.boon > b.boon;
     case 'totem': return n.totem > b.totem;
     case 'boss': return n.boss > b.boss;
     case 'time': return tu.waitT >= step.seconds;
   }
 }
+
+const ONCE = new Set(['card', 'find', 'buy', 'boon']);
 
 /** Joue l'étape en cours. Renvoie vrai si elle est finie. */
 function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): boolean {
@@ -290,7 +293,12 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
         tu.waitT = 0;
       }
       tu.waitT += dt;
-      return waitDone(run, tu, step);
+      // Ce qui ne se fait qu'une fois (ouvrir le trésor, prendre le don du totem, acheter, choisir
+      // sa carte) reste acquis quand la salle recommence : on ne peut pas le refaire.
+      if (tu.played[tu.step] && ONCE.has(step.until)) return true;
+      if (!waitDone(run, tu, step)) return false;
+      tu.played[tu.step] = 1;
+      return true;
     case 'bark':
       tu.bark = step.text;
       tu.barkT = tu.def.tuning.barkSeconds;
@@ -308,11 +316,12 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
       for (const p of step.points) {
         for (let k = 0; k < step.count; k++) {
           // Plusieurs ennemis au même repère : un peu écartés, pour ne pas naître empilés.
-          const ox = step.count > 1 ? (run.rngSpawn.float() - 0.5) * 24 : 0;
-          const oy = step.count > 1 ? (run.rngSpawn.float() - 0.5) * 24 : 0;
+          const spread = tu.def.tuning.spawnSpread;
+          const ox = step.count > 1 ? (run.rngSpawn.float() - 0.5) * spread : 0;
+          const oy = step.count > 1 ? (run.rngSpawn.float() - 0.5) * spread : 0;
           const i = spawnEnemy(run, step.kind, p.x + ox, p.y + oy, 1);
           if (i >= 0 && step.boss) {
-            e.timer2[i] = 1.5;
+            e.timer2[i] = tu.def.tuning.bossDelay;
             run.director.bossUid = e.uid[i]!;
             run.director.bossPhase = 1;
             emit(run, EV.bossSpawn, p.x, p.y, step.kind);
@@ -340,8 +349,11 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
       return true;
     }
     case 'gold':
+      // Une salle qui recommence ne redonne pas l'or.
+      if (tu.played[tu.step]) return true;
+      tu.played[tu.step] = 1;
       // Un peu sous le repère : posé sur un trésor, l'or reste visible devant lui.
-      addPickup(run, PK_GOLD, step.x, step.y + 14, step.amount);
+      addPickup(run, PK_GOLD, step.x, step.y + tu.def.tuning.goldOffset, step.amount);
       return true;
     case 'gem': {
       // Un gros éclat : juste ce qu'il faut pour gagner un niveau.
@@ -350,6 +362,9 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
       return true;
     }
     case 'place':
+      // Une salle qui recommence ne pose pas son lieu une seconde fois.
+      if (tu.played[tu.step]) return true;
+      tu.played[tu.step] = 1;
       run.map.pois.push({ kind: step.kind, x: step.x, y: step.y, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
       return true;
     case 'checkpoint':

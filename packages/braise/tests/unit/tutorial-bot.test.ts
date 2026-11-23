@@ -50,3 +50,27 @@ describe('robot de tutoriel', () => {
     expect(play()).toBe(play());
   }, 120_000);
 });
+
+describe('le script livré résiste à une mort à chaque étape', () => {
+  const waits = data.tutorial.steps.flatMap((s, i) => (s.do === 'wait' ? [i] : []));
+
+  it('mourir à chaque attente, une par une, ne bloque jamais le tutoriel', () => {
+    const stuck: number[] = [];
+    for (const w of waits) {
+      const run = makeTutorial(21, 'content');
+      // On joue jusqu'à cette attente, on y reste une seconde, puis Moon tombe.
+      let guard = 0;
+      while (run.tutorial!.step < w && !run.tutorial!.done && guard++ < 6000) simulateTutorial(run, run.time + 0.1);
+      simulateTutorial(run, run.time + 1);
+      if (run.tutorial!.done) continue;
+      run.hero.hp = -1;
+      run.hero.revives = 0;
+      const res = simulateTutorial(run, run.time + 400);
+      if (!res.done) stuck.push(w);
+      // Aucun lieu n'est posé deux fois.
+      const places = run.map.pois.map((p) => p.kind);
+      expect(new Set(places).size, `lieux en double après une mort à l'étape ${w} : ${places.join(', ')}`).toBe(places.length);
+    }
+    expect(stuck, 'étapes où une mort bloque le tutoriel').toEqual([]);
+  }, 240_000);
+});

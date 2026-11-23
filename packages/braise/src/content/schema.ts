@@ -462,6 +462,12 @@ export const tutorialSchema = z
         respawnInvuln: z.number().nonnegative(),
         /** Durée d'affichage d'une réplique courte, en secondes. */
         barkSeconds: z.number().positive(),
+        /** Délai avant la première attaque du boss, en secondes. */
+        bossDelay: z.number().nonnegative(),
+        /** Écart entre plusieurs ennemis nés au même repère, en pixels. */
+        spawnSpread: z.number().nonnegative(),
+        /** Décalage de l'or sous son repère, en pixels (pour rester visible devant un trésor). */
+        goldOffset: z.number(),
       })
       .strict(),
     /** La trouvaille que donne le trésor du tutoriel. */

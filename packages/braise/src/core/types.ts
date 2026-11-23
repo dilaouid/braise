@@ -381,6 +381,8 @@ export interface TutorialState {
   checkpointStep: number;
   checkpointX: number;
   checkpointY: number;
+  /** Les étapes déjà jouées qui ne se rejouent pas quand la salle recommence : lieu posé, or donné, geste unique fait. */
+  played: Uint8Array;
   /** Les tuiles de barrière : numéro et indice de tuile. */
   gates: Array<{ id: number; idx: number }>;
   deaths: number;

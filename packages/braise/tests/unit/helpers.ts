@@ -49,7 +49,10 @@ export function makeTutorial(seed = 7, steps: TutorialStep[] | 'content' = []): 
     seed, regionId: REGION, classId: CLASS, vigil: 1, sheet,
     unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: false,
   });
-  if (steps !== 'content') run.tutorial!.def = { ...run.tutorial!.def, steps };
+  if (steps !== 'content') {
+    run.tutorial!.def = { ...run.tutorial!.def, steps };
+    run.tutorial!.played = new Uint8Array(steps.length);
+  }
   return run;
 }
 

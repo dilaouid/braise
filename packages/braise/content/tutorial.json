@@ -16,7 +16,10 @@
     "guideKeep": 14,
     "reachRadius": 40,
     "respawnInvuln": 1.5,
-    "barkSeconds": 3
+    "barkSeconds": 3,
+    "bossDelay": 1.5,
+    "spawnSpread": 24,
+    "goldOffset": 14
   },
   "find": "find.boots",
   "deathBarks": [
@@ -170,9 +173,9 @@
     {"do":"wait","until":"healed"},
     {"do":"banner","text":null},
     {"do":"wait","until":"clear"},
-    {"do":"checkpoint","at":"r4in"},
     {"do":"place","kind":"spring","at":"r4spring"},
     {"do":"say","dialogue":"tuto.room4.b"},
+    {"do":"checkpoint","at":"r4in"},
     {"do":"banner","text":"tuto.banner.spring"},
     {"do":"wait","until":"full","at":"r4spring"},
     {"do":"banner","text":null},
@@ -204,6 +207,7 @@
     {"do":"banner","text":"tuto.banner.skill","glyph":"skill"},
     {"do":"wait","until":"boon","at":"r6totem"},
     {"do":"banner","text":null},
+    {"do":"checkpoint","at":"r6in"},
     {"do":"wait","until":"clear"},
     {"do":"gate","id":6},
     {"do":"guide","to":"r7cream"},
