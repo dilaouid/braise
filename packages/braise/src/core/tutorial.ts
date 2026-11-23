@@ -340,7 +340,8 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
       return true;
     }
     case 'gold':
-      addPickup(run, PK_GOLD, step.x, step.y, step.amount);
+      // Un peu sous le repère : posé sur un trésor, l'or reste visible devant lui.
+      addPickup(run, PK_GOLD, step.x, step.y + 14, step.amount);
       return true;
     case 'gem': {
       // Un gros éclat : juste ce qu'il faut pour gagner un niveau.

@@ -1,12 +1,15 @@
 /**
  * Joue des parties sans affichage, pour l'équilibrage.
  * Usage : pnpm sim -- --runs 50 --bot active --level 10 --minutes 16 --ardor 0
+ * Tutoriel : pnpm sim -- --tutorial --runs 10 (le robot de tutoriel joue le script livré).
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
 import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate } from '../packages/braise/src/core/bots.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
 import { createRun } from '../packages/braise/src/core/run.ts';
+import { simulateTutorial } from '../packages/braise/src/core/tutorial-bot.ts';
+import { createTutorialRun } from '../packages/braise/src/core/tutorial-run.ts';
 import { buildSheet, unlockedContent } from '../packages/braise/src/meta/hero.ts';
 import { newHero, newSave } from '../packages/braise/src/meta/save.ts';
 
@@ -52,6 +55,31 @@ const { sheet } = buildSheet(data, save, classId);
 const unlocked = unlockedContent(data, save);
 
 const fmt = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+if (process.argv.includes('--tutorial')) {
+  let sum = 0;
+  let boss = 0;
+  let died = 0;
+  let finished = 0;
+  for (let r = 0; r < runs; r++) {
+    const run = createTutorialRun(data, {
+      seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
+      unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: false,
+    });
+    const res = simulateTutorial(run, minutes * 60);
+    sum += res.seconds;
+    boss += res.bossSeconds;
+    died += res.deaths;
+    if (res.done) finished++;
+    if (verbose || !res.done) {
+      const b = run.enemies.count > 0 ? ` · ennemis ${run.enemies.count} (premier : ${Math.round(run.enemies.hp[0]!)} PV)` : '';
+      console.log(`graine ${seed0 + r} : ${res.done ? 'fini' : `arrêté à l'étape ${run.tutorial!.step}`} · ${fmt(res.seconds)} · boss ${fmt(res.bossSeconds)} · morts ${res.deaths} · niv. ${run.hero.level} · PV ${Math.round(run.hero.hp)}/${Math.round(run.hero.stats.maxHp)}${b}`);
+    }
+  }
+  console.log(`
+${runs} tutoriels · finis : ${finished} · durée hors dialogues : ${fmt(sum / runs)} · face au Guetteur : ${fmt(boss / runs)} · morts par partie : ${(died / runs).toFixed(1)}`);
+  process.exit(0);
+}
 const started = Date.now();
 let reachedBoss = 0;
 let victories = 0;
