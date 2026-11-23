@@ -1,0 +1,22 @@
+{
+  "name": "@owl/kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./rng": "./src/rng/index.ts",
+    "./loop": "./src/loop/index.ts",
+    "./input": "./src/input/index.ts",
+    "./host": "./src/host/index.ts",
+    "./save": "./src/save/index.ts",
+    "./focus": "./src/focus/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

@@ -1,0 +1,261 @@
+import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
+import type { Card } from '../core/types.ts';
+import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
+import { SettingsScreen } from './screens.tsx';
+import {
+  actions, chest, fmt, fmtTime, gameData, hud, levelUp, pauseReason, pauseStats, roman, t,
+} from './store.ts';
+
+/** Un anneau de rechargement, en pixels : il se remplit dans le sens des aiguilles. */
+function Ring({ frac, icon, glyph, active }: { frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean }): JSX.Element {
+  const pct = Math.round(Math.max(0, Math.min(1, frac)) * 100);
+  return (
+    <span class={`ring ${pct >= 100 ? 'ready' : ''} ${active ? 'active' : ''}`} style={`--pct: ${pct}%`}>
+      <Icon name={icon} />
+      <Btn g={glyph} />
+    </span>
+  );
+}
+
+export function Hud(): JSX.Element | null {
+  const h = hud.value;
+  if (!h) return null;
+  const data = gameData();
+  const cls = data.classes['class.ash-blade']!;
+  return (
+    <div class="hud">
+      <div class="xpbar"><div class="xpbar-fill" style={{ width: `${Math.round((100 * h.xp) / Math.max(1, h.xpNext))}%` }} /></div>
+      <div class="hud-tl">
+        <div class="hp">
+          <Bar class="bar-hp" value={h.hp} max={h.maxHp} />
+          <span class="hp-text">{Math.max(0, Math.ceil(h.hp))}/{h.maxHp}</span>
+        </div>
+        <div class="hud-row">
+          <span class="flasks">
+            {Array.from({ length: h.maxFlasks }, (_, i) => <Icon key={i} name="pickup-drop" class={i < h.flasks ? '' : 'spent'} />)}
+          </span>
+          <span class="lvl">{t('hud.level', { level: h.level })}</span>
+        </div>
+        <div class="slots">
+          {h.weapons.map((w, i) => (
+            <span class={`slot weapon ${w.ready ? 'evolve' : ''}`} key={`w${i}`}>
+              <Icon name={w.icon} />
+              <Pips value={w.level} max={w.max} />
+            </span>
+          ))}
+        </div>
+        <div class="slots">
+          {h.relics.map((r, i) => (
+            <span class="slot relic" key={`r${i}`}>
+              <Icon name={r.icon} />
+              <Pips value={r.level} max={r.max} />
+            </span>
+          ))}
+        </div>
+      </div>
+      <div class="hud-tr">
+        <span class={`clock ${h.boss ? 'boss' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
+        <span class="vigil">{t('hud.vigil', { vigil: roman(h.vigil) })}</span>
+        <canvas class="minimap" id="minimap" width="48" height="48" />
+        {h.fps > 0 ? <span class="fps">{h.fps} i/s</span> : null}
+      </div>
+      <div class="hud-bl">
+        <Ring frac={h.dashFrac} icon="icon-dash" glyph="dash" />
+        <Ring frac={h.skillFrac} icon={cls.skill.icon} glyph="skill" />
+        <Ring frac={h.ultFrac} icon={cls.ultimate.icon} glyph="ultimate" active={h.ultActive} />
+      </div>
+      <div class="hud-br">
+        <span class="currency"><Icon name="icon-gold" /> {fmt(h.gold)}</span>
+        <span class="currency"><Icon name="icon-ashes" /> {fmt(h.ashes)}</span>
+      </div>
+      {h.boss ? (
+        <div class="bossbar">
+          <span class="boss-name">{h.boss.name}</span>
+          <div class="boss-track">
+            <div class="boss-fill" style={{ width: `${Math.round(h.boss.frac * 1000) / 10}%` }} />
+            <i class="boss-mark" style={{ left: '66%' }} />
+            <i class="boss-mark" style={{ left: '33%' }} />
+          </div>
+        </div>
+      ) : null}
+      {h.message ? <div class="banner">{h.message}</div> : null}
+    </div>
+  );
+}
+
+function cardTexts(card: Card): { name: string; tag: string; text: string; icon: string; linked: string | null; linkLabel: string } {
+  const data = gameData();
+  if (card.kind === 'weapon') {
+    const def = data.weapons[card.def]!;
+    const relic = data.relics[def.relic]!;
+    return {
+      name: t(`${def.id}.name`),
+      tag: card.level === 1 ? `${t('levelup.weapon')} · ${t('levelup.new')}` : `${t('levelup.weapon')} · ${t('levelup.level', { level: card.level })}`,
+      text: card.level === 1 ? t(`${def.id}.desc`) : t(`${def.id}.level.${card.level}`),
+      icon: def.icon,
+      linked: relic.icon,
+      linkLabel: t('levelup.evolvesWith'),
+    };
+  }
+  if (card.kind === 'relic') {
+    const def = data.relics[card.def]!;
+    const weapon = data.weapons[def.weapon]!;
+    return {
+      name: t(`${def.id}.name`),
+      tag: card.level === 1 ? `${t('levelup.relic')} · ${t('levelup.new')}` : `${t('levelup.relic')} · ${t('levelup.level', { level: card.level })}`,
+      text: t(`${def.id}.desc`),
+      icon: def.icon,
+      linked: weapon.icon,
+      linkLabel: t('levelup.evolves'),
+    };
+  }
+  if (card.kind === 'gold') {
+    return { name: t('levelup.gold.name'), tag: '', text: t('levelup.gold.desc', { gold: data.tuning.gold.cardGold }), icon: 'icon-gold', linked: null, linkLabel: '' };
+  }
+  return {
+    name: t('levelup.heal.name'), tag: '', text: t('levelup.heal.desc', { pct: Math.round(data.tuning.cardHealShare * 100) }),
+    icon: 'icon-flask', linked: null, linkLabel: '',
+  };
+}
+
+export function LevelUp(): JSX.Element | null {
+  const ref = useFocusScope('levelup');
+  const lu = levelUp.value;
+  const focused = (): number => Number(document.querySelector('.levelup .is-focused')?.getAttribute('data-index') ?? 0);
+  useHandlers({
+    x: () => actions().reroll(),
+    y: () => actions().banish(focused()),
+  });
+  if (!lu) return null;
+  const data = gameData();
+  return (
+    <div class="backdrop levelup" ref={ref}>
+      <h1 class="gold">{t('levelup.title', { level: lu.level })}</h1>
+      <div class="cards">
+        {lu.cards.map((card, i) => {
+          const c = cardTexts(card);
+          return (
+            <button
+              type="button" key={`${card.kind}-${card.def}-${i}`} class={`card card-${card.kind} ${card.evolves ? 'card-evolves' : ''}`}
+              data-focus={`card${i}`} data-index={i} data-focus-default={i === 0 ? '' : undefined}
+              onClick={() => actions().takeCard(i)}
+            >
+              <span class="card-icon"><Icon name={c.icon} /></span>
+              <span class="card-name">{c.name}</span>
+              <span class="card-tag">{c.tag}</span>
+              <span class="card-text">{c.text}</span>
+              {c.linked ? (
+                <span class="card-link">
+                  <span>{c.linkLabel}</span>
+                  <Icon name={c.linked} />
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      <div class="skip-track"><div class="skip-fill" style={{ width: `${Math.round(lu.skipHold * 100)}%` }} /></div>
+      <HelpBar
+        items={[
+          ['confirm', t('levelup.take')],
+          lu.rerolls > 0 && ['x', t('levelup.reroll', { n: lu.rerolls })],
+          lu.banishes > 0 && ['y', t('levelup.banish', { n: lu.banishes })],
+          ['back', t('levelup.skip', { gold: data.tuning.gold.skipCard })],
+        ]}
+      />
+    </div>
+  );
+}
+
+export function ChestScreen(): JSX.Element | null {
+  const ref = useFocusScope('chest');
+  const c = chest.value;
+  useHandlers({ back: () => actions().closeChest() });
+  if (!c) return null;
+  const data = gameData();
+  const to = c.evolvedTo >= 0 ? data.weapons[c.evolvedTo]! : null;
+  const from = c.evolvedFrom >= 0 ? data.weapons[c.evolvedFrom]! : null;
+  return (
+    <div class="backdrop chest" ref={ref}>
+      <Panel class="chest-panel" active>
+        <h1 class="gold">{t('chest.title')}</h1>
+        <span class="chest-art"><Icon name="pickup-coffre" /></span>
+        {to && from ? (
+          <div class="evolution">
+            <h2 class="gold">{t('chest.evolution')}</h2>
+            <div class="evo-row">
+              <span class="card-icon"><Icon name={from.icon} /></span>
+              <span class="evo-arrow" />
+              <span class="card-icon evo-new"><Icon name={to.icon} /></span>
+            </div>
+            <p>{t('chest.becomes', { from: t(`${from.id}.name`), to: t(`${to.id}.name`) })}</p>
+            <p class="dim">{t(`${to.id}.desc`)}</p>
+          </div>
+        ) : <p class="dim">{t('chest.noEvolution')}</p>}
+        <p><Icon name="icon-gold" /> {t('chest.gold', { gold: c.gold })}</p>
+        <MenuButton id="ok" label={t('ui.continue')} onPress={() => actions().closeChest()} default />
+      </Panel>
+    </div>
+  );
+}
+
+export function PauseScreen(): JSX.Element {
+  const ref = useFocusScope('pause');
+  const [view, setView] = useState<'menu' | 'settings' | 'abandon'>('menu');
+  useHandlers({
+    back: () => {
+      if (view === 'menu') actions().pause(false);
+    },
+    pause: () => {
+      if (view === 'menu') actions().pause(false);
+    },
+  });
+  const h = hud.value;
+  const stats = pauseStats.value;
+  const data = gameData();
+  if (view === 'settings') return <SettingsScreen inRun onClose={() => setView('menu')} />;
+  return (
+    <div class="backdrop pause" ref={ref}>
+      <Panel class="pause-panel" active>
+        <h1>{pauseReason.value ?? t('pause.title')}</h1>
+        <div class="pause-cols">
+          <div class="pause-menu">
+            <MenuButton id="resume" label={t('pause.resume')} onPress={() => actions().pause(false)} default />
+            <MenuButton id="settings" label={t('ui.settings')} onPress={() => setView('settings')} />
+            <MenuButton id="abandon" label={t('pause.abandon')} onPress={() => setView('abandon')} danger />
+          </div>
+          <div class="pause-info">
+            <h2>{t('pause.build')}</h2>
+            <div class="slots">
+              {h?.weapons.map((w, i) => <span class="slot weapon" key={i}><Icon name={w.icon} /><Pips value={w.level} max={w.max} /></span>)}
+            </div>
+            <div class="slots">
+              {h?.relics.map((r, i) => <span class="slot relic" key={i}><Icon name={r.icon} /><Pips value={r.level} max={r.max} /></span>)}
+            </div>
+            {stats ? (
+              <div class="stats">
+                <p><span>{t('stat.maxHp')}</span><b>{stats.maxHp}</b></p>
+                <p><span>{t('stat.power')}</span><b>+{Math.round(stats.power * 100)} %</b></p>
+                <p><span>{t('stat.cadence')}</span><b>+{Math.round(stats.cadence * 100)} %</b></p>
+                <p><span>{t('stat.zone')}</span><b>+{Math.round(stats.zone * 100)} %</b></p>
+                <p><span>{t('stat.duration')}</span><b>+{Math.round(stats.duration * 100)} %</b></p>
+                <p><span>{t('stat.critChance')}</span><b>{(stats.critChance * 100).toFixed(1).replace('.', ',')} %</b></p>
+                <p><span>{t('stat.armor')}</span><b>{stats.armor.toFixed(1).replace('.', ',')}</b></p>
+                <p><span>{t('stat.speed')}</span><b>{Math.round(stats.speed)} px/s</b></p>
+                <p><span>{t('stat.glow')}</span><b>{Math.round(stats.glow)} px</b></p>
+                <p><span>{t('stat.str')} · {t('stat.agi')} · {t('stat.spi')}</span><b>{stats.attrs.str} · {stats.attrs.agi} · {stats.attrs.spi}</b></p>
+                <p><span>{t('stat.vig')} · {t('stat.luck')}</span><b>{stats.attrs.vig} · {stats.attrs.luck}</b></p>
+              </div>
+            ) : null}
+            <p class="dim">{t(`${data.classes['class.ash-blade']!.skill.id}.name`)} : {t(`${data.classes['class.ash-blade']!.skill.id}.desc`)}</p>
+          </div>
+        </div>
+      </Panel>
+      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('ui.confirm')], ['back', t('pause.resume')]]} />
+      {view === 'abandon' ? (
+        <ConfirmDialog text={t('pause.abandon.confirm')} yes={t('pause.abandon')} onYes={() => actions().abandon()} onNo={() => setView('menu')} />
+      ) : null}
+    </div>
+  );
+}

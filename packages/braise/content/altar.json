@@ -1,0 +1,6 @@
+[
+  { "id": "altar.ardor", "icon": "icon-altar-ardor", "row": 1, "ranks": 10, "baseCost": 5, "growth": 1.45, "shards": 0, "perRank": { "power": 0.03 } },
+  { "id": "altar.endurance", "icon": "icon-altar-endurance", "row": 1, "ranks": 10, "baseCost": 5, "growth": 1.45, "shards": 0, "perRank": { "maxHpShare": 0.05 } },
+  { "id": "altar.glow", "icon": "icon-altar-glow", "row": 1, "ranks": 5, "baseCost": 8, "growth": 1.6, "shards": 0, "perRank": { "glowShare": 0.08 } },
+  { "id": "altar.wisdom", "icon": "icon-altar-wisdom", "row": 1, "ranks": 5, "baseCost": 10, "growth": 1.7, "shards": 0, "perRank": { "wisdom": 0.04 } }
+]

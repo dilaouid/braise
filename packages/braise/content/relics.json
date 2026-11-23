@@ -1,0 +1,8 @@
+[
+  { "id": "relic.whetstone", "icon": "icon-relic-whetstone", "weapon": "weapon.scythe", "maxLevel": 5, "starting": true, "perLevel": { "power": 0.08 } },
+  { "id": "relic.scorched-grimoire", "icon": "icon-relic-grimoire", "weapon": "weapon.sparks", "maxLevel": 5, "starting": true, "perLevel": { "cadence": 0.06 } },
+  { "id": "relic.bottomless-quiver", "icon": "icon-relic-quiver", "weapon": "weapon.volley", "maxLevel": 5, "starting": true, "perLevel": { "projectileSpeed": 0.1 }, "atLevels": { "3": { "projectiles": 1 }, "5": { "projectiles": 1 } } },
+  { "id": "relic.glass-jar", "icon": "icon-relic-jar", "weapon": "weapon.fireflies", "maxLevel": 5, "starting": true, "perLevel": { "duration": 0.08 } },
+  { "id": "relic.oil-flask", "icon": "icon-relic-oil", "weapon": "weapon.firebrand", "maxLevel": 5, "starting": true, "perLevel": { "zone": 0.08 } },
+  { "id": "relic.portable-anvil", "icon": "icon-relic-anvil", "weapon": "weapon.hearth-hammer", "maxLevel": 5, "starting": true, "perLevel": { "knockback": 0.12, "eliteDamage": 0.05 } }
+]

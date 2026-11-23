@@ -1,0 +1,32 @@
+[
+  {
+    "id": "weapon.red-harvest", "icon": "icon-evo-red-harvest", "from": "weapon.scythe", "relic": "relic.whetstone",
+    "damageType": "physical", "scale": "str", "aim": "around", "behavior": "arc",
+    "params": { "damage": 34, "cooldown": 1.1, "arc": 360, "range": 66, "strikes": 2, "bleed": true, "healEvery": 20 }
+  },
+  {
+    "id": "weapon.ardent-swarm", "icon": "icon-evo-ardent-swarm", "from": "weapon.sparks", "relic": "relic.scorched-grimoire",
+    "damageType": "fire", "scale": "spi", "aim": "nearest", "behavior": "projectile",
+    "params": { "damage": 16, "cooldown": 1.0, "count": 8, "stagger": 0.11, "homing": 7, "pierce": 1, "speed": 250, "range": 440, "radius": 4, "burn": true, "sprite": "shot-spark" }
+  },
+  {
+    "id": "weapon.dawn-rain", "icon": "icon-evo-dawn-rain", "from": "weapon.volley", "relic": "relic.bottomless-quiver",
+    "damageType": "physical", "scale": "agi", "aim": "directed", "behavior": "projectile",
+    "params": { "damage": 18, "cooldown": 1.0, "count": 5, "pierce": 4, "speed": 375, "range": 280, "radius": 4, "spread": 12, "endZoneRadius": 30, "endZoneDamage": 22, "sprite": "shot-arrow" }
+  },
+  {
+    "id": "weapon.constellation", "icon": "icon-evo-constellation", "from": "weapon.fireflies", "relic": "relic.glass-jar",
+    "damageType": "fire", "scale": "spi", "aim": "orbit", "behavior": "orbit",
+    "params": { "damage": 13, "count": 10, "rings": 2, "radius": 56, "ringGap": 34, "active": 3, "pause": 0, "hitInterval": 0.5, "orbRadius": 7, "turnTime": 2.2, "sparkEvery": 2, "sparkDamage": 18 }
+  },
+  {
+    "id": "weapon.scorched-earth", "icon": "icon-evo-scorched-earth", "from": "weapon.firebrand", "relic": "relic.oil-flask",
+    "damageType": "fire", "scale": "str", "aim": "random", "behavior": "lob",
+    "params": { "damage": 26, "cooldown": 2.2, "count": 3, "impactRadius": 46, "flight": 0.55, "puddleRadius": 46, "puddleDuration": 6, "puddleDamage": 6, "puddleTick": 0.5, "puddleGrow": 5, "burn": true }
+  },
+  {
+    "id": "weapon.quake", "icon": "icon-evo-quake", "from": "weapon.hearth-hammer", "relic": "relic.portable-anvil",
+    "damageType": "physical", "scale": "str", "aim": "around", "behavior": "nova",
+    "params": { "damage": 70, "cooldown": 2.8, "radius": 96, "knockback": 160, "stun": 0.5, "waves": 2, "fissures": 8, "fissureLength": 340, "fissureWidth": 16, "fissureDamage": 45 }
+  }
+]

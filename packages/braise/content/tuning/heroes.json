@@ -1,0 +1,16 @@
+{
+  "maxLevel": 60,
+  "pointsPerLevel": { "auto": 2, "free": 1, "talent": 1 },
+  "xpCurve": { "base": 100, "linear": 50, "quadratic": 6 },
+  "shardCurve": { "base": 25000, "growth": 1.02 },
+  "baseHp": 80,
+  "attributes": {
+    "str": { "knockback": 0.005 },
+    "agi": { "speed": 0.002, "speedCap": 0.3, "critChance": 0.001 },
+    "spi": { "zone": 0.002, "duration": 0.002 },
+    "vig": { "hp": 3, "regen": 0.03, "armor": 0.3 },
+    "luck": { "luck": 0.005, "critChance": 0.001 }
+  },
+  "damagePerScalePoint": 0.01,
+  "rewards": { "perMinute": 15, "perRunLevelSq": 2, "perElite": 50, "perBoss": 300, "vigilGrowth": 1.25 }
+}

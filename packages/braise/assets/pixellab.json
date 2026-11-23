@@ -1,0 +1,514 @@
+{
+ "note": "Registre des générations PixelLab. tools/fetch-assets.mjs télécharge chaque entrée dans assets/source/. Les adresses des sons ne sont pas ici : elles se lisent par get_sound_effect / get_music et se rangent dans .pixellab/audio-urls.json (fichier local, hors du repository).",
+ "date": "2026-11-23",
+ "styleSuffix": "16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood, transparent background",
+ "characters": [
+  {
+   "name": "hero-lame-cendre",
+   "id": "b2c12880-2aac-4ca7-b57c-8a319cb5cd64",
+   "tool": "create_character",
+   "settings": {
+    "size": 48,
+    "view": "low top-down",
+    "mode": "v3"
+   },
+   "animations": {
+    "walk": "walking-8-frames",
+    "idle": "breathing-idle"
+   },
+   "prompt": "a sturdy warden in a heavy ash-grey hooded cloak over worn leather armor, a long curved blade on the back, holding a small glowing orange lantern in the left hand, soft round shapes, calm determined face"
+  }
+ ],
+ "objects": [
+  {
+   "name": "enemy-rampant",
+   "id": "5d9e89be-4761-4426-bff1-1dedd59d3212",
+   "size": [
+    32,
+    32
+   ],
+   "animated": true,
+   "prompt": "a low four-legged creature made of twisted grey roots and ash, hollow body with holes, two small glowing magenta eyes, angular jagged silhouette, facing right, crawling pose"
+  },
+  {
+   "name": "enemy-chauve-suie",
+   "id": "92317425-186f-4635-915e-59c62f764614",
+   "size": [
+    32,
+    32
+   ],
+   "animated": true,
+   "prompt": "a ragged bat made of soot with torn wings full of holes, two glowing magenta eyes, wings spread, facing right, angular silhouette"
+  },
+  {
+   "name": "enemy-souche-morte",
+   "id": "81b0628b-86bc-4c9b-9efc-1c7ddeeeffce",
+   "size": [
+    48,
+    48
+   ],
+   "animated": true,
+   "prompt": "a wide dead tree stump monster walking on short root legs, cracked grey bark, a dark hollow mouth, two glowing magenta eyes, facing right"
+  },
+  {
+   "name": "enemy-cracheur",
+   "id": "d410d54f-9bea-4d3c-b3aa-9f49825d245b",
+   "size": [
+    32,
+    32
+   ],
+   "animated": true,
+   "prompt": "a tall thin mushroom creature with a split cap leaking dark soot, standing still, leaning forward, two glowing magenta eyes, facing right"
+  },
+  {
+   "name": "elite-veneur",
+   "id": "23c7b0a2-61df-401d-b4a7-6192345b2186",
+   "size": [
+    64,
+    64
+   ],
+   "animated": true,
+   "prompt": "a tall hunter creature with stag antlers growing from a hood, a broken spear lowered to charge, cloak of dead leaves, two glowing magenta eyes, facing right"
+  },
+  {
+   "name": "elite-mere-souche",
+   "id": "03c07531-ca55-4df0-8bb3-f585821f7699",
+   "size": [
+    64,
+    64
+   ],
+   "animated": true,
+   "prompt": "a giant rooted tree stump monster with many hollows where small root creatures peek out, branches like arms, two glowing magenta eyes"
+  },
+  {
+   "name": "boss-cerf",
+   "id": "3be3c7e8-3b87-4608-ad27-5fe588eef3f9",
+   "size": [
+    128,
+    128
+   ],
+   "animated": true,
+   "prompt": "a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns, hollow chest, mournful, two glowing magenta eyes, standing side view facing right"
+  },
+  {
+   "name": "decor-souche",
+   "id": "60fb8950-5c77-4235-8c27-e3fb9570b20d",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a large dead tree stump with grey bark dusted with ash, a few dead fireflies hanging from a twig, no creature, top-down prop"
+  },
+  {
+   "name": "decor-rochers",
+   "id": "e3c90378-be07-4d4e-aef7-b5a6f263852c",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a cluster of three dark grey boulders dusted with pale ash, cold, top-down prop"
+  },
+  {
+   "name": "decor-ruine",
+   "id": "d7280fd6-ffc5-4685-b462-aa21830595b6",
+   "size": [
+    48,
+    64
+   ],
+   "prompt": "a broken ancient stone pillar ruin with a carved lantern symbol, cracked, dusted with ash, top-down prop"
+  },
+  {
+   "name": "decor-arbre",
+   "id": "0865f4ef-2514-4c5f-ac12-9d6404017811",
+   "size": [
+    64,
+    96
+   ],
+   "prompt": "a tall dead leafless tree with a thick grey trunk and bare twisted branches, dusted with ash, top-down RPG prop"
+  },
+  {
+   "name": "poi-brasero",
+   "id": "790703a9-3abb-4e44-b540-a45ba2c2705c",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a wide stone brazier bowl on a short pedestal, unlit, filled with cold grey ashes and charred logs, no fire, top-down prop"
+  },
+  {
+   "name": "poi-source",
+   "id": "e2509fb6-2886-4d5c-9869-6e910b7b59e2",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a small round stone-rimmed spring pool of clear glowing teal water, a few green moss tufts on the stones, top-down prop"
+  },
+  {
+   "name": "poi-cache",
+   "id": "52af106a-7ea6-4ae2-a652-e51217fce05f",
+   "size": [
+    32,
+    32
+   ],
+   "prompt": "an old closed wooden travel chest with iron bands and a small lantern emblem on the lock, dusted with ash, top-down prop"
+  },
+  {
+   "name": "pickup-coffre",
+   "id": "9bd92c17-a68c-4067-a939-4e4ea07a3970",
+   "size": [
+    32,
+    32
+   ],
+   "prompt": "a small closed iron chest glowing from within with warm orange ember light through its seams, golden trim, top-down prop"
+  },
+  {
+   "name": "poi-portail",
+   "id": "30f191a6-f1e7-4653-a6c2-df92760278a8",
+   "size": [
+    64,
+    64
+   ],
+   "prompt": "a standing stone archway portal filled with swirling warm orange and gold fire light, rough grey stones, top-down RPG prop"
+  }
+ ],
+ "tilesets": [
+  {
+   "name": "tile-bois",
+   "id": "b241daff-3ff8-419a-9fe8-44fc1f30d3ac",
+   "tool": "create_topdown_tileset",
+   "settings": {
+    "tile_size": 32,
+    "mode": "pro",
+    "view": "low top-down"
+   },
+   "prompt": "lower: dark forest floor covered in pale grey ash, sparse dead leaves · upper: dark packed earth path with small stones"
+  }
+ ],
+ "images": [
+  {
+   "name": "icon-weapon-scythe",
+   "id": "18a6c298-3d97-4d2f-9e4c-8f677f4ace58",
+   "prompt": "a curved scythe blade leaving an orange crescent slash trail, game ability icon"
+  },
+  {
+   "name": "icon-weapon-sparks",
+   "id": "2586d2d5-941c-4d62-a691-ee53b29d6aee",
+   "prompt": "three small bright orange fire sparks flying, game ability icon"
+  },
+  {
+   "name": "icon-weapon-volley",
+   "id": "9116e85b-dfce-4fde-835b-0e46286a5f21",
+   "prompt": "three wooden arrows flying in a fan, game ability icon"
+  },
+  {
+   "name": "icon-weapon-fireflies",
+   "id": "f694f3fc-a110-4d72-9cf1-14fc27c3cef0",
+   "prompt": "two small glowing yellow fireflies circling, game ability icon"
+  },
+  {
+   "name": "icon-weapon-firebrand",
+   "id": "aba38de5-9252-42fd-9955-8d1920231118",
+   "prompt": "a burning wooden torch brand thrown, tumbling with orange flame, game ability icon"
+  },
+  {
+   "name": "icon-weapon-hammer",
+   "id": "06901391-fd19-4fc6-8044-dab1674d0c21",
+   "prompt": "a heavy blacksmith war hammer with a glowing orange head, game ability icon"
+  },
+  {
+   "name": "icon-relic-whetstone",
+   "id": "311b80ef-4a11-45bf-bd6b-8aa27184b26e",
+   "prompt": "a grey whetstone block with an orange spark on it, game item icon"
+  },
+  {
+   "name": "icon-relic-grimoire",
+   "id": "c6552932-0449-45ca-b51d-e17646aad1b5",
+   "prompt": "an old closed spell book with scorched burnt corners and a teal clasp, game item icon"
+  },
+  {
+   "name": "icon-relic-quiver",
+   "id": "6f889b4c-d6ea-4356-be2c-819b817a4e3f",
+   "prompt": "a leather quiver full of arrows, game item icon"
+  },
+  {
+   "name": "icon-relic-jar",
+   "id": "2e3f2405-238c-412e-ae32-af2a682b9fb3",
+   "prompt": "a glass jar with a cork lid holding one glowing yellow firefly, game item icon"
+  },
+  {
+   "name": "icon-relic-oil",
+   "id": "86b8e806-12a2-40c9-abd3-58bd9e57727e",
+   "prompt": "a small dark glass flask of amber lamp oil with a cork, game item icon"
+  },
+  {
+   "name": "icon-relic-anvil",
+   "id": "60fb3617-bd7a-496c-8e49-8271c562244e",
+   "prompt": "a small portable iron anvil, game item icon"
+  },
+  {
+   "name": "icon-evo-red-harvest",
+   "id": "ece7682e-73ff-4a74-92c1-89032aecd53c",
+   "prompt": "a full circle spinning scythe slash in deep red and orange, blood red crescent ring, game ability icon"
+  },
+  {
+   "name": "icon-evo-ardent-swarm",
+   "id": "a4cb03f8-ca1f-47c9-9adc-c7e7aba1c770",
+   "prompt": "a dense swarm of many blazing orange sparks streaming together, game ability icon"
+  },
+  {
+   "name": "icon-evo-dawn-rain",
+   "id": "a7a6dd94-c49a-48c9-bbd6-fcc4292822df",
+   "prompt": "golden glowing arrows raining down from above with a small sunrise, game ability icon"
+  },
+  {
+   "name": "icon-evo-constellation",
+   "id": "5ff5ff04-7841-4fbf-9157-755ec9a0f8b7",
+   "prompt": "a ring of many small golden star lights forming a constellation circle, game ability icon"
+  },
+  {
+   "name": "icon-evo-scorched-earth",
+   "id": "5e1ef1ac-7fad-492f-99e3-089f179c3a0b",
+   "prompt": "cracked scorched ground with a wide pool of orange fire spreading, game ability icon"
+  },
+  {
+   "name": "icon-evo-quake",
+   "id": "0eef0991-ab24-48b3-bad8-b8f363266bfd",
+   "prompt": "a hammer striking the ground with glowing orange cracks radiating out in a star, earthquake, game ability icon"
+  },
+  {
+   "name": "icon-skill-ember-cry",
+   "id": "b14b78ce-873e-4e07-8ee1-c68209c09a80",
+   "prompt": "a shouting mouth releasing a ring shockwave of orange embers, war cry, game ability icon"
+  },
+  {
+   "name": "icon-ultimate-ardent-whirl",
+   "id": "2590d9c1-a754-440d-ad26-88790a5a6500",
+   "prompt": "a spinning whirlwind tornado of orange fire with a blade inside, game ability icon"
+  },
+  {
+   "name": "icon-flask",
+   "id": "a13bb05d-5332-41d2-bb0a-d874378bf3ae",
+   "prompt": "a small round glass flask filled with glowing orange ember liquid, healing potion, game item icon"
+  },
+  {
+   "name": "icon-dash",
+   "id": "d3ddac50-8817-4b0c-968a-e190604b4304",
+   "prompt": "a running boot with speed lines and an orange trail, dash, game ability icon"
+  },
+  {
+   "name": "icon-altar-ardor",
+   "id": "bfb62e9f-0a7e-4d2e-ac84-0d247b0b914c",
+   "prompt": "a bright orange flame with a small sword silhouette inside, power, game upgrade icon"
+  },
+  {
+   "name": "icon-altar-endurance",
+   "id": "6c86fa78-472c-4d6b-8b49-63970de0a904",
+   "prompt": "a warm glowing red-orange heart with a small flame on top, vitality, game upgrade icon"
+  },
+  {
+   "name": "icon-altar-glow",
+   "id": "f719352a-0288-44e6-abb9-7b25ec43096a",
+   "prompt": "a small iron lantern shining with a wide golden halo of light rays, game upgrade icon"
+  },
+  {
+   "name": "icon-altar-wisdom",
+   "id": "bb06d2c1-afdc-4227-9b9c-f494b4360447",
+   "prompt": "an open book with a teal glowing crystal floating above it, wisdom, game upgrade icon"
+  },
+  {
+   "name": "icon-gold",
+   "id": "a662ca7b-7756-4713-b627-9e0cf04a8f92",
+   "prompt": "a small pile of three shiny gold coins, game currency icon"
+  },
+  {
+   "name": "icon-ashes",
+   "id": "0cdc6798-353b-49c5-8ba8-ad98c5eb14e2",
+   "prompt": "a small pile of pale grey ashes with one tiny orange ember glowing in it, game currency icon"
+  }
+ ],
+ "sounds": [
+  {
+   "name": "sfx-scythe",
+   "id": "60c8ad6a-ff89-46bb-b80e-7a6d458fd1c3",
+   "prompt": "a quick sharp blade slash whoosh through the air, soft, not too bright",
+   "seconds": 0.6
+  },
+  {
+   "name": "sfx-spark",
+   "id": "40e7a07d-9f12-42bf-af05-05661303d6c7",
+   "prompt": "a small soft fire spark being shot, short muffled fwip",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-hammer",
+   "id": "de8b73fc-f3ae-4f56-8104-00e4b30aa7ce",
+   "prompt": "a heavy hammer slamming the ground with a deep low thud and rumble",
+   "seconds": 1
+  },
+  {
+   "name": "sfx-brand",
+   "id": "e93632d0-fa52-4c8b-a101-9f258cc61b0a",
+   "prompt": "a small burst of fire igniting on the ground, soft whoomp",
+   "seconds": 0.8
+  },
+  {
+   "name": "sfx-gem",
+   "id": "d5e9567f-c781-450c-96ee-7f5668ee4faf",
+   "prompt": "a single soft crystal chime note, short and clean, like picking up a small gem",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-levelup",
+   "id": "0c1b48c0-23f1-4b19-a479-7d7ac6890333",
+   "prompt": "a bright rising magical chime arpeggio, level up reward jingle, warm",
+   "seconds": 1.4
+  },
+  {
+   "name": "sfx-hurt",
+   "id": "8e9b4945-d465-4af8-89a5-d038e8b4f6fa",
+   "prompt": "a dull body hit impact with a short grunt of pain, muffled",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-dash",
+   "id": "c08d87cf-6399-417e-b4b3-109c02622360",
+   "prompt": "a fast cloth whoosh dash, quick air swish",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-kill",
+   "id": "6595120f-9846-4bec-90f4-3c323efe2642",
+   "prompt": "a soft puff of ash and dry twigs crumbling, very short, quiet",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-chest",
+   "id": "07f1a5b0-02a8-40bb-9c08-5c9fe562f295",
+   "prompt": "an old wooden chest creaking open with a warm magical shimmer",
+   "seconds": 1.4
+  },
+  {
+   "name": "sfx-arrow",
+   "id": "46e942b3-dfda-4e05-abfd-802dd5a9633f",
+   "prompt": "a bow string twang releasing an arrow, short and soft",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-evolution",
+   "id": "8cf258a0-9b61-4421-b295-c4f10bb08d2c",
+   "prompt": "a triumphant warm magical transformation fanfare with a swell of fire and bells",
+   "seconds": 1.6
+  },
+  {
+   "name": "sfx-skill",
+   "id": "30c65f21-a249-4b45-b1ce-4745ac24d421",
+   "prompt": "a deep warrior battle shout with a burst of fire shockwave",
+   "seconds": 1
+  },
+  {
+   "name": "sfx-ultimate",
+   "id": "1e192311-54dc-4789-b3ee-d5ce2ee2568d",
+   "prompt": "a roaring fire whirlwind spinning up, powerful flames whooshing around",
+   "seconds": 1.6
+  },
+  {
+   "name": "sfx-flask",
+   "id": "f3a12e79-1d9a-4f1a-821b-b22e5d563e8d",
+   "prompt": "drinking a potion, a quick gulp followed by a soft warm healing shimmer",
+   "seconds": 1
+  },
+  {
+   "name": "sfx-ui-move",
+   "id": "577635e5-30e6-4881-8bb1-05d26f4d34c2",
+   "prompt": "a tiny soft wooden tick, user interface cursor move, very short and quiet",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-ui-confirm",
+   "id": "efc48473-16be-49db-b2e9-e4b0963e64e5",
+   "prompt": "a soft warm confirm click with a small bell, user interface select",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-ui-back",
+   "id": "a9b3eb39-0925-4873-a70f-02494029e953",
+   "prompt": "a soft low muted thud, user interface cancel or back",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-buy",
+   "id": "b75b6d83-d8ca-4bbf-b644-e210f3ecd98f",
+   "prompt": "ashes poured into a bowl then a flame catching with a warm low chime, ritual purchase",
+   "seconds": 1.2
+  },
+  {
+   "name": "sfx-wave",
+   "id": "d9505968-b4b4-40f1-a8e0-0ea28adad41e",
+   "prompt": "a distant low ominous horn call warning, short",
+   "seconds": 1.4
+  },
+  {
+   "name": "sfx-elite",
+   "id": "43e246a6-9004-4a4d-9ad5-0491ea195dca",
+   "prompt": "a low menacing creature growl with rustling dead leaves, an elite monster appears",
+   "seconds": 1.4
+  },
+  {
+   "name": "sfx-boss",
+   "id": "557a732a-264b-4e0a-a4e9-4e09e349968f",
+   "prompt": "a huge mournful stag bellow echoing through a dark forest, deep and haunting",
+   "seconds": 2.4
+  },
+  {
+   "name": "sfx-death",
+   "id": "f5d66335-0e83-4a7b-b847-f5e5502d6226",
+   "prompt": "a flame being blown out followed by a sad low falling tone, defeat",
+   "seconds": 1.6
+  },
+  {
+   "name": "sfx-victory",
+   "id": "1475162b-cc93-48bb-8ef4-4e636a3d623b",
+   "prompt": "a great fire roaring to life with a warm triumphant bell chord, victory",
+   "seconds": 2.4
+  },
+  {
+   "name": "sfx-coin",
+   "id": "b4f55978-ba09-4f59-8751-336dc2a6c30d",
+   "prompt": "a single small coin clink pickup, short and soft",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-enemy-shot",
+   "id": "2fd47c12-d194-4865-8ce7-ed69451da962",
+   "prompt": "a wet sooty spit projectile launched, short dull plop",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-refuse",
+   "id": "c3cb9c97-306c-4af1-8c7f-b20c5c9862c9",
+   "prompt": "a short dull double buzz, user interface action refused",
+   "seconds": 0.5
+  }
+ ],
+ "music": [
+  {
+   "name": "music-bois",
+   "id": "a88184af-9c8c-4018-ae4f-cd89cf94364d",
+   "alt": "67dc9bdb-a273-4775-8a1f-91e7b1cfc5de",
+   "prompt": "Quiet melancholic night forest exploration theme: soft plucked acoustic guitar, low breathy flute, deep synth pad, sparse hand drum. 92 BPM."
+  },
+  {
+   "name": "music-boss",
+   "id": "8db30922-6c04-4285-ae5f-6a18a41ab173",
+   "alt": "aa39ea63-3a85-49a3-99b5-8562965bf823",
+   "prompt": "Tense urgent boss battle theme: low hand drums and timpani, dark cello ostinato, mournful horn melody, plucked strings. 132 BPM."
+  },
+  {
+   "name": "music-camp",
+   "id": "210a2335-097b-4ddd-a7d7-1791727138ab",
+   "alt": "245d79c7-9c90-4504-ae9d-ec2d99098136",
+   "prompt": "Gentle warm campfire theme: fingerpicked acoustic guitar, quiet wooden flute, warm pad, no drums. 76 BPM."
+  }
+ ]
+}
