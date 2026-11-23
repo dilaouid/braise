@@ -15,7 +15,7 @@ import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { applyRunResult, buildSheet, unlockedContent } from '../meta/hero.ts';
-import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type SaveV1 } from '../meta/save.ts';
+import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
@@ -34,9 +34,9 @@ async function boot(): Promise<void> {
   refs.data = data;
   const base = import.meta.env.BASE_URL;
   const host = detectHost('braise');
-  const store = createSaveStore<SaveV1>({ host, name: 'save', version: SAVE_VERSION, migrations: MIGRATIONS, validate: validateSave });
+  const store = createSaveStore<Save>({ host, name: 'save', version: SAVE_VERSION, migrations: MIGRATIONS, validate: validateSave });
   const loaded = await store.load();
-  let current: SaveV1 = loaded.data ?? newSave(Date.now());
+  let current: Save = loaded.data ?? newSave(Date.now());
   if (loaded.error === 'newer') notice.value = t('save.newer');
   else if (loaded.source === 'bak1' || loaded.source === 'bak2') notice.value = t('save.backup', { source: loaded.source });
   save.value = current;

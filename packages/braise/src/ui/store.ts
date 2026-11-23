@@ -5,7 +5,7 @@ import type { RunResult } from '../core/rewards.ts';
 import type { HeroStats } from '../core/stats.ts';
 import type { Card, ChestResult } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
-import type { SaveV1, Settings } from '../meta/save.ts';
+import type { Save, Settings } from '../meta/save.ts';
 
 export type Screen = 'boot' | 'title' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'pause';
@@ -87,7 +87,7 @@ export interface Handlers {
 export const screen = signal<Screen>('boot');
 export const overlay = signal<Overlay>('none');
 export const device = signal<Device>('keyboard');
-export const save = signal<SaveV1 | null>(null);
+export const save = signal<Save | null>(null);
 /** Incrémenté à chaque changement de la sauvegarde : l'objet lui-même est modifié en place. */
 export const saveRev = signal(0);
 export const hud = signal<HudState | null>(null);

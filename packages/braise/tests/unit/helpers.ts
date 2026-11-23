@@ -3,14 +3,14 @@ import { recomputeStats } from '../../src/core/levelup.ts';
 import { createRun } from '../../src/core/run.ts';
 import type { Run } from '../../src/core/types.ts';
 import { buildSheet, unlockedContent } from '../../src/meta/hero.ts';
-import { newHero, newSave, type SaveV1 } from '../../src/meta/save.ts';
+import { newHero, newSave, type Save } from '../../src/meta/save.ts';
 
 export const data: GameData = loadGameData();
 export const CLASS = 'class.ash-blade';
 export const REGION = 'region.ash-woods';
 
 /** Une sauvegarde de test, avec un héros au niveau voulu. */
-export function makeSave(heroLevel = 1): SaveV1 {
+export function makeSave(heroLevel = 1): Save {
   const save = newSave(0);
   const hero = newHero();
   hero.level = heroLevel;
@@ -27,7 +27,7 @@ export function makeImmortal(run: Run): void {
 }
 
 /** Une expédition de test. */
-export function makeRun(seed = 1234, save: SaveV1 = makeSave(), autoSkills = false): Run {
+export function makeRun(seed = 1234, save: Save = makeSave(), autoSkills = false): Run {
   const { sheet } = buildSheet(data, save, CLASS);
   const unlocked = unlockedContent(data, save);
   return createRun(data, {
