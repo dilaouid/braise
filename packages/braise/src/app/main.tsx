@@ -394,6 +394,7 @@ async function boot(): Promise<void> {
   window.addEventListener('contextmenu', (e) => e.preventDefault());
 
   render(<App />, uiRoot);
+  (window as unknown as { __braiseBootDone?: () => void }).__braiseBootDone?.();
   screen.value = 'title';
   guard(100);
 
@@ -746,6 +747,6 @@ async function boot(): Promise<void> {
 
 boot().catch((err) => {
   console.error(err);
-  const ui = document.getElementById('ui');
-  if (ui) ui.textContent = `Erreur au démarrage : ${String(err instanceof Error ? err.message : err)}`;
+  const fail = (window as unknown as { __braiseBootFail?: (text: string) => void }).__braiseBootFail;
+  fail?.(String(err instanceof Error ? err.message : err));
 });
