@@ -9,5 +9,8 @@ courante du jeu les charge toutes, sans rien perdre de ce que le joueur avait ga
 | `v1-m1-new.json` | Jalon M1 (`7179fef`) | Une partie tout juste commencée : un héros de niveau 1, rien d'acheté |
 | `v1-m1-played.json` | Jalon M1 (`7179fef`) | 24 expéditions jouées par le robot, 2 victoires, héros niveau 21, Autel rempli, un boost désactivé, des réglages changés |
 
+La version courante du format est la **v2** (jalon M2) : talents, dispositions, équipement, instantané
+de partie. Sa migration depuis la v1 est testée dans `tests/unit/save-v2.test.ts`.
+
 Quand le format change, la version qui s'en va laisse ici une sauvegarde d'exemple **avant** le changement,
-nommée `v<version>-<jalon>-<cas>.json`.
+nommée `v<version>-<jalon>-<cas>.json`. La v2 devra donc laisser les siennes avant le passage à la v3.

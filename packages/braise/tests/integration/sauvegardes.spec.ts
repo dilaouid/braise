@@ -13,7 +13,7 @@ async function plantSave(page: Page, text: string): Promise<void> {
   }, [storageKey('save.json'), text] as const);
 }
 
-test('une sauvegarde du jalon M1 se charge : héros, Cendres, Autel, réglages', async ({ page }, info) => {
+test('une sauvegarde du jalon M1 se charge en v2, et son fichier d\'origine est gardé en copie de secours', async ({ page }, info) => {
   const seen = watch(page);
   const pad = await SimPad.install(page);
   const m1 = JSON.parse(fixtureSave('v1-m1-played'));
@@ -36,6 +36,12 @@ test('une sauvegarde du jalon M1 se charge : héros, Cendres, Autel, réglages',
   await capture(page, info, SHOTS, '01-m1-camp');
 
   const loaded = await saveView(page);
+  // Le format est celui du jalon M2 : les héros ont leurs dispositions et leur équipement, vides.
+  expect(loaded.version).toBe(2);
+  expect(loaded.run).toBeNull();
+  expect(loaded.heroes[CLASS].talents).toEqual({});
+  expect(loaded.heroes[CLASS].loadouts).toEqual([]);
+  expect(loaded.heroes[CLASS].equipment).toEqual({});
   expect(loaded.account.gold).toBe(m1.account.gold);
   expect(loaded.account.ashes).toBe(m1.account.ashes);
   expect(loaded.account.altar).toEqual(m1.account.altar);
@@ -58,6 +64,31 @@ test('une sauvegarde du jalon M1 se charge : héros, Cendres, Autel, réglages',
   await expect(page.locator('[data-focus="altar.wisdom"]')).toContainText(FR['altar.disabled']!);
   await expect(page.locator('[data-focus="altar.ardor"] .pip.on')).toHaveCount(m1.account.altar['altar.ardor']);
   await capture(page, info, SHOTS, '02-m1-autel');
+
+  // Tant que rien ne change, le fichier de M1 reste tel quel sur le disque.
+  const stored = (file: string): Promise<string | null> => page.evaluate((key) => localStorage.getItem(key), storageKey(file));
+  expect(await stored('save.json')).toBe(fixtureSave('v1-m1-played'));
+  // Un changement (Y réactive Sagesse) : le fichier est réécrit en v2, et l'original v1 part dans save.bak1.
+  await pad.press('DOWN');
+  await pad.press('RIGHT');
+  await expectFocus(page, 'altar.wisdom');
+  await pad.press('Y');
+  expect((await saveView(page)).account.altarDisabled).toEqual([]);
+  await expect.poll(async () => JSON.parse((await stored('save.json'))!).version).toBe(2);
+  const written = JSON.parse((await stored('save.json'))!);
+  expect(written.account.altarDisabled).toEqual([]);
+  expect(written.account.ashes).toBe(m1.account.ashes);
+  expect(written.heroes[CLASS]).toMatchObject({ level: m1.heroes[CLASS].level, loadouts: [], equipment: {} });
+  expect(await stored('save.bak1')).toBe(fixtureSave('v1-m1-played'));
+
+  // Au rechargement, c'est la v2 qui est lue.
+  await page.reload();
+  await expect(page.locator('.screen.title')).toBeVisible();
+  await expect(page.locator('.notice')).toHaveCount(0);
+  const again = await saveView(page);
+  expect(again.version).toBe(2);
+  expect(again.account.altarDisabled).toEqual([]);
+  expect(again.heroes[CLASS].level).toBe(m1.heroes[CLASS].level);
 
   expect(seen.errors).toEqual([]);
   expect(seen.foreign).toEqual([]);

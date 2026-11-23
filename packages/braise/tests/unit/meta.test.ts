@@ -124,7 +124,7 @@ describe('sauvegarde', () => {
   });
 
   it('les champs manquants sont complétés, les valeurs fausses corrigées', () => {
-    const loaded = validateSave({ version: 1, account: { ashes: -5, gold: 12.7 }, heroes: { [CLASS]: { level: 3 } } });
+    const loaded = validateSave({ version: 2, account: { ashes: -5, gold: 12.7 }, heroes: { [CLASS]: { level: 3 } } });
     expect(loaded.account.ashes).toBe(0);
     expect(loaded.account.gold).toBe(12);
     expect(loaded.heroes[CLASS]!.level).toBe(3);
@@ -133,7 +133,7 @@ describe('sauvegarde', () => {
 
   it('ce qui n\'est pas une sauvegarde est refusé', () => {
     expect(() => validateSave(null)).toThrow();
-    expect(() => validateSave({ version: 1 })).toThrow();
-    expect(() => validateSave({ version: 2, account: {} })).toThrow();
+    expect(() => validateSave({ version: 2 })).toThrow();
+    expect(() => validateSave({ version: 3, account: {} })).toThrow();
   });
 });

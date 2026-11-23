@@ -1,6 +1,6 @@
 import type { Attribute, ClassDef, GameData, HeroTuning, StatBonus } from '../content/index.ts';
 import { addBonus, emptySheet, type Attributes, type StatSheet } from '../core/stats.ts';
-import { CURRENCY_CAP, newHero, type HeroSave, type SaveV1 } from './save.ts';
+import { CURRENCY_CAP, newHero, type HeroSave, type Save } from './save.ts';
 import type { RunResult } from '../core/rewards.ts';
 
 /** Expérience de héros demandée pour passer du niveau N au niveau N + 1. */
@@ -65,7 +65,7 @@ export interface StatSource {
 }
 
 /** Construit la feuille de statistiques d'un héros avant une partie, et la liste de ses sources. */
-export function buildSheet(data: GameData, save: SaveV1, classId: string): { sheet: StatSheet; sources: StatSource[] } {
+export function buildSheet(data: GameData, save: Save, classId: string): { sheet: StatSheet; sources: StatSource[] } {
   const cls = data.classes[classId];
   if (!cls) throw new Error(`Classe inconnue : ${classId}`);
   const hero = save.heroes[classId] ?? newHero();
@@ -82,7 +82,7 @@ export function buildSheet(data: GameData, save: SaveV1, classId: string): { she
 }
 
 /** Les armes et les reliques proposables dans les cartes de niveau. */
-export function unlockedContent(data: GameData, save: SaveV1): { weapons: string[]; relics: string[] } {
+export function unlockedContent(data: GameData, save: Save): { weapons: string[]; relics: string[] } {
   const extra = new Set(save.account.unlocks);
   return {
     weapons: data.weapons.filter((w) => !w.evolved && (w.starting || extra.has(w.id))).map((w) => w.id),
@@ -98,7 +98,7 @@ export interface RunSummary {
 }
 
 /** Verse le résultat d'une expédition dans la sauvegarde : monnaies, expérience, codex, régions. */
-export function applyRunResult(save: SaveV1, data: GameData, result: RunResult): RunSummary {
+export function applyRunResult(save: Save, data: GameData, result: RunResult): RunSummary {
   const acc = save.account;
   acc.gold = Math.min(CURRENCY_CAP, acc.gold + result.goldKept);
   acc.ashes = Math.min(CURRENCY_CAP, acc.ashes + result.ashesKept);
