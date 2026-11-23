@@ -18,6 +18,8 @@ export interface RunResult {
   /** Ramassé pendant la partie (avec l'Avidité), avant la part gardée. */
   goldCollected: number;
   goldKept: number;
+  /** Or dépensé chez les marchands : il n'est pas ramené au camp. */
+  goldSpent: number;
   ashesCollected: number;
   ashesKept: number;
   heroXp: number;
@@ -62,6 +64,7 @@ export function computeResult(run: Run): RunResult {
     evolutions: run.evolutions,
     goldCollected,
     goldKept: Math.round(goldCollected * bonus * share),
+    goldSpent: hero.goldSpent,
     ashesCollected,
     ashesKept: Math.round(ashesCollected * bonus * share),
     heroXp,

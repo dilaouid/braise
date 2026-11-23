@@ -1,27 +1,12 @@
 import { addPickup, healHero, spawnEnemy } from './combat.ts';
-import { isSolidAt } from './map.ts';
+import { convergingWave, updatePlace } from './places.ts';
 import { emit } from './stores.ts';
-import { EV, PK_ASH, PK_CHEST, PK_GOLD, type Poi, type Run } from './types.ts';
-
-const TAU = Math.PI * 2;
+import { EV, PK_ASH, PK_CHEST, PK_GOLD, type Run } from './types.ts';
 
 function guardAlive(run: Run, uid: number): boolean {
   const e = run.enemies;
   for (let i = 0; i < e.count; i++) if (e.uid[i] === uid && e.hp[i]! > 0) return true;
   return false;
-}
-
-function convergingWave(run: Run, poi: Poi): void {
-  const cfg = run.data.tuning.events.brazier;
-  const kind = run.data.enemies.findIndex((e) => e.id === cfg.waveEnemy);
-  if (kind < 0) return;
-  const offset = run.rngSpawn.float() * TAU;
-  for (let k = 0; k < cfg.waveCount; k++) {
-    const a = offset + (k * TAU) / cfg.waveCount;
-    const x = poi.x + Math.cos(a) * 300;
-    const y = poi.y + Math.sin(a) * 300;
-    if (!isSolidAt(run.map, x, y)) spawnEnemy(run, kind, x, y, run.hpScaleNow);
-  }
 }
 
 /** Les événements de la carte : braséros, sources, caches, portail. */
@@ -30,7 +15,10 @@ export function updatePois(run: Run, dt: number): void {
   const ev = run.data.tuning.events;
   const tile = run.map.tile;
   const discover = ev.discoverTiles * tile;
-  for (const poi of run.map.pois) {
+  for (let index = 0; index < run.map.pois.length; index++) {
+    // Un lieu vient d'ouvrir un écran : les autres attendent le pas suivant.
+    if (run.phase !== 'playing') return;
+    const poi = run.map.pois[index]!;
     const dist = Math.hypot(hero.x - poi.x, hero.y - poi.y);
     if (!poi.discovered && dist < discover) poi.discovered = true;
     if (poi.state === 2) continue;
@@ -40,7 +28,7 @@ export function updatePois(run: Run, dt: number): void {
         if (poi.state === 0) {
           if (inside) {
             poi.state = 1;
-            convergingWave(run, poi);
+            convergingWave(run, poi, ev.brazier.waveCount, ev.brazier.waveEnemy);
             emit(run, EV.poiStart, poi.x, poi.y, 0);
           }
         } else {
@@ -81,6 +69,7 @@ export function updatePois(run: Run, dt: number): void {
           const gold = run.data.tuning.gold.chest;
           addPickup(run, PK_GOLD, poi.x + 10, poi.y + 14, run.rngDraw.intRange(gold[0], gold[1]));
           addPickup(run, PK_ASH, poi.x - 10, poi.y + 14, ev.cache.ashes);
+          run.pendingFinds++;
           emit(run, EV.poiDone, poi.x, poi.y, 2);
         }
         break;
@@ -90,6 +79,9 @@ export function updatePois(run: Run, dt: number): void {
           run.outcome = 'victory';
           run.phase = 'victory';
         }
+        break;
+      default:
+        updatePlace(run, poi, index, dist, dt);
         break;
     }
   }

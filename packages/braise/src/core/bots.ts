@@ -1,5 +1,6 @@
-import { closeChest, takeCard } from './levelup.ts';
+import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeBoon } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { PK_GEM, PK_RED_GEM, type Run, type StepInput } from './types.ts';
 
@@ -261,6 +262,10 @@ export interface SimOptions {
   bot: Bot;
   /** Carte choisie à chaque montée de niveau (0 : toujours la première). */
   pickCard?: (run: Run) => number;
+  /** Buff choisi à chaque totem (0 : toujours le premier). */
+  pickBoon?: (run: Run) => number;
+  /** Vrai pour que le robot n'achète rien chez les marchands. */
+  noShopping?: boolean;
   /** Nombre maximum de pas (par défaut : 20 minutes). */
   maxSteps?: number;
   /** Appelé à chaque pas, après la simulation. */
@@ -283,6 +288,24 @@ export function simulate(run: Run, options: SimOptions): Run {
     }
     if (run.phase === 'chest') {
       closeChest(run);
+      continue;
+    }
+    if (run.phase === 'totem') {
+      takeBoon(run, options.pickBoon ? options.pickBoon(run) : 0);
+      continue;
+    }
+    if (run.phase === 'find') {
+      closeFind(run);
+      continue;
+    }
+    if (run.phase === 'shop') {
+      // Le robot achète l'article abordable le moins cher, tant qu'il y en a un.
+      const items = shopItems(run);
+      let best = -1;
+      for (let i = 0; i < items.length; i++) {
+        if (canBuy(run, items[i]!) && (best < 0 || items[i]!.price < items[best]!.price)) best = i;
+      }
+      if (best < 0 || options.noShopping || !buyItem(run, best)) closeShop(run);
       continue;
     }
     input.moveX = 0; input.moveY = 0; input.aimX = 0; input.aimY = 0;
@@ -326,6 +349,9 @@ export function hashRun(run: Run): number {
   for (const w of run.weapons) {
     mix(w.def); mix(w.level); mix(w.damageDone);
   }
+  for (const b of run.boons) mix(b);
+  for (const f of run.finds) mix(f);
+  mix(hero.goldSpent); mix(run.smithBuys);
   mix(run.rngSpawn.state); mix(run.rngDraw.state); mix(run.rngCombat.state);
   return h >>> 0;
 }

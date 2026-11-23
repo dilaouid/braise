@@ -6,7 +6,7 @@ import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
-import { closeChest, drawCards, gainXp, openChest } from './levelup.ts';
+import { closeChest, gainXp, resumeRun } from './levelup.ts';
 import { generateMap, isSolidAt } from './map.ts';
 import { updatePois } from './poi.ts';
 import { cloneSheet, enemyDamageScale, resolveStats, runXpForNext, type HeroStats } from './stats.ts';
@@ -15,7 +15,7 @@ import {
   createZoneStore, emit, queryCircle, removePickup,
 } from './stores.ts';
 import {
-  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, STEP,
+  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SERVICES, STEP,
   type Hero, type Run, type RunConfig, type StepInput,
 } from './types.ts';
 import { addWeapon, updateShots, updateWeapons, updateZones } from './weapons.ts';
@@ -49,7 +49,7 @@ export function createRun(data: GameData, cfg: RunConfig): Run {
     flasks: stats.flasks, skillCd: 0, buffT: 0, ultGauge: 0, ultT: 0, ultTick: 0,
     revives: stats.revives,
     level: 1, xp: 0, xpNext: runXpForNext(1, tuning.xp),
-    gold: 0, ashDrops: 0, gems: 0, kills: 0, elites: 0, bossKills: 0,
+    gold: 0, goldSpent: 0, ashDrops: 0, gems: 0, kills: 0, elites: 0, bossKills: 0,
     rerolls: stats.rerolls, banishes: stats.banishes, damageTaken: 0,
     stats,
   };
@@ -83,6 +83,9 @@ export function createRun(data: GameData, cfg: RunConfig): Run {
     weaponPool: data.weapons.filter((w) => !w.evolved && (unlockedWeapons.has(w.id) || w.index === cls.startWeaponIndex)).map((w) => w.index),
     relicPool: data.relics.filter((r) => unlockedRelics.has(r.id)).map((r) => r.index),
     pendingChests: 0, chest: null, evolutions: 0,
+    boons: [], finds: [], findPool: rngDraw.shuffle(data.finds.map((_, i) => i)),
+    pendingFinds: 0, find: -1, findGold: 0, totemChoices: [], shopPoi: -1,
+    smithBuys: 0, serviceBuys: SERVICES.map(() => 0), extraFlasks: 0, bossWarned: false,
     gridStart: new Int32Array(gridCols * gridCols + 1),
     gridItems: new Int32Array(CAP_ENEMIES),
     gridCursor: new Int32Array(gridCols * gridCols),
@@ -386,12 +389,7 @@ export function stepRun(run: Run, input: StepInput): void {
   updatePickups(run, dt);
   updatePois(run, dt);
   if (run.phase !== 'playing') return;
-  if (run.pendingChests > 0) {
-    openChest(run);
-  } else if (run.pendingLevels > 0) {
-    drawCards(run);
-    run.phase = 'levelup';
-  }
+  resumeRun(run);
 }
 
 /** Abandonner depuis le menu de pause compte comme une mort. */

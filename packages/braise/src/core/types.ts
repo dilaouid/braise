@@ -63,6 +63,7 @@ export const EV = {
   eliteSpawn: 17, bossSpawn: 18, bossPhase: 19, bossDeath: 20, skill: 21, ultimate: 22, flask: 23,
   chestDrop: 24, evolution: 25, telegraph: 26, telegraphHit: 27, poiDone: 28, poiStart: 29, fissure: 30,
   eliteDeath: 31, flameCall: 32, burst: 33, charge: 34, ultTick: 35,
+  totemDone: 36, shopOpen: 37, shopBuy: 38, findGot: 39, bossWarning: 40,
 } as const;
 
 export interface EnemyStore {
@@ -235,7 +236,18 @@ export interface ChestResult {
   freeLevel: boolean;
 }
 
-export type RunPhase = 'playing' | 'levelup' | 'chest' | 'victory' | 'dead';
+export type RunPhase = 'playing' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'victory' | 'dead';
+
+/** Les services de l'Herboriste, dans l'ordre de l'écran. */
+export const SERVICES = ['flask', 'balm', 'reroll', 'banish'] as const;
+
+/** Un article de boutique : une carte (Ferrailleur) ou un service (Herboriste). */
+export interface ShopItem {
+  card: Card | null;
+  /** Indice dans `SERVICES`, ou -1 pour une carte. */
+  service: number;
+  price: number;
+}
 
 /** Les actions du joueur pour un pas. Un instantané par pas : la simulation reste déterministe. */
 export interface StepInput {
@@ -271,6 +283,8 @@ export interface Hero {
   level: number; xp: number; xpNext: number;
   /** Or, Cendres et gemmes ramassés pendant la partie (avant les multiplicateurs de fin). */
   gold: number; ashDrops: number; gems: number;
+  /** Or dépensé chez les marchands pendant la partie. */
+  goldSpent: number;
   kills: number; elites: number; bossKills: number;
   rerolls: number; banishes: number;
   damageTaken: number;
@@ -350,6 +364,27 @@ export interface Run {
   pendingChests: number;
   chest: ChestResult | null;
   evolutions: number;
+  // Carte vivante : buffs de totem, trouvailles, boutiques
+  /** Indices dans `data.boons` ; un buff pris deux fois y est deux fois. */
+  boons: number[];
+  /** Indices dans `data.finds`, dans l'ordre d'obtention. */
+  finds: number[];
+  /** Les trouvailles pas encore obtenues, mélangées au départ. */
+  findPool: number[];
+  pendingFinds: number;
+  /** La trouvaille affichée (phase `find`) : -1 aucune, -2 réserve vide (de l'or à la place). */
+  find: number;
+  findGold: number;
+  /** Les buffs proposés par le totem chargé (phase `totem`). */
+  totemChoices: number[];
+  /** Indice du lieu dont la boutique est ouverte, ou -1. */
+  shopPoi: number;
+  smithBuys: number;
+  /** Achats par service, dans l'ordre de `SERVICES`. */
+  serviceBuys: number[];
+  /** Fioles achetées à l'Herboriste. */
+  extraFlasks: number;
+  bossWarned: boolean;
   // Grille spatiale
   gridStart: Int32Array;
   gridItems: Int32Array;

@@ -12,10 +12,18 @@ export function recomputeStats(run: Run): void {
     addBonus(sheet, def.perLevel, r.level);
     for (const [lvl, bonus] of Object.entries(def.atLevels)) if (r.level >= Number(lvl)) addBonus(sheet, bonus, 1);
   }
+  for (const b of run.boons) addBonus(sheet, run.data.boons[b]!.bonus, 1);
+  for (const f of run.finds) addBonus(sheet, run.data.finds[f]!.bonus, 1);
+  sheet.flasks += run.extraFlasks;
   run.sheet = sheet;
   const hero = run.hero;
   const before = hero.stats.maxHp;
+  const flasksBefore = hero.stats.flasks;
+  const revivesBefore = hero.stats.revives;
   resolveStats(sheet, run.data.tuning, run.data.heroTuning, hero.stats);
+  // Une fiole ou une résurrection de plus arrive prête à servir.
+  if (hero.stats.flasks > flasksBefore) hero.flasks += hero.stats.flasks - flasksBefore;
+  if (hero.stats.revives > revivesBefore) hero.revives += hero.stats.revives - revivesBefore;
   // Des points de vie maximum en plus sont aussi des points de vie en plus.
   if (before > 0 && hero.stats.maxHp > before) hero.hp += hero.stats.maxHp - before;
   if (hero.hp > hero.stats.maxHp) hero.hp = hero.stats.maxHp;
@@ -113,16 +121,11 @@ function finishChoice(run: Run): void {
   run.pendingLevels = Math.max(0, run.pendingLevels - 1);
   run.cards = [];
   run.director.breathT = run.data.tuning.director.breathSeconds;
-  if (run.pendingLevels > 0) drawCards(run);
-  else run.phase = 'playing';
+  resumeRun(run);
 }
 
-/** Prend la carte d'indice donné. */
-export function takeCard(run: Run, index: number): boolean {
-  if (run.phase !== 'levelup') return false;
-  const card = run.cards[index];
-  if (!card) return false;
-  const tuning = run.data.tuning;
+/** Applique une carte d'arme ou de relique : l'acquiert, ou la monte au niveau de la carte. */
+export function applyCard(run: Run, card: Card): void {
   if (card.kind === 'weapon') {
     const owned = ownedWeapon(run, card.def);
     if (owned) owned.level = card.level;
@@ -132,6 +135,60 @@ export function takeCard(run: Run, index: number): boolean {
     if (owned) owned.level = card.level;
     else run.relics.push({ def: card.def, level: 1 });
     recomputeStats(run);
+  }
+}
+
+/** Donne une trouvaille au hasard et l'affiche ; si la réserve est vide, l'or d'un coffre. */
+function openFind(run: Run): void {
+  run.pendingFinds = Math.max(0, run.pendingFinds - 1);
+  const next = run.findPool.pop();
+  if (next === undefined) {
+    const range = run.data.tuning.gold.chest;
+    run.findGold = run.rngDraw.intRange(range[0], range[1]);
+    run.hero.gold += run.findGold;
+    run.find = -2;
+  } else {
+    run.find = next;
+    run.findGold = 0;
+    run.finds.push(next);
+    recomputeStats(run);
+  }
+  emit(run, EV.findGot, run.hero.x, run.hero.y, run.find);
+  run.phase = 'find';
+}
+
+/** Referme la trouvaille affichée. */
+export function closeFind(run: Run): void {
+  if (run.phase !== 'find') return;
+  run.find = -1;
+  resumeRun(run);
+}
+
+/**
+ * Reprend la partie, ou ouvre ce qui attend : un coffre, puis une trouvaille, puis un choix de carte.
+ * Tous les écrans de choix se referment par ici, pour qu'aucun ne soit perdu.
+ */
+export function resumeRun(run: Run): void {
+  if (run.pendingChests > 0) {
+    openChest(run);
+  } else if (run.pendingFinds > 0) {
+    openFind(run);
+  } else if (run.pendingLevels > 0) {
+    drawCards(run);
+    run.phase = 'levelup';
+  } else {
+    run.phase = 'playing';
+  }
+}
+
+/** Prend la carte d'indice donné. */
+export function takeCard(run: Run, index: number): boolean {
+  if (run.phase !== 'levelup') return false;
+  const card = run.cards[index];
+  if (!card) return false;
+  const tuning = run.data.tuning;
+  if (card.kind === 'weapon' || card.kind === 'relic') {
+    applyCard(run, card);
   } else if (card.kind === 'gold') {
     run.hero.gold += tuning.gold.cardGold;
   } else {
@@ -230,12 +287,5 @@ export function openChest(run: Run): void {
 export function closeChest(run: Run): void {
   if (run.phase !== 'chest') return;
   run.chest = null;
-  if (run.pendingChests > 0) {
-    openChest(run);
-  } else if (run.pendingLevels > 0) {
-    drawCards(run);
-    run.phase = 'levelup';
-  } else {
-    run.phase = 'playing';
-  }
+  resumeRun(run);
 }
