@@ -174,12 +174,37 @@ describe('évolutions (document 02 §5.4)', () => {
     expect(run.phase).toBe('playing');
   });
 
-  it('un coffre sans évolution prête donne seulement de l\'or', () => {
+  it('un coffre sans évolution prête donne un niveau gratuit, choisi à la fermeture', () => {
     const run = makeRun(3);
+    const level = run.hero.level;
     run.pendingChests = 1;
     openChest(run);
     expect(run.chest?.evolvedTo).toBe(-1);
-    expect(run.chest!.gold).toBeGreaterThanOrEqual(80);
-    expect(run.chest!.gold).toBeLessThanOrEqual(120);
+    expect(run.chest?.freeLevel).toBe(true);
+    expect(run.chest!.gold).toBeGreaterThanOrEqual(data.tuning.gold.chest[0]);
+    expect(run.chest!.gold).toBeLessThanOrEqual(data.tuning.gold.chest[1]);
+    closeChest(run);
+    expect(run.phase).toBe('levelup');
+    expect(run.cards.length).toBeGreaterThanOrEqual(3);
+    takeCard(run, 0);
+    expect(run.phase).toBe('playing');
+    // Le niveau gratuit ne change pas le niveau de partie, seulement le build.
+    expect(run.hero.level).toBe(level);
+  });
+
+  it('un coffre qui fait évoluer ne donne pas de niveau gratuit', () => {
+    const run = makeRun(3);
+    const scythe = run.weapons[0]!;
+    scythe.level = 6;
+    run.relics.push({ def: data.weapons[scythe.def]!.relic, level: 1 });
+    run.pendingChests = 1;
+    openChest(run);
+    expect(run.chest?.freeLevel).toBe(false);
+    closeChest(run);
+    expect(run.phase).toBe('playing');
+  });
+
+  it('l\'or d\'un coffre reste petit devant celui du boss', () => {
+    expect(data.tuning.gold.chest[1]).toBeLessThanOrEqual(data.tuning.gold.boss / 10);
   });
 });

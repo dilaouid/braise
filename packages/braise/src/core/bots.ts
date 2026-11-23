@@ -229,6 +229,34 @@ function inTelegraph(run: Run): boolean {
   return false;
 }
 
+/**
+ * Un choix de carte de joueur appliqué : d'abord ce qui mène à une évolution (relique liée à une arme
+ * portée, puis niveau d'une arme portée), puis le niveau d'une relique portée, puis une arme nouvelle,
+ * puis une relique nouvelle. Quand tout est au maximum : un soin sous la moitié des points de vie,
+ * sinon de l'or.
+ */
+export function plannedPick(run: Run): number {
+  let best = 0;
+  let bestScore = -1;
+  const hero = run.hero;
+  for (let i = 0; i < run.cards.length; i++) {
+    const c = run.cards[i]!;
+    let score = 0;
+    if (c.kind === 'relic' && c.evolves) score = 6;
+    else if (c.kind === 'weapon' && c.evolves) score = 5;
+    else if (c.kind === 'relic' && c.level > 1) score = 4;
+    else if (c.kind === 'weapon') score = 3;
+    else if (c.kind === 'relic') score = 2;
+    else if (c.kind === 'heal') score = hero.hp < hero.stats.maxHp * 0.5 ? 1.5 : 0.5;
+    else score = 1;
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
+}
+
 export interface SimOptions {
   bot: Bot;
   /** Carte choisie à chaque montée de niveau (0 : toujours la première). */

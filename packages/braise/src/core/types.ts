@@ -227,6 +227,8 @@ export interface ChestResult {
   evolvedTo: number;
   evolvedFrom: number;
   gold: number;
+  /** Vrai si le coffre, faute d'évolution prête, donne un choix de carte gratuit. */
+  freeLevel: boolean;
 }
 
 export type RunPhase = 'playing' | 'levelup' | 'chest' | 'victory' | 'dead';

@@ -120,7 +120,7 @@ describe('ramassables', () => {
     addPickup(run, PK_CHEST, h.x, h.y - 6, 1);
     steps(run, 20);
     expect(run.phase).toBe('chest');
-    expect(run.chest!.gold).toBeGreaterThanOrEqual(80);
+    expect(run.chest!.gold).toBeGreaterThanOrEqual(data.tuning.gold.chest[0]);
   });
 
   it('l\'Appel de la flamme attire toutes les gemmes de la carte', () => {

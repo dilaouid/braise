@@ -192,6 +192,12 @@ export function ChestScreen(): JSX.Element | null {
             <p>{t('chest.becomes', { from: t(`${from.id}.name`), to: t(`${to.id}.name`) })}</p>
             <p class="dim">{t(`${to.id}.desc`)}</p>
           </div>
+        ) : c.freeLevel ? (
+          <div class="evolution">
+            <h2 class="gold">{t('chest.freeLevel')}</h2>
+            <p>{t('chest.freeLevelDesc')}</p>
+            <p class="dim">{t('chest.noEvolution')}</p>
+          </div>
         ) : <p class="dim">{t('chest.noEvolution')}</p>}
         <p><Icon name="icon-gold" /> {t('chest.gold', { gold: c.gold })}</p>
         <MenuButton id="ok" label={t('ui.continue')} onPress={() => actions().closeChest()} default />
