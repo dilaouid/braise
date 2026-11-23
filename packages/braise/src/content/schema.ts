@@ -160,7 +160,7 @@ export const enemySchema = z
     id: enemyId,
     sprite: z.string(),
     family: z.enum(['walker', 'fast', 'tank', 'shooter', 'swarm', 'elite', 'boss']),
-    behavior: z.enum(['chase', 'zigzag', 'shooter', 'swarm', 'charger', 'spawner', 'boss-stag']),
+    behavior: z.enum(['chase', 'zigzag', 'shooter', 'swarm', 'charger', 'spawner', 'boss-stag', 'boss-watcher']),
     rank: z.enum(['normal', 'elite', 'boss']),
     hp: z.number().positive(),
     damage: z.number(),
@@ -388,6 +388,105 @@ export const heroTuningSchema = z
       .strict(),
   })
   .strict();
+
+/** Ceux qui parlent dans un dialogue, dans l'ordre de leurs indices. */
+export const SPEAKERS = ['moon', 'cream'] as const;
+/** Les bulles qu'on peut poser au-dessus d'un personnage. */
+export const EMOTES = ['exclaim', 'question', 'dots', 'drop', 'note'] as const;
+
+const speakerSchema = z.enum(SPEAKERS);
+const emoteSchema = z.enum(EMOTES);
+
+/** Une ligne de dialogue : une réplique (qui, portrait, texte) ou une ligne muette (une durée). */
+export const dialogueLineSchema = z
+  .object({
+    who: speakerSchema.optional(),
+    face: z.string().optional(),
+    /** Clé du texte dans fr.json. */
+    text: z.string().optional(),
+    poses: z.object({ moon: z.string().optional(), cream: z.string().optional() }).strict().optional(),
+    emotes: z.object({ moon: emoteSchema.optional(), cream: emoteSchema.optional() }).strict().optional(),
+    sfx: z.string().optional(),
+    seconds: z.number().positive().optional(),
+  })
+  .strict();
+
+export const dialoguesSchema = z
+  .object({
+    faces: z.object({ moon: z.array(z.string()).min(1), cream: z.array(z.string()).min(1) }).strict(),
+    poses: z.object({ moon: z.array(z.string()), cream: z.array(z.string()) }).strict(),
+    dialogues: z.record(z.string(), z.array(dialogueLineSchema).min(1)),
+  })
+  .strict();
+
+export const WAIT_CONDITIONS = ['reach', 'clear', 'gems', 'card', 'healed', 'full', 'find', 'buy', 'boon', 'totem', 'boss', 'time'] as const;
+export const PLACE_KINDS = ['spring', 'treasure', 'smith', 'totem'] as const;
+export const BANNER_GLYPHS = ['move', 'dash', 'flask', 'skill', 'confirm'] as const;
+
+/** Une étape du script du tutoriel. Les repères sont cités par leur nom. */
+export const tutorialStepSchema = z.discriminatedUnion('do', [
+  z.object({ do: z.literal('say'), dialogue: z.string() }).strict(),
+  z.object({ do: z.literal('bark'), text: z.string() }).strict(),
+  z.object({ do: z.literal('guide'), to: z.string() }).strict(),
+  z.object({ do: z.literal('banner'), text: z.string().nullable(), glyph: z.enum(BANNER_GLYPHS).optional() }).strict(),
+  z.object({ do: z.literal('wait'), until: z.enum(WAIT_CONDITIONS), at: z.string().optional(), seconds: z.number().positive().optional() }).strict(),
+  z.object({ do: z.literal('spawn'), enemy: enemyId, at: z.array(z.string()).min(1), count: z.number().int().positive().optional(), boss: z.boolean().optional() }).strict(),
+  z.object({ do: z.literal('gate'), id: z.number().int().min(1).max(9) }).strict(),
+  z.object({ do: z.literal('hurt'), share: z.number().positive().max(1) }).strict(),
+  z.object({ do: z.literal('gold'), amount: z.number().int().positive(), at: z.string() }).strict(),
+  z.object({ do: z.literal('gem'), at: z.string() }).strict(),
+  z.object({ do: z.literal('place'), kind: z.enum(PLACE_KINDS), at: z.string() }).strict(),
+  z.object({ do: z.literal('checkpoint'), at: z.string() }).strict(),
+  z.object({ do: z.literal('end') }).strict(),
+]);
+
+export const tutorialSchema = z
+  .object({
+    look: z
+      .object({
+        tileset: z.string(),
+        wall: z.string(),
+        darkness: z.object({ color: z.string(), opacity: z.number() }).strict(),
+        music: z.object({ calm: z.string(), boss: z.string() }).strict(),
+      })
+      .strict(),
+    tuning: z
+      .object({
+        /** Vitesse de Cream, en pixels par seconde. */
+        guideSpeed: z.number().positive(),
+        /** Marge que Cream garde au-delà de la lueur de Moon, en pixels. */
+        guideKeep: z.number().nonnegative(),
+        /** Distance à laquelle un repère est atteint, en pixels. */
+        reachRadius: z.number().positive(),
+        /** Invulnérabilité après une reprise, en secondes. */
+        respawnInvuln: z.number().nonnegative(),
+        /** Durée d'affichage d'une réplique courte, en secondes. */
+        barkSeconds: z.number().positive(),
+      })
+      .strict(),
+    /** La trouvaille que donne le trésor du tutoriel. */
+    find: z.string().regex(/^find\.[a-z-]+$/),
+    /** Les répliques de Cream après une mort, qui tournent. */
+    deathBarks: z.array(z.string()).min(1),
+    map: z
+      .object({
+        /** `#` mur, `.` sol, `1`-`9` barrière, `=` rangée d'Éteints, autre caractère : un repère sur du sol. */
+        rows: z.array(z.string()).min(8),
+        /** Nom du repère → son caractère dans la grille. */
+        markers: z.record(z.string(), z.string().length(1)),
+      })
+      .strict(),
+    start: z.string(),
+    guideStart: z.string(),
+    steps: z.array(tutorialStepSchema).min(2),
+  })
+  .strict();
+
+export type DialoguesRaw = z.infer<typeof dialoguesSchema>;
+export type TutorialRaw = z.infer<typeof tutorialSchema>;
+export type TutorialStepRaw = z.infer<typeof tutorialStepSchema>;
+export type WaitCondition = (typeof WAIT_CONDITIONS)[number];
+export type PlaceKind = (typeof PLACE_KINDS)[number];
 
 export type Attribute = z.infer<typeof attributeSchema>;
 export type DamageTypeName = z.infer<typeof damageTypeSchema>;

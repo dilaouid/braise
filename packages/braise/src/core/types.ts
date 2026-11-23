@@ -32,7 +32,7 @@ export const HIT_BLEED = 16;
 export const HIT_NO_NUMBER = 32;
 
 /** Comportements d'ennemis, en indices. */
-export const BH = { chase: 0, zigzag: 1, shooter: 2, swarm: 3, charger: 4, spawner: 5, 'boss-stag': 6 } as const;
+export const BH = { chase: 0, zigzag: 1, shooter: 2, swarm: 3, charger: 4, spawner: 5, 'boss-stag': 6, 'boss-watcher': 7 } as const;
 
 /** Sortes de ramassables. */
 export const PK_GEM = 0;

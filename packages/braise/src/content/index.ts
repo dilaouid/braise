@@ -7,6 +7,8 @@ import enemiesJson from '../../content/enemies.json';
 import altarJson from '../../content/altar.json';
 import boonsJson from '../../content/boons.json';
 import findsJson from '../../content/finds.json';
+import dialoguesJson from '../../content/dialogues.json';
+import tutorialJson from '../../content/tutorial.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
 import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
@@ -17,7 +19,9 @@ import {
   type AltarBoostRaw, type Attribute, type BoonDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
   type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
+import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial.ts';
 
+export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
 export type { Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, FindDef } from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
@@ -105,6 +109,10 @@ export interface GameData {
   boons: BoonDef[];
   /** Les trouvailles des trésors et des caches. */
   finds: FindDef[];
+  /** Les dialogues, par identifiant. */
+  dialogues: Record<string, DialogueLine[]>;
+  /** La carte et le script du tutoriel. */
+  tutorial: TutorialDef;
 }
 
 /** Les données brutes telles qu'elles sont dans `content/`. */
@@ -118,6 +126,8 @@ export const RAW = {
   altar: altarJson as unknown,
   boons: boonsJson as unknown,
   finds: findsJson as unknown,
+  dialogues: dialoguesJson as unknown,
+  tutorial: tutorialJson as unknown,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
   fr: frJson as unknown as Record<string, string>,
@@ -247,6 +257,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     if (e.behavior === 'shooter' && !e.shot) errors.push(`${e.id}: un tireur sans « shot »`);
     if (e.behavior === 'charger' && !e.charge) errors.push(`${e.id}: un chargeur sans « charge »`);
     if (e.behavior === 'spawner' && (!e.spawner || !e.slam)) errors.push(`${e.id}: il manque « spawner » ou « slam »`);
+    if (e.behavior === 'boss-watcher' && (!e.charge || !e.slam)) errors.push(`${e.id}: il manque « charge » ou « slam »`);
     if (e.behavior === 'boss-stag' && (!e.charge || !e.roots || !e.summon || !e.phases)) errors.push(`${e.id}: boss incomplet`);
     // Toute attaque annoncée l'est au moins 0,7 s avant (document 02 §6.3).
     for (const t of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph]) {
@@ -315,8 +326,15 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${c.ultimate.id}.desc`);
   }
 
-  if (errors.length > 0) return { data: null, errors };
-  return { data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds }, errors };
+  const tuto = compileTutorial(raw.dialogues, raw.tutorial, {
+    tile: tuning.tileSize, fr, enemyIndex, findIds: finds.map((f) => f.id), smithPrice: tuning.events.smith.basePrice,
+  }, errors);
+
+  if (errors.length > 0 || !tuto) return { data: null, errors };
+  return {
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial },
+    errors,
+  };
 }
 
 let cached: GameData | null = null;
