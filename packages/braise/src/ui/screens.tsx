@@ -4,7 +4,7 @@ import { heroXpForNext } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  INTRO_SEEN, actions, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
+  actions, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
   save, saveRev, t,
 } from './store.ts';
 
@@ -23,8 +23,6 @@ function Currencies(): JSX.Element {
 
 export function Title(): JSX.Element {
   const ref = useFocusScope('title');
-  saveRev.value;
-  const seen = save.value?.account.unlocks.includes(INTRO_SEEN) ?? false;
   return (
     <div class="screen title" ref={ref}>
       <div class="logo">
@@ -34,11 +32,10 @@ export function Title(): JSX.Element {
       <button type="button" class="press" data-focus="start" data-focus-default onClick={() => actions().start()}>
         {t('ui.press')} <Btn g="confirm" /> {t('ui.toStart')}
       </button>
-      {seen ? (
-        <button type="button" class="press press-small" data-focus="prologue" onClick={() => actions().prologue()}>
-          {t('title.prologue')}
-        </button>
-      ) : null}
+      {/* Toujours là : une sauvegarde qui a déjà un héros ne rejoue pas le prologue d'elle-même. */}
+      <button type="button" class="press press-small" data-focus="prologue" onClick={() => actions().prologue()}>
+        {t('title.prologue')}
+      </button>
       {notice.value ? <p class="notice">{notice.value}</p> : null}
     </div>
   );
