@@ -24,7 +24,7 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
 
   // --- Prologue (sauvegarde neuve), passé en maintenant B -----------------------------------
   await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await expect(page.locator('.cine-card')).toHaveText(FR['cine.intro.card.village']!);
+  await expect(page.locator('.cine-caption')).toHaveText(FR['cine.intro.t01']!);
   await capture(page, info, SHOTS, '01b-prologue');
   await skipIntro(page, pad);
   expect((await saveView(page)).account.unlocks).toContain('seen.intro');

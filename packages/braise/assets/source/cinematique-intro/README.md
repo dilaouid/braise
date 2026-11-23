@@ -127,3 +127,36 @@ verre qui tinte, flamme.
 - **Après la fumée**, le moteur passe Moon en couleurs froides (désaturation d'environ 65 %).
   **Cream garde sa couleur crème** : c'est voulu, et c'est un indice de plus (document 14 §6).
 - `ancre/apercu-plans.png` montre les plans 2, 3, 5, 7, 9a, 9b, 9c et 10 assemblés.
+
+## Refonte en illustrations (2026-11-23, 250 générations)
+
+Le prologue est maintenant une suite d'illustrations fixes de 640 × 360, personnages peints dans
+l'image, avec une ligne de récit sous chacune (document 15 §1 et §3). `create_image_pro`, palette du
+jeu, `ill-01` en référence pour le visage de Moon, `ill-01` ou `ill-05` en image de style. Chaque image
+se récupère par `node tools/fetch-illustration.mjs <nom> <job>`, qui efface le liseré clair de PixelLab
+et écrit une copie agrandie dans `ancre/`.
+
+| Fichier | Plan | Job PixelLab |
+|---|---|---|
+| `ill-01.png` | Moon rentre chez lui | `e3df7b03-9d85-4501-a296-e0fe68b159ab` |
+| `ill-03.png` | La fumée derrière le clocher | `546f8b13-287a-4b32-8ea2-9932328c03e7` |
+| `ill-04.png` | La course | `9200f3ad-6092-434d-b859-6d0ae5695fcf` |
+| `ill-05.png` | La porte | `0bfacef3-eb71-4951-9430-216eea4a278b` |
+| `ill-07.png` | Le mur, l'Éteint qui passe | `1ad6be98-3df2-40ed-9725-5361045450ba` |
+| `ill-08.png` | La plaine, Cream devant | `15c334d0-c3f5-4cc2-b572-9d1795d09472` |
+| `ill-09.png` | La ruine fouillée | `d3270128-ad27-4462-b5b1-0a6198cbec14` |
+| `ill-10.png` | Cream gratte, la lanterne | `a540a1a3-fa25-4c87-80d4-9d2d98d11f84` |
+| `ill-11.png` | Les mains et la lanterne | `6a68d148-d9ca-4152-a0fb-d7d3334d311c` |
+| `ill-12.png` | La lanterne allumée, les yeux | `31c4dcd4-082e-4bc8-b5a8-f2853f277422` |
+
+Le plan 2 (la façade) garde `decor-facade-sans-chat.png`, `anim-elio-signe-*` et `cream.png`.
+
+Retouches à la main :
+
+- `ill-05` : liseré effacé à la main avant l'existence de l'outil (même méthode).
+- `ill-12` : l'ombre portée de Cream a été effacée (931 pixels, remplacés par le sol symétrique du
+  cercle de lumière). **Cream n'a jamais d'ombre** (document 14 §6) : à refaire si l'image est régénérée.
+
+Les sprites et décors de la première version (`decor-rue`, `decor-desert`, `decor-annee-*`, `moon-*`,
+`porte*`, `mains-lanterne`, `eteint-*`, `anim-moon-*`, `anim-cream-*`) ne servent plus au prologue. Ils
+restent là comme références.

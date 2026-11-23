@@ -105,6 +105,7 @@ export const lastSeed = signal<number | null>(null);
 export const replaySeed = signal(false);
 /** La cinématique : le carton affiché (clé de fr.json) et la progression du maintien pour passer, de 0 à 1. */
 export const cineCard = signal<string | null>(null);
+export const cineCaption = signal<string | null>(null);
 export const cineSkip = signal(0);
 
 /** Ce qu'une sauvegarde garde quand le prologue a été vu (dans `account.unlocks`). */

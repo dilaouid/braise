@@ -103,6 +103,9 @@ export const cineShotSchema = z
     duration: z.number().positive(),
     /** Clé de fr.json d'un carton de texte. */
     card: z.string().optional(),
+    /** Clé de fr.json de la ligne de récit, affichée en bas de l'image à partir de `captionAt` (0,8 s par défaut). */
+    caption: z.string().optional(),
+    captionAt: z.number().min(0).optional(),
     fadeIn: z.number().min(0).optional(),
     fadeOut: z.number().min(0).optional(),
     /** Décalage du décor : il glisse de `from` à `to` pendant le plan. */
@@ -158,6 +161,8 @@ export function compileCinematic(raw: unknown, fr: Record<string, string>, sound
     if (ids.has(shot.id)) errors.push(`${where}: plan en double`);
     ids.add(shot.id);
     if (shot.card !== undefined && !fr[shot.card]) errors.push(`${where}: texte manquant « ${shot.card} »`);
+    if (shot.caption !== undefined && !fr[shot.caption]) errors.push(`${where}: texte manquant « ${shot.caption} »`);
+    if ((shot.captionAt ?? 0) > shot.duration) errors.push(`${where}: récit après la fin du plan`);
     for (const layer of shot.layers) {
       if (layer.type === 'image') {
         if (!c.assets[layer.asset]) errors.push(`${where}: image inconnue « ${layer.asset} »`);

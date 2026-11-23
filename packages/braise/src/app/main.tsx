@@ -22,7 +22,7 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, chest, cineCard, cineSkip, confirm, device, ending, holdProgress, hud, lastSeed, levelUp, notice, overlay, pauseReason,
+  INTRO_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, ending, holdProgress, hud, lastSeed, levelUp, notice, overlay, pauseReason,
   pauseStats, refs, save, saveRev, screen, t, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
@@ -182,6 +182,7 @@ async function boot(): Promise<void> {
     cineHoldMs = 0;
     cineSkip.value = 0;
     cineCard.value = null;
+    cineCaption.value = null;
     audio.stopMusic();
     setScreen('cinematic');
     void CinematicPlayer.load(introCinematic(), import.meta.env.BASE_URL, {
@@ -190,6 +191,7 @@ async function boot(): Promise<void> {
       stopMusic: () => audio.stopMusic(),
       musicRate: (to, over) => audio.setMusicRate(to, over),
       card: (key) => (cineCard.value = key),
+      caption: (key) => (cineCaption.value = key),
     })
       .then((player) => {
         if (screen.value === 'cinematic') cine = player;
@@ -206,6 +208,7 @@ async function boot(): Promise<void> {
     cine?.destroy();
     cine = null;
     cineCard.value = null;
+    cineCaption.value = null;
     cineSkip.value = 0;
     audio.stopMusic();
     if (!current.account.unlocks.includes(INTRO_SEEN)) {
@@ -595,12 +598,13 @@ async function boot(): Promise<void> {
     const playing = screen.value === 'run' && run !== null;
 
     if (screen.value === 'cinematic') {
-      // Passer : B maintenu (un appui court ne fait rien). Rien d'autre ne répond pendant la cinématique.
+      // Passer tout : B maintenu (un appui court ne fait rien). A passe à l'image suivante.
       const hold = introCinematic().skipHoldMs;
       if (f.held.back && now >= guardUntil) cineHoldMs += dt;
       else cineHoldMs = 0;
       const k = Math.min(1, cineHoldMs / hold);
       if (k !== cineSkip.value) cineSkip.value = k;
+      if (cine && !cinePaused && f.pressed.confirm && now >= guardUntil) cine.next();
       if (cine && !cinePaused) cine.update(dt);
       if (cine) renderer.app.renderer.render(cine.root);
       if (cineHoldMs >= hold || cine?.finished) endIntro();
@@ -706,6 +710,9 @@ async function boot(): Promise<void> {
       },
       advance(seconds: number): void {
         for (let ms = 0; cine && ms < seconds * 1000; ms += 50) cine.update(50);
+      },
+      next(): void {
+        cine?.next();
       },
       /** Fige la cinématique (vrai) ou la relance (faux). */
       freeze(on: boolean): void {

@@ -24,19 +24,36 @@ describe('cinématique d\'intro (document 15)', () => {
     expect(cinematic).not.toBeNull();
   });
 
-  it('dure entre 75 et 90 secondes', () => {
+  it('dure entre 95 et 120 secondes', () => {
     const d = cinematicDuration(cinematic!);
-    expect(d).toBeGreaterThanOrEqual(75);
-    expect(d).toBeLessThanOrEqual(90);
+    expect(d).toBeGreaterThanOrEqual(95);
+    expect(d).toBeLessThanOrEqual(120);
   });
 
   it('se passe en maintenant B au moins une demi-seconde', () => {
     expect(cinematic!.skipHoldMs).toBeGreaterThanOrEqual(500);
   });
 
-  it('n\'a que deux cartons de texte, et aucune parole', () => {
+  it('a un seul carton, et une ligne de récit par illustration', () => {
     const cards = cinematic!.shots.filter((s) => s.card).map((s) => RAW.fr[s.card!]);
-    expect(cards).toEqual(['Un village, en France.', 'Un an plus tard.']);
+    expect(cards).toEqual(['Un an plus tard.']);
+    const silent = cinematic!.shots.filter((s) => s.layers.some((l) => l.type === 'image') && !s.caption).map((s) => s.id);
+    expect(silent).toEqual([]);
+  });
+
+  it('chaque ligne de récit tient en deux lignes de 80 caractères, et laisse le temps de la lire', () => {
+    for (const shot of cinematic!.shots) {
+      if (!shot.caption) continue;
+      const text = RAW.fr[shot.caption]!;
+      expect(text.length, shot.id).toBeLessThanOrEqual(160);
+      const visible = shot.duration - (shot.fadeOut ?? 0) - (shot.captionAt ?? 0.8);
+      expect(visible, `${shot.id} : ${text}`).toBeGreaterThanOrEqual(3 + text.length / 20);
+    }
+  });
+
+  it('ne dit rien de ce que Cream est (document 14 §6)', () => {
+    const all = cinematic!.shots.filter((s) => s.caption).map((s) => RAW.fr[s.caption!]).join(' ');
+    expect(all).not.toMatch(/ombre|parl|deux mondes/i);
   });
 
   it('chaque image est construite, de la bonne taille, et dans la palette', () => {

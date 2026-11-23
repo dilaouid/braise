@@ -21,6 +21,8 @@ export interface CineHooks {
   musicRate(to: number, overSeconds: number): void;
   /** Le carton de texte du plan (une clé de fr.json), ou null. */
   card(key: string | null): void;
+  /** La ligne de récit à afficher (une clé de fr.json), ou null. */
+  caption(key: string | null): void;
 }
 
 const NIGHT = 0x0b0f1a;
@@ -67,6 +69,7 @@ export class CinematicPlayer {
   private shotTime = 0;
   private cueIndex = 0;
   private finishedFlag = false;
+  private captionKey: string | null = null;
 
   private constructor(private readonly def: Cinematic, private readonly hooks: CineHooks) {
     const back = new Sprite(Texture.WHITE);
@@ -127,6 +130,7 @@ export class CinematicPlayer {
       if (this.shotIndex + 1 >= this.def.shots.length) {
         this.finishedFlag = true;
         this.hooks.card(null);
+        this.setCaption(null);
         return;
       }
       this.enter(this.shotIndex + 1);
@@ -134,7 +138,35 @@ export class CinematicPlayer {
       shot = this.def.shots[this.shotIndex]!;
     }
     this.fireCues(shot, this.shotTime);
+    const shown = shot.caption !== undefined && this.shotTime >= (shot.captionAt ?? 0.8) && this.shotTime < shot.duration - (shot.fadeOut ?? 0);
+    this.setCaption(shown ? shot.caption! : null);
     this.draw(shot, this.shotTime);
+  }
+
+  /**
+   * Passe à la suite : saute au fondu de sortie du plan en cours. Les sons qui restaient ne sont
+   * pas joués (ils tomberaient tous ensemble) ; la musique, elle, suit.
+   */
+  next(): void {
+    const shot = this.def.shots[this.shotIndex];
+    if (!shot || this.finishedFlag) return;
+    const target = shot.duration - (shot.fadeOut ?? 0);
+    // Pas avant que le texte soit lisible, ni pendant le fondu de sortie.
+    if (this.shotTime < (shot.captionAt ?? 0.8) + 0.4 || this.shotTime >= target) return;
+    const cues = shot.cues ?? [];
+    for (; this.cueIndex < cues.length; this.cueIndex++) {
+      const cue = cues[this.cueIndex]!;
+      if (cue.music) this.hooks.music(cue.music);
+      else if (cue.musicStop) this.hooks.stopMusic();
+      else if (cue.musicRate) this.hooks.musicRate(cue.musicRate.to, 0);
+    }
+    this.shotTime = target;
+  }
+
+  private setCaption(key: string | null): void {
+    if (key === this.captionKey) return;
+    this.captionKey = key;
+    this.hooks.caption(key);
   }
 
   /** Libère les textures. Le lecteur ne sert plus ensuite. */
@@ -156,6 +188,7 @@ export class CinematicPlayer {
     this.cueIndex = 0;
     const shot = this.def.shots[index]!;
     this.hooks.card(shot.card ?? null);
+    this.setCaption(null);
     shot.layers.forEach((layer, k) => this.nodes.push(this.build(layer, index * 100 + k)));
   }
 

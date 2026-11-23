@@ -11,7 +11,7 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
 
   // Sauvegarde neuve : le prologue se joue. Un appui court sur Échap ne le passe pas, un maintien oui.
   await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await expect(page.locator('.cine-card')).toHaveText(FR['cine.intro.card.village']!);
+  await expect(page.locator('.cine-caption')).toHaveText(FR['cine.intro.t01']!);
   await settle(page);
   await page.keyboard.press('Escape', { delay: 60 });
   await page.waitForTimeout(300);

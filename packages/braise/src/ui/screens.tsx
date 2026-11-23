@@ -4,7 +4,7 @@ import { heroXpForNext } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
+  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
   save, saveRev, t,
 } from './store.ts';
 
@@ -42,15 +42,18 @@ export function Title(): JSX.Element {
 }
 
 /**
- * La cinématique (document 15) : l'image est dessinée par le rendu, l'interface n'affiche que
- * le carton de texte et l'anneau du maintien pour passer.
+ * La cinématique (document 15) : l'image est dessinée par le rendu, l'interface affiche le carton,
+ * la ligne de récit en bas de l'image, et les deux touches (suite, passer).
  */
 export function CinematicScreen(): JSX.Element {
   const card = cineCard.value;
+  const caption = cineCaption.value;
   const hold = cineSkip.value;
   return (
     <div class="screen cinematic">
       {card ? <p class="cine-card" key={card}>{t(card)}</p> : null}
+      {caption ? <p class="cine-caption" key={caption}>{t(caption)}</p> : null}
+      {caption ? <div class="cine-next"><Btn g="confirm" /> {t('cine.next')}</div> : null}
       <div class={`cine-skip${hold > 0 ? ' active' : ''}`}>
         <span class="cine-ring" style={{ '--hold': String(hold) }} />
         <Btn g="back" /> {t('cine.skip')}
