@@ -46,6 +46,7 @@ export function pickInDirection(from: Rect, candidates: readonly Rect[], dx: num
 }
 
 const SELECTOR = '[data-focus]:not([disabled]):not([aria-hidden="true"])';
+const FOCUS_CLASS = 'is-focused';
 
 /** Gère le focus dans une racine DOM. */
 export class FocusManager {
@@ -56,8 +57,17 @@ export class FocusManager {
   private scopeKey = '';
   /** Appelé quand le focus se déplace (son d'interface). */
   onMove: (() => void) | null = null;
+  /**
+   * Un rendu déclaratif (Preact, React) réécrit l'attribut `class` d'un élément qu'il redessine,
+   * et efface la marque du focus avec. Ce gardien la repose aussitôt.
+   */
+  private readonly keeper: MutationObserver | null;
 
   constructor(private readonly root: HTMLElement) {
+    this.keeper = typeof MutationObserver === 'undefined' ? null : new MutationObserver(() => {
+      const el = this.current;
+      if (el && el.isConnected && !el.classList.contains(FOCUS_CLASS)) el.classList.add(FOCUS_CLASS);
+    });
     root.addEventListener('mouseover', (e) => {
       const el = (e.target as HTMLElement | null)?.closest?.(SELECTOR) as HTMLElement | null;
       if (el && this.inScope(el) && el !== this.current) this.set(el, false);
@@ -86,10 +96,12 @@ export class FocusManager {
 
   private set(el: HTMLElement | null, scroll: boolean): void {
     if (this.current === el) return;
-    this.current?.classList.remove('is-focused');
+    this.keeper?.disconnect();
+    this.current?.classList.remove(FOCUS_CLASS);
     this.current = el;
     if (el) {
-      el.classList.add('is-focused');
+      el.classList.add(FOCUS_CLASS);
+      this.keeper?.observe(el, { attributes: true, attributeFilter: ['class'] });
       this.lastRect = FocusManager.rect(el);
       const id = el.getAttribute('data-focus');
       if (id && this.scopeKey) this.memory.set(this.scopeKey, id);

@@ -171,3 +171,8 @@ GEMINI.md
 .pixellab/
 docs/
 release/
+
+
+# Playwright
+test-results/
+playwright-report/

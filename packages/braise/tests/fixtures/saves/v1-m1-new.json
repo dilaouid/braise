@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "createdAt": 1795424400000,
+  "updatedAt": 1795424400000,
+  "playSeconds": 0,
+  "account": {
+    "gold": 0,
+    "ashes": 0,
+    "shards": 0,
+    "materials": {
+      "filings": 0,
+      "essence": 0,
+      "hearts": 0
+    },
+    "altar": {},
+    "altarDisabled": [],
+    "camp": {},
+    "npcs": [],
+    "unlocks": [],
+    "codex": {
+      "kills": {},
+      "seen": [],
+      "steles": []
+    },
+    "regions": {},
+    "abyss": {
+      "bestDepth": 0
+    },
+    "stats": {}
+  },
+  "heroes": {
+    "class.ash-blade": {
+      "level": 1,
+      "xp": 0,
+      "shardLevel": 0,
+      "freeAttributes": {
+        "str": 0,
+        "agi": 0,
+        "spi": 0,
+        "vig": 0,
+        "luck": 0
+      },
+      "talents": {},
+      "bestDepth": 0
+    }
+  },
+  "activeHero": "class.ash-blade",
+  "settings": {
+    "autoSkills": false,
+    "damageNumbers": true,
+    "screenShake": 1,
+    "flashes": 1,
+    "volumeMaster": 0.8,
+    "volumeMusic": 0.6,
+    "volumeSfx": 0.8,
+    "swapAB": false,
+    "deadzoneLeft": 0.25,
+    "deadzoneRight": 0.35,
+    "showFps": false
+  },
+  "run": null
+}

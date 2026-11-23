@@ -40,6 +40,8 @@ déclenche la compétence et l'ultime dès qu'ils sont prêts : le jeu se joue a
 |---|---|
 | `pnpm dev` | Serveur de développement |
 | `pnpm test` | Tous les tests (données, simulation, robots, kit). Environ trois minutes |
+| `pnpm test:e2e` | Les parcours Playwright, à la manette simulée et au clavier, sur le site construit. Environ une minute |
+| `pnpm evidence` | Les mêmes parcours, et leurs captures réécrites dans `production/qa/evidence/` |
 | `pnpm typecheck` | Vérification des types |
 | `pnpm validate` | Valide les données de `content/` |
 | `pnpm build` | Le site statique dans `packages/braise/dist/` |
@@ -47,6 +49,9 @@ déclenche la compétence et l'ultime dès qu'ils sont prêts : le jeu se joue a
 | `pnpm sim -- --runs 50 --bot active --level 10` | Des parties sans affichage, pour l'équilibrage |
 | `pnpm assets` | Retélécharge les générations PixelLab, les met à la palette, reconstruit l'atlas et les sons (demande ffmpeg) |
 | `pnpm assets:build` | Remet à la palette et reconstruit l'atlas, sans rien télécharger |
+
+Les parcours demandent le navigateur de Playwright, à installer une fois :
+`pnpm --filter braise exec playwright install chromium`.
 
 Options de `pnpm sim` : `--runs`, `--bot active|flee`, `--level` (niveau du héros), `--altar` (rangs de
 chaque boost), `--minutes`, `--seed`, `--verbose`.
@@ -66,7 +71,10 @@ packages/braise/
   src/app/               assemblage
   assets/                registre PixelLab, sources, sprites mis à la palette, provenance
   tests/unit/            Vitest
+  tests/integration/     Playwright : parcours à la manette simulée et au clavier
+  tests/fixtures/saves/  une sauvegarde d'exemple par version du format, jamais réécrite
 tools/                   assets, atlas, sons, validation, simulation, paquet .owlgame
+production/qa/evidence/  les captures gardées de chaque écran
 ```
 
 Les images, les sons et la musique sont générés avec PixelLab ; leur usage est régi par
