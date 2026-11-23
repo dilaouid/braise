@@ -1,11 +1,15 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { Card } from '../core/types.ts';
-import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
+import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers, type Glyph } from './parts.tsx';
 import { SettingsScreen } from './screens.tsx';
+import { Portrait } from './dialogue.tsx';
 import {
-  actions, chest, findState, fmt, fmtTime, gameData, hud, levelUp, pauseReason, pauseStats, roman, runExtras, shopState, t, totemState,
+  actions, chest, findState, fmt, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
+  totemState, tutoHud,
 } from './store.ts';
+
+const LESSON_GLYPHS: readonly Glyph[] = ['move', 'dash', 'flask', 'skill', 'confirm'];
 
 /** Un anneau de rechargement, en pixels : il se remplit dans le sens des aiguilles. */
 function Ring({ frac, icon, glyph, active }: { frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean }): JSX.Element {
@@ -23,8 +27,11 @@ export function Hud(): JSX.Element | null {
   if (!h) return null;
   const data = gameData();
   const cls = data.classes['class.ash-blade']!;
+  // Le tutoriel : ni chronomètre, ni Veillée, ni mini-carte, ni Cendres ; un bandeau de leçon en haut.
+  const tuto = tutoHud.value;
+  const glyph = tuto ? LESSON_GLYPHS.find((g) => g === tuto.glyph) : undefined;
   return (
-    <div class="hud">
+    <div class={`hud${overlay.value === 'dialogue' ? ' talking' : ''}`}>
       <div class="xpbar"><div class="xpbar-fill" style={{ width: `${Math.round((100 * h.xp) / Math.max(1, h.xpNext))}%` }} /></div>
       <div class="hud-tl">
         <div class="hp">
@@ -55,9 +62,13 @@ export function Hud(): JSX.Element | null {
         </div>
       </div>
       <div class="hud-tr">
-        <span class={`clock ${h.boss ? 'boss' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
-        <span class="vigil">{t('hud.vigil', { vigil: roman(h.vigil) })}</span>
-        <canvas class="minimap" id="minimap" width="48" height="48" />
+        {tuto ? <span class="vigil place">{t('hud.tutorial')}</span> : (
+          <>
+            <span class={`clock ${h.boss ? 'boss' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
+            <span class="vigil">{t('hud.vigil', { vigil: roman(h.vigil) })}</span>
+            <canvas class="minimap" id="minimap" width="48" height="48" />
+          </>
+        )}
         {h.fps > 0 ? <span class="fps">{h.fps} i/s</span> : null}
       </div>
       <div class="hud-bl">
@@ -67,16 +78,28 @@ export function Hud(): JSX.Element | null {
       </div>
       <div class="hud-br">
         <span class="currency"><Icon name="icon-gold" /> {fmt(h.gold)}</span>
-        <span class="currency"><Icon name="icon-ashes" /> {fmt(h.ashes)}</span>
+        {tuto ? null : <span class="currency"><Icon name="icon-ashes" /> {fmt(h.ashes)}</span>}
       </div>
       {h.boss ? (
         <div class="bossbar">
           <span class="boss-name">{h.boss.name}</span>
           <div class="boss-track">
             <div class="boss-fill" style={{ width: `${Math.round(h.boss.frac * 1000) / 10}%` }} />
-            <i class="boss-mark" style={{ left: '66%' }} />
-            <i class="boss-mark" style={{ left: '33%' }} />
+            {tuto ? null : <i class="boss-mark" style={{ left: '66%' }} />}
+            {tuto ? null : <i class="boss-mark" style={{ left: '33%' }} />}
           </div>
+        </div>
+      ) : null}
+      {tuto?.banner ? (
+        <div class="lesson" key={tuto.banner}>
+          {glyph ? <Btn g={glyph} /> : null}
+          <span>{t(tuto.banner)}</span>
+        </div>
+      ) : null}
+      {tuto?.bark ? (
+        <div class="bark" key={tuto.bark}>
+          <Portrait name="face-cream-neutral" size={32} />
+          <span>{t(tuto.bark)}</span>
         </div>
       ) : null}
       {h.message ? <div class="banner">{h.message}</div> : null}
@@ -298,7 +321,8 @@ export function FindScreen(): JSX.Element | null {
 
 export function PauseScreen(): JSX.Element {
   const ref = useFocusScope('pause');
-  const [view, setView] = useState<'menu' | 'settings' | 'abandon'>('menu');
+  const [view, setView] = useState<'menu' | 'settings' | 'abandon' | 'skip'>('menu');
+  const tuto = tutoHud.value !== null;
   useHandlers({
     back: () => {
       if (view === 'menu') actions().pause(false);
@@ -320,7 +344,10 @@ export function PauseScreen(): JSX.Element {
           <div class="pause-menu">
             <MenuButton id="resume" label={t('pause.resume')} onPress={() => actions().pause(false)} default />
             <MenuButton id="settings" label={t('ui.settings')} onPress={() => setView('settings')} />
-            <MenuButton id="abandon" label={t('pause.abandon')} onPress={() => setView('abandon')} danger />
+            {/* On ne perd pas le tutoriel : pas d'abandon, mais on peut le passer. */}
+            {tuto
+              ? <MenuButton id="skip-tutorial" label={t('pause.skipTutorial')} onPress={() => setView('skip')} />
+              : <MenuButton id="abandon" label={t('pause.abandon')} onPress={() => setView('abandon')} danger />}
           </div>
           <div class="pause-info">
             <h2>{t('pause.build')}</h2>
@@ -358,6 +385,11 @@ export function PauseScreen(): JSX.Element {
       <HelpBar items={[['nav', t('ui.move')], ['confirm', t('ui.confirm')], ['back', t('pause.resume')]]} />
       {view === 'abandon' ? (
         <ConfirmDialog text={t('pause.abandon.confirm')} yes={t('pause.abandon')} onYes={() => actions().abandon()} onNo={() => setView('menu')} />
+      ) : null}
+      {view === 'skip' ? (
+        <ConfirmDialog
+          text={t('pause.skipTutorial.confirm')} yes={t('pause.skipTutorial')} onYes={() => actions().skipTutorial()} onNo={() => setView('menu')}
+        />
       ) : null}
     </div>
   );

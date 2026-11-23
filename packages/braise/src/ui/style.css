@@ -104,7 +104,8 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .logo-sub { color: var(--ash-4); background: rgba(11, 15, 26, 0.7); padding: 3px 6px; }
 .press { padding: 5px 9px; background: rgba(11, 15, 26, 0.85); border: 1px solid var(--ash-2); animation: press-blink 1.2s steps(2) infinite; }
 @keyframes press-blink { 50% { color: var(--ember-1); } }
-.press-small { position: absolute; bottom: 14px; padding: 3px 7px; animation: none; color: var(--ash-4); }
+.press-small { padding: 3px 7px; animation: none; color: var(--ash-4); }
+.title-extras { position: absolute; bottom: 14px; left: 0; right: 0; display: flex; gap: 10px; justify-content: center; }
 
 /* Cinématique (document 15) : l'image vient du rendu, l'interface n'a que le carton et l'anneau. */
 .cinematic { pointer-events: none; }
@@ -218,6 +219,52 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boss-mark { position: absolute; top: -1px; bottom: -1px; width: 1px; background: var(--ash-5); }
 .banner { position: absolute; left: 0; right: 0; top: 66px; text-align: center; }
 .banner { color: var(--ember-0); font-family: var(--font-title); font-size: 15px; line-height: 15px; text-shadow: 1px 1px 0 var(--night-0), -1px 1px 0 var(--night-0), 1px -1px 0 var(--night-0), -1px -1px 0 var(--night-0), 0 2px 0 var(--night-0); }
+
+/* Tutoriel : le nom du lieu, le bandeau de leçon avec son bouton, la réplique courte de Cream. */
+.place { color: var(--ash-4); }
+.lesson {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 5px;
+  padding: 4px 8px; white-space: nowrap; background: rgba(11, 15, 26, 0.85); border: 1px solid var(--ember-2);
+  color: var(--ember-0); font-family: var(--font-title); font-size: 15px; line-height: 13px;
+  animation: lesson-in 0.25s steps(3) both;
+}
+@keyframes lesson-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+.bark {
+  position: absolute; left: 50%; top: 34px; transform: translateX(-50%); display: flex; align-items: center; gap: 5px;
+  padding: 2px 8px 2px 2px; white-space: nowrap; background: rgba(11, 15, 26, 0.85); border: 1px solid var(--ash-2);
+  color: var(--ash-5); font-family: var(--font-title); font-size: 15px; line-height: 13px;
+  animation: lesson-in 0.25s steps(3) both;
+}
+.portrait { display: inline-block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; }
+.portrait-missing { background: var(--ash-1); }
+
+/* Dialogue : une boîte en bas, le portrait de Moon à gauche, celui de Cream à droite. */
+.dialogue { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 68px; display: flex; gap: 6px; align-items: stretch; }
+.dialogue-cream { flex-direction: row-reverse; }
+/* La boîte prend le bas de l'image : ce qu'elle couvrirait à moitié s'efface le temps du dialogue. */
+.hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner,
+.camp.talking .camp-info, .camp.talking .helpbar { visibility: hidden; }
+.dialogue-face {
+  flex: none; width: 68px; height: 68px; padding: 1px; background: var(--night-0); border: 1px solid var(--ember-2);
+  animation: face-in 0.18s steps(3) both;
+}
+.dialogue-cream .dialogue-face { border-color: var(--ember-0); }
+@keyframes face-in { from { transform: translateY(3px); opacity: 0.4; } }
+.dialogue-box {
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 5px 9px;
+  background: rgba(11, 15, 26, 0.93); border: 1px solid var(--ash-2); white-space: normal; text-align: left;
+}
+.dialogue-name { font-family: var(--font-title); font-size: 15px; line-height: 12px; color: var(--ember-1); }
+.dialogue-cream .dialogue-name { color: var(--ember-0); text-align: right; }
+.dialogue-text { font-family: var(--font-title); font-size: 15px; line-height: 15px; color: var(--ash-5); }
+.dialogue-rest { visibility: hidden; }
+.dialogue-next { position: absolute; left: 9px; bottom: 3px; display: flex; align-items: center; gap: 4px; color: var(--ash-3); opacity: 0.45; }
+.dialogue-next.ready { opacity: 1; animation: press-blink 0.9s steps(2) infinite; }
+.dialogue-skip {
+  position: absolute; bottom: 3px; right: 16px; display: flex; align-items: center; gap: 4px; color: var(--ash-3); opacity: 0.6;
+}
+.dialogue-cream .dialogue-skip { right: 90px; }
+.dialogue-skip.active { opacity: 1; color: var(--ash-5); }
 
 /* Montée de niveau */
 .levelup h1 { font-size: 30px; line-height: 26px; text-shadow: 0 2px 0 var(--ember-5); margin-bottom: 4px; }

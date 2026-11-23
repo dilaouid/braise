@@ -8,7 +8,7 @@ import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
 export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
-export type Overlay = 'none' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'pause';
+export type Overlay = 'none' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
 /** Ce que le HUD affiche. Recopié de la simulation une dizaine de fois par seconde. */
@@ -60,11 +60,39 @@ export interface ConfirmState {
   onYes: () => void;
 }
 
+/** La réplique affichée dans la boîte de dialogue. `id` change à chaque ligne. */
+export interface DialogueState {
+  who: 'moon' | 'cream';
+  face: string;
+  /** Le texte entier, déjà traduit ; `dialogueShown` dit combien de lettres sont écrites. */
+  text: string;
+  id: number;
+  /** Vrai pour une réplique seule (Cream au refuge) : A ou B la ferme, il n'y a rien à passer. */
+  single: boolean;
+}
+
+/** Ce que le tutoriel ajoute au HUD : le bandeau de leçon, son bouton, la réplique courte de Cream. */
+export interface TutoHudState {
+  banner: string | null;
+  glyph: string | null;
+  bark: string | null;
+}
+
 /** Les actions que l'interface peut demander. Fournies par `app`, jamais l'inverse. */
 export interface Actions {
   start(): void;
   /** Rejoue le prologue depuis l'écran titre. */
   prologue(): void;
+  /** Rejoue le tutoriel depuis l'écran titre, sans rien changer à la sauvegarde. */
+  tutorial(): void;
+  /** Passe le tutoriel en cours et va au refuge. */
+  skipTutorial(): void;
+  /** Finit la ligne de dialogue en cours, ou passe à la suivante. */
+  dialogueNext(): void;
+  /** Passe tout le dialogue en cours. */
+  dialogueSkip(): void;
+  /** Cream, au refuge, dit une réplique. */
+  creamTalk(): void;
   goto(screen: Screen): void;
   depart(seed?: number): void;
   buyAltar(id: string): void;
@@ -128,8 +156,21 @@ export const cineCard = signal<string | null>(null);
 export const cineCaption = signal<string | null>(null);
 export const cineSkip = signal(0);
 
+/** Le dialogue : la réplique affichée (nulle pour une ligne muette) et le nombre de lettres déjà écrites. */
+export const dialogueState = signal<DialogueState | null>(null);
+export const dialogueShown = signal(0);
+/** Non nul pendant le tutoriel. */
+export const tutoHud = signal<TutoHudState | null>(null);
+
 /** Ce qu'une sauvegarde garde quand le prologue a été vu (dans `account.unlocks`). */
 export const INTRO_SEEN = 'seen.intro';
+/** Ce qu'une sauvegarde garde quand le tutoriel a été fini ou passé. */
+export const TUTORIAL_SEEN = 'seen.tutorial';
+
+/** Cream est au refuge, et le tutoriel se rejoue, dès qu'un héros existe ou que le tutoriel a été vu. */
+export function knowsCream(s: Save): boolean {
+  return Object.keys(s.heroes).length > 0 || s.account.unlocks.includes(TUTORIAL_SEEN);
+}
 
 /** Références partagées, posées par `app` au démarrage. */
 export const refs: {

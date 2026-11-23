@@ -1,17 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, fixtureSave, saveView, settle, skipIntro, storageKey, watch } from './harness.ts';
+import { expect, test } from '@playwright/test';
+import { FR, SimPad, capture, expectFocus, fixtureSave, plantSave, saveView, settle, skipIntro, skipTutorial, storageKey, watch } from './harness.ts';
 
 const SHOTS = 'sauvegardes';
 const CLASS = 'class.ash-blade';
-
-/** Dépose un fichier de sauvegarde avant le premier chargement de la page, et seulement celui-là. */
-async function plantSave(page: Page, text: string): Promise<void> {
-  await page.addInitScript(([key, value]) => {
-    if (sessionStorage.getItem('planted')) return;
-    sessionStorage.setItem('planted', '1');
-    localStorage.setItem(key!, value!);
-  }, [storageKey('save.json'), text] as const);
-}
 
 test('une sauvegarde du jalon M1 se charge en v2, et son fichier d\'origine est gardé en copie de secours', async ({ page }, info) => {
   const seen = watch(page);
@@ -107,6 +98,7 @@ test('une sauvegarde plus récente que le jeu est refusée, et rien n\'est écra
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
   await skipIntro(page);
+  await skipTutorial(page);
   await expect(page.locator('.screen.camp')).toBeVisible();
   await page.keyboard.press('ArrowDown', { delay: 60 });
   await page.keyboard.press('ArrowDown', { delay: 60 });
@@ -127,6 +119,7 @@ test('une sauvegarde illisible n\'empêche pas de jouer', async ({ page }) => {
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
   await skipIntro(page);
+  await skipTutorial(page);
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expect(page.locator('.camp-info')).toContainText(FR['camp.hero']!.replace('{level}', '1'));
 });

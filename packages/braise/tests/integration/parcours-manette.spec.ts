@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  FR, SimPad, capture, expectFocus, fastForward, runView, saveView, settle, skipIntro, storageKey, waitFrames, watch,
+  FR, SimPad, capture, expectFocus, fastForward, runView, saveView, settle, skipIntro, skipTutorial, storageKey, waitFrames, watch,
 } from './harness.ts';
 
 const SHOTS = 'parcours-manette';
@@ -28,6 +28,10 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await capture(page, info, SHOTS, '01b-prologue');
   await skipIntro(page, pad);
   expect((await saveView(page)).account.unlocks).toContain('seen.intro');
+
+  // --- Tutoriel (il suit le prologue), passé depuis la pause ---------------------------------
+  await skipTutorial(page, pad);
+  expect((await saveView(page)).account.unlocks).toContain('seen.tutorial');
 
   // --- Camp --------------------------------------------------------------------------------
   await expect(page.locator('.screen.camp')).toBeVisible();
