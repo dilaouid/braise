@@ -9,6 +9,8 @@
     "build": "pnpm validate && pnpm --filter braise build",
     "preview": "pnpm --filter braise preview",
     "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter braise test:e2e",
+    "evidence": "pnpm --filter braise evidence",
     "typecheck": "pnpm -r typecheck",
     "validate": "tsx tools/validate-content.ts",
     "assets": "node tools/fetch-assets.mjs && node tools/process-assets.mjs && node tools/build-atlas.mjs && node tools/build-audio.mjs",
