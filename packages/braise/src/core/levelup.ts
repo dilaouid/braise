@@ -193,7 +193,10 @@ export function readyEvolution(run: Run): WeaponInstance | null {
   return best;
 }
 
-/** Ouvre un coffre de braise : une évolution si une arme est prête, et de l'or. */
+/**
+ * Ouvre un coffre de braise : une évolution si une arme est prête, sinon un choix de carte gratuit
+ * (proposé à la fermeture du coffre), et un peu d'or.
+ */
 export function openChest(run: Run): void {
   const tuning = run.data.tuning;
   const gold = run.rngDraw.intRange(tuning.gold.chest[0], tuning.gold.chest[1]);
@@ -214,8 +217,12 @@ export function openChest(run: Run): void {
     run.evolutions++;
     emit(run, EV.evolution, run.hero.x, run.hero.y, evolvedTo);
   }
+  // Sans évolution, le coffre donne un niveau d'arme ou de relique : un choix de plus, sans
+  // changer le niveau de partie. closeChest l'enchaîne avec les niveaux qui attendent.
+  const freeLevel = !ready;
+  if (freeLevel) run.pendingLevels++;
   run.pendingChests = Math.max(0, run.pendingChests - 1);
-  run.chest = { evolvedTo, evolvedFrom, gold };
+  run.chest = { evolvedTo, evolvedFrom, gold, freeLevel };
   run.phase = 'chest';
 }
 

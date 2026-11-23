@@ -184,6 +184,8 @@
   "chest.evolution": "Évolution !",
   "chest.becomes": "{from} devient {to}",
   "chest.noEvolution": "Aucune arme n'est prête à évoluer : arme au niveau 6 et sa relique liée.",
+  "chest.freeLevel": "Niveau gratuit !",
+  "chest.freeLevelDesc": "Choisis une arme ou une relique parmi les cartes.",
 
   "pause.title": "Pause",
   "pause.resume": "Reprendre",
