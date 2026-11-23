@@ -76,7 +76,10 @@ for (const t of manifest.tilesets) {
     continue;
   }
   save(join(dir, 'tileset.png'), await download(`${API}/tilesets/${t.id}/image?inline=true`));
-  save(join(dir, 'metadata.json'), await download(`${API}/tilesets/${t.id}/metadata`));
+  // L'adresse de la planche porte l'identifiant du compte PixelLab : elle ne va pas dans le repository.
+  const meta = JSON.parse(new TextDecoder().decode(await download(`${API}/tilesets/${t.id}/metadata`)));
+  if (meta.tileset_data) meta.tileset_data.spritesheet_url = null;
+  save(join(dir, 'metadata.json'), JSON.stringify(meta));
   console.log(`${t.name} : jeu de tuiles`);
   fetched++;
 }

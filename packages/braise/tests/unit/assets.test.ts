@@ -79,7 +79,40 @@ describe('assets (documents 10 et 11)', () => {
       'icon-find-boots', 'icon-find-lantern-glass', 'icon-find-holed-coin', 'icon-find-purse', 'icon-find-notebook', 'icon-find-scarf',
       'icon-find-flask', 'icon-find-cards', 'icon-find-flint', 'icon-find-winder', 'icon-find-blanket', 'icon-find-door-nail',
       'icon-service-flask', 'icon-service-balm', 'icon-service-reroll', 'icon-service-banish');
+    // Le tutoriel avec Cream : le chat, les poses de Moon, les portraits, le donjon, les bulles.
+    for (let d = 0; d < 8; d++) need.push(`cream-walk-${d}`);
+    need.push('cream-sit', 'cream-pose-laugh', 'cream-pose-groom', 'cream-pose-scratch', 'cream-pose-rise',
+      'hero-lame-cendre-pose-startle', 'hero-lame-cendre-pose-think', 'hero-lame-cendre-pose-laugh');
+    for (const face of ['neutral', 'think', 'surprised', 'shocked', 'laugh', 'awkward', 'sad', 'resolute']) need.push(`face-moon-${face}`);
+    for (const face of ['neutral', 'smug', 'serious', 'laugh', 'closed', 'surprised']) need.push(`face-cream-${face}`);
+    for (let mask = 0; mask < 16; mask++) need.push(`tile-cave-${mask}`);
+    need.push('boss-guetteur', 'decor-mur-cave', 'fx-barriere-fumee', 'decor-eteints-endormis', 'camp-cream',
+      'emote-exclaim', 'emote-question', 'emote-dots', 'emote-drop', 'emote-note');
     for (const name of need) expect(has(name), `image manquante dans l'atlas : ${name}`).toBe(true);
+  });
+
+  it('les portraits du dialogue ont tous la même taille, et les poses fixes ne sont pas des bandes', () => {
+    const atlas = JSON.parse(readFileSync(join(publicDir, 'atlas', 'atlas.json'), 'utf8')) as {
+      frames: Record<string, { w: number; h: number }>;
+      anims: Record<string, number>;
+    };
+    const faces = Object.keys(atlas.frames).filter((n) => n.startsWith('face-'));
+    expect(faces.length).toBe(14);
+    for (const n of faces) expect([atlas.frames[n]!.w, atlas.frames[n]!.h], n).toEqual([64, 64]);
+    // Une pose est lue par `atlas.get` : elle doit être une image seule.
+    for (const n of ['cream-sit', 'cream-pose-laugh', 'cream-pose-groom', 'cream-pose-scratch', 'cream-pose-rise',
+      'hero-lame-cendre-pose-startle', 'hero-lame-cendre-pose-think', 'hero-lame-cendre-pose-laugh']) {
+      expect(n in atlas.frames, n).toBe(true);
+    }
+    for (let d = 0; d < 8; d++) expect(atlas.anims[`cream-walk-${d}`], `cream-walk-${d}`).toBe(8);
+  });
+
+  it('les sons du tutoriel existent', () => {
+    const index = JSON.parse(readFileSync(join(publicDir, 'audio', 'index.json'), 'utf8')) as Record<string, string>;
+    for (const name of ['sfx-talk-moon', 'sfx-talk-cream', 'sfx-surprise', 'sfx-gate']) {
+      expect(index[name], name).toBeDefined();
+      expect(existsSync(join(publicDir, 'audio', index[name]!)), name).toBe(true);
+    }
   });
 
   it('chaque ennemi animé a de 2 à 8 images, toutes de la même taille', () => {
