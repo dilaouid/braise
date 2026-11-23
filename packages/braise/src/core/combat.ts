@@ -315,9 +315,12 @@ export function reapEnemies(run: Run): boolean {
     } else {
       run.hero.bossKills++;
       bossKilled = true;
-      addPickup(run, PK_CHEST, x, y + 10, 1);
-      addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss);
-      addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss);
+      // Le boss du tutoriel ne laisse rien : on n'en rapporte ni or ni Cendres.
+      if (!run.tutorial) {
+        addPickup(run, PK_CHEST, x, y + 10, 1);
+        addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss);
+        addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss);
+      }
       emit(run, EV.bossDeath, x, y, kind);
     }
     const spawnKind = def.onDeathIndex;

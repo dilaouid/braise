@@ -1,6 +1,6 @@
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_EVENTS, CAP_PICKUPS, CAP_SHOTS, CAP_TELEGRAPHS, CAP_ZONES, MAX_WEAPON_SLOTS,
-  type EnemyShotStore, type EnemyStore, type PickupStore, type Run, type ShotStore, type TelegraphStore, type ZoneStore,
+  type EnemyShotStore, type EnemyStore, type PickupStore, type Run, type ShotStore, type TelegraphStore, type TutorialNotes, type ZoneStore,
 } from './types.ts';
 
 /** Nombre de cibles mémorisées par projectile, pour ne pas toucher deux fois le même ennemi. */
@@ -168,6 +168,17 @@ export function emit(run: Run, type: number, x: number, y: number, a = 0, b = 0,
 }
 
 /** Taille d'une cellule de la grille spatiale, en pixels. */
+/** Direction de sprite, 0 à 7 : sud, sud-ouest, ouest, nord-ouest, nord, nord-est, est, sud-est. */
+export function facingFromVector(x: number, y: number): number {
+  const deg = (Math.atan2(y, x) * 180) / Math.PI;
+  return ((Math.round((deg - 90) / 45) % 8) + 8) % 8;
+}
+
+/** Compte un geste du joueur pour le script du tutoriel. Sans effet dans une expédition normale. */
+export function tutorialNote(run: Run, what: keyof TutorialNotes): void {
+  if (run.tutorial) run.tutorial.notes[what]++;
+}
+
 export const CELL = 64;
 
 /** Reconstruit la grille spatiale des ennemis (tri par cellule dans des tableaux fixes). */

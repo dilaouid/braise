@@ -1,5 +1,5 @@
 import type { Rng } from '@owl/kit/rng';
-import type { ClassDef, GameData, RegionDef } from '../content/index.ts';
+import type { ClassDef, GameData, RegionDef, TutorialDef } from '../content/index.ts';
 import type { HeroStats, StatSheet } from './stats.ts';
 
 /** Pas de simulation, en secondes. */
@@ -64,6 +64,8 @@ export const EV = {
   chestDrop: 24, evolution: 25, telegraph: 26, telegraphHit: 27, poiDone: 28, poiStart: 29, fissure: 30,
   eliteDeath: 31, flameCall: 32, burst: 33, charge: 34, ultTick: 35,
   totemDone: 36, shopOpen: 37, shopBuy: 38, findGot: 39, bossWarning: 40,
+  /** Tutoriel : ligne de dialogue (a : 0 Moon, 1 Cream, -1 muette), barrière ouverte (a : son numéro), reprise, réplique courte. */
+  dialogueLine: 41, gateOpen: 42, tutoRespawn: 43, bark: 44,
 } as const;
 
 export interface EnemyStore {
@@ -177,7 +179,7 @@ export interface GameMap {
   size: number;
   /** Côté d'une tuile, en pixels. */
   tile: number;
-  /** 0 : libre · 1 : obstacle · 2 : bordure. */
+  /** 0 : libre · 1 : obstacle · 2 : bordure · 3 : barrière du tutoriel · 4 : rangée d'Éteints (seule la ruée la franchit). */
   solid: Uint8Array;
   /** Terrain aux coins des tuiles ((size + 1)²) : 0 cendre, 1 chemin. */
   corners: Uint8Array;
@@ -236,7 +238,7 @@ export interface ChestResult {
   freeLevel: boolean;
 }
 
-export type RunPhase = 'playing' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'victory' | 'dead';
+export type RunPhase = 'playing' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'dialogue' | 'victory' | 'dead';
 
 /** Les services de l'Herboriste, dans l'ordre de l'écran. */
 export const SERVICES = ['flask', 'balm', 'reroll', 'banish'] as const;
@@ -326,6 +328,65 @@ export interface RunConfig {
   autoSkills: boolean;
 }
 
+/** Tuiles pleines propres au tutoriel. */
+export const TILE_GATE = 3;
+export const TILE_THICKET = 4;
+
+/** Cream pendant le tutoriel : il marche devant, attend, et reste au bord de la lueur. */
+export interface Guide {
+  x: number; y: number;
+  px: number; py: number;
+  /** Là où il veut aller. */
+  tx: number; ty: number;
+  /** Son chemin, en indices de tuiles, et l'étape du chemin en cours. */
+  path: number[];
+  pathI: number;
+  /** Direction de sprite, 0 à 7, comme le héros. */
+  facing: number;
+  moving: boolean;
+  /** Pose imposée par la ligne de dialogue en cours, ou vide. */
+  pose: string;
+}
+
+/** Ce que le joueur a fait depuis le début du tutoriel, compté. */
+export interface TutorialNotes {
+  dash: number; flask: number; card: number; find: number; buy: number; boon: number; totem: number; boss: number; shopClosed: number;
+}
+
+/** L'état du tutoriel : où en est le script, Cream, le dialogue en cours. */
+export interface TutorialState {
+  def: TutorialDef;
+  /** Indice de l'étape en cours dans `def.steps`. */
+  step: number;
+  /** Vrai une fois que l'étape en cours a démarré (dialogue ouvert, instantané des notes pris). */
+  entered: boolean;
+  guide: Guide;
+  heroPose: string;
+  emoteMoon: string;
+  emoteCream: string;
+  /** Identifiant du dialogue ouvert, ou null. */
+  dialogue: string | null;
+  line: number;
+  lineT: number;
+  /** Clé du bandeau de leçon affiché, et son bouton. */
+  banner: string | null;
+  bannerGlyph: string | null;
+  /** Clé de la réplique courte de Cream affichée, et le temps qu'il lui reste. */
+  bark: string | null;
+  barkT: number;
+  notes: TutorialNotes;
+  /** Les notes à l'entrée de l'attente en cours. */
+  base: TutorialNotes;
+  waitT: number;
+  checkpointStep: number;
+  checkpointX: number;
+  checkpointY: number;
+  /** Les tuiles de barrière : numéro et indice de tuile. */
+  gates: Array<{ id: number; idx: number }>;
+  deaths: number;
+  done: boolean;
+}
+
 /** L'état entier d'une expédition. */
 export interface Run {
   data: GameData;
@@ -409,5 +470,7 @@ export interface Run {
   /** Dégâts subis par le héros, par sorte d'ennemi (pour l'équilibrage). */
   damageByKind: Float32Array;
   braziersLit: number;
+  /** L'état du tutoriel, ou null pour une expédition normale. */
+  tutorial: TutorialState | null;
   outcome: 'victory' | 'death' | 'abandon' | null;
 }
