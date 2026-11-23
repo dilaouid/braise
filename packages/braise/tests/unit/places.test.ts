@@ -78,7 +78,7 @@ describe('totems', () => {
     const base = data.tuning.hero.speed;
     expect(takeBoon(run, 0)).toBe(true);
     expect(run.boons).toEqual([boon('boon.stride')]);
-    expect(run.hero.stats.speed - speed).toBeCloseTo(base * 0.08, 6);
+    expect(run.hero.stats.speed - speed).toBeCloseTo(base * data.boons[boon('boon.stride')]!.bonus.speedShare!, 6);
     expect(run.totemChoices).toEqual([]);
     expect(run.phase === 'playing' || run.phase === 'levelup').toBe(true);
     expect(takeBoon(run, 0)).toBe(false);
@@ -103,7 +103,7 @@ describe('totems', () => {
       run.totemChoices = [boon('boon.edge')];
       takeBoon(run, 0);
     }
-    expect(run.hero.stats.power - power).toBeCloseTo(0.2, 6);
+    expect(run.hero.stats.power - power).toBeCloseTo(2 * data.boons[boon('boon.edge')]!.bonus.power!, 6);
   });
 });
 
@@ -250,9 +250,9 @@ describe('marchands', () => {
       expect(it.price).toBe(ev.smith.basePrice);
     }
     const owned = run.weapons.length + run.relics.length + run.weapons.reduce((s, w) => s + w.level, 0);
-    run.hero.gold = 100;
+    run.hero.gold = ev.smith.basePrice + 40;
     expect(buyItem(run, 0)).toBe(true);
-    expect(run.hero.gold).toBe(100 - ev.smith.basePrice);
+    expect(run.hero.gold).toBe(40);
     expect(run.hero.goldSpent).toBe(ev.smith.basePrice);
     expect(run.weapons.length + run.relics.length + run.weapons.reduce((s, w) => s + w.level, 0)).toBeGreaterThan(owned);
     const left = shopItems(run);
