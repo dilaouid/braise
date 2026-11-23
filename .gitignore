@@ -155,3 +155,18 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 .nx/migrate-runs
+
+# --- Claude / AI tooling & design docs (local only) ---
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.mcp.json
+.superpowers/
+.cursor/
+.cursorrules
+.windsurfrules
+.aider*
+.pixellab/
+docs/
