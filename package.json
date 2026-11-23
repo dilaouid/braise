@@ -1,0 +1,26 @@
+{
+  "name": "braise-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "dev": "pnpm --filter braise dev",
+    "build": "pnpm validate && pnpm --filter braise build",
+    "preview": "pnpm --filter braise preview",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "validate": "tsx tools/validate-content.ts",
+    "assets": "node tools/fetch-assets.mjs && node tools/process-assets.mjs && node tools/build-atlas.mjs && node tools/build-audio.mjs",
+    "sim": "tsx tools/sim-bot.ts",
+    "pack:owl": "node tools/pack-owlgame.mjs",
+    "assets:build": "node tools/process-assets.mjs && node tools/build-atlas.mjs"
+  },
+  "devDependencies": {
+    "fflate": "^0.8.3",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

@@ -1,0 +1,70 @@
+import type { AltarBoostRaw, GameData } from '../content/index.ts';
+import type { SaveV1 } from './save.ts';
+
+/** Coût d'un rang (à partir de 1) : `arrondi(base × croissance^(rang − 1))`. */
+export function altarCost(boost: AltarBoostRaw, rank: number): number {
+  return Math.round(boost.baseCost * Math.pow(boost.growth, rank - 1));
+}
+
+/** Total des Cendres pour monter un boost de 0 à `ranks`. */
+export function altarTotalCost(boost: AltarBoostRaw, ranks: number): number {
+  let total = 0;
+  for (let r = 1; r <= ranks; r++) total += altarCost(boost, r);
+  return total;
+}
+
+/** Total des Cendres dépensées à l'Autel dans cette sauvegarde. */
+export function altarSpent(save: SaveV1, data: GameData): number {
+  let total = 0;
+  for (const boost of data.altar) total += altarTotalCost(boost, save.account.altar[boost.id] ?? 0);
+  return total;
+}
+
+export type AltarError = 'unknown' | 'max' | 'ashes' | 'shards';
+
+/** Le rang courant d'un boost. */
+export function altarRank(save: SaveV1, id: string): number {
+  return save.account.altar[id] ?? 0;
+}
+
+/** Vrai si le rang suivant peut être acheté. */
+export function canBuyAltarRank(save: SaveV1, data: GameData, id: string): AltarError | null {
+  const boost = data.altar.find((b) => b.id === id);
+  if (!boost) return 'unknown';
+  const rank = altarRank(save, id);
+  if (boost.ranks > 0 && rank >= boost.ranks) return 'max';
+  if (save.account.ashes < altarCost(boost, rank + 1)) return 'ashes';
+  if (rank === 0 && save.account.shards < boost.shards) return 'shards';
+  return null;
+}
+
+/** Achète un rang. Le coût prélevé est le coût affiché. */
+export function buyAltarRank(save: SaveV1, data: GameData, id: string): { ok: boolean; error: AltarError | null; cost: number } {
+  const error = canBuyAltarRank(save, data, id);
+  if (error) return { ok: false, error, cost: 0 };
+  const boost = data.altar.find((b) => b.id === id)!;
+  const rank = altarRank(save, id);
+  const cost = altarCost(boost, rank + 1);
+  save.account.ashes -= cost;
+  if (rank === 0) save.account.shards -= boost.shards;
+  save.account.altar[id] = rank + 1;
+  return { ok: true, error: null, cost };
+}
+
+/** Rend toutes les Cendres : remet tous les rangs à zéro et rend exactement la somme dépensée. */
+export function refundAltar(save: SaveV1, data: GameData): number {
+  const refund = altarSpent(save, data);
+  let shards = 0;
+  for (const boost of data.altar) if ((save.account.altar[boost.id] ?? 0) > 0) shards += boost.shards;
+  save.account.altar = {};
+  save.account.ashes += refund;
+  save.account.shards += shards;
+  return refund;
+}
+
+/** Active ou désactive un boost, sans le rembourser. */
+export function setAltarBoostEnabled(save: SaveV1, id: string, enabled: boolean): void {
+  const list = save.account.altarDisabled.filter((x) => x !== id);
+  if (!enabled) list.push(id);
+  save.account.altarDisabled = list;
+}

@@ -1,0 +1,965 @@
+import { Application, Container, Graphics, RenderTexture, Sprite, Texture, TextureSource } from 'pixi.js';
+import type { GameData } from '../content/index.ts';
+import {
+  CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE,
+  type Run,
+} from '../core/types.ts';
+import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
+import { Atlas } from './atlas.ts';
+import { lightDisc } from './light.ts';
+
+/** L'image native du jeu (document 08 §5). */
+export const VIEW_W = 640;
+export const VIEW_H = 360;
+
+const C = {
+  night: 0x0b0f1a, ember: 0xffb020, emberHot: 0xfb7a0c, emberPale: 0xffd166, emberWhite: 0xfff1c2, emberDark: 0xd9480f,
+  danger: 0xff3d81, dangerDark: 0xc2185b, teal: 0x4fe0c8, tealPale: 0xb8fff0, white: 0xeef2f6, grey: 0x6b7285,
+  pale: 0xc9d1dc, frost: 0x7fd4ff, spark: 0xf6f08a,
+};
+
+interface Fx {
+  type: number;
+  x: number; y: number;
+  a: number; b: number; c: number;
+  t: number; dur: number;
+}
+
+const FX_ARC = 1;
+const FX_RING = 2;
+const FX_BURST = 3;
+const FX_FISSURE = 4;
+const FX_EDGE = 5;
+const FX_TELE_LINE = 6;
+const FX_TELE_CIRCLE = 7;
+const FX_TRAIL = 8;
+const MAX_FX = 96;
+const MAX_PUFFS = 120;
+const MAX_NUMBERS = 110;
+const MAX_PROPS = 260;
+const MAX_LIGHTS = 140;
+
+interface Puff { sprite: Sprite; t: number; frames: Texture[]; rate: number }
+interface NumberFx { box: Container; digits: Sprite[]; t: number; x: number; y: number }
+
+/** Les réglages d'affichage lus par le rendu. */
+export interface RenderSettings {
+  damageNumbers: boolean;
+  screenShake: number;
+  flashes: number;
+}
+
+/** Le rendu du jeu : il lit l'état de `core` et ne le modifie jamais. */
+export class GameRenderer {
+  readonly app: Application;
+  readonly atlas: Atlas;
+  settings: RenderSettings = { damageNumbers: true, screenShake: 1, flashes: 1 };
+
+  private readonly world = new Container();
+  private readonly ground = new Container();
+  private readonly groundFx = new Graphics();
+  private readonly pickups = new Container();
+  private readonly entities = new Container();
+  private readonly shots = new Container();
+  private readonly topFx = new Graphics();
+  private readonly puffLayer = new Container();
+  private readonly numberLayer = new Container();
+  private readonly screen = new Container();
+  private readonly screenFx = new Graphics();
+  private readonly camp = new Container();
+
+  private readonly lightScene = new Container();
+  private readonly darkness: Sprite;
+  private readonly lightHoles = new Container();
+  private readonly lightTexture: RenderTexture;
+  private readonly lightSprite: Sprite;
+  private readonly lights: Sprite[] = [];
+  private lightCount = 0;
+  private readonly warmLayer = new Container();
+  private readonly warms: Sprite[] = [];
+  private warmCount = 0;
+
+  private readonly tiles: Sprite[] = [];
+  private tileTextures: Texture[] = [];
+  private readonly tileCols = Math.ceil(VIEW_W / 32) + 2;
+  private readonly tileRows = Math.ceil(VIEW_H / 32) + 2;
+
+  private readonly enemySprites: Sprite[] = [];
+  private enemyFrames: Texture[][] = [];
+  private enemyWhite: Texture[][] = [];
+  private enemyAnchor: number[] = [];
+  private readonly propSprites: Sprite[] = [];
+  private propTextures: Texture[] = [];
+  private borderTexture: Texture = Texture.EMPTY;
+  private readonly poiSprites: Sprite[] = [];
+  private readonly poiFlames: Sprite[] = [];
+  private readonly pickupSprites: Sprite[] = [];
+  private pickupTextures: Texture[] = [];
+  private readonly shotSprites: Sprite[] = [];
+  private readonly enemyShotSprites: Sprite[] = [];
+  private shotTextures: Texture[] = [];
+  private readonly orbSprites: Sprite[] = [];
+  private readonly arrows: Sprite[] = [];
+  private readonly hero: Sprite;
+  private heroWalk: Texture[][] = [];
+  private heroIdle: Texture[][] = [];
+  private readonly ghost: Sprite[] = [];
+
+  private readonly fx: Fx[] = [];
+  private fxCount = 0;
+  private readonly puffs: Puff[] = [];
+  private readonly numbers: NumberFx[] = [];
+  private digitTextures: Texture[] = [];
+  private flameFrames: Texture[] = [];
+  private puffFrames: Texture[] = [];
+
+  private shownEnemies = 0;
+  private shownPickups = 0;
+  private shownShots = 0;
+  private shownEnemyShots = 0;
+  private camX = 0;
+  private camY = 0;
+  private shake = 0;
+  private clock = 0;
+  private deathFade = 0;
+  private currentRun: Run | null = null;
+
+  private campHero!: Sprite;
+  private campFlame!: Sprite;
+  private campBuilt = false;
+
+  private constructor(app: Application, atlas: Atlas) {
+    this.app = app;
+    this.atlas = atlas;
+    this.entities.sortableChildren = true;
+    this.world.addChild(this.ground, this.groundFx, this.pickups, this.entities, this.shots, this.topFx, this.puffLayer);
+
+    this.darkness = new Sprite(Texture.WHITE);
+    this.darkness.width = VIEW_W;
+    this.darkness.height = VIEW_H;
+    this.lightScene.addChild(this.darkness, this.lightHoles);
+    this.lightTexture = RenderTexture.create({ width: VIEW_W, height: VIEW_H });
+    this.lightTexture.source.scaleMode = 'nearest';
+    this.lightSprite = new Sprite(this.lightTexture);
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+      const s = new Sprite(Texture.EMPTY);
+      s.anchor.set(0.5);
+      s.blendMode = 'erase';
+      s.visible = false;
+      this.lightHoles.addChild(s);
+      this.lights.push(s);
+    }
+
+    for (let i = 0; i < 24; i++) {
+      const s = new Sprite(Texture.EMPTY);
+      s.anchor.set(0.5);
+      s.blendMode = 'add';
+      s.tint = C.emberHot;
+      s.visible = false;
+      this.warmLayer.addChild(s);
+      this.warms.push(s);
+    }
+    this.screen.addChild(this.screenFx);
+    app.stage.addChild(this.camp, this.world, this.warmLayer, this.lightSprite, this.numberLayer, this.screen);
+
+    for (let i = 0; i < this.tileCols * this.tileRows; i++) {
+      const s = new Sprite(Texture.EMPTY);
+      this.ground.addChild(s);
+      this.tiles.push(s);
+    }
+    this.hero = new Sprite(Texture.EMPTY);
+    this.hero.anchor.set(0.5, 0.8);
+    this.entities.addChild(this.hero);
+    for (let i = 0; i < 3; i++) {
+      const g = new Sprite(Texture.EMPTY);
+      g.anchor.set(0.5, 0.8);
+      g.visible = false;
+      this.entities.addChild(g);
+      this.ghost.push(g);
+    }
+    const pool = (count: number, parent: Container, anchorX = 0.5, anchorY = 0.5): Sprite[] => {
+      const list: Sprite[] = [];
+      for (let i = 0; i < count; i++) {
+        const s = new Sprite(Texture.EMPTY);
+        s.anchor.set(anchorX, anchorY);
+        s.visible = false;
+        parent.addChild(s);
+        list.push(s);
+      }
+      return list;
+    };
+    this.enemySprites = pool(CAP_ENEMIES, this.entities);
+    this.propSprites = pool(MAX_PROPS, this.entities, 0.5, 0.92);
+    this.poiSprites = pool(14, this.entities, 0.5, 0.8);
+    this.poiFlames = pool(14, this.entities, 0.5, 1);
+    this.pickupSprites = pool(CAP_PICKUPS, this.pickups);
+    this.shotSprites = pool(CAP_SHOTS, this.shots);
+    this.enemyShotSprites = pool(CAP_ENEMY_SHOTS, this.shots);
+    this.orbSprites = pool(32, this.shots);
+    this.arrows = pool(8, this.screen);
+    for (let i = 0; i < MAX_FX; i++) this.fx.push({ type: 0, x: 0, y: 0, a: 0, b: 0, c: 0, t: 0, dur: 1 });
+    for (const s of pool(MAX_PUFFS, this.puffLayer)) this.puffs.push({ sprite: s, t: -1, frames: [], rate: 12 });
+    for (let i = 0; i < MAX_NUMBERS; i++) {
+      const box = new Container();
+      box.visible = false;
+      const digits: Sprite[] = [];
+      for (let d = 0; d < 6; d++) {
+        const s = new Sprite(Texture.EMPTY);
+        s.x = d * 5;
+        box.addChild(s);
+        digits.push(s);
+      }
+      this.numberLayer.addChild(box);
+      this.numbers.push({ box, digits, t: -1, x: 0, y: 0 });
+    }
+    this.bindTextures();
+  }
+
+  /** Crée le rendu dans un élément de la page. */
+  static async create(parent: HTMLElement, base: string): Promise<GameRenderer> {
+    TextureSource.defaultOptions.scaleMode = 'nearest';
+    const app = new Application();
+    await app.init({
+      width: VIEW_W, height: VIEW_H, backgroundColor: C.night, antialias: false, resolution: 1,
+      autoDensity: false, roundPixels: true, autoStart: false, preference: 'webgl', powerPreference: 'high-performance',
+    });
+    app.ticker.stop();
+    app.canvas.classList.add('game-canvas');
+    parent.appendChild(app.canvas);
+    const atlas = await Atlas.load(base);
+    return new GameRenderer(app, atlas);
+  }
+
+  private bindTextures(): void {
+    const a = this.atlas;
+    this.pickupTextures = [];
+    this.pickupTextures[PK_GEM] = a.get('pickup-gem-small');
+    this.pickupTextures[PK_GOLD] = a.get('pickup-gold');
+    this.pickupTextures[PK_ASH] = a.get('pickup-ash');
+    this.pickupTextures[PK_DROP] = a.get('pickup-drop');
+    this.pickupTextures[PK_CHEST] = a.get('pickup-coffre');
+    this.pickupTextures[PK_CALL] = a.get('pickup-call');
+    this.pickupTextures[PK_RED_GEM] = a.get('pickup-gem-red');
+    this.shotTextures = SHOT_SPRITES.map((name) => a.get(name));
+    this.digitTextures = a.anim('font-digits');
+    this.flameFrames = a.anim('fx-flame');
+    this.puffFrames = a.anim('fx-puff');
+    for (const s of this.enemyShotSprites) s.texture = a.get('shot-enemy');
+    for (const s of this.orbSprites) s.texture = a.get('fx-firefly');
+    for (const s of this.arrows) s.texture = a.get('ui-arrow');
+    for (const s of this.poiFlames) s.texture = this.flameFrames[0]!;
+  }
+
+  /** Prépare le rendu d'une expédition : textures de la région, de la classe et des ennemis. */
+  beginRun(run: Run): void {
+    const a = this.atlas;
+    const data: GameData = run.data;
+    this.currentRun = run;
+    this.tileTextures = [];
+    for (let mask = 0; mask < 16; mask++) this.tileTextures.push(a.get(`${run.region.tileset}-${mask}`));
+    this.propTextures = run.region.decor.map((d) => a.get(d.sprite));
+    this.borderTexture = a.get(run.region.borderDecor);
+    this.enemyFrames = data.enemies.map((e) => a.anim(e.sprite));
+    this.enemyWhite = data.enemies.map((e) => a.whiteAnim(e.sprite));
+    this.enemyAnchor = data.enemies.map((e) => (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
+    this.heroWalk = [];
+    this.heroIdle = [];
+    for (let d = 0; d < 8; d++) {
+      this.heroWalk.push(a.anim(`${run.cls.sprite}-walk-${d}`));
+      const idle = a.anim(`${run.cls.sprite}-idle-${d}`);
+      this.heroIdle.push(idle[0] === Texture.EMPTY ? [a.get(`${run.cls.sprite}-rot-${d}`)] : idle);
+    }
+    this.fxCount = 0;
+    for (const s of this.enemySprites) s.visible = false;
+    for (const s of this.pickupSprites) s.visible = false;
+    for (const s of this.shotSprites) s.visible = false;
+    for (const s of this.enemyShotSprites) s.visible = false;
+    this.shownEnemies = 0;
+    this.shownPickups = 0;
+    this.shownShots = 0;
+    this.shownEnemyShots = 0;
+    for (const p of this.puffs) {
+      p.t = -1;
+      p.sprite.visible = false;
+    }
+    for (const n of this.numbers) {
+      n.t = -1;
+      n.box.visible = false;
+    }
+    this.shake = 0;
+    this.deathFade = 0;
+    this.darkness.tint = parseInt(run.region.darkness.color.slice(1), 16);
+    this.darkness.alpha = run.region.darkness.opacity;
+    this.camp.visible = false;
+    this.world.visible = true;
+    this.numberLayer.visible = true;
+    this.screen.visible = true;
+  }
+
+  /** Ajoute un effet passager. */
+  private addFx(type: number, x: number, y: number, a: number, b: number, c: number, dur: number): void {
+    const f = this.fx[this.fxCount < MAX_FX ? this.fxCount++ : MAX_FX - 1]!;
+    f.type = type; f.x = x; f.y = y; f.a = a; f.b = b; f.c = c; f.t = 0; f.dur = dur;
+  }
+
+  private puff(x: number, y: number, frames: Texture[], tint = 0xffffff, rate = 14): void {
+    for (const p of this.puffs) {
+      if (p.t >= 0) continue;
+      p.t = 0;
+      p.frames = frames;
+      p.rate = rate;
+      p.sprite.tint = tint;
+      p.sprite.position.set(Math.round(x), Math.round(y));
+      p.sprite.visible = true;
+      p.sprite.texture = frames[0]!;
+      return;
+    }
+  }
+
+  private number(x: number, y: number, value: number, flags: number): void {
+    if (!this.settings.damageNumbers) return;
+    const n = this.numbers.find((k) => k.t < 0);
+    if (!n) return;
+    const text = String(Math.min(999999, Math.round(value)));
+    const tint = flags & HIT_CRIT ? C.emberPale : flags & HIT_WEAK ? C.white : flags & HIT_RESIST ? C.grey : C.pale;
+    for (let d = 0; d < n.digits.length; d++) {
+      const s = n.digits[d]!;
+      if (d < text.length) {
+        s.texture = this.digitTextures[text.charCodeAt(d) - 48] ?? Texture.EMPTY;
+        s.tint = tint;
+        s.visible = true;
+      } else {
+        s.visible = false;
+      }
+    }
+    n.t = 0;
+    n.x = x - (text.length * 5) / 2 + ((value * 7) % 9) - 4;
+    n.y = y - 14;
+    n.box.visible = true;
+  }
+
+  /** Reçoit un événement de la simulation (coup, mort, ramassage…). */
+  onEvent(run: Run, type: number, x: number, y: number, a: number, b: number, c: number): void {
+    switch (type) {
+      case EV.kill: this.puff(x, y, this.puffFrames); break;
+      case EV.eliteDeath:
+      case EV.bossDeath:
+        for (let k = 0; k < 6; k++) this.puff(x + Math.cos(k) * 14, y + Math.sin(k * 2) * 12, this.puffFrames, 0xffffff, 9);
+        this.addFx(FX_RING, x, y, type === EV.bossDeath ? 220 : 90, C.emberWhite, 3, 0.6);
+        this.shake = Math.max(this.shake, type === EV.bossDeath ? 3 : 2);
+        break;
+      case EV.damageNumber: this.number(x, y, a, b); break;
+      case EV.heroHurt: this.shake = Math.max(this.shake, 1.5); break;
+      case EV.heroDash: this.addFx(FX_TRAIL, x, y, a, 0, 0, 0.25); break;
+      case EV.arc: this.addFx(FX_ARC, x, y, a, b, c, 0.16); break;
+      case EV.nova:
+        this.addFx(FX_RING, x, y, a, C.emberPale, 4, 0.28);
+        this.shake = Math.max(this.shake, 1);
+        break;
+      case EV.burst: this.addFx(FX_BURST, x, y, a, C.emberHot, 0, 0.22); break;
+      case EV.fissure: this.addFx(FX_FISSURE, x, y, a, b, c, 0.4); break;
+      case EV.skill:
+        this.addFx(FX_RING, x, y, a, C.ember, 5, 0.3);
+        this.shake = Math.max(this.shake, 1.5);
+        break;
+      case EV.ultTick: this.addFx(FX_RING, x, y - 6, a, C.emberHot, 2, 0.18); break;
+      case EV.levelUp: this.addFx(FX_RING, x, y, 120, C.emberPale, 3, 0.5); break;
+      case EV.evolution: this.addFx(FX_RING, x, y, 180, C.emberWhite, 6, 0.7); break;
+      case EV.waveWarning: this.addFx(FX_EDGE, 0, 0, a, b, 0, run.data.tuning.director.waveWarning); break;
+      case EV.telegraphHit:
+        if (a === TG_CIRCLE) this.addFx(FX_TELE_CIRCLE, x, y, c, 0, 0, 0.2);
+        else this.addFx(FX_TELE_LINE, x, y, b, c, 18, 0.2);
+        this.shake = Math.max(this.shake, 1.5);
+        break;
+      case EV.bossSpawn: this.shake = Math.max(this.shake, 3); break;
+      case EV.poiDone: this.addFx(FX_RING, x, y, 90, a === 1 ? C.teal : C.emberPale, 3, 0.5); break;
+      case EV.heroRevive: this.addFx(FX_RING, x, y, 110, C.emberWhite, 6, 0.5); break;
+      case EV.flameCall: this.addFx(FX_RING, x, y, 300, C.tealPale, 2, 0.6); break;
+      case EV.heroDeath: this.deathFade = 0.001; break;
+    }
+  }
+
+  /** Perce la couche sombre d'un disque de lumière. `warm` ajoute une teinte chaude (lanterne, feux). */
+  private light(x: number, y: number, radius: number, warm = 0): void {
+    if (this.lightCount >= MAX_LIGHTS || radius < 3) return;
+    const s = this.lights[this.lightCount++]!;
+    s.texture = lightDisc(radius);
+    s.position.set(Math.round(x), Math.round(y));
+    s.visible = true;
+    if (warm > 0 && this.warmCount < this.warms.length) {
+      const w = this.warms[this.warmCount++]!;
+      w.texture = s.texture;
+      w.position.copyFrom(s.position);
+      w.alpha = warm;
+      w.visible = true;
+    }
+  }
+
+  private renderLight(): void {
+    for (let i = this.lightCount; i < MAX_LIGHTS; i++) {
+      if (!this.lights[i]!.visible) break;
+      this.lights[i]!.visible = false;
+    }
+    for (let i = this.warmCount; i < this.warms.length; i++) this.warms[i]!.visible = false;
+    this.app.renderer.render({ container: this.lightScene, target: this.lightTexture, clear: true, clearColor: [0, 0, 0, 0] });
+  }
+
+  /** Dessine une image de l'expédition. `alpha` interpole entre les deux derniers pas. */
+  drawRun(run: Run, alpha: number, dtMs: number): void {
+    if (run !== this.currentRun) this.beginRun(run);
+    const dt = Math.min(0.1, dtMs / 1000);
+    const paused = run.phase !== 'playing';
+    if (!paused) this.clock += dt;
+    const time = this.clock;
+    const hero = run.hero;
+    const map = run.map;
+    const hx = hero.px + (hero.x - hero.px) * alpha;
+    const hy = hero.py + (hero.y - hero.py) * alpha;
+
+    // La caméra : centrée sur le héros, bornée à la carte, arrondie au pixel natif.
+    const mapPx = map.size * map.tile;
+    let camX = Math.round(Math.min(mapPx - VIEW_W, Math.max(0, hx - VIEW_W / 2)));
+    let camY = Math.round(Math.min(mapPx - VIEW_H, Math.max(0, hy - VIEW_H / 2 - 8)));
+    this.camX = camX;
+    this.camY = camY;
+    if (this.shake > 0.05 && this.settings.screenShake > 0) {
+      const amp = Math.min(3, this.shake) * this.settings.screenShake;
+      camX += Math.round(Math.sin(time * 97) * amp);
+      camY += Math.round(Math.cos(time * 83) * amp);
+      this.shake *= Math.pow(0.0005, dt);
+    } else {
+      this.shake = 0;
+    }
+    this.world.position.set(-camX, -camY);
+    this.numberLayer.position.set(-camX, -camY);
+    this.lightCount = 0;
+    this.warmCount = 0;
+    const lightX = (x: number): number => x - camX;
+    const lightY = (y: number): number => y - camY;
+
+    // Sol.
+    const tx0 = Math.floor(camX / map.tile);
+    const ty0 = Math.floor(camY / map.tile);
+    const cs = map.size + 1;
+    let ti = 0;
+    for (let r = 0; r < this.tileRows; r++) {
+      for (let c = 0; c < this.tileCols; c++) {
+        const s = this.tiles[ti++]!;
+        const tx = tx0 + c;
+        const ty = ty0 + r;
+        if (tx < 0 || ty < 0 || tx >= map.size || ty >= map.size) {
+          s.visible = false;
+          continue;
+        }
+        const k = ty * cs + tx;
+        const mask = map.corners[k]! * 8 + map.corners[k + 1]! * 4 + map.corners[k + cs]! * 2 + map.corners[k + cs + 1]!;
+        s.texture = this.tileTextures[mask]!;
+        s.position.set(tx * map.tile, ty * map.tile);
+        s.visible = true;
+      }
+    }
+
+    // Décors : seuls ceux de l'écran sont dessinés (la liste est triée par ordonnée).
+    let pi = 0;
+    const props = map.props;
+    let lo = 0;
+    let hi = props.length;
+    const top = camY - 8;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (props[mid]!.y < top) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let k = lo; k < props.length && pi < MAX_PROPS; k++) {
+      const p = props[k]!;
+      if (p.y > camY + VIEW_H + 100) break;
+      if (p.x < camX - 40 || p.x > camX + VIEW_W + 40) continue;
+      const s = this.propSprites[pi++]!;
+      s.texture = p.decor < 0 ? this.borderTexture : this.propTextures[p.decor]!;
+      s.position.set(p.x, p.y);
+      s.zIndex = p.y;
+      s.visible = true;
+    }
+    for (; pi < MAX_PROPS; pi++) {
+      if (!this.propSprites[pi]!.visible) break;
+      this.propSprites[pi]!.visible = false;
+    }
+
+    const g = this.groundFx;
+    g.clear();
+    const top2 = this.topFx;
+    top2.clear();
+
+    // Points d'intérêt.
+    const ev = run.data.tuning.events;
+    for (let k = 0; k < this.poiSprites.length; k++) {
+      const s = this.poiSprites[k]!;
+      const f = this.poiFlames[k]!;
+      const poi = map.pois[k];
+      if (!poi || poi.x < camX - 80 || poi.x > camX + VIEW_W + 80 || poi.y < camY - 80 || poi.y > camY + VIEW_H + 80) {
+        s.visible = false;
+        f.visible = false;
+        continue;
+      }
+      s.visible = true;
+      s.position.set(poi.x, poi.y + 10);
+      s.zIndex = poi.y + 4;
+      f.visible = false;
+      s.tint = 0xffffff;
+      if (poi.kind === 'brazier') {
+        s.texture = this.atlas.get('poi-brasero');
+        if (poi.state === 2) {
+          f.visible = true;
+          f.texture = this.flameFrames[Math.floor(time * 10 + k) % this.flameFrames.length]!;
+          f.position.set(poi.x, poi.y - 8);
+          f.zIndex = poi.y + 5;
+          this.light(lightX(poi.x), lightY(poi.y - 8), 96 + Math.round(Math.sin(time * 3 + k) * 2), 0.14);
+        } else {
+          g.circle(poi.x, poi.y, ev.brazier.radius).stroke({ width: 1, color: C.ember, alpha: 0.35 + Math.sin(time * 4) * 0.1 });
+          if (poi.state === 1) {
+            const frac = Math.min(1, poi.progress / ev.brazier.seconds);
+            g.moveTo(poi.x, poi.y).arc(poi.x, poi.y, ev.brazier.radius, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2).closePath()
+              .fill({ color: C.ember, alpha: 0.16 });
+            this.light(lightX(poi.x), lightY(poi.y - 8), 24 + frac * 50);
+          }
+        }
+      } else if (poi.kind === 'spring') {
+        s.texture = this.atlas.get('poi-source');
+        if (poi.state === 2) s.tint = 0x7f8a9a;
+        else this.light(lightX(poi.x), lightY(poi.y), 44);
+      } else if (poi.kind === 'cache') {
+        s.texture = this.atlas.get('poi-cache');
+        if (poi.state === 2) s.tint = 0x6b7285;
+      } else {
+        s.texture = this.atlas.get('poi-portail');
+        s.position.set(poi.x, poi.y + 22);
+        this.light(lightX(poi.x), lightY(poi.y), 84 + Math.round(Math.sin(time * 4) * 3), 0.14);
+      }
+    }
+
+    // Zones au sol du joueur : tons Braise, pâles, sous les ennemis.
+    const z = run.zones;
+    for (let i = 0; i < z.count; i++) {
+      const fade = Math.min(1, z.life[i]! / 0.4);
+      const flick = 0.85 + Math.sin(time * 9 + i) * 0.15;
+      g.circle(z.x[i]!, z.y[i]!, z.radius[i]!).fill({ color: C.emberDark, alpha: 0.22 * fade });
+      g.circle(z.x[i]!, z.y[i]!, z.radius[i]! * 0.7 * flick).fill({ color: C.emberHot, alpha: 0.2 * fade });
+      g.circle(z.x[i]!, z.y[i]!, z.radius[i]!).stroke({ width: 1, color: C.ember, alpha: 0.45 * fade });
+      this.light(lightX(z.x[i]!), lightY(z.y[i]!), z.radius[i]! + 14);
+    }
+
+    // Annonces d'attaque : magenta, hachurées, qui se remplissent pendant le délai.
+    const tg = run.telegraphs;
+    for (let i = 0; i < tg.count; i++) {
+      const frac = Math.min(1, tg.t[i]! / tg.duration[i]!);
+      if (tg.shape[i] === TG_CIRCLE) {
+        const r = tg.width[i]!;
+        g.circle(tg.x[i]!, tg.y[i]!, r).fill({ color: C.danger, alpha: 0.12 });
+        g.circle(tg.x[i]!, tg.y[i]!, r * frac).fill({ color: C.danger, alpha: 0.22 });
+        g.circle(tg.x[i]!, tg.y[i]!, r).stroke({ width: 1, color: C.danger, alpha: 0.9 });
+        for (let ring = 1; ring <= 3; ring++) g.circle(tg.x[i]!, tg.y[i]!, (r * ring) / 4).stroke({ width: 1, color: C.dangerDark, alpha: 0.5 });
+      } else {
+        const a = tg.angle[i]!;
+        const ux = Math.cos(a);
+        const uy = Math.sin(a);
+        const nx = -uy * (tg.width[i]! / 2);
+        const ny = ux * (tg.width[i]! / 2);
+        const x0 = tg.x[i]!;
+        const y0 = tg.y[i]!;
+        const len = tg.length[i]!;
+        g.poly([x0 + nx, y0 + ny, x0 + ux * len + nx, y0 + uy * len + ny, x0 + ux * len - nx, y0 + uy * len - ny, x0 - nx, y0 - ny])
+          .fill({ color: C.danger, alpha: 0.12 });
+        const fl = len * frac;
+        g.poly([x0 + nx, y0 + ny, x0 + ux * fl + nx, y0 + uy * fl + ny, x0 + ux * fl - nx, y0 + uy * fl - ny, x0 - nx, y0 - ny])
+          .fill({ color: C.danger, alpha: 0.24 });
+        g.poly([x0 + nx, y0 + ny, x0 + ux * len + nx, y0 + uy * len + ny, x0 + ux * len - nx, y0 + uy * len - ny, x0 - nx, y0 - ny])
+          .stroke({ width: 1, color: C.danger, alpha: 0.9 });
+        // Hachures : le danger ne se lit pas par la seule couleur.
+        for (let d = 10; d < len; d += 12) {
+          g.moveTo(x0 + ux * d + nx, y0 + uy * d + ny).lineTo(x0 + ux * (d - 8) - nx, y0 + uy * (d - 8) - ny)
+            .stroke({ width: 1, color: C.dangerDark, alpha: 0.55 });
+        }
+      }
+    }
+
+    // Arène du boss.
+    const d = run.director;
+    if (d.bossSpawned && !d.bossDead) {
+      g.circle(d.arenaX, d.arenaY, d.arenaR).stroke({ width: 3, color: C.dangerDark, alpha: 0.7 });
+      g.circle(d.arenaX, d.arenaY, d.arenaR + 4).stroke({ width: 1, color: C.danger, alpha: 0.5 + Math.sin(time * 3) * 0.2 });
+    }
+
+    // Ramassables.
+    const p = run.pickups;
+    for (let i = 0; i < p.count; i++) {
+      const s = this.pickupSprites[i]!;
+      const x = p.px[i]! + (p.x[i]! - p.px[i]!) * alpha;
+      const y = p.py[i]! + (p.y[i]! - p.py[i]!) * alpha;
+      if (x < camX - 16 || x > camX + VIEW_W + 16 || y < camY - 16 || y > camY + VIEW_H + 16) {
+        s.visible = false;
+        continue;
+      }
+      const kind = p.kind[i]!;
+      let tex = this.pickupTextures[kind]!;
+      if (kind === PK_GEM) {
+        const v = p.value[i]!;
+        const gems = run.data.tuning.gems;
+        tex = v >= gems.large ? this.atlas.get('pickup-gem-large') : v >= gems.medium ? this.atlas.get('pickup-gem-medium') : tex;
+      }
+      s.texture = tex;
+      const bob = kind === PK_CHEST ? 0 : Math.round(Math.sin(time * 4 + i * 0.7));
+      s.position.set(Math.round(x), Math.round(y) + bob);
+      s.visible = true;
+      if (kind === PK_CHEST) this.light(lightX(x), lightY(y), 26);
+      else if (kind === PK_CALL || kind === PK_DROP || kind === PK_RED_GEM) this.light(lightX(x), lightY(y), 12);
+      else this.light(lightX(x), lightY(y), 6);
+    }
+    for (let i = p.count; i < this.shownPickups; i++) this.pickupSprites[i]!.visible = false;
+    this.shownPickups = p.count;
+
+    // Ennemis : une direction, retournée ; clignotement blanc d'une image quand ils sont touchés.
+    const e = run.enemies;
+    const defs = run.data.enemies;
+    for (let i = 0; i < e.count; i++) {
+      const s = this.enemySprites[i]!;
+      const x = e.px[i]! + (e.x[i]! - e.px[i]!) * alpha;
+      const y = e.py[i]! + (e.y[i]! - e.py[i]!) * alpha;
+      const kind = e.kind[i]!;
+      if (x < camX - 70 || x > camX + VIEW_W + 70 || y < camY - 70 || y > camY + VIEW_H + 110) {
+        s.visible = false;
+        continue;
+      }
+      const frames = e.flash[i]! > 0 ? this.enemyWhite[kind]! : this.enemyFrames[kind]!;
+      const frozen = (e.status[i]! & ST_FROZEN) !== 0;
+      const frame = frozen ? 0 : Math.floor(time * 10 + (e.uid[i]! % 7)) % frames.length;
+      s.texture = frames[frame]!;
+      s.anchor.set(0.5, this.enemyAnchor[kind]!);
+      s.scale.x = e.facing[i]! < 0 ? -1 : 1;
+      s.position.set(Math.round(x), Math.round(y));
+      s.zIndex = y;
+      const st = e.status[i]!;
+      s.tint = st & ST_FROZEN || st & ST_SLOW ? 0x9fd8ff : st & ST_BURN ? 0xffc79a : 0xffffff;
+      s.visible = true;
+      const def = defs[kind]!;
+      if (def.rank === 'elite') {
+        // Barre de vie : seulement sur les élites (le boss a la sienne dans l'interface).
+        const w = 30;
+        const frac = Math.max(0, e.hp[i]! / e.maxHp[i]!);
+        top2.rect(x - w / 2 - 1, y - 40, w + 2, 4).fill({ color: C.night, alpha: 0.9 });
+        top2.rect(x - w / 2, y - 39, w * frac, 2).fill({ color: C.danger });
+      }
+    }
+    for (let i = e.count; i < this.shownEnemies; i++) this.enemySprites[i]!.visible = false;
+    this.shownEnemies = e.count;
+
+    // Héros.
+    const frames = hero.moving || hero.dashT > 0 ? this.heroWalk[hero.facing]! : this.heroIdle[hero.facing]!;
+    const rate = hero.moving ? 12 : 5;
+    this.hero.texture = frames[Math.floor(time * rate) % frames.length]!;
+    this.hero.position.set(Math.round(hx), Math.round(hy));
+    this.hero.zIndex = hy;
+    const blink = hero.invuln > 0 && hero.dashT <= 0 && Math.floor(time * 20) % 2 === 0;
+    this.hero.alpha = run.phase === 'dead' ? Math.max(0, 1 - this.deathFade * 1.5) : blink ? 0.35 : 1;
+    this.hero.tint = hero.invuln > 0 && hero.dashT <= 0 ? 0xff9ac0 : hero.buffT > 0 ? 0xffdfae : 0xffffff;
+    for (let k = 0; k < this.ghost.length; k++) {
+      const gs = this.ghost[k]!;
+      if (hero.dashT > 0) {
+        gs.visible = true;
+        gs.texture = this.hero.texture;
+        gs.position.set(Math.round(hx - hero.dashX * (k + 1) * 9), Math.round(hy - hero.dashY * (k + 1) * 9));
+        gs.alpha = 0.4 - k * 0.11;
+        gs.tint = C.ember;
+        gs.zIndex = hy - 1;
+      } else {
+        gs.visible = false;
+      }
+    }
+    // Anneau de rechargement de la ruée, sous le héros.
+    const dash = run.data.tuning.dash;
+    if (hero.dashCd > 0) {
+      const frac = 1 - hero.dashCd / dash.cooldown;
+      g.moveTo(hx + 9, hy + 1).arc(hx, hy + 1, 9, 0, frac * Math.PI * 2).stroke({ width: 1, color: C.emberPale, alpha: 0.7 });
+    } else {
+      g.circle(hx, hy + 1, 9).stroke({ width: 1, color: C.ember, alpha: 0.35 });
+    }
+    // Ultime en cours : un tourbillon autour du héros.
+    if (hero.ultT > 0) {
+      const r = run.cls.ultimate.radius;
+      for (let k = 0; k < 3; k++) {
+        const a0 = time * 14 + (k * Math.PI * 2) / 3;
+        top2.moveTo(hx + Math.cos(a0) * r, hy - 6 + Math.sin(a0) * r * 0.85).arc(hx, hy - 6, r, a0, a0 + 1.3)
+          .stroke({ width: 3, color: C.emberHot, alpha: 0.55 });
+      }
+      g.circle(hx, hy - 6, r).fill({ color: C.emberHot, alpha: 0.1 });
+      this.light(lightX(hx), lightY(hy), r + 20);
+    }
+    if (hero.buffT > 0) g.circle(hx, hy, 12 + Math.sin(time * 10) * 1.5).stroke({ width: 1, color: C.emberHot, alpha: 0.6 });
+
+    // Lucioles en orbite.
+    let oi = 0;
+    for (const w of run.weapons) {
+      const def = run.data.weapons[w.def]!;
+      if (def.behavior !== 'orbit' || w.phase === 0) continue;
+      const count = weaponParams(run, w).count;
+      for (let k = 0; k < count && oi < this.orbSprites.length; k++) {
+        const o = orbPosition(run, w, k, hx, hy);
+        const s = this.orbSprites[oi++]!;
+        s.position.set(Math.round(o.x), Math.round(o.y));
+        s.visible = true;
+        s.alpha = 0.9;
+        this.light(lightX(o.x), lightY(o.y), 12);
+      }
+    }
+    for (; oi < this.orbSprites.length; oi++) this.orbSprites[oi]!.visible = false;
+
+    // Projectiles du joueur.
+    const sh = run.shots;
+    for (let i = 0; i < sh.count; i++) {
+      const s = this.shotSprites[i]!;
+      let x = sh.px[i]! + (sh.x[i]! - sh.px[i]!) * alpha;
+      let y = sh.py[i]! + (sh.y[i]! - sh.py[i]!) * alpha;
+      const sprite = sh.sprite[i]!;
+      s.texture = this.shotTextures[sprite]!;
+      if (sh.kind[i] === SHOT_LOB) {
+        // Un lobé monte puis retombe : la hauteur est un effet de rendu.
+        const total = sh.t[i]! || 1;
+        const k = 1 - sh.life[i]! / total;
+        y -= Math.sin(Math.min(1, Math.max(0, k)) * Math.PI) * 42;
+        s.rotation = time * 12;
+      } else {
+        s.rotation = sprite === 1 ? Math.atan2(sh.vy[i]!, sh.vx[i]!) : 0;
+      }
+      x = Math.round(x);
+      y = Math.round(y);
+      s.position.set(x, y);
+      s.alpha = 0.9;
+      s.visible = true;
+      if (sprite !== 1) this.light(lightX(x), lightY(y), 12);
+    }
+    for (let i = sh.count; i < this.shownShots; i++) this.shotSprites[i]!.visible = false;
+    this.shownShots = sh.count;
+    // Projectiles ennemis : magenta plein, toujours au-dessus.
+    const es = run.enemyShots;
+    for (let i = 0; i < es.count; i++) {
+      const s = this.enemyShotSprites[i]!;
+      s.position.set(Math.round(es.px[i]! + (es.x[i]! - es.px[i]!) * alpha), Math.round(es.py[i]! + (es.y[i]! - es.py[i]!) * alpha));
+      s.visible = true;
+    }
+    for (let i = es.count; i < this.shownEnemyShots; i++) this.enemyShotSprites[i]!.visible = false;
+    this.shownEnemyShots = es.count;
+
+    this.drawFx(run, dt, paused, top2, g, hx, hy);
+    this.drawOverlay(run, time, camX, camY);
+
+    // La lueur : un disque chaud autour de la lanterne ; son rayon est la statistique Lueur plus 24 px.
+    let glow = hero.stats.glow + 24 + Math.round(Math.sin(time * 1.6) * 2);
+    if (run.phase === 'dead') {
+      this.deathFade = Math.min(1.2, this.deathFade + dt * 0.8);
+      glow *= Math.max(0, 1 - this.deathFade);
+      this.darkness.alpha = Math.min(1, run.region.darkness.opacity + this.deathFade * 0.5);
+    }
+    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : 0.1);
+    this.renderLight();
+    this.app.renderer.render(this.app.stage);
+  }
+
+  private drawFx(run: Run, dt: number, paused: boolean, top: Graphics, ground: Graphics, hx: number, hy: number): void {
+    for (let i = this.fxCount - 1; i >= 0; i--) {
+      const f = this.fx[i]!;
+      if (!paused) f.t += dt;
+      const k = Math.min(1, f.t / f.dur);
+      const fade = 1 - k;
+      switch (f.type) {
+        case FX_ARC: {
+          // L'arc de la lame : pâle et sans contour, pour laisser voir les dangers.
+          const range = Math.abs(f.c);
+          const half = (f.b * Math.PI) / 360;
+          const sweep = f.c < 0 ? 1 - k : k;
+          if (f.b >= 360) {
+            top.circle(hx, hy - 4, range).stroke({ width: 6, color: C.ember, alpha: 0.5 * fade });
+            top.circle(hx, hy - 4, range - 5).stroke({ width: 2, color: C.emberWhite, alpha: 0.6 * fade });
+          } else {
+            const a0 = f.a - half;
+            const a1 = f.a - half + half * 2 * Math.min(1, sweep * 1.6 + 0.3);
+            top.moveTo(hx + Math.cos(a0) * range, hy - 4 + Math.sin(a0) * range).arc(hx, hy - 4, range, a0, a1)
+              .stroke({ width: 7, color: C.ember, alpha: 0.5 * fade });
+            top.moveTo(hx + Math.cos(a0) * (range - 3), hy - 4 + Math.sin(a0) * (range - 3)).arc(hx, hy - 4, range - 3, a0, a1)
+              .stroke({ width: 2, color: C.emberWhite, alpha: 0.7 * fade });
+            ground.moveTo(hx, hy - 4).arc(hx, hy - 4, range, f.a - half, f.a + half).closePath().fill({ color: C.emberPale, alpha: 0.1 * fade });
+          }
+          break;
+        }
+        case FX_RING:
+          top.circle(f.x, f.y, f.a * (0.25 + 0.75 * k)).stroke({ width: f.c, color: f.b, alpha: 0.7 * fade });
+          break;
+        case FX_BURST:
+          ground.circle(f.x, f.y, f.a * (0.5 + 0.5 * k)).fill({ color: f.b, alpha: 0.35 * fade });
+          top.circle(f.x, f.y, f.a * (0.5 + 0.5 * k)).stroke({ width: 2, color: C.emberPale, alpha: 0.6 * fade });
+          break;
+        case FX_FISSURE: {
+          const len = f.b * Math.min(1, k * 3);
+          ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * len, f.y + Math.sin(f.a) * len).stroke({ width: f.c, color: C.emberDark, alpha: 0.4 * fade });
+          ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * len, f.y + Math.sin(f.a) * len).stroke({ width: 2, color: C.emberPale, alpha: 0.8 * fade });
+          break;
+        }
+        case FX_TELE_CIRCLE:
+          ground.circle(f.x, f.y, f.a).fill({ color: C.danger, alpha: 0.5 * fade });
+          break;
+        case FX_TELE_LINE:
+          ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * f.b, f.y + Math.sin(f.a) * f.b).stroke({ width: f.c, color: C.danger, alpha: 0.55 * fade });
+          break;
+        case FX_TRAIL:
+          ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * 110, f.y + Math.sin(f.a) * 110).stroke({ width: 4, color: C.ember, alpha: 0.3 * fade });
+          break;
+        case FX_EDGE: {
+          // Un tracé rouge sur le bord de l'écran, du côté d'où vient la vague.
+          const s = this.screenFx;
+          const pulse = 0.45 + Math.sin(f.t * 18) * 0.25;
+          if (f.b > 0) {
+            s.rect(0, 0, VIEW_W, 3).fill({ color: C.danger, alpha: pulse });
+            s.rect(0, VIEW_H - 3, VIEW_W, 3).fill({ color: C.danger, alpha: pulse });
+            s.rect(0, 0, 3, VIEW_H).fill({ color: C.danger, alpha: pulse });
+            s.rect(VIEW_W - 3, 0, 3, VIEW_H).fill({ color: C.danger, alpha: pulse });
+          } else {
+            const ux = Math.cos(f.a);
+            const uy = Math.sin(f.a);
+            if (Math.abs(ux) > Math.abs(uy)) s.rect(ux > 0 ? VIEW_W - 4 : 0, VIEW_H * 0.2, 4, VIEW_H * 0.6).fill({ color: C.danger, alpha: pulse });
+            else s.rect(VIEW_W * 0.2, uy > 0 ? VIEW_H - 4 : 0, VIEW_W * 0.6, 4).fill({ color: C.danger, alpha: pulse });
+          }
+          break;
+        }
+      }
+      if (f.t >= f.dur) {
+        const last = this.fx[--this.fxCount]!;
+        this.fx[i] = last;
+        this.fx[this.fxCount] = f;
+      }
+    }
+    for (const pf of this.puffs) {
+      if (pf.t < 0) continue;
+      if (!paused) pf.t += dt;
+      const frame = Math.floor(pf.t * pf.rate);
+      if (frame >= pf.frames.length) {
+        pf.t = -1;
+        pf.sprite.visible = false;
+      } else {
+        pf.sprite.texture = pf.frames[frame]!;
+      }
+    }
+    for (const n of this.numbers) {
+      if (n.t < 0) continue;
+      if (!paused) n.t += dt;
+      if (n.t > 0.6) {
+        n.t = -1;
+        n.box.visible = false;
+        continue;
+      }
+      n.box.position.set(Math.round(n.x), Math.round(n.y - n.t * 22));
+      n.box.alpha = n.t > 0.4 ? 1 - (n.t - 0.4) / 0.2 : 1;
+    }
+  }
+
+  /** Flèches vers ce qui est hors champ : élites, boss, point d'intérêt suivi, portail. */
+  private drawOverlay(run: Run, time: number, camX: number, camY: number): void {
+    let used = 0;
+    const cx = VIEW_W / 2;
+    const cy = VIEW_H / 2;
+    const arrow = (wx: number, wy: number, tint: number): void => {
+      if (used >= this.arrows.length) return;
+      const sx = wx - camX;
+      const sy = wy - camY;
+      if (sx > 8 && sx < VIEW_W - 8 && sy > 8 && sy < VIEW_H - 8) return;
+      const a = Math.atan2(sy - cy, sx - cx);
+      const s = this.arrows[used++]!;
+      const k = Math.min((cx - 14) / Math.abs(Math.cos(a) || 1e-6), (cy - 14) / Math.abs(Math.sin(a) || 1e-6));
+      s.position.set(Math.round(cx + Math.cos(a) * k), Math.round(cy + Math.sin(a) * k));
+      s.rotation = a + Math.PI / 2;
+      s.tint = tint;
+      s.alpha = 0.75 + Math.sin(time * 6) * 0.2;
+      s.visible = true;
+    };
+    const e = run.enemies;
+    for (let i = 0; i < e.count; i++) {
+      if (run.data.enemies[e.kind[i]!]!.rank !== 'normal') arrow(e.x[i]!, e.y[i]!, C.danger);
+    }
+    // Le point d'intérêt le plus proche encore à faire, ou le portail.
+    let target: { x: number; y: number } | null = null;
+    let best = Infinity;
+    for (const poi of run.map.pois) {
+      if (poi.state === 2) continue;
+      if (poi.kind === 'portal') {
+        target = poi;
+        break;
+      }
+      const dist = Math.hypot(poi.x - run.hero.x, poi.y - run.hero.y);
+      if (dist < best) {
+        best = dist;
+        target = poi;
+      }
+    }
+    if (target && !(run.director.bossSpawned && !run.director.bossDead)) arrow(target.x, target.y, C.emberPale);
+    const p = run.pickups;
+    for (let i = 0; i < p.count; i++) if (p.kind[i] === PK_CHEST) arrow(p.x[i]!, p.y[i]!, C.ember);
+    for (; used < this.arrows.length; used++) this.arrows[used]!.visible = false;
+  }
+
+  /** Efface le tracé d'écran (appelé au début de chaque image). */
+  beginFrame(): void {
+    this.screenFx.clear();
+  }
+
+  /** Le camp : le fond des menus, entre deux expéditions. */
+  drawCamp(timeMs: number, lit: boolean, heroSprite: string): void {
+    const a = this.atlas;
+    if (!this.campBuilt) {
+      this.campBuilt = true;
+      for (let y = 0; y < 12; y++) {
+        for (let x = 0; x < 20; x++) {
+          const near = Math.hypot(x - 9.5, y - 6.5);
+          const mask = near < 3.2 ? 15 : near < 4.2 ? [7, 11, 13, 14][(x + y) % 4]! : 0;
+          const s = new Sprite(a.get(`tile-bois-${mask}`));
+          s.position.set(x * 32, y * 32 - 12);
+          this.camp.addChild(s);
+        }
+      }
+      const prop = (name: string, x: number, y: number): void => {
+        const s = new Sprite(a.get(name));
+        s.anchor.set(0.5, 0.92);
+        s.position.set(x, y);
+        this.camp.addChild(s);
+      };
+      prop('decor-arbre', 60, 120); prop('decor-arbre', 130, 70); prop('decor-arbre', 560, 110); prop('decor-arbre', 600, 230);
+      prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
+      prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
+      prop('poi-brasero', 320, 196);
+      this.campFlame = new Sprite(this.flameFrames[0]!);
+      this.campFlame.anchor.set(0.5, 1);
+      this.campFlame.position.set(320, 176);
+      this.camp.addChild(this.campFlame);
+      this.campHero = new Sprite(Texture.EMPTY);
+      this.campHero.anchor.set(0.5, 0.8);
+      this.campHero.position.set(366, 214);
+      this.camp.addChild(this.campHero);
+    }
+    this.currentRun = null;
+    this.camp.visible = true;
+    this.world.visible = false;
+    this.numberLayer.visible = false;
+    this.screen.visible = false;
+    const t = timeMs / 1000;
+    this.campFlame.texture = this.flameFrames[Math.floor(t * 10) % this.flameFrames.length]!;
+    this.campFlame.visible = true;
+    this.campFlame.scale.set(lit ? 2 : 1);
+    const idle = a.anim(`${heroSprite}-idle-1`);
+    this.campHero.texture = idle[Math.floor(t * 5) % idle.length]!;
+    this.darkness.tint = C.night;
+    this.darkness.alpha = lit ? 0.4 : 0.52;
+    this.lightCount = 0;
+    this.warmCount = 0;
+    this.light(320, 176, (lit ? 150 : 104) + Math.round(Math.sin(t * 3) * 2), 0.13);
+    this.light(366, 204, 40);
+    this.renderLight();
+    this.app.renderer.render(this.app.stage);
+  }
+}
