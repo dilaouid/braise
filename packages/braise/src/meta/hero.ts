@@ -1,5 +1,6 @@
 import type { Attribute, ClassDef, GameData, HeroTuning, StatBonus } from '../content/index.ts';
 import { addBonus, emptySheet, type Attributes, type StatSheet } from '../core/stats.ts';
+import { resolveLantern } from './lantern.ts';
 import { CURRENCY_CAP, newHero, type HeroSave, type Save } from './save.ts';
 import type { RunResult } from '../core/rewards.ts';
 
@@ -77,6 +78,10 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     if (rank <= 0 || save.account.altarDisabled.includes(boost.id)) continue;
     addBonus(sheet, boost.perRank, rank);
     sources.push({ label: boost.id, bonus: boost.perRank, times: rank });
+  }
+  for (const source of resolveLantern(data, save.account.lantern).sources) {
+    addBonus(sheet, source.bonus, source.times);
+    sources.push(source);
   }
   return { sheet, sources };
 }

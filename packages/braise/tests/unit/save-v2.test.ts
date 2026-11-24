@@ -107,7 +107,8 @@ describe('migration v1 → v2', () => {
     expect(v2.run).toBeNull();
     expect(v2.heroes[CLASS]).toEqual({ ...v1.heroes[CLASS], loadouts: [], equipment: {} });
     // Le compte, les réglages et les dates sont ceux de M1, au champ près.
-    expect(v2.account).toEqual(v1.account);
+    // La Lanterne, plus récente, y est ajoutée neuve.
+    expect(v2.account).toEqual({ ...v1.account, lantern: newSave(0).account.lantern });
     expect(v2.settings).toEqual(v1.settings);
     expect(v2.activeHero).toBe(v1.activeHero);
     expect({ createdAt: v2.createdAt, updatedAt: v2.updatedAt, playSeconds: v2.playSeconds })

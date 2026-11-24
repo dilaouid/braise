@@ -70,6 +70,23 @@ export interface RunSnapshot {
   state: unknown;
 }
 
+/** Le nombre de faces de la Lanterne. */
+export const LANTERN_FACES = 4;
+
+/** La Lanterne du compte : ce qu'on possède, ce qu'on a posé, ce qui est ouvert. */
+export interface LanternSave {
+  /** Les pièces possédées. */
+  owned: string[];
+  /** Les pièces et les faces (« face.2 ») déjà vues dans son écran. */
+  seen: string[];
+  /** La pièce posée sur chaque face, ou `null`. */
+  faces: Array<string | null>;
+  /** Le nombre de faces ouvertes, de 1 à 4. */
+  opened: number;
+  /** Les victoires avec au moins une pièce posée. */
+  wins: number;
+}
+
 export interface SaveV2 {
   version: 2;
   createdAt: number;
@@ -90,6 +107,7 @@ export interface SaveV2 {
     regions: Record<string, { lit: boolean; bestVigil: number; bossKills: number }>;
     abyss: { bestDepth: number };
     stats: Record<string, number>;
+    lantern: LanternSave;
   };
   heroes: Record<string, HeroSave>;
   activeHero: string | null;
@@ -143,6 +161,11 @@ export function newHero(): HeroSave {
   };
 }
 
+/** Une Lanterne neuve : une face ouverte, aucune pièce. */
+export function newLantern(): LanternSave {
+  return { owned: [], seen: [], faces: new Array<string | null>(LANTERN_FACES).fill(null), opened: 1, wins: 0 };
+}
+
 /** Une sauvegarde neuve. `now` est fourni par l'appelant : `meta` ne lit pas l'horloge. */
 export function newSave(now: number): Save {
   return {
@@ -153,7 +176,7 @@ export function newSave(now: number): Save {
       materials: { filings: 0, essence: 0, hearts: 0 },
       altar: {}, altarDisabled: [], camp: {}, npcs: [], unlocks: [],
       codex: { kills: {}, seen: [], steles: [] },
-      regions: {}, abyss: { bestDepth: 0 }, stats: {},
+      regions: {}, abyss: { bestDepth: 0 }, stats: {}, lantern: newLantern(),
     },
     heroes: {},
     activeHero: null,
@@ -188,6 +211,27 @@ function cleanEquipment(raw: unknown): Record<string, ItemSave | null> {
   for (const [slot, item] of Object.entries(raw)) {
     if (item === null) out[slot] = null;
     else if (isRecord(item) && typeof item.base === 'string') out[slot] = { ...item } as ItemSave;
+  }
+  return out;
+}
+
+/** Les chaînes d'une liste lue, sans doublon. */
+function cleanStrings(raw: unknown): string[] {
+  return Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string'))] : [];
+}
+
+/** La Lanterne lue. Une face ne garde qu'une pièce possédée, posée une seule fois, sur une face ouverte. */
+function cleanLantern(raw: unknown): LanternSave {
+  const out = newLantern();
+  if (!isRecord(raw)) return out;
+  out.owned = cleanStrings(raw.owned);
+  out.seen = cleanStrings(raw.seen);
+  out.opened = Math.min(LANTERN_FACES, Math.max(1, Math.floor(num(raw.opened, 1))));
+  out.wins = Math.max(0, Math.floor(num(raw.wins, 0)));
+  const faces: unknown[] = Array.isArray(raw.faces) ? raw.faces : [];
+  for (let i = 0; i < out.opened; i++) {
+    const id = faces[i];
+    if (typeof id === 'string' && out.owned.includes(id) && !out.faces.includes(id)) out.faces[i] = id;
   }
   return out;
 }
@@ -235,6 +279,7 @@ export function validateSave(raw: unknown): Save {
       regions: { ...(a.regions ?? {}) },
       abyss: { ...base.account.abyss, ...(a.abyss ?? {}) },
       stats: { ...(a.stats ?? {}) },
+      lantern: cleanLantern(a.lantern),
     },
     heroes: {},
     activeHero: typeof r.activeHero === 'string' ? r.activeHero : null,
