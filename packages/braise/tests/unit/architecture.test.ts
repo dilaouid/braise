@@ -48,6 +48,15 @@ describe('règles de dépendance', () => {
     }
   });
 
+  it('le jeu n\'importe jamais l\'éditeur de texte (outil de développement)', () => {
+    for (const dir of ['core', 'meta', 'content', 'render', 'ui', 'audio', 'app']) {
+      const list = readdirSync(join(src, dir)).filter((f) => /\.tsx?$/.test(f)).map((f) => join(src, dir, f));
+      for (const file of list) {
+        for (const spec of imports(file)) expect(spec.includes('editor'), `${file} importe ${spec}`).toBe(false);
+      }
+    }
+  });
+
   it('window.OwlHost n\'est lu que dans le kit', () => {
     for (const dir of ['core', 'meta', 'content', 'render', 'ui', 'audio', 'app']) {
       let list: string[] = [];
