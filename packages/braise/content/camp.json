@@ -1,0 +1,12 @@
+{
+  "speed": 90,
+  "bounds": { "x": 320, "y": 214, "rx": 172, "ry": 104 },
+  "objects": [
+    { "id": "door", "x": 320, "y": 204, "reach": 60, "stand": [320, 222], "solid": { "rx": 32, "ry": 10 } },
+    { "id": "altar", "x": 196, "y": 206, "reach": 36, "stand": [196, 226], "solid": { "rx": 25, "ry": 11 } },
+    { "id": "lantern", "x": 262, "y": 220, "reach": 30, "stand": [254, 234], "solid": { "rx": 12, "ry": 7 } },
+    { "id": "cream", "x": 288, "y": 220, "reach": 30, "stand": [294, 234], "solid": { "rx": 14, "ry": 7 } },
+    { "id": "memories", "x": 236, "y": 148, "reach": 34, "stand": [236, 168], "solid": { "rx": 18, "ry": 9 } },
+    { "id": "fire", "x": 414, "y": 208, "reach": 0, "stand": [392, 222], "solid": { "rx": 22, "ry": 11 } }
+  ]
+}

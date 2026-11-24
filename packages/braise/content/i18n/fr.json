@@ -549,5 +549,11 @@
   "hud.hunt": "Chasse : +{n} % de Puissance",
   "end.piece": "Pièce de Lanterne : {name}",
   "end.pieceLost": "Pièce de Lanterne perdue : {name}",
-  "end.lanternFace": "La face {n} de la Lanterne s'ouvre."
+  "end.lanternFace": "La face {n} de la Lanterne s'ouvre.",
+
+  "camp.object.door": "Porte",
+  "camp.object.altar": "Autel",
+  "camp.object.lantern": "Lanterne",
+  "camp.object.cream": "Cream",
+  "camp.object.memories": "Souvenirs"
 }

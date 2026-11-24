@@ -184,6 +184,33 @@ export const lanternSchema = z
   })
   .strict();
 
+const pointSchema = z.tuple([z.number(), z.number()]);
+
+/** Le refuge : où Moon marche, et ce qu'il peut y ouvrir. Positions en pixels de l'image (640 × 360). */
+export const campSchema = z
+  .object({
+    /** Vitesse de Moon, en pixels par seconde. */
+    speed: z.number().positive(),
+    /** La clairière : une ellipse. */
+    bounds: z.object({ x: z.number(), y: z.number(), rx: z.number().positive(), ry: z.number().positive() }).strict(),
+    objects: z.array(
+      z
+        .object({
+          id: z.string().regex(/^[a-z-]+$/),
+          x: z.number(),
+          y: z.number(),
+          /** Distance à laquelle Moon l'ouvre ; 0 : un décor. */
+          reach: z.number().nonnegative(),
+          /** Où Moon s'arrête quand il y va de lui-même. */
+          stand: pointSchema,
+          /** L'obstacle au sol : une ellipse. */
+          solid: z.object({ rx: z.number().nonnegative(), ry: z.number().nonnegative() }).strict(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
 /** Un prix qui monte à chaque achat. */
 const priceSchema = z.object({ base: z.number().int().nonnegative(), step: z.number().int().nonnegative() }).strict();
 
@@ -605,6 +632,8 @@ export type WeaponRaw = z.infer<typeof weaponSchema>;
 export type EvolutionRaw = z.infer<typeof evolutionSchema>;
 export type RelicRaw = z.infer<typeof relicSchema>;
 export type StatBonus = z.infer<typeof statBonusSchema>;
+export type CampDef = z.infer<typeof campSchema>;
+export type CampObject = CampDef['objects'][number];
 export type RunModsRaw = z.infer<typeof runModsSchema>;
 export type PieceEffect = z.infer<typeof pieceEffectSchema>;
 export type LanternRaw = z.infer<typeof lanternSchema>;

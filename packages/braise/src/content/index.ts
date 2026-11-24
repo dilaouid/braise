@@ -9,6 +9,7 @@ import boonsJson from '../../content/boons.json';
 import findsJson from '../../content/finds.json';
 import dialoguesJson from '../../content/dialogues.json';
 import tutorialJson from '../../content/tutorial.json';
+import campJson from '../../content/camp.json';
 import lanternJson from '../../content/lantern.json';
 import memoriesJson from '../../content/memories.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
@@ -16,9 +17,9 @@ import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
 import {
-  altarBoostSchema, boonSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
+  altarBoostSchema, boonSchema, campSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
   lanternSchema, memoriesSchema, regionSchema, relicSchema, weaponSchema,
-  type AltarBoostRaw, type Attribute, type BoonDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
+  type AltarBoostRaw, type Attribute, type BoonDef, type CampDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
   type PieceEffect, type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
 import { CINEMATICS_RAW } from './cinematic.ts';
@@ -27,7 +28,7 @@ import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial
 
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
 export type {
-  Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, FindDef, PieceEffect, RunModsRaw,
+  Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, CampDef, CampObject, FindDef, PieceEffect, RunModsRaw,
 } from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
@@ -161,6 +162,8 @@ export interface GameData {
   memories: MemoryDef[];
   /** Le nombre d'emplacements de souvenirs montrés au refuge. */
   memoriesTotal: number;
+  /** Le refuge. */
+  camp: CampDef;
   /** Les pièces de la Lanterne. */
   lantern: LanternDef;
   /** Les scènes de route, par identifiant. */
@@ -182,6 +185,7 @@ export const RAW = {
   tutorial: tutorialJson as unknown,
   memories: memoriesJson as unknown,
   lantern: lanternJson as unknown,
+  camp: campJson as unknown,
   scenes: SCENES_RAW,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
@@ -218,10 +222,11 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   const boons = check(z.array(boonSchema), raw.boons, 'boons.json', errors);
   const finds = check(z.array(findSchema), raw.finds, 'finds.json', errors);
   const memoriesRaw = check(memoriesSchema, raw.memories, 'memories.json', errors);
+  const camp = check(campSchema, raw.camp, 'camp.json', errors);
   const lanternRaw = check(lanternSchema, raw.lantern, 'lantern.json', errors);
   const regionsRaw = raw.regions.map((r, i) => check(regionSchema, r, `regions[${i}]`, errors));
   const classesRaw = raw.classes.map((c, i) => check(classSchema, c, `classes[${i}]`, errors));
-  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw || !lanternRaw
+  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw || !lanternRaw || !camp
     || regionsRaw.includes(null) || classesRaw.includes(null)) {
     return { data: null, errors };
   }
@@ -402,6 +407,17 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${m.id}.name`);
   }
 
+  unique(camp.objects.map((o) => o.id), 'camp.json');
+  const inside = (x: number, y: number, e: { x: number; y: number; rx: number; ry: number }): boolean =>
+    e.rx > 0 && e.ry > 0 && Math.hypot((x - e.x) / e.rx, (y - e.y) / e.ry) < 1;
+  for (const o of camp.objects) {
+    if (o.reach > 0) needText(`camp.object.${o.id}`);
+    if (!inside(o.stand[0], o.stand[1], camp.bounds)) errors.push(`camp.json: « ${o.id} », point d'arrêt hors de la clairière`);
+    for (const other of camp.objects) {
+      if (inside(o.stand[0], o.stand[1], { x: other.x, y: other.y, ...other.solid })) errors.push(`camp.json: « ${o.id} », point d'arrêt dans « ${other.id} »`);
+    }
+  }
+
   const pieces: PieceDef[] = [
     ...lanternRaw.runes.map((r) => ({ ...r, kind: 'rune' as const, shifts: { next: 0, previous: 0, opposite: 0 }, clearsOpposite: false })),
     ...lanternRaw.glasses.map((g) => ({ ...g, kind: 'glass' as const, levels: [] })),
@@ -432,7 +448,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
 
   if (errors.length > 0 || !tuto) return { data: null, errors };
   return {
-    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes,
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes, camp,
       lantern: { pieces, drops: lanternRaw.drops, winsForThird: lanternRaw.winsForThird } },
     errors,
   };
