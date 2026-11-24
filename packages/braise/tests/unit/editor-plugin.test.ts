@@ -38,6 +38,57 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+describe('greffon de l\'éditeur : écriture sans demi-mesure', () => {
+  it('si le second renommage échoue, le premier fichier est remis comme avant et rien ne traîne', async () => {
+    const { rename } = await import('node:fs/promises');
+    const failing = createEditorApi({
+      contentDir: dir,
+      validate: async () => [],
+      fs: {
+        rename: async (from: string, to: string) => {
+          if (to.endsWith('fr.json')) throw new Error('disque plein');
+          await rename(from, to);
+        },
+      },
+    });
+    const c = await failing.readContent();
+    const before = snapshot(dir);
+    const res = await failing.save({
+      files: {
+        dialogues: c.files.dialogues.replace('{"seconds":1.2,', '{"seconds":2,'),
+        fr: c.files.fr.replace('"Encore."', '"Encore !"'),
+      },
+      hashes: c.hashes,
+    });
+    expect(res.status).toBe(500);
+    expect((res.body as { message: string }).message).toContain('disque plein');
+    expect(snapshot(dir)).toEqual(before);
+    // Les empreintes de départ restent bonnes : l'enregistrement suivant passe.
+    const again = await api.save({ files: { ...c.files, fr: c.files.fr.replace('"Encore."', '"Encore !"') }, hashes: c.hashes });
+    expect(again.status).toBe(200);
+  });
+});
+
+describe('greffon de l\'éditeur : copie de contenu et page du jeu', () => {
+  it('dit quel dossier il lit, et si c\'est une copie', async () => {
+    const copied = createEditorApi({ contentDir: dir, validate: async () => [], override: true });
+    const c = await copied.readContent();
+    expect(c.override).toBe(true);
+    expect(c.contentDir).toBe(dir);
+    expect((await api.readContent()).override).toBe(false);
+  });
+
+  it('pose l\'écoute du rechargement dans index.html avant le jeu, et pas dans editor.html', async () => {
+    const plugin = (await import('../../tools/vite-editor.ts')).default();
+    const hook = plugin.transformIndexHtml as unknown as (html: string, ctx: { path: string }) => unknown;
+    const game = JSON.stringify(hook('<html></html>', { path: '/index.html' }));
+    expect(game).toContain('braise:content');
+    expect(game).toContain('location.reload');
+    expect(game).toContain('head-prepend');
+    expect(hook('<html></html>', { path: '/editor.html' }) ?? []).toEqual([]);
+  });
+});
+
 describe('greffon de l\'éditeur : lecture', () => {
   it('rend les deux fichiers, leurs empreintes, le tutoriel et les cinématiques', async () => {
     const c = await api.readContent();

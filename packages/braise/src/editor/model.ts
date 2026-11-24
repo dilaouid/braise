@@ -31,6 +31,27 @@ export interface EditLine {
   sfx: string;
   /** Durée d'un silence, en secondes ; 0 pour une réplique. */
   seconds: number;
+  /** Un identifiant propre à ce message dans la page, qui le suit quand il bouge ou change (jamais écrit). */
+  uid?: string;
+  /** La réplique qu'un silence a remplacée : elle revient si le message reparle avant l'enregistrement (jamais écrite). */
+  kept?: { key: string; text: string; face: string };
+}
+
+let uidSeq = 0;
+/** Un nouvel identifiant de message. */
+export function newUid(): string {
+  uidSeq += 1;
+  return `m${uidSeq}`;
+}
+
+/** Le même modèle, avec de nouveaux identifiants de messages (un brouillon relu vient d'une autre page). */
+export function withFreshUids(model: EditorModel): EditorModel {
+  return { ...model, dialogues: model.dialogues.map((d) => ({ id: d.id, lines: d.lines.map((l) => ({ ...l, uid: newUid() })) })) };
+}
+
+/** Ce qu'un message écrit dans dialogues.json, pour comparer deux messages sans leur texte ni leur identifiant. */
+export function lineShape(l: EditLine): string {
+  return JSON.stringify(lineObject(l));
 }
 
 /** Ce qu'il faut pour réécrire les fichiers comme ils étaient. */
@@ -96,6 +117,7 @@ function readLine(raw: unknown, fr: Map<string, string>): EditLine {
     emotes: readPair(r.emotes),
     sfx: str(r.sfx),
     seconds: who ? 0 : typeof r.seconds === 'number' ? r.seconds : 0,
+    uid: newUid(),
   };
 }
 
@@ -310,6 +332,7 @@ function blankLine(who: Speaker | null, faces: Record<Speaker, string[]>): EditL
     emotes: { moon: '', cream: '' },
     sfx: '',
     seconds: who ? 0 : 1,
+    uid: newUid(),
   };
 }
 
@@ -381,16 +404,26 @@ export function setWho(model: EditorModel, dialogueId: string, index: number, wh
   if (!line || line.who === who) return model;
   const lines = [...d.lines];
   if (who === null) {
-    lines[index] = { ...line, who: null, key: null, face: '', text: '', seconds: line.seconds > 0 ? line.seconds : 1 };
+    // La réplique est gardée de côté (hors des fichiers) : repasser à Moon ou Cream la rend telle quelle.
+    const kept = line.key ? { key: line.key, text: line.text, face: line.face } : line.kept;
+    lines[index] = { ...line, who: null, key: null, face: '', text: '', seconds: line.seconds > 0 ? line.seconds : 1, kept };
     return dropKeyIfUnused(withLines(model, dialogueId, lines), line.key);
   }
-  const face = model.faces[who].includes(line.face) ? line.face : blankLine(who, model.faces).face;
+  const pick = (f: string): string => (model.faces[who].includes(f) ? f : blankLine(who, model.faces).face);
   if (line.who !== null) {
-    lines[index] = { ...line, who, face };
+    lines[index] = { ...line, who, face: pick(line.face) };
     return withLines(model, dialogueId, lines);
   }
+  const { kept, ...rest } = line;
+  if (kept && !isCited(model, kept.key)) {
+    const has = model.fr.some(([k]) => k === kept.key);
+    const m = has ? model : insertFr(model, kept.key, kept.text, lastKeyOf(model, dialogueId));
+    const text = m.fr.find(([k]) => k === kept.key)?.[1] ?? kept.text;
+    lines[index] = { ...rest, who, face: pick(kept.face), key: kept.key, text, seconds: 0 };
+    return withLines(m, dialogueId, lines);
+  }
   const claimed = claimKey(model, dialogueId, '');
-  lines[index] = { ...line, who, face, key: claimed.key, text: '', seconds: 0 };
+  lines[index] = { ...rest, who, face: pick(line.face), key: claimed.key, text: '', seconds: 0 };
   return withLines(claimed.model, dialogueId, lines);
 }
 
@@ -497,4 +530,80 @@ export function editorErrors(model: EditorModel): string[] {
     else if (text.length > MAX_CHARS) errors.push(`i18n/fr.json: « ${key} » dépasse ${MAX_CHARS} caractères`);
   }
   return errors;
+}
+
+const dialogueShape = (d: { lines: EditLine[] }): string => JSON.stringify(d.lines.map(lineShape));
+
+/**
+ * Reprend mes changements (`mine`, fait sur `base`) sur des fichiers plus récents (`disk`).
+ * - Une phrase que j'ai changée ou ajoutée prend ma version, à sa place ; si le disque l'a aussi changée, ma version gagne et c'est signalé.
+ * - Un dialogue que j'ai changé prend mes messages si le disque ne l'a pas touché ; sinon il garde ceux du disque,
+ *   plus mes messages ajoutés (en fin de dialogue), et c'est signalé.
+ * - Un dialogue ou une phrase que j'ai supprimés le restent si le disque ne les a pas changés.
+ * Tout le reste vient du disque.
+ */
+export function rebase(mine: EditorModel, base: EditorModel, disk: EditorModel): { model: EditorModel; conflicts: string[] } {
+  const conflicts: string[] = [];
+  let m: EditorModel = disk;
+  const baseFr = new Map(base.fr);
+  const diskFr = new Map(disk.fr);
+  const mineKeys = mine.fr.map(([k]) => k);
+
+  // Phrases changées ou ajoutées.
+  mine.fr.forEach(([key, value], i) => {
+    const was = baseFr.get(key);
+    if (was === value && baseFr.has(key)) return;
+    const theirs = diskFr.get(key);
+    if (diskFr.has(key) && theirs !== was && theirs !== value) conflicts.push(`« ${key} » a aussi changé sur le disque : ta version est gardée.`);
+    if (m.fr.some(([k]) => k === key)) {
+      m = { ...m, fr: m.fr.map(([k, v]): [string, string] => [k, k === key ? value : v]) };
+    } else {
+      let after: string | null = null;
+      for (let j = i - 1; j >= 0 && after === null; j--) if (m.fr.some(([k]) => k === mineKeys[j])) after = mineKeys[j]!;
+      m = insertFr(m, key, value, after);
+    }
+  });
+
+  // Dialogues.
+  const byId = (model: EditorModel, id: string) => model.dialogues.find((d) => d.id === id);
+  for (const d of mine.dialogues) {
+    const b = byId(base, d.id);
+    const t = byId(disk, d.id);
+    if (b && dialogueShape(d) === dialogueShape(b)) continue;
+    if (!t) {
+      if (b) conflicts.push(`Le dialogue « ${d.id} » a été supprimé sur le disque : ta version est remise.`);
+      m = { ...m, dialogues: [...m.dialogues, { id: d.id, lines: d.lines }] };
+    } else if (!b) {
+      conflicts.push(`Un dialogue « ${d.id} » a aussi été créé sur le disque : celui du disque est gardé.`);
+    } else if (dialogueShape(t) === dialogueShape(b)) {
+      m = withLines(m, d.id, d.lines);
+    } else {
+      const baseKeys = new Set(b.lines.map((l) => l.key));
+      const theirKeys = new Set(t.lines.map((l) => l.key));
+      const added = d.lines.filter((l) => l.key !== null && !baseKeys.has(l.key) && !theirKeys.has(l.key));
+      conflicts.push(`Le dialogue « ${d.id} » a aussi changé sur le disque : ses messages viennent du disque${added.length > 0 ? `, plus tes ${added.length} message(s) ajouté(s) à la fin` : ''}.`);
+      m = withLines(m, d.id, [...t.lines, ...added]);
+    }
+  }
+  for (const b of base.dialogues) {
+    const t = byId(disk, b.id);
+    if (!byId(mine, b.id) && t && dialogueShape(t) === dialogueShape(b)) m = { ...m, dialogues: m.dialogues.filter((x) => x.id !== b.id) };
+  }
+
+  // Phrases supprimées de mon côté (messages retirés) : retirées si le disque ne les a pas changées et que plus rien ne les cite.
+  const mineFr = new Map(mine.fr);
+  for (const [key, was] of base.fr) {
+    if (!mineFr.has(key) && diskFr.get(key) === was) m = dropKeyIfUnused(m, key);
+  }
+
+  // Le texte de chaque message suit fr ; les compteurs ne redescendent jamais.
+  const fr = new Map(m.fr);
+  const counters = { ...m.layout.counters };
+  for (const [id, n] of Object.entries(mine.layout.counters)) counters[id] = Math.max(counters[id] ?? 0, n);
+  m = {
+    ...m,
+    dialogues: m.dialogues.map((d) => ({ id: d.id, lines: d.lines.map((l) => (l.key ? { ...l, text: fr.get(l.key) ?? '' } : l)) })),
+    layout: { ...m.layout, counters },
+  };
+  return { model: m, conflicts };
 }

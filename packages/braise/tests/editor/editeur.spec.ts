@@ -129,7 +129,7 @@ test('changer la copie à la main fait apparaître le bandeau, et l\'enregistrem
   expect(copy('i18n/fr.json')).not.toContain('"Oui."');
   // Recharger reprend le disque.
   page.once('dialog', (d) => void d.accept());
-  await page.getByRole('button', { name: 'Recharger' }).click();
+  await page.getByRole('button', { name: 'Recharger sans mes changements' }).click();
   await expect(page.getByLabel('Texte, message 2', { exact: true })).toHaveValue('C\'est exact.');
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeHidden();
 });
@@ -179,4 +179,78 @@ test('nouveau dialogue, onglet Phrases et captures', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: evidence ? join(EVIDENCE, '02-phrases.png') : test.info().outputPath('02-phrases.png'), fullPage: false });
   for (const f of FILES) expect(copy(f)).toBe(shipped(f));
+});
+
+test('un fichier de contenu cassé puis réparé : le jeu se recharge et redémarre', async ({ context }) => {
+  const game = await context.newPage();
+  await game.goto('/');
+  await game.waitForFunction(() => !document.getElementById('boot'), undefined, { timeout: 90_000 });
+  const fr = copy('i18n/fr.json');
+  writeFileSync(join(COPY, 'i18n/fr.json'), fr.slice(0, -20));
+  await game.waitForTimeout(1500);
+  const reloaded = game.waitForEvent('load', { timeout: 30_000 });
+  writeFileSync(join(COPY, 'i18n/fr.json'), fr);
+  await reloaded;
+  await game.waitForFunction(() => !document.getElementById('boot'), undefined, { timeout: 90_000 });
+});
+
+test('la lecture de l\'aperçu n\'avale pas les touches tapées dans un champ', async ({ page }) => {
+  await openEditor(page);
+  await page.getByRole('button', { name: '▶ Jouer depuis ce message' }).click();
+  await expect(page.getByRole('button', { name: /Arrêter/ })).toBeVisible();
+  const field = page.getByLabel('Texte, message 2', { exact: true });
+  await field.click();
+  await field.press('End');
+  await page.keyboard.type(' a A');
+  await expect(field).toHaveValue('C\'est exact. a A');
+  await expect(page.getByRole('button', { name: /Arrêter/ })).toBeVisible();
+});
+
+test('déplacer un silence garde le focus sur son bouton', async ({ page }) => {
+  await openEditor(page);
+  await page.getByRole('button', { name: 'Descendre le message 4', exact: true }).click();
+  await expect(page.locator('[data-line="4"] select').first()).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Descendre le message 5', exact: true })).toBeFocused();
+});
+
+test('enregistrement refusé : recharger en gardant mes changements', async ({ page }) => {
+  await openEditor(page);
+  await page.getByLabel('Texte, message 2', { exact: true }).fill('Oui.');
+  writeFileSync(join(COPY, 'i18n/fr.json'), shipped('i18n/fr.json').replace('"Encore."', '"Encore une fois."'));
+  await expect(page.getByText('Fichiers changés sur le disque.')).toBeVisible();
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('.ed-status')).toContainText('a changé sur le disque');
+  await page.getByRole('button', { name: 'Recharger en gardant mes changements' }).click();
+  await expect(page.getByLabel('Texte, message 2', { exact: true })).toHaveValue('Oui.');
+  await expect(page.getByText('Fichiers changés sur le disque.')).toBeHidden();
+  await page.keyboard.press('Control+s');
+  await expect(page.locator('.ed-status')).toContainText('Enregistré');
+  expect(copy('i18n/fr.json')).toContain('"dialog.tuto.opening.2": "Oui."');
+  expect(copy('i18n/fr.json')).toContain('"tuto.death.2": "Encore une fois."');
+});
+
+test('un ancien brouillon n\'est pas écrasé quand on modifie sans l\'avoir repris', async ({ page, context }) => {
+  const key = 'braise-editeur:brouillon';
+  await openEditor(page);
+  await page.getByLabel('Texte, message 2', { exact: true }).fill('Ancien brouillon.');
+  const old = await page.evaluate((k) => localStorage.getItem(k), key);
+  expect(old).toContain('Ancien brouillon.');
+  await page.close({ runBeforeUnload: false });
+
+  const again = await context.newPage();
+  await openEditor(again);
+  await expect(again.getByText('Un brouillon non enregistré')).toBeVisible();
+  await again.getByLabel('Texte, message 3', { exact: true }).fill('Nouveau changement.');
+  await expect(again.getByText('ne sont pas gardés dans le navigateur')).toBeVisible();
+  expect(await again.evaluate((k) => localStorage.getItem(k), key)).toBe(old);
+  // Enregistrer ce nouveau changement ne jette pas l'ancien brouillon.
+  await again.keyboard.press('Control+s');
+  await expect(again.locator('.ed-status')).toContainText('Enregistré');
+  expect(await again.evaluate((k) => localStorage.getItem(k), key)).toBe(old);
+  await expect(again.getByText('Un brouillon non enregistré')).toBeVisible();
+});
+
+test('la page dit quand elle travaille sur une copie du contenu', async ({ page }) => {
+  await openEditor(page);
+  await expect(page.locator('.ed-override')).toContainText('BRAISE_CONTENT_DIR');
 });

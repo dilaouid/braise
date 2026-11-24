@@ -1,5 +1,7 @@
 import { computed, signal } from '@preact/signals';
-import { editorErrors, parseFiles, serialize, usedDialogues, type EditorFiles, type EditorModel } from './model.ts';
+import {
+  editorErrors, lineShape, parseFiles, rebase, serialize, usedDialogues, withFreshUids, type EditorFiles, type EditorModel,
+} from './model.ts';
 
 /**
  * L'état de la page de l'éditeur. Rien n'est écrit sur le disque avant « Enregistrer » ; les
@@ -16,6 +18,8 @@ interface ContentPayload {
   hashes: Hashes;
   tutorial: unknown;
   cinematics: Record<string, unknown>;
+  contentDir: string;
+  override: boolean;
 }
 
 export type Tab = 'dialogues' | 'phrases';
@@ -44,6 +48,10 @@ export const status = signal<{ text: string; kind: 'ok' | 'error' | 'info' } | n
 export const loadError = signal<string | null>(null);
 /** Un brouillon local trouvé au chargement, qu'on peut reprendre. */
 export const draftOffer = signal<Draft | null>(null);
+/** Vrai quand on a modifié sans reprendre ni oublier l'ancien brouillon : il n'est pas écrasé, et les nouveaux changements ne sont pas gardés. */
+export const draftHeld = signal(false);
+/** Le dossier de contenu, quand c'est une copie (BRAISE_CONTENT_DIR) et non content/. */
+export const override = signal<string | null>(null);
 
 export const used = computed(() => usedDialogues(tutorial.value));
 export const current = computed<EditorFiles | null>(() => (model.value ? serialize(model.value) : null));
@@ -64,7 +72,7 @@ export const changeCount = computed(() => {
   const frNow = new Map(m.fr);
   for (const [k, v] of frNow) if (frBefore.get(k) !== v) n++;
   for (const k of frBefore.keys()) if (!frNow.has(k)) n++;
-  const shape = (d: EditorModel['dialogues'][number]): string => JSON.stringify(d.lines.map((l) => ({ ...l, text: '' })));
+  const shape = (d: EditorModel['dialogues'][number]): string => JSON.stringify(d.lines.map(lineShape));
   const dBefore = new Map(before.dialogues.map((d) => [d.id, shape(d)]));
   const dNow = new Map(m.dialogues.map((d) => [d.id, shape(d)]));
   for (const [id, s] of dNow) if (dBefore.get(id) !== s) n++;
@@ -92,7 +100,12 @@ function readDraft(): Draft | null {
   }
 }
 
+/** Garde les changements en cours dans le navigateur — sauf si un ancien brouillon attend encore : il n'est jamais écrasé sans qu'on l'ait repris ou oublié. */
 export function writeDraft(): void {
+  if (draftOffer.value) {
+    draftHeld.value = dirty.value;
+    return;
+  }
   try {
     if (!dirty.value || !model.value || !base.value || !hashes.value) {
       localStorage.removeItem(DRAFT_KEY);
@@ -105,6 +118,20 @@ export function writeDraft(): void {
   }
 }
 
+/** Retire le brouillon gardé seulement s'il donne ces fichiers (ce qui vient d'être enregistré, ou abandonné). */
+function forgetDraftIf(files: EditorFiles): void {
+  const d = readDraft();
+  if (!d) return;
+  const f = serialize(d.model);
+  if (f.dialogues !== files.dialogues || f.fr !== files.fr) return;
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Rien à faire.
+  }
+}
+
+/** Oublie l'ancien brouillon proposé ; les changements en cours prennent sa place. */
 export function dropDraft(): void {
   try {
     localStorage.removeItem(DRAFT_KEY);
@@ -112,18 +139,39 @@ export function dropDraft(): void {
     // Rien à faire.
   }
   draftOffer.value = null;
+  draftHeld.value = false;
+  writeDraft();
 }
 
-/** Reprend le brouillon : ses changements, sur les fichiers qu'il avait lus (un fichier changé depuis fera refuser l'enregistrement). */
+function reportConflicts(done: string, conflicts: string[]): void {
+  status.value = conflicts.length > 0
+    ? { text: `${done} À vérifier : ${conflicts.join(' ')}`, kind: 'info' }
+    : { text: done, kind: 'info' };
+}
+
+/**
+ * Reprend le brouillon. S'il avait lu les mêmes fichiers que ceux du disque, tel quel ; sinon ses changements
+ * sont réappliqués sur les fichiers d'aujourd'hui (phrases changées, messages ajoutés), sans rien perdre du disque.
+ */
 export function resumeDraft(): void {
   const d = draftOffer.value;
-  if (!d) return;
-  model.value = d.model;
-  base.value = d.base;
-  hashes.value = d.hashes;
+  const b = base.value;
+  const h = hashes.value;
+  if (!d || !b || !h) return;
+  if (dirty.value && !confirm('Reprendre le brouillon remplace les changements faits depuis l\'ouverture de la page. Continuer ?')) return;
   draftOffer.value = null;
+  draftHeld.value = false;
+  const mine = withFreshUids(d.model);
+  if (d.hashes.dialogues === h.dialogues && d.hashes.fr === h.fr) {
+    model.value = mine;
+    status.value = { text: 'Brouillon repris.', kind: 'info' };
+  } else {
+    const r = rebase(mine, parseFiles(d.base), parseFiles(b));
+    model.value = r.model;
+    reportConflicts('Brouillon repris sur les fichiers d\'aujourd\'hui, qui avaient changé depuis.', r.conflicts);
+  }
   ensureSelection();
-  status.value = { text: 'Brouillon repris.', kind: 'info' };
+  writeDraft();
 }
 
 // --- Chargement et enregistrement ---
@@ -137,24 +185,57 @@ function ensureSelection(): void {
   }
 }
 
+async function fetchContent(): Promise<ContentPayload> {
+  const res = await fetch('/__editor/content', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Le greffon de l'éditeur ne répond pas (${res.status}). La page ne marche qu'avec « pnpm dev ».`);
+  return (await res.json()) as ContentPayload;
+}
+
+function applyContent(c: ContentPayload, m: EditorModel): void {
+  model.value = m;
+  base.value = c.files;
+  hashes.value = c.hashes;
+  tutorial.value = c.tutorial;
+  cinematics.value = c.cinematics;
+  override.value = c.override ? c.contentDir : null;
+  diskChanged.value = false;
+  conflict.value = false;
+  saveErrors.value = [];
+  loadError.value = null;
+  ensureSelection();
+}
+
 /** Charge (ou recharge) tout depuis le disque, par le greffon. Les changements non enregistrés sont perdus. */
 export async function load(): Promise<void> {
   try {
-    const res = await fetch('/__editor/content', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Le greffon de l'éditeur ne répond pas (${res.status}). La page ne marche qu'avec « pnpm dev ».`);
-    const c = (await res.json()) as ContentPayload;
-    model.value = parseFiles(c.files);
-    base.value = c.files;
-    hashes.value = c.hashes;
-    tutorial.value = c.tutorial;
-    cinematics.value = c.cinematics;
-    diskChanged.value = false;
-    conflict.value = false;
-    saveErrors.value = [];
-    loadError.value = null;
-    ensureSelection();
+    const c = await fetchContent();
+    applyContent(c, parseFiles(c.files));
   } catch (e) {
     loadError.value = (e as Error).message;
+  }
+}
+
+/** Abandonne les changements en cours et relit le disque ; le brouillon de ces changements part avec eux. */
+export async function reloadDiscarding(): Promise<void> {
+  const c = current.value;
+  if (c) forgetDraftIf(c);
+  await load();
+  status.value = { text: 'Rechargé depuis le disque.', kind: 'info' };
+}
+
+/** Relit le disque puis y réapplique les changements en cours (phrases changées, messages ajoutés, par clé). */
+export async function reloadKeepingChanges(): Promise<void> {
+  const m = model.value;
+  const b = base.value;
+  if (!m || !b) return;
+  try {
+    const c = await fetchContent();
+    const r = rebase(m, parseFiles(b), parseFiles(c.files));
+    applyContent(c, r.model);
+    reportConflicts('Rechargé depuis le disque, avec tes changements réappliqués.', r.conflicts);
+    writeDraft();
+  } catch (e) {
+    status.value = { text: (e as Error).message, kind: 'error' };
   }
 }
 
@@ -165,7 +246,7 @@ export function offerDraft(): void {
   if (!d || !b) return;
   const files = serialize(d.model);
   if (files.dialogues === b.dialogues && files.fr === b.fr) {
-    dropDraft();
+    forgetDraftIf(files);
     return;
   }
   draftOffer.value = d;
@@ -210,7 +291,9 @@ export async function save(): Promise<void> {
       base.value = files;
       saveErrors.value = [];
       conflict.value = false;
-      dropDraft();
+      // Seul le brouillon de ce qui vient d'être enregistré s'en va ; un ancien brouillon pas encore repris reste.
+      forgetDraftIf(files);
+      draftHeld.value = false;
       status.value = { text: 'Enregistré. Le jeu ouvert se recharge.', kind: 'ok' };
     } else if (res.status === 409) {
       conflict.value = true;

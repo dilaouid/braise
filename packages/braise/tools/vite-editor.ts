@@ -35,6 +35,16 @@ export interface ContentPayload {
   hashes: Record<FileName, string>;
   tutorial: unknown;
   cinematics: Record<string, unknown>;
+  /** Le dossier lu, et si c'est une copie désignée par BRAISE_CONTENT_DIR. */
+  contentDir: string;
+  override: boolean;
+}
+
+/** Les trois opérations d'écriture du greffon. */
+export interface FsOps {
+  writeFile: (path: string, text: string, encoding: 'utf8') => Promise<void>;
+  rename: (from: string, to: string) => Promise<void>;
+  unlink: (path: string) => Promise<void>;
 }
 
 export interface SaveResult {
@@ -100,8 +110,16 @@ function isStringMap(v: unknown): v is Record<string, string> {
 }
 
 /** Ce que le greffon sait faire, sans serveur : lire, et enregistrer avec ses garde-fous. */
-export function createEditorApi(opts: { contentDir: string; validate: Validator }): EditorApi {
+export function createEditorApi(opts: {
+  contentDir: string;
+  validate: Validator;
+  /** Vrai si le dossier de contenu est une copie (BRAISE_CONTENT_DIR) : la page le dit. */
+  override?: boolean;
+  /** Les écritures sur le disque, remplaçables pour les tests. */
+  fs?: Partial<FsOps>;
+}): EditorApi {
   const dir = resolve(opts.contentDir);
+  const fsx: FsOps = { writeFile, rename, unlink, ...opts.fs };
   const pathOf = (name: FileName): string => join(dir, FILES[name]);
   /** Les empreintes de ce que l'éditeur a écrit en dernier, par chemin. */
   const written = new Map<string, string>();
@@ -115,6 +133,8 @@ export function createEditorApi(opts: { contentDir: string; validate: Validator 
       hashes: { dialogues: hash(files.dialogues), fr: hash(files.fr) },
       tutorial: JSON.parse(await readText(join(dir, 'tutorial.json'))),
       cinematics: await readCinematics(dir),
+      contentDir: dir,
+      override: opts.override ?? false,
     };
   }
 
@@ -134,7 +154,11 @@ export function createEditorApi(opts: { contentDir: string; validate: Validator 
 
     // Un fichier changé sur le disque depuis le chargement : rien n'est écrit.
     const disk = {} as Record<FileName, string>;
-    for (const name of NAMES) disk[name] = hash(await readText(pathOf(name)));
+    const old = {} as Record<FileName, string>;
+    for (const name of NAMES) {
+      old[name] = await readText(pathOf(name));
+      disk[name] = hash(old[name]);
+    }
     const changed = NAMES.filter((name) => disk[name] !== hashes[name]);
     if (changed.length > 0) {
       return { status: 409, body: { error: 'changed', files: changed.map((n) => FILES[n]), hashes: disk } };
@@ -158,23 +182,47 @@ export function createEditorApi(opts: { contentDir: string; validate: Validator 
     if (errors.length === 0) errors.push(...await opts.validate({ dialogues, fr: fr as Record<string, string> }));
     if (errors.length > 0) return { status: 422, body: { error: 'invalid', errors } };
 
-    // Écriture : chaque fichier dans un temporaire du même dossier, puis renommé par-dessus.
+    // Écriture : chaque fichier dans un temporaire du même dossier, puis renommé par-dessus. Si un renommage
+    // échoue, les fichiers déjà remplacés reprennent leur ancien texte : jamais un fichier écrit sans l'autre.
     const todo = NAMES.filter((name) => hash(files[name]) !== disk[name]);
     const temps: Array<{ name: FileName; tmp: string }> = [];
+    const done: FileName[] = [];
+    const tempOf = (name: FileName): string => join(dirname(pathOf(name)), `.${FILES[name].replace(/^.*\//, '')}.${process.pid}-${randomBytes(4).toString('hex')}.tmp`);
     try {
       for (const name of todo) {
-        const target = pathOf(name);
-        const tmp = join(dirname(target), `.${FILES[name].replace(/^.*\//, '')}.${process.pid}-${randomBytes(4).toString('hex')}.tmp`);
-        await writeFile(tmp, files[name], 'utf8');
+        const tmp = tempOf(name);
+        await fsx.writeFile(tmp, files[name], 'utf8');
         temps.push({ name, tmp });
       }
       for (const { name, tmp } of temps) {
         written.set(pathOf(name), hash(files[name]));
-        await rename(tmp, pathOf(name));
+        await fsx.rename(tmp, pathOf(name));
+        done.push(name);
       }
     } catch (e) {
-      for (const { tmp } of temps) await unlink(tmp).catch(() => undefined);
-      return { status: 500, body: { error: 'write', message: (e as Error).message } };
+      for (const { name, tmp } of temps) if (!done.includes(name)) await fsx.unlink(tmp).catch(() => undefined);
+      const unrestored: string[] = [];
+      for (const name of done) {
+        // L'ancien texte, remis par le même chemin (temporaire puis renommage).
+        const tmp = tempOf(name);
+        try {
+          written.set(pathOf(name), hash(old[name]));
+          await fsx.writeFile(tmp, old[name], 'utf8');
+          await fsx.rename(tmp, pathOf(name));
+        } catch {
+          await fsx.unlink(tmp).catch(() => undefined);
+          unrestored.push(FILES[name]);
+        }
+      }
+      for (const name of todo) if (!done.includes(name)) written.delete(pathOf(name));
+      const message = (e as Error).message;
+      return {
+        status: 500,
+        body: {
+          error: 'write',
+          message: unrestored.length > 0 ? `${message} (et ${unrestored.join(', ')} n'a pas pu être remis comme avant)` : `${message} (rien n'a été changé)`,
+        },
+      };
     }
     return { status: 200, body: { hashes: { dialogues: hash(files.dialogues), fr: hash(files.fr) }, written: todo.map((n) => FILES[n]) } };
   }
@@ -303,8 +351,12 @@ export default function braiseEditor(): Plugin {
     configureServer(server: ViteDevServer) {
       api = createEditorApi({
         contentDir,
+        override: redirected,
         validate: makeValidator((path) => server.ssrLoadModule(`/${path}`), contentDir, join(packageDir, 'public')),
       });
+      if (redirected) {
+        server.config.logger.warn(`\n  [braise-editor] BRAISE_CONTENT_DIR : le jeu et l'éditeur lisent et écrivent ${contentDir}, pas content/.\n`);
+      }
       server.middlewares.use(editorMiddleware(api));
       if (redirected) server.watcher.add(contentDir);
 
@@ -325,6 +377,19 @@ export default function braiseEditor(): Plugin {
       server.watcher.on('change', onFs);
       server.watcher.on('add', onFs);
       server.watcher.on('unlink', onFs);
+    },
+
+    // La page du jeu écoute l'événement avant même de charger son code : si un fichier de content/ est cassé,
+    // le jeu ne démarre pas, mais il se recharge quand même une fois le fichier réparé. En développement seulement.
+    transformIndexHtml(_html, ctx) {
+      if (ctx.path !== '/' && ctx.path !== '/index.html') return [];
+      return [{
+        tag: 'script',
+        attrs: { type: 'module' },
+        children: `import { createHotContext } from '/@vite/client';\n`
+          + `createHotContext('/@braise-editor/reload').on(${JSON.stringify(CONTENT_EVENT)}, () => location.reload());\n`,
+        injectTo: 'head-prepend',
+      }];
     },
 
     // Vite rechargerait toutes les pages : l'événement ci-dessus s'en charge, page par page.

@@ -8,8 +8,8 @@ import { loadAtlas } from './atlas.tsx';
 import { DialoguesTab } from './dialogues.tsx';
 import { PhrasesTab } from './phrases.tsx';
 import {
-  changeCount, conflict, dirty, diskChanged, draftOffer, dropDraft, load, loadError, loadSounds, offerDraft, resumeDraft, save,
-  saveErrors, saving, status, tab, type Tab,
+  changeCount, conflict, dirty, diskChanged, draftHeld, draftOffer, dropDraft, load, loadError, loadSounds, offerDraft, override,
+  reloadDiscarding, reloadKeepingChanges, resumeDraft, save, saveErrors, saving, status, tab, type Tab,
 } from './state.ts';
 
 /**
@@ -20,9 +20,7 @@ import {
 /** Recharge depuis le disque, après confirmation s'il y a des changements non enregistrés. */
 async function reloadFromDisk(): Promise<void> {
   if (dirty.value && !confirm('Recharger depuis le disque ? Les changements non enregistrés seront perdus.')) return;
-  dropDraft();
-  await load();
-  status.value = { text: 'Rechargé depuis le disque.', kind: 'info' };
+  await reloadDiscarding();
 }
 
 function Tabs(): JSX.Element {
@@ -75,19 +73,33 @@ function Banners(): JSX.Element {
   const s = status.value;
   return (
     <div class="ed-banners">
+      {override.value ? (
+        <div class="ed-banner ed-banner-warn ed-override" role="note">
+          <strong>Copie de contenu :</strong> cette page lit et écrit <code>{override.value}</code> (BRAISE_CONTENT_DIR), pas content/.
+        </div>
+      ) : null}
       {draftOffer.value ? (
         <div class="ed-banner ed-banner-info" role="status">
           Un brouillon non enregistré du {new Date(draftOffer.value.at).toLocaleString('fr-FR')} est gardé dans ce navigateur.
           <button type="button" class="ed-btn ed-btn-primary" onClick={resumeDraft}>Le reprendre</button>
           <button type="button" class="ed-btn" onClick={dropDraft}>L'oublier</button>
+          {draftHeld.value ? (
+            <strong class="ed-warn">
+              Tes changements faits depuis l'ouverture ne sont pas gardés dans le navigateur tant que ce brouillon n'est ni repris ni oublié.
+            </strong>
+          ) : null}
         </div>
       ) : null}
       {diskChanged.value || conflict.value ? (
         <div class="ed-banner ed-banner-warn" role="alert">
           <strong>Fichiers changés sur le disque.</strong>
           {conflict.value ? ' L\'enregistrement a été refusé pour ne rien écraser.' : ' Un fichier de content/ a changé hors de l\'éditeur.'}
-          {dirty.value ? ' Recharger fera perdre les changements non enregistrés.' : ''}
-          <button type="button" class="ed-btn ed-btn-primary" onClick={() => void reloadFromDisk()}>Recharger</button>
+          {dirty.value ? (
+            <button type="button" class="ed-btn ed-btn-primary" onClick={() => void reloadKeepingChanges()}>Recharger en gardant mes changements</button>
+          ) : null}
+          <button type="button" class={`ed-btn${dirty.value ? '' : ' ed-btn-primary'}`} onClick={() => void reloadFromDisk()}>
+            {dirty.value ? 'Recharger sans mes changements' : 'Recharger'}
+          </button>
           {conflict.value ? null : <button type="button" class="ed-btn" onClick={() => { diskChanged.value = false; }}>Ignorer</button>}
         </div>
       ) : null}

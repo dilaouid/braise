@@ -20,6 +20,7 @@ if (!process.env.BRAISE_CONTENT_DIR) {
 
 export default defineConfig({
   testDir: 'tests/editor',
+  globalTeardown: './tests/editor/teardown.ts',
   outputDir: 'test-results/editor',
   workers: 1,
   fullyParallel: false,

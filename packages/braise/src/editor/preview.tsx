@@ -77,10 +77,19 @@ export function Preview({ m, lines, index, onSelect }: { m: EditorModel; lines: 
     return () => clearTimeout(t);
   }, [playing, shown, line]);
 
+  // Le focus va à l'aperçu quand la lecture commence, pas à chaque lettre écrite : un champ cliqué ensuite le garde.
+  const isPlaying = playing !== null;
+  useEffect(() => {
+    if (isPlaying) frame.current?.focus();
+  }, [isPlaying]);
+
   useEffect(() => {
     if (playing === null) return;
-    frame.current?.focus();
     const onKey = (e: KeyboardEvent): void => {
+      // Ce qu'on tape dans un champ reste au champ : seule Échap y arrête la lecture.
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
+      if (typing && e.key !== 'Escape') return;
       if (e.key === 'Escape') stop();
       else if (e.key === 'Enter' || e.key === 'a' || e.key === 'A' || e.key === ' ') advance();
       else return;

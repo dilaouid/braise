@@ -335,7 +335,7 @@ export function DialoguesTab(): JSX.Element | null {
           <div class="ed-lines">
             <Insert id={d.id} index={0} />
             {d.lines.map((line, i) => (
-              <div key={line.key ?? `silence-${i}`}>
+              <div key={line.uid ?? line.key ?? `silence-${i}`}>
                 <LineCard m={m} id={d.id} line={line} index={i} count={d.lines.length} />
                 <Insert id={d.id} index={i + 1} />
               </div>
