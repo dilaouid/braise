@@ -85,12 +85,16 @@ export interface EnemyDef extends EnemyRaw {
   onDeathIndex: number;
   spawnerIndex: number;
   summonIndex: number;
+  shedIndex: number;
 }
 
-export interface RegionDef extends Omit<RegionRaw, 'horde' | 'waves'> {
+export interface RegionDef extends Omit<RegionRaw, 'horde' | 'waves' | 'cinematics'> {
   enemyIdx: number[];
   eliteIdx: number[];
   bossIdx: number;
+  /** Le boss qui revient une fois le premier battu (-1 : aucun). */
+  rebornBossIdx: number;
+  cinematics: { first: string; reborn: string } | null;
   /** Poids par indice d'ennemi, pour chaque tranche. */
   horde: Array<{ from: number; to: number; weights: Float32Array }>;
   waves: Array<{ at: number; shape: 'circle' | 'line' | 'corners' | 'side'; enemy: number; count: number }>;
@@ -276,6 +280,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     onDeathIndex: e.onDeath ? ref(enemyIndex, e.onDeath.spawn, e.id) : -1,
     spawnerIndex: e.spawner ? ref(enemyIndex, e.spawner.enemy, e.id) : -1,
     summonIndex: e.summon ? ref(enemyIndex, e.summon.enemy, e.id) : -1,
+    shedIndex: e.shed ? ref(enemyIndex, e.shed.enemy, e.id) : -1,
   }));
   for (const e of enemies) {
     if (e.behavior === 'shooter' && !e.shot) errors.push(`${e.id}: un tireur sans « shot »`);
@@ -306,6 +311,8 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       enemyIdx: r.enemies.map((e) => ref(enemyIndex, e, r.id)),
       eliteIdx: r.elites.map((e) => ref(enemyIndex, e, r.id)),
       bossIdx: ref(enemyIndex, r.boss, r.id),
+      rebornBossIdx: r.rebornBoss ? ref(enemyIndex, r.rebornBoss, r.id) : -1,
+      cinematics: r.cinematics ?? null,
       horde,
       waves: r.waves.map((w) => ({ at: w.at, shape: w.shape, enemy: ref(enemyIndex, w.enemy, `${r.id} (vague)`), count: w.count })),
     };

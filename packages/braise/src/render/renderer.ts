@@ -438,6 +438,12 @@ export class GameRenderer {
         this.addFx(FX_RING, x, y, type === EV.bossDeath ? 220 : 90, C.emberWhite, 3, 0.6);
         this.shake = Math.max(this.shake, type === EV.bossDeath ? 3 : 2);
         break;
+      case EV.bossReform:
+        // Le boss retombe en poussière : une gerbe grise, sans l'éclat de la vraie mort.
+        for (let k = 0; k < 10; k++) this.puff(x + Math.cos(k * 1.7) * 22, y - 10 + Math.sin(k * 2.3) * 16, this.puffFrames, 0x9aa3b5, 7);
+        this.addFx(FX_RING, x, y, 160, C.night, 3, 0.7);
+        this.shake = Math.max(this.shake, 3);
+        break;
       case EV.damageNumber: this.number(x, y, a, b); break;
       case EV.heroHurt: this.shake = Math.max(this.shake, 1.5); break;
       case EV.heroDash: this.addFx(FX_TRAIL, x, y, a, 0, 0, 0.25); break;
@@ -890,8 +896,18 @@ export class GameRenderer {
       s.zIndex = y;
       const st = e.status[i]!;
       s.tint = st & ST_FROZEN || st & ST_SLOW ? 0x9fd8ff : st & ST_BURN ? 0xffc79a : 0xffffff;
+      s.alpha = 1;
       s.visible = true;
       const def = defs[kind]!;
+      const dir = run.director;
+      if (dir.bossReformT > 0 && e.uid[i] === dir.bossUid && def.reform) {
+        // En poussière : il s'efface presque, de la cendre s'en échappe, puis il se recompose.
+        const k = 1 - dir.bossReformT / def.reform.duration;
+        s.texture = frames[0]!;
+        s.tint = 0x9aa3b5;
+        s.alpha = k < 0.35 ? 1 - (k / 0.35) * 0.85 : k < 0.7 ? 0.15 : 0.15 + ((k - 0.7) / 0.3) * 0.85;
+        if (Math.random() < 0.3) this.puff(x + (Math.random() - 0.5) * 60, y - Math.random() * 50, this.puffFrames, 0x9aa3b5, 8);
+      }
       if (def.rank === 'elite') {
         // Barre de vie : seulement sur les élites (le boss a la sienne dans l'interface).
         const w = 30;

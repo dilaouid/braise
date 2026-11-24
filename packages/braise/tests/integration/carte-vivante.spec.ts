@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, runView, settle, skipIntro, skipTutorial, watch } from './harness.ts';
+import { FR, SimPad, capture, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, watch } from './harness.ts';
 
 const SHOTS = 'carte-vivante';
 
@@ -61,8 +61,9 @@ test('totem, Ferrailleur, Herboriste et trésor à la manette seule', async ({ p
   await expectFocus(page, 'depart');
   await settle(page);
   await pad.down('A');
-  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
   await pad.up('A');
+  await skipDepartCinematic(page, pad);
   await settle(page);
 
   // --- Totem : rester dans le cercle, puis choisir un buff ---------------------------------

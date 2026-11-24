@@ -106,6 +106,15 @@ export async function skipIntro(page: Page, pad?: SimPad): Promise<void> {
 }
 
 /**
+ * Passe la cinématique jouée à chaque départ au Bois (l'appel du Cerf, ou la Cendre) : B (ou Échap)
+ * maintenu un peu plus d'une seconde, ce qui suffit qu'elle soit déjà vue ou non. L'expédition suit.
+ */
+export async function skipDepartCinematic(page: Page, pad?: SimPad): Promise<void> {
+  await skipIntro(page, pad);
+  await expect(page.locator('.hud')).toBeVisible();
+}
+
+/**
  * Passe une scène de route (Moon et Cream rentrent au refuge) : B (ou Échap) maintenu un peu plus
  * d'une seconde.
  */

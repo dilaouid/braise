@@ -1,5 +1,5 @@
 import type { EnemyDef } from '../content/index.ts';
-import { hurtHero, spawnEnemy, tickStatuses } from './combat.ts';
+import { hurtHero, isDust, spawnEnemy, tickStatuses } from './combat.ts';
 import { isSolidAt, isSolidTile } from './map.ts';
 import { addTelegraph, emit, queryCircle, removeEnemyShot, removeTelegraph } from './stores.ts';
 import {
@@ -279,9 +279,29 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
   const def = run.data.enemies[e.kind[i]!]!;
   const ch = def.charge!;
   const summon = def.summon!;
+  if (dir.bossReformT > 0) {
+    // En poussière : il ne bouge ni ne frappe. Il se relève d'un coup, prêt à attaquer.
+    dir.bossReformT = Math.max(0, dir.bossReformT - dt);
+    e.state[i] = ST_IDLE;
+    e.timer2[i] = 0.6;
+    return;
+  }
   const frac = e.hp[i]! / e.maxHp[i]!;
   const phases = def.phases!;
-  const phase = frac > phases[0]! ? 1 : frac > phases[1]! ? 2 : 3;
+  // Relevé de sa poussière, il reste dans sa dernière phase.
+  const phase = dir.bossReformed ? 3 : frac > phases[0]! ? 1 : frac > phases[1]! ? 2 : 3;
+  const shed = def.shed;
+  if (shed) {
+    // Des éclats tous les `every` de vie perdue ; un très gros coup les étale sur plusieurs pas.
+    for (let n = 0; n < shed.maxPerStep && frac <= 1 - (dir.bossShed + 1) * shed.every; n++) {
+      dir.bossShed++;
+      for (let k = 0; k < shed.count; k++) {
+        const a = run.rngSpawn.float() * TAU;
+        const r = 30 + run.rngSpawn.float() * 40;
+        spawnEnemy(run, def.shedIndex, e.x[i]! + Math.cos(a) * r, e.y[i]! + Math.sin(a) * r, run.hpScaleNow);
+      }
+    }
+  }
   if (phase !== dir.bossPhase) {
     const first = dir.bossPhase === 0;
     dir.bossPhase = phase;
@@ -735,7 +755,7 @@ export function contactDamage(run: Run): void {
   let worstKind = -1;
   for (let k = 0; k < n; k++) {
     const i = run.query[k]!;
-    if (e.status[i]! & 8) continue;
+    if (e.status[i]! & 8 || isDust(run, i)) continue;
     const def = run.data.enemies[e.kind[i]!]!;
     const charging = def.charge !== undefined && e.state[i] === 2;
     const dmg = charging ? def.charge!.damage : def.damage;

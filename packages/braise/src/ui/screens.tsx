@@ -4,7 +4,7 @@ import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCaption, cineCard, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
+  actions, cineCaption, cineCard, cineQuick, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
   replaySeed, roman, save, saveRev, t,
 } from './store.ts';
 
@@ -80,7 +80,7 @@ export function CinematicScreen(): JSX.Element {
       {caption ? <div class="cine-next"><Btn g="confirm" /> {t('cine.next')}</div> : null}
       <div class={`cine-skip${hold > 0 ? ' active' : ''}`}>
         <span class="cine-ring" style={{ '--hold': String(hold) }} />
-        <Btn g="back" /> {t('cine.skip')}
+        <Btn g="back" /> {t(cineQuick.value ? 'cine.skipPress' : 'cine.skip')}
       </div>
     </div>
   );

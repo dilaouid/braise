@@ -193,6 +193,12 @@ export const enemySchema = z
       .optional(),
     summon: z.object({ enemy: enemyId, count: z.number().int(), cooldown: z.number() }).strict().optional(),
     phase3Haste: z.number().optional(),
+    /** Des éclats qui deviennent des ennemis chaque fois que le boss perd `every` de sa vie. */
+    shed: z.object({ enemy: enemyId, every: z.number().positive().max(1), count: z.number().int().positive(), maxPerStep: z.number().int().positive() }).strict().optional(),
+    /** À sa première mort, le boss retombe en poussière `duration` secondes, puis se relève avec `share` de sa vie. */
+    reform: z.object({ share: z.number().positive().max(1), duration: z.number().positive() }).strict().optional(),
+    /** Multiplie l'or et les Cendres que laisse un boss. */
+    loot: z.number().positive().optional(),
     /** Le souffle entre deux attaques du boss, une valeur par phase. */
     pauses: z.array(z.number()).optional(),
     /** Des anneaux qui partent du boss l'un après l'autre. */
@@ -226,6 +232,10 @@ export const regionSchema = z
     enemies: z.array(enemyId).length(5),
     elites: z.array(enemyId).length(2),
     boss: enemyId,
+    /** Le boss qui revient une fois le premier battu. */
+    rebornBoss: enemyId.optional(),
+    /** La cinématique jouée avant chaque départ : boss jamais battu, puis boss reformé. */
+    cinematics: z.object({ first: z.string(), reborn: z.string() }).strict().optional(),
     decor: z.array(z.object({ sprite: z.string(), weight: z.number() }).strict()).min(1),
     borderDecor: z.string(),
     horde: z.array(z.object({ from: z.number(), to: z.number(), weights: z.record(enemyId, z.number()) }).strict()).min(1),

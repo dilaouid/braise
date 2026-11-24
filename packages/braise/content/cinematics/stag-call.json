@@ -1,0 +1,69 @@
+{
+  "id": "stag-call",
+  "skipHoldMs": 1000,
+  "assets": {
+    "ill-01": { "src": "ill-01.png" },
+    "ill-02": { "src": "ill-02.png" },
+    "ill-03": { "src": "ill-03.png" },
+    "ill-04": { "src": "ill-04.png" }
+  },
+  "shots": [
+    {
+      "id": "p01-loin",
+      "duration": 6.5,
+      "fadeIn": 1.6,
+      "fadeOut": 0.5,
+      "camera": { "scale": [1, 1.05], "focus": [330, 175] },
+      "layers": [
+        { "type": "image", "asset": "ill-01", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "smoke", "area": [-40, 200, 720, 90], "drift": [8, 0], "count": 30, "radius": [16, 34], "alpha": [0.25, 0.4], "colors": ["#6b7285", "#9aa3b5", "#454a5c"] }
+      ],
+      "cues": [
+        { "at": 0, "music": "music-stag-call-a" },
+        { "at": 0.4, "sfx": "intro-vent", "volume": 0.35 }
+      ]
+    },
+    {
+      "id": "p02-visage",
+      "duration": 5.5,
+      "fadeIn": 0.4,
+      "fadeOut": 0.4,
+      "camera": { "scale": [1, 1.12], "focus": [300, 170] },
+      "layers": [
+        { "type": "image", "asset": "ill-02", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 0.3, "sfx": "stag-call-souffle", "volume": 0.7 },
+        { "at": 3, "sfx": "stag-call-craquement", "volume": 0.5 }
+      ]
+    },
+    {
+      "id": "p03-appel",
+      "duration": 6,
+      "fadeIn": 0.3,
+      "fadeOut": 0.5,
+      "camera": { "scale": [1, 1.03], "focus": [320, 140] },
+      "layers": [
+        { "type": "image", "asset": "ill-03", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "eyes", "area": [0, 170, 640, 170], "count": 16, "interval": 0.22, "start": 0.8, "avoid": [300, 170, 90] },
+        { "type": "smoke", "area": [-40, 250, 720, 110], "drift": [6, -2], "count": 26, "radius": [14, 30], "alpha": [0.2, 0.45], "colors": ["#454a5c", "#6b7285", "#2a2d3a"] }
+      ],
+      "cues": [
+        { "at": 0.4, "sfx": "stag-call-brame", "volume": 0.9 }
+      ]
+    },
+    {
+      "id": "p04-parti",
+      "duration": 5,
+      "fadeIn": 0.6,
+      "fadeOut": 1.8,
+      "layers": [
+        { "type": "image", "asset": "ill-04", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "smoke", "area": [200, 110, 260, 130], "drift": [3, -5], "count": 34, "radius": [16, 36], "alpha": [0, 0.65], "colors": ["#6b7285", "#9aa3b5", "#454a5c"] }
+      ],
+      "cues": [
+        { "at": 0.4, "sfx": "intro-vent", "volume": 0.4 }
+      ]
+    }
+  ]
+}

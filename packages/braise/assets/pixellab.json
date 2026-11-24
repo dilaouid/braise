@@ -175,6 +175,18 @@
    "prompt": "a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns, hollow chest, mournful, two glowing magenta eyes, standing side view facing right"
   },
   {
+   "name": "boss-cerf-cendre",
+   "id": "85c517de-8d30-47d3-bb7b-b0f0f52864f7",
+   "size": [
+    128,
+    128
+   ],
+   "animated": true,
+   "prompt": "a huge stag made of grey ash and cracked dry clay, pale wooden splinters falling off, great grey antlers with small broken dead lanterns, empty black eye sockets with no glow, lifeless and menacing. Diagonal south-east facing pose seen from above at an angle: the stag walks toward the bottom-right corner of the image, its chest and face visible, its far side hidden",
+   "date": "2026-11-24",
+   "view": "high top-down"
+  },
+  {
    "name": "decor-souche",
    "id": "60fb8950-5c77-4235-8c27-e3fb9570b20d",
    "size": [

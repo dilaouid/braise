@@ -70,6 +70,8 @@ export const EV = {
   dialogueLine: 41, gateOpen: 42, tutoRespawn: 43, bark: 44,
   /** Un braséro allumé n'a aucune arme à faire évoluer. */
   brazierNone: 45,
+  /** Le boss retombe en poussière avant de se relever (x, y). */
+  bossReform: 46,
 } as const;
 
 export interface EnemyStore {
@@ -315,6 +317,11 @@ export interface Director {
   bossLast: number;
   bossNext: number;
   bossDead: boolean;
+  /** Le boss s'est déjà relevé une fois ; secondes de poussière qui restent. */
+  bossReformed: boolean;
+  bossReformT: number;
+  /** Paquets d'éclats déjà lâchés par le boss dans sa vie en cours. */
+  bossShed: number;
   arenaX: number; arenaY: number; arenaR: number;
   /** Poids de travail, un par sorte d'ennemi. */
   scratch: Float32Array;
@@ -334,6 +341,8 @@ export interface RunConfig {
   autoSkills: boolean;
   /** Le souvenir que le boss de cette partie doit encore rendre : il le laisse à la place du portail. */
   memory?: string | null;
+  /** Le boss de la région est déjà battu : c'est son boss reformé qui l'attend. */
+  reborn?: boolean;
 }
 
 /** Tuiles pleines propres au tutoriel. */

@@ -36,7 +36,9 @@ export interface RunOverrides {
 
 /** Crée une expédition à partir des données du jeu et d'une configuration. */
 export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {}): Run {
-  const region = opts.region ?? data.regions[cfg.regionId];
+  const base = data.regions[cfg.regionId];
+  // Le boss reformé remplace le premier ; une région imposée (le tutoriel) garde le sien.
+  const region = opts.region ?? (base && cfg.reborn && base.rebornBossIdx >= 0 ? { ...base, bossIdx: base.rebornBossIdx } : base);
   const cls = data.classes[cfg.classId];
   if (!region) throw new Error(`Région inconnue : ${cfg.regionId}`);
   if (!cls) throw new Error(`Classe inconnue : ${cfg.classId}`);
@@ -86,6 +88,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
       budget: 0, bank: 0, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
       eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()),
       bossSpawned: false, bossUid: 0, bossPhase: 0, bossSummonT: 0, bossLast: -1, bossNext: -1, bossDead: false,
+      bossReformed: false, bossReformT: 0, bossShed: 0,
       arenaX: 0, arenaY: 0, arenaR: 0,
       scratch: new Float32Array(kinds),
     },

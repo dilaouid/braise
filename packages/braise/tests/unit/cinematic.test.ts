@@ -110,3 +110,63 @@ describe('scène de souvenir « La rencontre »', () => {
     }
   });
 });
+
+describe('caméra des cinématiques', () => {
+  /** Le souvenir, avec une caméra posée sur son premier plan. */
+  function withCamera(camera: unknown): unknown {
+    const raw = structuredClone(CINEMATICS_RAW['memory-meeting']) as { shots: Array<Record<string, unknown>> };
+    raw.shots[0]!.camera = camera;
+    return raw;
+  }
+
+  it('une caméra peut zoomer vers un point', () => {
+    const res = compileCinematic(withCamera({ scale: [1, 1.12], focus: [400, 120] }), RAW.fr, sounds);
+    expect(res.errors).toEqual([]);
+  });
+
+  it('un panoramique seul reste valide', () => {
+    expect(compileCinematic(withCamera({ from: [0, 0], to: [-24, 0] }), RAW.fr, sounds).errors).toEqual([]);
+  });
+
+  it('un zoom hors de 1 à 2 est refusé', () => {
+    expect(compileCinematic(withCamera({ scale: [1, 3] }), RAW.fr, sounds).cinematic).toBeNull();
+    expect(compileCinematic(withCamera({ scale: [0.5, 1] }), RAW.fr, sounds).cinematic).toBeNull();
+  });
+
+  it('une caméra vide est refusée', () => {
+    expect(compileCinematic(withCamera({}), RAW.fr, sounds).cinematic).toBeNull();
+  });
+
+  it('les cinématiques existantes compilent toujours', () => {
+    for (const raw of Object.values(CINEMATICS_RAW)) expect(compileCinematic(raw, RAW.fr, sounds).errors).toEqual([]);
+  });
+});
+
+describe('les cinématiques du Cerf', () => {
+  for (const id of ['stag-call', 'stag-ash']) {
+    it(`${id} est valide, sans texte, ses sons connus, ses images dans la palette`, () => {
+      const { cinematic, errors } = compileCinematic(CINEMATICS_RAW[id], RAW.fr, sounds);
+      expect(errors).toEqual([]);
+      expect(cinematic!.shots.every((s) => s.caption === undefined && s.card === undefined)).toBe(true);
+      const d = cinematicDuration(cinematic!);
+      expect(d).toBeGreaterThanOrEqual(15);
+      expect(d).toBeLessThanOrEqual(25);
+      for (const name of Object.keys(cinematic!.assets)) {
+        const png = PNG.sync.read(readFileSync(join(publicDir, 'cinematics', id, `${name}.png`)));
+        expect([png.width, png.height], name).toEqual([640, 360]);
+        for (let i = 0; i < png.data.length; i += 4) {
+          const rgb = (png.data[i]! << 16) | (png.data[i + 1]! << 8) | png.data[i + 2]!;
+          if (png.data[i + 3] !== 255 || !PALETTE.has(rgb)) throw new Error(`${id}/${name} : pixel hors palette ou transparent`);
+        }
+      }
+    });
+  }
+
+  it('chaque région nomme des cinématiques qui existent', () => {
+    for (const region of Object.values(RAW.regions as Array<{ cinematics?: { first: string; reborn: string } }>)) {
+      if (!region.cinematics) continue;
+      expect(CINEMATICS_RAW[region.cinematics.first]).toBeDefined();
+      expect(CINEMATICS_RAW[region.cinematics.reborn]).toBeDefined();
+    }
+  });
+});

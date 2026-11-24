@@ -7,6 +7,8 @@
   "enemies": ["enemy.crawler", "enemy.soot-bat", "enemy.soot-spitter", "enemy.dead-stump", "enemy.ash-swarm"],
   "elites": ["elite.dim-hunter", "elite.mother-stump"],
   "boss": "boss.lightless-stag",
+  "rebornBoss": "boss.ash-stag",
+  "cinematics": { "first": "stag-call", "reborn": "stag-ash" },
   "decor": [
     { "sprite": "decor-souche", "weight": 3 },
     { "sprite": "decor-rochers", "weight": 4 },
