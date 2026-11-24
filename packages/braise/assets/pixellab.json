@@ -176,14 +176,15 @@
   },
   {
    "name": "boss-cerf-cendre",
-   "id": "77f53df9-16cc-4782-bb08-dc1fe9f70cd2",
+   "id": "85c517de-8d30-47d3-bb7b-b0f0f52864f7",
    "size": [
     128,
     128
    ],
    "animated": true,
-   "prompt": "a huge stag rebuilt from grey ash and dust, cracked like dry clay, sharp pale wooden splinters and flakes falling from its body, enormous grey antlers hung with small broken dead lanterns, hollow chest, empty black eye sockets with no glow, lifeless and menacing, standing side view facing right",
-   "date": "2026-11-24"
+   "prompt": "a huge stag made of grey ash and cracked dry clay, pale wooden splinters falling off, great grey antlers with small broken dead lanterns, empty black eye sockets with no glow, lifeless and menacing. Diagonal south-east facing pose seen from above at an angle: the stag walks toward the bottom-right corner of the image, its chest and face visible, its far side hidden",
+   "date": "2026-11-24",
+   "view": "high top-down"
   },
   {
    "name": "decor-souche",

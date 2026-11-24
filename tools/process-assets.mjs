@@ -146,7 +146,7 @@ for (const o of manifest.objects) {
   const base = join(source, o.name);
   if (!existsSync(base)) continue;
   const animRoot = join(base, 'animations');
-  const settings = { width: o.size[0], height: o.size[1], view: 'low top-down' };
+  const settings = { width: o.size[0], height: o.size[1], view: o.view ?? 'low top-down' };
   if (o.animated && existsSync(animRoot)) {
     const anim = readdirSync(animRoot)[0];
     const dir = readdirSync(join(animRoot, anim))[0];

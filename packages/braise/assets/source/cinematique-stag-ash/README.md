@@ -31,9 +31,11 @@ Même suffixe que `stag-call`.
 
 ## Le sprite du boss
 
-`boss-cerf-cendre` (dossier `../boss-cerf-cendre/`) : `create_map_object` 128 × 128, « low top-down »,
-puis `animate_object` v3, 6 images, « walking forward slowly and majestically, four-legged stag gait,
-grey ash flakes falling from its body ». Objet `77f53df9-16cc-4782-bb08-dc1fe9f70cd2`. Inscrit dans
+`boss-cerf-cendre` (dossier `../boss-cerf-cendre/`) : `create_map_object` 128 × 128, vue « high top-down »,
+pose en diagonale (trois quarts, tourné vers le bas-droite, tête vers la caméra), puis `animate_object` v3,
+6 images. Objet `85c517de-8d30-47d3-bb7b-b0f0f52864f7`. Il remplace une première version de profil
+(`77f53df9-16cc-4782-bb08-dc1fe9f70cd2`, « low top-down »), que l'auteur n'aimait pas. Une autre
+proposition « low top-down » (`62c1e19d-8f2e-4ffe-94ab-6036b7455fe1`) restait de profil. Inscrit dans
 `assets/pixellab.json` ; `pnpm assets:build` en fait `sprites/boss-cerf-cendre@6.png`.
 `../boss-cerf-cendre/apercu-x3.png` montre la bande agrandie.
 
@@ -41,5 +43,6 @@ grey ash flakes falling from its body ». Objet `77f53df9-16cc-4782-bb08-dc1fe9f
 
 - `ill-01` : deux lanternes du tas brillent orange, alors qu'elles devraient être mortes.
 - `ill-04` : les fissures du visage luisent d'un orange pâle, comme des braises dedans.
-- Le sprite animé est plus lisse que les illustrations (peu de fissures) et ses lanternes brillent
-  orange ; ses yeux ont un point ambre. Le moteur le fait pâlir et se défaire pendant sa reformation.
+- Le sprite en diagonale a perdu les lanternes et les fissures : il ressemble à un cerf vivant, gris et
+  sombre, aux yeux ambrés. À reprendre si l'auteur veut le look de cendre des illustrations.
+  Le moteur le fait pâlir et se défaire pendant sa reformation.
