@@ -499,7 +499,7 @@ export const memoriesSchema = z
   .object({
     total: z.number().int().positive(),
     memories: z.array(
-      z.object({ id: z.string().regex(/^memory\.[a-z-]+$/), boss: enemyId, cinematic: z.string() }).strict(),
+      z.object({ id: z.string().regex(/^memory\.[a-z-]+$/), boss: enemyId, cinematic: z.string(), scene: z.string().optional() }).strict(),
     ),
   })
   .strict();

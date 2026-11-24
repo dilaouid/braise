@@ -35,6 +35,8 @@ export interface ContentPayload {
   hashes: Record<FileName, string>;
   tutorial: unknown;
   cinematics: Record<string, unknown>;
+  /** Les scènes de route : leurs dialogues comptent comme utilisés. */
+  scenes: Record<string, unknown>;
   /** Le dossier lu, et si c'est une copie désignée par BRAISE_CONTENT_DIR. */
   contentDir: string;
   override: boolean;
@@ -96,8 +98,13 @@ export function makeValidator(load: (path: string) => Promise<Record<string, unk
 }
 
 async function readCinematics(contentDir: string): Promise<Record<string, unknown>> {
+  return readFolder(contentDir, 'cinematics');
+}
+
+/** Les fichiers JSON d'un sous-dossier de content/, par nom sans extension. */
+async function readFolder(contentDir: string, sub: string): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {};
-  const dir = join(contentDir, 'cinematics');
+  const dir = join(contentDir, sub);
   if (!existsSync(dir)) return out;
   for (const name of (await readdir(dir)).sort()) {
     if (name.endsWith('.json')) out[name.slice(0, -5)] = JSON.parse(await readText(join(dir, name)));
@@ -133,6 +140,7 @@ export function createEditorApi(opts: {
       hashes: { dialogues: hash(files.dialogues), fr: hash(files.fr) },
       tutorial: JSON.parse(await readText(join(dir, 'tutorial.json'))),
       cinematics: await readCinematics(dir),
+      scenes: await readFolder(dir, 'scenes'),
       contentDir: dir,
       override: opts.override ?? false,
     };

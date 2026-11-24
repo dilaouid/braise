@@ -4,7 +4,8 @@
     {
       "id": "memory.meeting",
       "boss": "boss.lightless-stag",
-      "cinematic": "memory-meeting"
+      "cinematic": "memory-meeting",
+      "scene": "after-memory-meeting"
     }
   ]
 }

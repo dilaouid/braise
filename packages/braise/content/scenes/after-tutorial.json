@@ -1,0 +1,16 @@
+{
+  "id": "after-tutorial",
+  "fire": false,
+  "moon": [700, 246],
+  "cream": [670, 254],
+  "steps": [
+    { "do": "move", "moon": [505, 244], "cream": [470, 252] },
+    { "do": "say", "dialogue": "scene.after-tutorial.1" },
+    { "do": "move", "moon": [350, 214] },
+    { "do": "wait", "seconds": 0.5 },
+    { "do": "kindle" },
+    { "do": "wait", "seconds": 0.9 },
+    { "do": "say", "dialogue": "scene.after-tutorial.2" },
+    { "do": "move", "moon": [366, 214], "cream": [276, 216] }
+  ]
+}

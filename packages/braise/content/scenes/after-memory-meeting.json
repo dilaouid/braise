@@ -1,0 +1,14 @@
+{
+  "id": "after-memory-meeting",
+  "fire": false,
+  "moon": [-30, 250],
+  "cream": [-56, 258],
+  "steps": [
+    { "do": "move", "moon": [180, 248], "cream": [150, 256] },
+    { "do": "say", "dialogue": "scene.after-memory-meeting.1" },
+    { "do": "move", "moon": [366, 214], "cream": [276, 216] },
+    { "do": "kindle" },
+    { "do": "wait", "seconds": 0.8 },
+    { "do": "say", "dialogue": "scene.after-memory-meeting.2" }
+  ]
+}

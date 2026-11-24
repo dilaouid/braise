@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RAW, compileContent } from '../../src/content/index.ts';
+import { SCENES_RAW } from '../../src/content/scene.ts';
 import {
   addCampLine, addDialogue, editorErrors, insertLine, moveLine, nextKey, parseFiles, rebase, removeDialogue, removeLastCampLine, removeLine,
   renameDialogue, serialize, setText, setWho, toRaw, updateLine, usedDialogues, type EditorFiles, type EditorModel,
@@ -178,9 +179,10 @@ describe('éditeur : dialogues', () => {
   });
 
   it('dit quels dialogues le script du tutoriel appelle', () => {
-    const used = usedDialogues(TUTORIAL);
+    const used = usedDialogues(TUTORIAL, Object.values(SCENES_RAW));
     expect(used.has('tuto.opening')).toBe(true);
     expect(used.has('tuto.room8')).toBe(true);
+    expect(used.has('scene.after-tutorial.1')).toBe(true);
     expect(used.size).toBe(fresh().dialogues.length);
     expect(usedDialogues(null).size).toBe(0);
   });

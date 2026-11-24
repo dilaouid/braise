@@ -133,6 +133,30 @@
       {"seconds":1,"poses":{"cream":"rise"},"sfx":"sfx-hurt"},
       {"who":"moon","face":"shocked","text":"dialog.tuto.room8.7","poses":{"moon":"startle","cream":"scratch"},"emotes":{"moon":"exclaim"}},
       {"who":"cream","face":"serious","text":"dialog.tuto.room8.8"}
+    ],
+    "scene.after-tutorial.1": [
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.1"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.1.2","emotes":{"moon":"question"}},
+      {"who":"cream","face":"smug","text":"dialog.scene.after-tutorial.1.3","poses":{"cream":"groom"}}
+    ],
+    "scene.after-tutorial.2": [
+      {"who":"moon","face":"surprised","text":"dialog.scene.after-tutorial.2.1","emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.2.2"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.2.3"},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-tutorial.2.4"},
+      {"who":"moon","face":"awkward","text":"dialog.scene.after-tutorial.2.5","emotes":{"moon":"drop"}},
+      {"who":"cream","face":"smug","text":"dialog.scene.after-tutorial.2.6","poses":{"cream":"laugh"},"emotes":{"cream":"note"}}
+    ],
+    "scene.after-memory-meeting.1": [
+      {"seconds":1.2,"emotes":{"moon":"dots"}},
+      {"who":"moon","face":"sad","text":"dialog.scene.after-memory-meeting.1.1"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.1.2"},
+      {"who":"moon","face":"laugh","text":"dialog.scene.after-memory-meeting.1.3","poses":{"moon":"laugh"}},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-memory-meeting.1.4"}
+    ],
+    "scene.after-memory-meeting.2": [
+      {"who":"moon","face":"resolute","text":"dialog.scene.after-memory-meeting.2.1"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.2"}
     ]
   }
 }

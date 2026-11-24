@@ -18,6 +18,7 @@ interface ContentPayload {
   hashes: Hashes;
   tutorial: unknown;
   cinematics: Record<string, unknown>;
+  scenes?: Record<string, unknown>;
   contentDir: string;
   override: boolean;
 }
@@ -31,6 +32,7 @@ export const base = signal<EditorFiles | null>(null);
 export const hashes = signal<Hashes | null>(null);
 export const tutorial = signal<unknown>(null);
 export const cinematics = signal<Record<string, unknown>>({});
+export const scenes = signal<Record<string, unknown>>({});
 export const sounds = signal<string[]>([]);
 
 export const tab = signal<Tab>('dialogues');
@@ -53,7 +55,7 @@ export const draftHeld = signal(false);
 /** Le dossier de contenu, quand c'est une copie (BRAISE_CONTENT_DIR) et non content/. */
 export const override = signal<string | null>(null);
 
-export const used = computed(() => usedDialogues(tutorial.value));
+export const used = computed(() => usedDialogues(tutorial.value, Object.values(scenes.value)));
 export const current = computed<EditorFiles | null>(() => (model.value ? serialize(model.value) : null));
 export const dirty = computed(() => {
   const c = current.value;
@@ -197,6 +199,7 @@ function applyContent(c: ContentPayload, m: EditorModel): void {
   hashes.value = c.hashes;
   tutorial.value = c.tutorial;
   cinematics.value = c.cinematics;
+  scenes.value = c.scenes ?? {};
   override.value = c.override ? c.contentDir : null;
   diskChanged.value = false;
   conflict.value = false;

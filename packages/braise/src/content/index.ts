@@ -21,6 +21,7 @@ import {
   type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
 import { CINEMATICS_RAW } from './cinematic.ts';
+import { SCENES_RAW, compileScenes, type SceneDef } from './scene.ts';
 import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial.ts';
 
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
@@ -105,6 +106,8 @@ export interface MemoryDef {
   boss: string;
   bossIdx: number;
   cinematic: string;
+  /** La scène de route jouée après la cinématique ('' : aucune). */
+  scene: string;
 }
 
 /** Toutes les données du jeu, validées et indexées. */
@@ -129,6 +132,8 @@ export interface GameData {
   memories: MemoryDef[];
   /** Le nombre d'emplacements de souvenirs montrés au refuge. */
   memoriesTotal: number;
+  /** Les scènes de route, par identifiant. */
+  scenes: Record<string, SceneDef>;
 }
 
 /** Les données brutes telles qu'elles sont dans `content/`. */
@@ -145,6 +150,7 @@ export const RAW = {
   dialogues: dialoguesJson as unknown,
   tutorial: tutorialJson as unknown,
   memories: memoriesJson as unknown,
+  scenes: SCENES_RAW,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
   fr: frJson as unknown as Record<string, string>,
@@ -345,7 +351,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   }
 
   const memories: MemoryDef[] = memoriesRaw.memories.map((m, index) => ({
-    id: m.id, index, boss: m.boss, bossIdx: ref(enemyIndex, m.boss, m.id), cinematic: m.cinematic,
+    id: m.id, index, boss: m.boss, bossIdx: ref(enemyIndex, m.boss, m.id), cinematic: m.cinematic, scene: m.scene ?? '',
   }));
   unique(memories.map((m) => m.id), 'memories.json');
   if (memoriesRaw.total < memories.length) errors.push(`memories.json: ${memories.length} souvenirs pour ${memoriesRaw.total} emplacements`);
@@ -362,9 +368,12 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     tile: tuning.tileSize, fr, enemyIndex, findIds: finds.map((f) => f.id), smithPrice: tuning.events.smith.basePrice,
   }, errors);
 
+  const scenes = tuto ? compileScenes(raw.scenes, new Set(Object.keys(tuto.dialogues)), errors) : {};
+  for (const m of memories) if (m.scene !== '' && raw.scenes[m.scene] === undefined) errors.push(`${m.id}: scène inconnue « ${m.scene} »`);
+
   if (errors.length > 0 || !tuto) return { data: null, errors };
   return {
-    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total },
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes },
     errors,
   };
 }

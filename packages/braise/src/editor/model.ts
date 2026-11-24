@@ -487,14 +487,16 @@ export function removeDialogue(model: EditorModel, id: string): EditorModel {
   return { ...m, layout: { ...m.layout, counters } };
 }
 
-/** Les dialogues que le script du tutoriel appelle (étapes `say`). */
-export function usedDialogues(tutorialRaw: unknown): Set<string> {
+/** Les dialogues que le script du tutoriel et les scènes de route appellent (étapes `say`). */
+export function usedDialogues(tutorialRaw: unknown, scenesRaw: unknown[] = []): Set<string> {
   const used = new Set<string>();
-  const steps = asRecord(tutorialRaw).steps;
-  if (!Array.isArray(steps)) return used;
-  for (const s of steps) {
-    const r = asRecord(s);
-    if (r.do === 'say' && typeof r.dialogue === 'string') used.add(r.dialogue);
+  for (const script of [tutorialRaw, ...scenesRaw]) {
+    const steps = asRecord(script).steps;
+    if (!Array.isArray(steps)) continue;
+    for (const s of steps) {
+      const r = asRecord(s);
+      if (r.do === 'say' && typeof r.dialogue === 'string') used.add(r.dialogue);
+    }
   }
   return used;
 }

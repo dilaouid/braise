@@ -456,5 +456,20 @@
   "camp.memories": "Souvenirs",
   "camp.memories.desc": "Ce que Moon a repris aux Éteints.",
   "camp.memories.empty": "···",
-  "end.memory": "Souvenir retrouvé : {name}"
+  "end.memory": "Souvenir retrouvé : {name}",
+  "dialog.scene.after-tutorial.1.1": "Ici. On s'arrête.",
+  "dialog.scene.after-tutorial.1.2": "Ici ? Il n'y a rien.",
+  "dialog.scene.after-tutorial.1.3": "Justement. Rien, c'est calme.",
+  "dialog.scene.after-tutorial.2.1": "Le feu a pris tout seul...",
+  "dialog.scene.after-tutorial.2.2": "La lanterne. Elle aime les braises.",
+  "dialog.scene.after-tutorial.2.3": "Et toi, tu vas parler tous les soirs, maintenant ?",
+  "dialog.scene.after-tutorial.2.4": "Seulement quand tu dis des bêtises.",
+  "dialog.scene.after-tutorial.2.5": "Donc tous les soirs.",
+  "dialog.scene.after-tutorial.2.6": "Tu apprends vite.",
+  "dialog.scene.after-memory-meeting.1.1": "Je l'avais oubliée, cette nuit-là.",
+  "dialog.scene.after-memory-meeting.1.2": "Le lapin ? Il était raté.",
+  "dialog.scene.after-memory-meeting.1.3": "Elle a ri quand même.",
+  "dialog.scene.after-memory-meeting.1.4": "Elle riait de toi. Nuance.",
+  "dialog.scene.after-memory-meeting.2.1": "Il en reste quatre.",
+  "dialog.scene.after-memory-meeting.2.2": "Alors dors. Demain, on marche."
 }
