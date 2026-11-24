@@ -60,11 +60,24 @@
   "boss": { "arenaRadiusTiles": 16, "minTelegraph": 0.7 },
   "events": {
     "poiMinFromCenterTiles": 20,
-    "poiMinApartTiles": 15,
+    "poiMinApartTiles": 12,
     "discoverTiles": 15,
     "brazier": { "count": 4, "radius": 56, "seconds": 8, "waveCount": 18, "waveEnemy": "enemy.crawler" },
     "spring": { "count": 2, "radius": 26 },
-    "cache": { "count": 2, "triggerRadius": 150, "openRadius": 26, "ashes": 8 }
+    "cache": { "count": 2, "triggerRadius": 150, "openRadius": 26, "ashes": 8 },
+    "totem": { "count": 6, "radius": 48, "seconds": 5, "waveCount": 12, "waveEnemy": "enemy.crawler", "choices": 3 },
+    "smith": { "count": 2, "radius": 26, "dwell": 0.6, "offers": 3, "basePrice": 150, "priceStep": 80 },
+    "herbalist": {
+      "count": 2, "radius": 26, "dwell": 0.6,
+      "services": {
+        "flask": { "base": 200, "step": 200 },
+        "balm": { "base": 80, "step": 60 },
+        "reroll": { "base": 80, "step": 60 },
+        "banish": { "base": 80, "step": 60 }
+      }
+    },
+    "treasure": { "count": 4, "radius": 20 },
+    "bossWarningMinute": 14
   },
   "damageNumberInterval": 0.25
 }

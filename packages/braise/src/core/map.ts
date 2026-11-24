@@ -66,6 +66,10 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
   for (let i = 0; i < ev.brazier.count; i++) kinds.push('brazier');
   for (let i = 0; i < ev.spring.count; i++) kinds.push('spring');
   for (let i = 0; i < ev.cache.count; i++) kinds.push('cache');
+  for (let i = 0; i < ev.totem.count; i++) kinds.push('totem');
+  for (let i = 0; i < ev.smith.count; i++) kinds.push('smith');
+  for (let i = 0; i < ev.herbalist.count; i++) kinds.push('herbalist');
+  for (let i = 0; i < ev.treasure.count; i++) kinds.push('treasure');
   rng.shuffle(kinds);
   const pois: Poi[] = [];
   const margin = border + 8;
@@ -73,16 +77,16 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
     for (let attempt = 0; attempt < 400; attempt++) {
       const tx = rng.intRange(margin, size - margin - 1);
       const ty = rng.intRange(margin, size - margin - 1);
-      if (Math.hypot(tx - center, ty - center) < ev.poiMinFromCenterTiles) continue;
+      if (Math.hypot(tx + 0.5 - center, ty + 0.5 - center) < ev.poiMinFromCenterTiles) continue;
       let ok = true;
       for (const p of pois) {
-        if (Math.hypot(p.x / tile - tx, p.y / tile - ty) < ev.poiMinApartTiles) {
+        if (Math.hypot(p.x / tile - tx - 0.5, p.y / tile - ty - 0.5) < ev.poiMinApartTiles) {
           ok = false;
           break;
         }
       }
       if (!ok) continue;
-      pois.push({ kind, x: (tx + 0.5) * tile, y: (ty + 0.5) * tile, state: 0, progress: 0, discovered: false, guardUid: 0 });
+      pois.push({ kind, x: (tx + 0.5) * tile, y: (ty + 0.5) * tile, state: 0, progress: 0, discovered: false, guardUid: 0, offers: null, armed: true });
       break;
     }
   }

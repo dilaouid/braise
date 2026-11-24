@@ -123,6 +123,13 @@ export const statBonusSchema = z
   })
   .strict();
 
+/** Un buff de totem ou une trouvaille : un bonus de statistiques pour la partie. */
+export const boonSchema = z.object({ id: z.string().regex(/^boon\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
+export const findSchema = z.object({ id: z.string().regex(/^find\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
+
+/** Un prix qui monte à chaque achat. */
+const priceSchema = z.object({ base: z.number().int().nonnegative(), step: z.number().int().nonnegative() }).strict();
+
 export const relicSchema = z
   .object({
     id: relicId,
@@ -339,6 +346,20 @@ export const expeditionTuningSchema = z
         brazier: z.object({ count: z.number().int(), radius: z.number(), seconds: z.number(), waveCount: z.number().int(), waveEnemy: enemyId }).strict(),
         spring: z.object({ count: z.number().int(), radius: z.number() }).strict(),
         cache: z.object({ count: z.number().int(), triggerRadius: z.number(), openRadius: z.number(), ashes: z.number() }).strict(),
+        totem: z
+          .object({ count: z.number().int(), radius: z.number(), seconds: z.number(), waveCount: z.number().int(), waveEnemy: enemyId, choices: z.number().int().positive() })
+          .strict(),
+        smith: z
+          .object({ count: z.number().int(), radius: z.number(), dwell: z.number(), offers: z.number().int().positive(), basePrice: z.number().int(), priceStep: z.number().int() })
+          .strict(),
+        herbalist: z
+          .object({
+            count: z.number().int(), radius: z.number(), dwell: z.number(),
+            services: z.object({ flask: priceSchema, balm: priceSchema, reroll: priceSchema, banish: priceSchema }).strict(),
+          })
+          .strict(),
+        treasure: z.object({ count: z.number().int(), radius: z.number() }).strict(),
+        bossWarningMinute: z.number(),
       })
       .strict(),
     damageNumberInterval: z.number(),
@@ -375,6 +396,8 @@ export type WeaponRaw = z.infer<typeof weaponSchema>;
 export type EvolutionRaw = z.infer<typeof evolutionSchema>;
 export type RelicRaw = z.infer<typeof relicSchema>;
 export type StatBonus = z.infer<typeof statBonusSchema>;
+export type BoonDef = z.infer<typeof boonSchema>;
+export type FindDef = z.infer<typeof findSchema>;
 export type EnemyRaw = z.infer<typeof enemySchema>;
 export type RegionRaw = z.infer<typeof regionSchema>;
 export type ClassRaw = z.infer<typeof classSchema>;

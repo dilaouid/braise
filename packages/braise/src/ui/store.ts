@@ -3,12 +3,12 @@ import type { GameData } from '../content/index.ts';
 import { FR } from '../content/index.ts';
 import type { RunResult } from '../core/rewards.ts';
 import type { HeroStats } from '../core/stats.ts';
-import type { Card, ChestResult } from '../core/types.ts';
+import type { Card, ChestResult, ShopItem } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
 export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
-export type Overlay = 'none' | 'levelup' | 'chest' | 'pause';
+export type Overlay = 'none' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'pause';
 export type Device = 'keyboard' | 'gamepad';
 
 /** Ce que le HUD affiche. Recopié de la simulation une dizaine de fois par seconde. */
@@ -45,6 +45,15 @@ export interface LevelUpState {
   skipHold: number;
 }
 
+/** Un article de boutique tel que l'écran l'affiche. */
+export type ShopEntry = ShopItem & { can: boolean };
+
+export interface ShopState {
+  kind: 'smith' | 'herbalist';
+  gold: number;
+  items: ShopEntry[];
+}
+
 export interface ConfirmState {
   text: string;
   yes: string;
@@ -66,6 +75,10 @@ export interface Actions {
   banish(index: number): void;
   skip(): void;
   closeChest(): void;
+  takeBoon(index: number): void;
+  buy(index: number): void;
+  closeShop(): void;
+  closeFind(): void;
   pause(on: boolean): void;
   abandon(): void;
   setSetting<K extends keyof Settings>(key: K, value: Settings[K]): void;
@@ -95,6 +108,13 @@ export const saveRev = signal(0);
 export const hud = signal<HudState | null>(null);
 export const levelUp = signal<LevelUpState | null>(null);
 export const chest = signal<ChestResult | null>(null);
+/** Les buffs proposés par le totem chargé (indices dans `data.boons`). */
+export const totemState = signal<number[] | null>(null);
+export const shopState = signal<ShopState | null>(null);
+/** La trouvaille affichée : son indice (-2 : de l'or à la place) et cet or. */
+export const findState = signal<{ find: number; gold: number } | null>(null);
+/** Buffs et trouvailles portés, pour l'écran de pause. */
+export const runExtras = signal<{ boons: number[]; finds: number[] }>({ boons: [], finds: [] });
 export const confirm = signal<ConfirmState | null>(null);
 export const ending = signal<{ result: RunResult; summary: RunSummary; stats: HeroStats } | null>(null);
 export const pauseReason = signal<string | null>(null);

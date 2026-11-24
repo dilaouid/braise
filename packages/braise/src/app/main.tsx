@@ -10,10 +10,11 @@ import { AudioManager } from '../audio/audio.ts';
 import { introCinematic } from '../content/cinematic.ts';
 import { loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
-import { banishCard, closeChest, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
+import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeBoon } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
 import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
-import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Run } from '../core/types.ts';
+import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { applyRunResult, buildSheet, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
@@ -22,9 +23,15 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, ending, holdProgress, hud, lastSeed, levelUp, notice, overlay, pauseReason,
-  pauseStats, refs, save, saveRev, screen, t, type Actions, type HudState, type Screen,
+  INTRO_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, ending, findState, holdProgress, hud, lastSeed, levelUp, notice, overlay,
+  pauseReason, pauseStats, refs, runExtras, save, saveRev, screen, shopState, t, totemState, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
+
+/** Une couleur par sorte de lieu sur la mini-carte. */
+const MINIMAP_COLORS: Record<Poi['kind'], string> = {
+  brazier: '#ffb020', spring: '#4fe0c8', cache: '#ff7a3d', portal: '#fff1c2',
+  totem: '#6cc7ff', smith: '#f4f1e6', herbalist: '#7ee08a', treasure: '#ffe36b',
+};
 
 const CLASS = 'class.ash-blade';
 const REGION = 'region.ash-woods';
@@ -138,6 +145,19 @@ async function boot(): Promise<void> {
     levelUp.value = { level: run.hero.level - run.pendingLevels + 1, cards: run.cards.slice(), rerolls: run.hero.rerolls, banishes: run.hero.banishes, skipHold: 0 };
   }
 
+  /** Recopie la boutique ouverte pour l'écran : articles, prix, or. */
+  function syncShop(): void {
+    if (!run) return;
+    const poi = run.map.pois[run.shopPoi];
+    if (!poi) return;
+    const r = run;
+    shopState.value = {
+      kind: poi.kind === 'smith' ? 'smith' : 'herbalist',
+      gold: r.hero.gold,
+      items: shopItems(r).map((item) => ({ ...item, can: canBuy(r, item) })),
+    };
+  }
+
   function finishRun(): void {
     if (!run) return;
     if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
@@ -152,17 +172,21 @@ async function boot(): Promise<void> {
     hud.value = null;
     levelUp.value = null;
     chest.value = null;
+    totemState.value = null;
+    shopState.value = null;
+    findState.value = null;
     paused = false;
     setScreen('end');
   }
 
   function setPaused(on: boolean, reason: string | null = null): void {
     if (!run || screen.value !== 'run') return;
-    if (on && (overlay.value === 'levelup' || overlay.value === 'chest')) return;
+    if (on && overlay.value !== 'none' && overlay.value !== 'pause') return;
     if (on === paused) return;
     paused = on;
     pauseReason.value = on ? reason : null;
     pauseStats.value = on ? { ...run.hero.stats } : null;
+    if (on) runExtras.value = { boons: run.boons.slice(), finds: run.finds.slice() };
     overlay.value = on ? 'pause' : 'none';
     audio.duck(on);
     guard(200);
@@ -329,6 +353,35 @@ async function boot(): Promise<void> {
         guard(250);
       }
     },
+    takeBoon(index) {
+      if (!run || performance.now() < guardUntil) return;
+      if (takeBoon(run, index)) audio.play('ui-confirm');
+    },
+    buy(index) {
+      if (!run || performance.now() < guardUntil) return;
+      if (buyItem(run, index)) {
+        syncShop();
+        // La carte achetée peut disparaître : une fois l'écran repeint, le focus retombe sur ce qui reste.
+        requestAnimationFrame(() => requestAnimationFrame(() => focus.ensure()));
+        guard(250);
+      } else {
+        audio.play('refuse');
+      }
+    },
+    closeShop() {
+      if (!run || performance.now() < guardUntil) return;
+      closeShop(run);
+      audio.play('ui-back');
+    },
+    closeFind() {
+      if (!run || performance.now() < guardUntil) return;
+      closeFind(run);
+      audio.play('ui-confirm');
+      if (run.phase === 'find') {
+        findState.value = { find: run.find, gold: run.findGold };
+        guard(250);
+      }
+    },
     pause(on) {
       setPaused(on);
       audio.play(on ? 'ui-confirm' : 'ui-back', 0.7);
@@ -456,11 +509,15 @@ async function boot(): Promise<void> {
           audio.play('evolution', 0.8, 1.2);
           say(t('hud.revive'));
           break;
-        case EV.poiStart: say(t('hud.brazier'), 3200); break;
+        case EV.poiStart: say(t(a === 1 ? 'hud.totem' : 'hud.brazier'), 3200); break;
         case EV.poiDone:
           audio.play('buy', 0.8);
-          say(a === 0 ? t('hud.brazierLit') : a === 1 ? t('hud.spring') : t('hud.cache'));
+          say(a === 0 ? t('hud.brazierLit') : a === 1 ? t('hud.spring') : a === 3 ? t('hud.treasure') : t('hud.cache'));
           break;
+        case EV.totemDone: audio.play('totem', 0.9); break;
+        case EV.shopOpen: audio.play('shop-open', 0.8); break;
+        case EV.shopBuy: audio.play('shop-buy', 0.9); break;
+        case EV.bossWarning: say(t('hud.bossWarning'), 5000); break;
         case EV.flameCall: say(t('hud.flameCall')); break;
         case EV.telegraphHit: audio.play('hammer', 0.5, 1.3, 100); break;
         case EV.charge: audio.play('dash', 0.6, 0.6); break;
@@ -514,7 +571,7 @@ async function boot(): Promise<void> {
     ctx.fillRect(0, 0, 48, b); ctx.fillRect(0, 48 - b, 48, b); ctx.fillRect(0, 0, b, 48); ctx.fillRect(48 - b, 0, b, 48);
     for (const poi of r.map.pois) {
       if (!poi.discovered) continue;
-      ctx.fillStyle = poi.state === 2 ? '#454a5c' : poi.kind === 'spring' ? '#4fe0c8' : poi.kind === 'portal' ? '#fff1c2' : '#ffb020';
+      ctx.fillStyle = poi.state === 2 ? '#454a5c' : MINIMAP_COLORS[poi.kind];
       ctx.fillRect(Math.round(poi.x * k) - 1, Math.round(poi.y * k) - 1, 2, 2);
     }
     const e = r.enemies;
@@ -660,10 +717,26 @@ async function boot(): Promise<void> {
         overlay.value = 'chest';
         audio.play('chest', 0.9);
         guard(350);
-      } else if (r.phase === 'playing' && (overlay.value === 'levelup' || overlay.value === 'chest')) {
+      } else if (r.phase === 'totem' && overlay.value !== 'totem') {
+        totemState.value = r.totemChoices.slice();
+        overlay.value = 'totem';
+        guard(350);
+      } else if (r.phase === 'shop' && overlay.value !== 'shop') {
+        syncShop();
+        overlay.value = 'shop';
+        guard(350);
+      } else if (r.phase === 'find' && overlay.value !== 'find') {
+        findState.value = { find: r.find, gold: r.findGold };
+        overlay.value = 'find';
+        audio.play('chest', 0.9);
+        guard(350);
+      } else if (r.phase === 'playing' && overlay.value !== 'none' && overlay.value !== 'pause') {
         overlay.value = 'none';
         levelUp.value = null;
         chest.value = null;
+        totemState.value = null;
+        shopState.value = null;
+        findState.value = null;
         guard(150);
       }
 
@@ -732,6 +805,9 @@ async function boot(): Promise<void> {
           if (stopOnChoice) break;
           if (run.phase === 'levelup') takeCard(run, 0);
           else if (run.phase === 'chest') closeChest(run);
+          else if (run.phase === 'totem') takeBoon(run, 0);
+          else if (run.phase === 'shop') closeShop(run);
+          else if (run.phase === 'find') closeFind(run);
           else break;
           continue;
         }

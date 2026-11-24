@@ -157,6 +157,11 @@ export function updateDirector(run: Run, dt: number): void {
   run.hpScaleNow = enemyHpScale(tuning.scale, Math.min(m, tuning.durationMin), v, 0);
 
   if (d.bossSpawned) return;
+  // Une minute avant le boss, la partie prévient : la carte va se refermer.
+  if (!run.bossWarned && m >= tuning.events.bossWarningMinute) {
+    run.bossWarned = true;
+    if (m < tuning.durationMin) emit(run, EV.bossWarning, run.hero.x, run.hero.y);
+  }
   if (m >= tuning.durationMin) {
     spawnBoss(run);
     return;

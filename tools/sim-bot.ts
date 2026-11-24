@@ -1,9 +1,10 @@
 /**
  * Joue des parties sans affichage, pour l'équilibrage.
  * Usage : pnpm sim -- --runs 50 --bot active --level 10 --minutes 16 --ardor 0
+ * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
-import { BOT_TUNE, activeBot, fleeBot, simulate } from '../packages/braise/src/core/bots.ts';
+import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate } from '../packages/braise/src/core/bots.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
 import { createRun } from '../packages/braise/src/core/run.ts';
 import { buildSheet, unlockedContent } from '../packages/braise/src/meta/hero.ts';
@@ -30,6 +31,16 @@ BOT_TUNE.fleeReach = Number(arg('reach', String(BOT_TUNE.fleeReach)));
 BOT_TUNE.touch = Number(arg('touch', String(BOT_TUNE.touch)));
 BOT_TUNE.lead = Number(arg('lead', String(BOT_TUNE.lead)));
 const data = loadGameData();
+const noPlaces = process.argv.includes('--no-places');
+if (noPlaces) {
+  const ev = data.tuning.events;
+  ev.totem.count = 0;
+  ev.smith.count = 0;
+  ev.herbalist.count = 0;
+  ev.treasure.count = 0;
+  // La référence est le jeu d'avant : les caches n'y donnaient pas de trouvaille (de l'or à la place).
+  data.finds.length = 0;
+}
 const save = newSave(0);
 const hero = newHero();
 hero.level = level;
@@ -52,6 +63,12 @@ let totalKills = 0;
 const weaponDamage = new Map<string, number>();
 const weaponPicked = new Map<string, number>();
 const deaths: number[] = [];
+let totalBoons = 0;
+let totalFinds = 0;
+let totalBuys = 0;
+let totalSpent = 0;
+let totalGold = 0;
+let bossSeconds = 0;
 const hurtBy = new Float64Array(data.enemies.length);
 
 for (let r = 0; r < runs; r++) {
@@ -61,7 +78,8 @@ for (let r = 0; r < runs; r++) {
   });
   let maxEnemies = 0;
   simulate(run, {
-    bot: botName === 'flee' ? fleeBot : activeBot,
+    bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorerBot : activeBot,
+    pickCard: botName === 'explorer' ? plannedPick : undefined,
     maxSteps: minutes * 3600,
     onStep: (x) => {
       if (x.enemies.count > maxEnemies) maxEnemies = x.enemies.count;
@@ -77,6 +95,12 @@ for (let r = 0; r < runs; r++) {
   totalAshes += res.ashesKept;
   totalXp += res.heroXp;
   totalKills += run.hero.kills;
+  totalBoons += run.boons.length;
+  totalFinds += run.finds.length;
+  totalBuys += run.smithBuys + run.serviceBuys.reduce((a, b) => a + b, 0);
+  totalSpent += run.hero.goldSpent;
+  totalGold += run.hero.gold + run.hero.goldSpent;
+  if (run.phase === 'victory') bossSeconds += run.time - data.tuning.durationMin * 60;
   for (let k = 0; k < hurtBy.length; k++) hurtBy[k]! += run.damageByKind[k]!;
   const total = res.damageByWeapon.reduce((s, w) => s + w.damage, 0) || 1;
   for (const w of res.damageByWeapon) {
@@ -95,6 +119,11 @@ for (let r = 0; r < runs; r++) {
 console.log(`\n${runs} parties · robot « ${botName} » · héros niveau ${level} · Autel ${ardor} · ${((Date.now() - started) / 1000).toFixed(1)} s`);
 console.log(`boss atteint : ${Math.round((100 * reachedBoss) / runs)} %   victoires : ${Math.round((100 * victories) / runs)} %`);
 console.log(`temps moyen : ${fmt(totalTime / runs)}   niveau de partie moyen : ${(totalLevel / runs).toFixed(1)}   battus : ${Math.round(totalKills / runs)}`);
+console.log(
+  `lieux${noPlaces ? ' (retirés)' : ''} : totems ${(totalBoons / runs).toFixed(1)} · trouvailles ${(totalFinds / runs).toFixed(1)} · achats ${(totalBuys / runs).toFixed(1)}`
+  + ` · or ramassé ${Math.round(totalGold / runs)} · or dépensé ${Math.round(totalSpent / runs)}`
+  + (victories ? ` · boss battu en ${fmt(bossSeconds / victories)}` : ''),
+);
 console.log(`Cendres moyennes : ${Math.round(totalAshes / runs)}   expérience de héros moyenne : ${Math.round(totalXp / runs)}`);
 if (deaths.length) {
   deaths.sort((a, b) => a - b);

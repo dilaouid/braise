@@ -170,6 +170,42 @@
     64
    ],
    "prompt": "a standing stone archway portal filled with swirling warm orange and gold fire light, rough grey stones, top-down RPG prop"
+  },
+  {
+   "name": "poi-totem",
+   "id": "c841070b-dec8-4ac1-acc3-628b96a3622f",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a short wide squat ancient standing stone idol of grey granite, carved face and rune engravings glowing faint blue, on a small round stone pedestal, grey rock, top-down prop"
+  },
+  {
+   "name": "poi-ferrailleur",
+   "id": "1e2a3043-ecec-4a10-8cf5-029a2e11cc63",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a hooded survivor with hidden face sitting still behind a small market stall of scrap metal and rusty weapons, rusty blades and a hammer on the table, an unlit lantern beside, top-down prop"
+  },
+  {
+   "name": "poi-herboriste",
+   "id": "5a6b700d-d662-4ac1-a5b0-53ac098abe7d",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a hooded survivor with hidden face sitting still behind a small market stall of glass vials, jars and bundles of dried herbs, top-down prop"
+  },
+  {
+   "name": "poi-tresor",
+   "id": "97d5dc74-0cae-4425-9e20-e7d751dae70e",
+   "size": [
+    32,
+    32
+   ],
+   "prompt": "a small ancient closed casket of pale silvery-blue wood bound with tarnished copper bands, bluish silver tint, top-down prop"
   }
  ],
  "tilesets": [
@@ -325,6 +361,116 @@
    "name": "icon-ashes",
    "id": "0cdc6798-353b-49c5-8ba8-ad98c5eb14e2",
    "prompt": "a small pile of pale grey ashes with one tiny orange ember glowing in it, game currency icon"
+  },
+  {
+   "name": "icon-boon-wisdom",
+   "id": "809b5730-d32b-4ad2-a6b4-b6d369e8c0d0",
+   "prompt": "a large open book seen from the front filling the frame, cream pages radiating bright yellow light rays, brown cover, big simple shapes, game item icon"
+  },
+  {
+   "name": "icon-boon-stride",
+   "id": "427dacdb-490a-4653-ba7c-f424cba0b97d",
+   "prompt": "one large brown boot in side view filling the frame, with a big white bird wing attached to its heel, winged boot of speed, big simple shapes, game item icon"
+  },
+  {
+   "name": "icon-boon-glow",
+   "id": "e40f713d-f188-4953-afb7-80f6c161aeda",
+   "prompt": "a large glowing yellow ring halo of light with short rays around a tiny lit lantern, filling the frame, big simple shapes, game item icon"
+  },
+  {
+   "name": "icon-boon-edge",
+   "id": "0ec9f0a1-96c9-4eb1-a3b6-9a733eff26c6",
+   "prompt": "a sharp steel sword blade with a bright white gleam sparkle on its edge, game buff icon"
+  },
+  {
+   "name": "icon-boon-breath",
+   "id": "c96ebb27-e1a0-4d7b-a611-09f4fdaa0c4e",
+   "prompt": "a simple red heart with a small highlight, game buff icon"
+  },
+  {
+   "name": "icon-boon-vein",
+   "id": "77d6a7e9-eba0-40c8-8382-e0ddce92238d",
+   "prompt": "a green four-leaf clover, game buff icon"
+  },
+  {
+   "name": "icon-find-boots",
+   "id": "17f638bd-0797-46fe-8902-dda0efc08d23",
+   "prompt": "a pair of worn brown leather boots with new patched soles, game item icon"
+  },
+  {
+   "name": "icon-find-lantern-glass",
+   "id": "f5ce664e-467a-4408-a1ce-c0915b614dee",
+   "prompt": "a curved clear glass lantern chimney, pale blue glass tube with a highlight, game item icon"
+  },
+  {
+   "name": "icon-find-holed-coin",
+   "id": "ce43c4a7-3873-418b-b6a8-d2fc3d8dbda8",
+   "prompt": "a single old gold coin with a round hole in its center, game item icon"
+  },
+  {
+   "name": "icon-find-purse",
+   "id": "d30b79e6-e03c-47e1-8beb-d146f2a40ba9",
+   "prompt": "a small brown leather coin purse tied with a string, visible stitched patch, game item icon"
+  },
+  {
+   "name": "icon-find-notebook",
+   "id": "8d1f7c41-c73c-475d-9a1c-350e8703569a",
+   "prompt": "a small child's notebook with a pale cover and a simple yellow sun drawing on it, game item icon"
+  },
+  {
+   "name": "icon-find-scarf",
+   "id": "5dad8025-eb9d-48e1-bb36-c5ae7393a90c",
+   "prompt": "a folded red wool scarf with fringes, game item icon"
+  },
+  {
+   "name": "icon-find-flask",
+   "id": "7436d907-2faa-4161-8bb0-52f2d2ddf665",
+   "prompt": "a dented grey metal canteen water flask with a cap and a strap, game item icon"
+  },
+  {
+   "name": "icon-find-cards",
+   "id": "bb4cdd33-e3a2-4641-be53-ccacd6e4900a",
+   "prompt": "a small fanned deck of playing cards, pale cards with red and dark pips, game item icon"
+  },
+  {
+   "name": "icon-find-flint",
+   "id": "cae922e2-0d40-421d-befc-1119ba100e49",
+   "prompt": "a dark grey flint stone with a bright orange spark flying off it, game item icon"
+  },
+  {
+   "name": "icon-find-winder",
+   "id": "9ba765c8-6730-4781-9196-5afeb88bf624",
+   "prompt": "a small brass wind-up key, a short metal shaft with a flat two-lobed handle, music box winding key, golden brass, drawn diagonally filling the frame, game item icon"
+  },
+  {
+   "name": "icon-find-blanket",
+   "id": "a65313b8-f77b-4bea-a276-6728431b8de9",
+   "prompt": "a neatly folded thick wool blanket, grey-blue with a pale stripe, stacked folds, game item icon"
+  },
+  {
+   "name": "icon-find-door-nail",
+   "id": "d7ef3d41-0008-49ff-80a4-9c594e41cc4a",
+   "prompt": "one big old forged iron door nail with a wide round head, drawn diagonally filling the frame, dark grey iron, game item icon"
+  },
+  {
+   "name": "icon-service-flask",
+   "id": "e1796e69-c245-45cb-a09f-50cf50ab9f09",
+   "prompt": "a round glass healing flask full of glowing orange liquid with a cork and a white plus sign cross on the glass, game item icon"
+  },
+  {
+   "name": "icon-service-balm",
+   "id": "92e6c531-9eca-42bc-abc7-7ede7909d4da",
+   "prompt": "a small round clay pot jar filled with thick green healing balm ointment, open top, game item icon"
+  },
+  {
+   "name": "icon-service-reroll",
+   "id": "477943a2-4ff6-40c6-b465-df9b329a3d61",
+   "prompt": "two bold curved arrows forming an open ring, recycle refresh symbol, bright teal arrows with arrowheads, empty hollow center, flat simple shapes, game UI icon"
+  },
+  {
+   "name": "icon-service-banish",
+   "id": "174adce2-a250-4da0-82ee-7ffc8c2efb4a",
+   "prompt": "a single pale upright playing card crossed out by a big bold red X cross, banish symbol, filling the frame, game UI icon"
   }
  ],
  "sounds": [
@@ -489,6 +635,24 @@
    "id": "c3cb9c97-306c-4af1-8c7f-b20c5c9862c9",
    "prompt": "a short dull double buzz, user interface action refused",
    "seconds": 0.5
+  },
+  {
+   "name": "sfx-totem",
+   "id": "3c47e463-b4d2-408b-91e4-1a14b64cd4cb",
+   "prompt": "a deep low stone hum that opens into a clear bright chime, an ancient totem awakening, short",
+   "seconds": 1.5
+  },
+  {
+   "name": "sfx-shop-open",
+   "id": "e4c08872-3aef-45e7-90c5-0be811e70839",
+   "prompt": "a short rattle of scrap metal pieces clinking and a small jingle bell, a shop stall opening",
+   "seconds": 1.2
+  },
+  {
+   "name": "sfx-shop-buy",
+   "id": "ec6507b9-914e-4db3-bef3-0fe6c1866586",
+   "prompt": "a few coins dropped and set down on a wooden counter, satisfying purchase, short",
+   "seconds": 1
   }
  ],
  "music": [

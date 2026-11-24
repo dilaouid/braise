@@ -322,6 +322,12 @@ export function EndScreen(): JSX.Element | null {
               <span><Icon name="icon-ashes" /> {t('end.ashes')}</span>
               <b>{fmt(result.ashesKept)} {t('end.kept')}{victory ? '' : ` · ${fmt(result.ashesCollected - result.ashesKept)} ${t('end.lost')}`}</b>
             </p>
+            {result.goldSpent > 0 ? (
+              <p>
+                <span><Icon name="icon-gold" /> {t('end.goldSpent')}</span>
+                <b>{fmt(result.goldSpent)}</b>
+              </p>
+            ) : null}
             <p class="dim">{victory ? t('end.victoryBonus') : t('end.deathShare')}</p>
             <h2>{t('end.heroXp')} +{fmt(result.heroXp)}</h2>
             <p><span>{t('end.heroLevel', { level: summary.heroLevel })}</span>{summary.levelsGained > 0 ? <b class="gold">{t('end.levelUp', { n: summary.levelsGained })}</b> : null}</p>
