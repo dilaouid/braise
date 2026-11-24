@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import introJson from '../../content/cinematics/intro.json';
 import memoryMeetingJson from '../../content/cinematics/memory-meeting.json';
+import stagAshJson from '../../content/cinematics/stag-ash.json';
+import stagCallJson from '../../content/cinematics/stag-call.json';
 import frJson from '../../content/i18n/fr.json';
 
 /**
@@ -198,6 +200,8 @@ export function compileCinematic(raw: unknown, fr: Record<string, string>, sound
 export const CINEMATICS_RAW: Record<string, unknown> = {
   intro: introJson,
   'memory-meeting': memoryMeetingJson,
+  'stag-call': stagCallJson,
+  'stag-ash': stagAshJson,
 };
 
 const compiled = new Map<string, Cinematic>();

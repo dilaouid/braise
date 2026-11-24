@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  FR, SimPad, bossNow, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, storedSave, waitFrames, watch,
+  FR, SimPad, bossNow, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipDepartCinematic, storedSave, waitFrames, watch,
 } from './harness.ts';
 
 const SHOTS = 'souvenirs';
@@ -64,8 +64,9 @@ async function toFallenBoss(page: Page, pad: SimPad): Promise<void> {
   await expectFocus(page, 'depart');
   await settle(page);
   await pad.down('A');
-  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
   await pad.up('A');
+  await skipDepartCinematic(page, pad);
   await settle(page);
   expect(await bossNow(page)).toBe(true);
   // L'arène se referme autour de Moon : il s'écarte de son centre, là où le boss laissera son lieu.

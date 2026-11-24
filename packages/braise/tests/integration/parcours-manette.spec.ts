@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  FR, SimPad, capture, expectFocus, fastForward, runView, saveView, settle, skipIntro, skipTutorial, storageKey, waitFrames, watch,
+  FR, SimPad, capture, expectFocus, fastForward, runView, saveView, settle, skipDepartCinematic, skipIntro, skipTutorial, storageKey, waitFrames, watch,
 } from './harness.ts';
 
 const SHOTS = 'parcours-manette';
@@ -88,8 +88,9 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await expectFocus(page, 'depart');
   await settle(page);
   await pad.down('A');
-  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
   await pad.up('A');
+  await skipDepartCinematic(page, pad);
   await settle(page);
 
   // Le stick déplace le héros, A lance la ruée.
@@ -205,8 +206,9 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await pad.press('UP');
   await expectFocus(page, 'depart');
   await pad.down('A');
-  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
   await pad.up('A');
+  await skipDepartCinematic(page, pad);
   await settle(page);
   // Ardeur, rang 1 : +3 % de Puissance, visible dans la partie et sur la fiche de la pause.
   expect((await runView(page))!.power).toBeCloseTo(0.03, 5);

@@ -20,7 +20,7 @@ import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
-import { applyRunResult, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
+import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
 import { GameRenderer } from '../render/renderer.ts';
@@ -428,7 +428,7 @@ async function boot(): Promise<void> {
    * Lance une cinématique par son identifiant. Pendant le chargement, l'écran reste noir. `after` est
    * appelé quand elle finit ou qu'elle est passée ; `failed` si elle ne charge pas (par défaut, `after`).
    */
-  function playCinematic(id: string, after: () => void, failed: () => void = after): void {
+  function playCinematic(id: string, after: () => void, failed: () => void = after, holdMs?: number): void {
     const token = ++cineToken;
     cineAfter = after;
     cineHoldMs = 0;
@@ -452,7 +452,7 @@ async function boot(): Promise<void> {
       fail(err);
       return;
     }
-    cineHold = def.skipHoldMs;
+    cineHold = holdMs ?? def.skipHoldMs;
     void CinematicPlayer.load(def, import.meta.env.BASE_URL, {
       sfx: (name, volume) => audio.play(name, volume),
       music: (name) => audio.playMusic(name, false),
@@ -534,6 +534,29 @@ async function boot(): Promise<void> {
       dialogueState.value = null;
       overlay.value = 'none';
     }
+  }
+
+  /** L'expédition au Bois commence. `reborn` : le boss de la région est déjà battu, son boss reformé l'attend. */
+  function startExpedition(seed: number, reborn: boolean): void {
+    const { sheet } = buildSheet(data, current, CLASS);
+    const unlocked = unlockedContent(data, current);
+    run = createRun(data, {
+      seed, regionId: REGION, classId: CLASS, vigil: 1, sheet,
+      unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: current.settings.autoSkills,
+      // Le souvenir que le boss de la région garde encore, s'il y en a un.
+      memory: pendingMemory(data, current, REGION),
+      reborn,
+    });
+    renderer.beginRun(run);
+    paused = false;
+    acc = 0;
+    deadAt = 0;
+    banner = null;
+    ending.value = null;
+    audio.play('ui-confirm');
+    audio.playMusic(run.region.music.calm);
+    setScreen('run');
+    say(t('hud.hint.move'), 4500);
   }
 
   /** Le prologue : il est noté comme vu, puis le jeu continue là où on l'attendait. */
@@ -659,25 +682,27 @@ async function boot(): Promise<void> {
     },
     depart(seed) {
       audio.unlock();
-      const { sheet } = buildSheet(data, current, CLASS);
-      const unlocked = unlockedContent(data, current);
+      // La graine est tirée avant la cinématique : « rejouer la même carte » reste la même carte.
       const chosen = seed ?? ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
-      run = createRun(data, {
-        seed: chosen, regionId: REGION, classId: CLASS, vigil: 1, sheet,
-        unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: current.settings.autoSkills,
-        // Le souvenir que le boss de la région garde encore, s'il y en a un.
-        memory: pendingMemory(data, current, REGION),
-      });
-      renderer.beginRun(run);
-      paused = false;
-      acc = 0;
-      deadAt = 0;
-      banner = null;
-      ending.value = null;
+      const reborn = bossBeaten(current, REGION);
+      const cinematics = data.regions[REGION]?.cinematics;
+      const id = cinematics ? (reborn ? cinematics.reborn : cinematics.first) : null;
+      if (!id) {
+        startExpedition(chosen, reborn);
+        return;
+      }
       audio.play('ui-confirm');
-      audio.playMusic(run.region.music.calm);
-      setScreen('run');
-      say(t('hud.hint.move'), 4500);
+      // Déjà vue : un seul appui sur Retour la passe. Sinon, Retour maintenu, comme le prologue.
+      const key = `seen.${id}`;
+      const seen = current.account.unlocks.includes(key);
+      playCinematic(id, () => {
+        if (!current.account.unlocks.includes(key)) {
+          current.account.unlocks.push(key);
+          changed();
+          persist();
+        }
+        startExpedition(chosen, reborn);
+      }, () => startExpedition(chosen, reborn), seen ? 1 : undefined);
     },
     buyAltar(id) {
       const res = buyAltarRank(current, data, id);
@@ -898,7 +923,7 @@ async function boot(): Promise<void> {
           audio.play('boss', 1);
           audio.playMusic(r.region.music.boss);
           // Le boss du tutoriel porte son propre nom, et sa leçon est déjà dans le bandeau.
-          if (!r.tutorial) say(t('hud.bossComing'), 3500);
+          if (!r.tutorial) say(t(`${r.data.enemies[r.region.bossIdx]!.id}.name`), 3500);
           break;
         case EV.bossPhase: if (a > 1) audio.play('boss', 0.8, 1.15); break;
         case EV.bossDeath:
@@ -1362,6 +1387,8 @@ async function boot(): Promise<void> {
       for (let i = 0; i < e.count; i++) {
         if (e.uid[i] !== run.director.bossUid) continue;
         e.hp[i] = 1;
+        // Un boss qui se reforme est pris déjà relevé : le prochain coup le fait tomber pour de bon.
+        run.director.bossReformed = true;
         return true;
       }
       return false;

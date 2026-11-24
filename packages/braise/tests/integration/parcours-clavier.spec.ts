@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { FR, expectFocus, runView, settle, skipIntro, skipTutorial, watch } from './harness.ts';
+import { FR, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, watch } from './harness.ts';
 
 /** Le même jeu au clavier seul : menus, départ maintenu, pause. */
 test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }) => {
@@ -39,8 +39,9 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
   await expectFocus(page, 'depart');
   await settle(page);
   await page.keyboard.down('Enter');
-  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toBeVisible();
   await page.keyboard.up('Enter');
+  await skipDepartCinematic(page);
   await settle(page);
 
   const start = (await runView(page))!;
