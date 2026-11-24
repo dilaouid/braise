@@ -135,8 +135,12 @@ test('ouvrir Cream en chemin : Moon s\'arrête, et ne repart pas', async ({ page
   const pad = await SimPad.install(page);
   await plantSave(page, played());
   await toCamp(page, pad);
+  // Moon part loin vers le bas à droite : la marche jusqu'à Cream dure assez pour qu'on l'ouvre en chemin.
+  await pad.stick(0.7, 0.7);
+  await page.waitForTimeout(1000);
+  await pad.stick(0, 0);
   // Sans attendre qu'il arrive.
-  for (let k = 0; k < 4 && (await page.locator('.camp-object.is-focused[data-focus="cream"]').count()) === 0; k++) await pad.press('RB', 2);
+  for (let k = 0; k < 6 && (await page.locator('.camp-object.is-focused[data-focus="cream"]').count()) === 0; k++) await pad.press('RB', 2);
   expect((await moon(page)).goal).not.toBeNull();
   await pad.press('A', 2);
   await expect(page.locator('.dialogue')).toBeVisible();
