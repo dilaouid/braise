@@ -1310,6 +1310,36 @@
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-drop.png
   tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-heart.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-power.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-wisdom.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-glow.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-crit.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-hourglass.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-horde.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-elite.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-flame.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-next.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-prev.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-opposite.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-malus.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-remove.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-plus.png
+  tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-lantern-piece.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-call.png
