@@ -46,7 +46,7 @@ describe('données du jeu', () => {
 
   it('toute attaque d\'élite ou de boss est annoncée au moins 0,7 s avant', () => {
     for (const e of data.enemies) {
-      for (const tele of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph]) {
+      for (const tele of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph, e.stomp?.telegraph, e.stalk?.telegraph, e.volley?.windup]) {
         if (tele !== undefined) expect(tele).toBeGreaterThanOrEqual(0.7);
       }
     }

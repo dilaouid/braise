@@ -193,6 +193,26 @@ export const enemySchema = z
       .optional(),
     summon: z.object({ enemy: enemyId, count: z.number().int(), cooldown: z.number() }).strict().optional(),
     phase3Haste: z.number().optional(),
+    /** Le souffle entre deux attaques du boss, une valeur par phase. */
+    pauses: z.array(z.number()).optional(),
+    /** Des anneaux qui partent du boss l'un après l'autre. */
+    stomp: z
+      .object({ damage: z.number(), telegraph: z.number(), rings: z.number().int(), ringWidth: z.number(), stagger: z.number() })
+      .strict()
+      .optional(),
+    /** Des cercles posés l'un après l'autre là où se tient le héros. */
+    stalk: z
+      .object({ damage: z.number(), telegraph: z.number(), count: z.number().int(), interval: z.number(), radius: z.number() })
+      .strict()
+      .optional(),
+    /** Des éventails de projectiles. */
+    volley: z
+      .object({
+        damage: z.number(), windup: z.number(), waves: z.number().int(), shots: z.number().int(), spread: z.number(),
+        speed: z.number(), interval: z.number(), radius: z.number(), life: z.number(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

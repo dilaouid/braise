@@ -282,9 +282,11 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     if (e.behavior === 'charger' && !e.charge) errors.push(`${e.id}: un chargeur sans « charge »`);
     if (e.behavior === 'spawner' && (!e.spawner || !e.slam)) errors.push(`${e.id}: il manque « spawner » ou « slam »`);
     if (e.behavior === 'boss-watcher' && (!e.charge || !e.slam)) errors.push(`${e.id}: il manque « charge » ou « slam »`);
-    if (e.behavior === 'boss-stag' && (!e.charge || !e.roots || !e.summon || !e.phases)) errors.push(`${e.id}: boss incomplet`);
+    if (e.behavior === 'boss-stag' && (!e.charge || !e.roots || !e.summon || !e.phases || !e.slam || !e.stomp || !e.stalk || !e.volley || !e.pauses)) {
+      errors.push(`${e.id}: boss incomplet`);
+    }
     // Toute attaque annoncée l'est au moins 0,7 s avant (document 02 §6.3).
-    for (const t of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph]) {
+    for (const t of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph, e.stomp?.telegraph, e.stalk?.telegraph, e.volley?.windup]) {
       if (t !== undefined && t < tuning.boss.minTelegraph) errors.push(`${e.id}: annonce de ${t} s, inférieure à ${tuning.boss.minTelegraph} s`);
     }
   }

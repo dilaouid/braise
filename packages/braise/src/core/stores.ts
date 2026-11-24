@@ -128,16 +128,16 @@ export function removeTelegraph(t: TelegraphStore, i: number): void {
   t.kind[i] = t.kind[l]!;
 }
 
-/** Ajoute une annonce d'attaque au sol. `damage` nul : l'annonce est seulement visuelle. */
+/** Ajoute une annonce d'attaque au sol. `damage` nul : l'annonce est seulement visuelle. `delay` : elle n'apparaît qu'après ce temps. */
 export function addTelegraph(
   run: Run, shape: number, x: number, y: number, angle: number, length: number, width: number, duration: number, damage: number, owner: number,
-  kind = 0,
+  kind = 0, delay = 0,
 ): void {
   const t = run.telegraphs;
   if (t.count >= CAP_TELEGRAPHS) return;
   const i = t.count++;
   t.shape[i] = shape; t.x[i] = x; t.y[i] = y; t.angle[i] = angle; t.length[i] = length; t.width[i] = width;
-  t.t[i] = 0; t.duration[i] = duration; t.damage[i] = damage; t.owner[i] = owner; t.kind[i] = kind;
+  t.t[i] = -delay; t.duration[i] = duration; t.damage[i] = damage; t.owner[i] = owner; t.kind[i] = kind;
 }
 
 export function createPickupStore(): PickupStore {

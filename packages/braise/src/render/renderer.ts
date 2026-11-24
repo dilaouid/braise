@@ -2,7 +2,7 @@ import { Application, Container, Graphics, RenderTexture, Sprite, Texture, Textu
 import type { GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
-  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
   TILE_GATE, TILE_THICKET,
   type Run,
 } from '../core/types.ts';
@@ -38,6 +38,15 @@ const FX_EDGE = 5;
 const FX_TELE_LINE = 6;
 const FX_TELE_CIRCLE = 7;
 const FX_TRAIL = 8;
+const FX_TELE_RING = 9;
+/** Le bois sombre des racines du Cerf et le sol qu'elles ouvrent. */
+const ROOT_DARK = 0x2a1a14;
+
+/** Un nombre de 0 à 1 tiré d'un autre, toujours le même : les racines poussent au même endroit à chaque image. */
+function hash(n: number): number {
+  const v = Math.sin(n) * 43758.5453;
+  return v - Math.floor(v);
+}
 const MAX_FX = 96;
 const MAX_PUFFS = 120;
 const MAX_NUMBERS = 110;
@@ -447,11 +456,26 @@ export class GameRenderer {
       case EV.levelUp: this.addFx(FX_RING, x, y, 120, C.emberPale, 3, 0.5); break;
       case EV.evolution: this.addFx(FX_RING, x, y, 180, C.emberWhite, 6, 0.7); break;
       case EV.waveWarning: this.addFx(FX_EDGE, 0, 0, a, b, 0, run.data.tuning.director.waveWarning); break;
-      case EV.telegraphHit:
-        if (a === TG_CIRCLE) this.addFx(FX_TELE_CIRCLE, x, y, c, 0, 0, 0.2);
-        else this.addFx(FX_TELE_LINE, x, y, b, c, 18, 0.2);
-        this.shake = Math.max(this.shake, 1.5);
+      case EV.telegraphHit: {
+        // a : la forme ; b : l'angle d'une ligne ou le rayon intérieur d'un anneau ; c : la longueur ou le rayon.
+        const dust = 0x8f8173;
+        if (a === TG_CIRCLE) {
+          this.addFx(FX_TELE_CIRCLE, x, y, c, 0, 0, 0.7);
+          for (let k = 0; k < 4; k++) this.puff(x + Math.cos(k * 1.6) * c * 0.6, y + Math.sin(k * 1.6) * c * 0.5, this.puffFrames, dust, 12);
+        } else if (a === TG_RING) {
+          this.addFx(FX_TELE_RING, x, y, b, c, 0, 0.6);
+          for (let k = 0; k < 8; k++) {
+            const ang = (k * Math.PI) / 4 + b * 0.01;
+            this.puff(x + Math.cos(ang) * (b + c) * 0.5, y + Math.sin(ang) * (b + c) * 0.5, this.puffFrames, dust, 12);
+          }
+        } else if (a === TG_LINE) {
+          // L'événement ne porte pas la largeur : celle des racines du Cerf, la seule ligne qui frappe.
+          this.addFx(FX_TELE_LINE, x, y, b, c, 22, 0.9);
+          for (let d = 50; d < c; d += 100) this.puff(x + Math.cos(b) * d, y + Math.sin(b) * d, this.puffFrames, dust, 12);
+        }
+        this.shake = Math.max(this.shake, 2);
         break;
+      }
       case EV.bossSpawn: this.shake = Math.max(this.shake, 3); break;
       case EV.poiDone: this.addFx(FX_RING, x, y, 90, a === 1 ? C.teal : C.emberPale, 3, 0.5); break;
       case EV.heroRevive: this.addFx(FX_RING, x, y, 110, C.emberWhite, 6, 0.5); break;
@@ -754,8 +778,32 @@ export class GameRenderer {
     // Annonces d'attaque : magenta, hachurées, qui se remplissent pendant le délai.
     const tg = run.telegraphs;
     for (let i = 0; i < tg.count; i++) {
-      const frac = Math.min(1, tg.t[i]! / tg.duration[i]!);
-      if (tg.shape[i] === TG_CIRCLE) {
+      // Une annonce différée n'est encore qu'un contour pâle : on voit venir la suite sans la confondre avec ce qui frappe.
+      const waiting = tg.t[i]! < 0;
+      const frac = waiting ? 0 : Math.min(1, tg.t[i]! / tg.duration[i]!);
+      if (tg.shape[i] === TG_RING) {
+        const inner = tg.length[i]!;
+        const outer = tg.width[i]!;
+        const w = outer - inner;
+        if (!waiting) {
+          g.circle(tg.x[i]!, tg.y[i]!, (inner + outer) / 2).stroke({ width: w, color: C.danger, alpha: 0.12 });
+          // Le remplissage part du bord intérieur, comme l'onde qui vient du Cerf.
+          if (frac > 0) g.circle(tg.x[i]!, tg.y[i]!, inner + (w * frac) / 2).stroke({ width: w * frac, color: C.danger, alpha: 0.22 });
+        }
+        const edge = waiting ? 0.3 : 0.9;
+        g.circle(tg.x[i]!, tg.y[i]!, outer).stroke({ width: 1, color: C.danger, alpha: edge });
+        g.circle(tg.x[i]!, tg.y[i]!, inner).stroke({ width: 1, color: C.danger, alpha: edge });
+        if (!waiting) g.circle(tg.x[i]!, tg.y[i]!, inner + w / 2).stroke({ width: 1, color: C.dangerDark, alpha: 0.5 });
+      } else if (waiting) {
+        if (tg.shape[i] === TG_CIRCLE) {
+          g.circle(tg.x[i]!, tg.y[i]!, tg.width[i]!).stroke({ width: 1, color: C.danger, alpha: 0.3 });
+        } else {
+          const a = tg.angle[i]!;
+          const len = tg.length[i]!;
+          g.moveTo(tg.x[i]!, tg.y[i]!).lineTo(tg.x[i]! + Math.cos(a) * len, tg.y[i]! + Math.sin(a) * len)
+            .stroke({ width: tg.width[i]!, color: C.danger, alpha: 0.07 });
+        }
+      } else if (tg.shape[i] === TG_CIRCLE) {
         const r = tg.width[i]!;
         g.circle(tg.x[i]!, tg.y[i]!, r).fill({ color: C.danger, alpha: 0.12 });
         g.circle(tg.x[i]!, tg.y[i]!, r * frac).fill({ color: C.danger, alpha: 0.22 });
@@ -979,7 +1027,7 @@ export class GameRenderer {
     for (let i = es.count; i < this.shownEnemyShots; i++) this.enemyShotSprites[i]!.visible = false;
     this.shownEnemyShots = es.count;
 
-    this.drawFx(run, dt, paused, top2, g, hx, hy);
+    this.drawFx(run, dt, paused, top2, g, hx, hy, camX, camY);
     this.drawOverlay(run, time, camX, camY);
 
     // La lueur : un disque chaud autour de la lanterne ; son rayon est la statistique Lueur plus 24 px.
@@ -1018,7 +1066,35 @@ export class GameRenderer {
     em.sprite.visible = true;
   }
 
-  private drawFx(run: Run, dt: number, paused: boolean, top: Graphics, ground: Graphics, hx: number, hy: number): void {
+  /** Les racines qui jaillissent le long d'une ligne frappée, de son origine vers son bout. */
+  private drawRootSpikes(ground: Graphics, f: Fx, camX: number, camY: number): void {
+    const ux = Math.cos(f.a);
+    const uy = Math.sin(f.a);
+    const len = f.b;
+    const width = f.c;
+    for (let d = 10; d < len; d += 13) {
+      // Le jaillissement court le long de la ligne en 0,12 s, puis chaque racine pousse et retombe.
+      const local = (f.t - (d / len) * 0.12) / 0.5;
+      if (local <= 0 || local >= 1) continue;
+      const h = hash(d * 12.9898 + f.x * 0.37 + f.y * 0.11);
+      const side = (h - 0.5) * width * 0.7;
+      const px = f.x + ux * d - uy * side;
+      const py = f.y + uy * d + ux * side;
+      const rise = local < 0.2 ? local / 0.2 : 1 - (local - 0.2) / 0.8;
+      const tall = (9 + h * 11) * rise;
+      const lean = (hash(h * 91.7) - 0.5) * 6;
+      const base = 2.5 + h * 1.5;
+      ground.poly([px - base, py, px + base, py, px + lean, py - tall]).fill({ color: ROOT_DARK, alpha: 0.95 });
+      ground.moveTo(px + base * 0.3, py - 1).lineTo(px + lean, py - tall).stroke({ width: 1, color: C.danger, alpha: 0.7 * rise });
+    }
+    // La lueur de l'impact : sans elle, le coup se perd dans le noir de la forêt.
+    if (f.t < 0.3) {
+      const glow = 1 - f.t / 0.3;
+      for (let d = 30; d < len; d += 70) this.light(f.x + ux * d - camX, f.y + uy * d - camY, Math.round(26 * glow), 0.08);
+    }
+  }
+
+  private drawFx(run: Run, dt: number, paused: boolean, top: Graphics, ground: Graphics, hx: number, hy: number, camX: number, camY: number): void {
     for (let i = this.fxCount - 1; i >= 0; i--) {
       const f = this.fx[i]!;
       if (!paused) f.t += dt;
@@ -1057,12 +1133,46 @@ export class GameRenderer {
           ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * len, f.y + Math.sin(f.a) * len).stroke({ width: 2, color: C.emberPale, alpha: 0.8 * fade });
           break;
         }
-        case FX_TELE_CIRCLE:
-          ground.circle(f.x, f.y, f.a).fill({ color: C.danger, alpha: 0.5 * fade });
+        case FX_TELE_CIRCLE: {
+          // Un éclair plein, puis le sol fendu en étoile qui s'efface, et la poussière qui s'éloigne.
+          const flash = Math.max(0, 1 - f.t / 0.14);
+          if (flash > 0) ground.circle(f.x, f.y, f.a).fill({ color: C.danger, alpha: 0.55 * flash });
+          ground.circle(f.x, f.y, f.a).fill({ color: ROOT_DARK, alpha: 0.35 * fade });
+          ground.circle(f.x, f.y, f.a * (0.6 + 0.5 * k)).stroke({ width: 3, color: C.danger, alpha: 0.6 * fade });
+          for (let s = 0; s < 7; s++) {
+            const a = s * 0.9 + hash(f.x + s) * 0.6;
+            const r = f.a * (0.55 + hash(f.y + s) * 0.45);
+            ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(a) * r, f.y + Math.sin(a) * r).stroke({ width: 2, color: C.dangerDark, alpha: 0.8 * fade });
+          }
+          if (f.t < 0.25) this.light(f.x - camX, f.y - camY, Math.round(f.a * 0.8 * (1 - f.t / 0.25)), 0.08);
           break;
-        case FX_TELE_LINE:
-          ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * f.b, f.y + Math.sin(f.a) * f.b).stroke({ width: f.c, color: C.danger, alpha: 0.55 * fade });
+        }
+        case FX_TELE_RING: {
+          // L'onde : un front qui file vers l'extérieur de l'anneau et laisse un sillon sombre.
+          const inner = f.a;
+          const outer = f.b;
+          const flash = Math.max(0, 1 - f.t / 0.14);
+          const mid = (inner + outer) / 2;
+          if (flash > 0) ground.circle(f.x, f.y, mid).stroke({ width: outer - inner, color: C.danger, alpha: 0.5 * flash });
+          ground.circle(f.x, f.y, mid).stroke({ width: (outer - inner) * 0.6, color: ROOT_DARK, alpha: 0.3 * fade });
+          const front = inner + (outer - inner) * Math.min(1, k * 1.6);
+          ground.circle(f.x, f.y, front).stroke({ width: 3, color: C.danger, alpha: 0.75 * fade });
+          ground.circle(f.x, f.y, front - 4).stroke({ width: 1, color: C.emberWhite, alpha: 0.5 * fade });
           break;
+        }
+        case FX_TELE_LINE: {
+          const ux = Math.cos(f.a);
+          const uy = Math.sin(f.a);
+          const ex = f.x + ux * f.b;
+          const ey = f.y + uy * f.b;
+          const flash = Math.max(0, 1 - f.t / 0.14);
+          if (flash > 0) ground.moveTo(f.x, f.y).lineTo(ex, ey).stroke({ width: f.c, color: C.danger, alpha: 0.6 * flash });
+          // Le sillon : le sol ouvert reste visible un moment après le coup.
+          ground.moveTo(f.x, f.y).lineTo(ex, ey).stroke({ width: f.c * 0.55, color: ROOT_DARK, alpha: 0.55 * fade });
+          ground.moveTo(f.x, f.y).lineTo(ex, ey).stroke({ width: 1, color: C.dangerDark, alpha: 0.8 * fade });
+          this.drawRootSpikes(ground, f, camX, camY);
+          break;
+        }
         case FX_TRAIL:
           ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * 110, f.y + Math.sin(f.a) * 110).stroke({ width: 4, color: C.ember, alpha: 0.3 * fade });
           break;

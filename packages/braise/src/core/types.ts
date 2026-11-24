@@ -55,6 +55,8 @@ export const ZONE_BURST = 1;
 /** Formes d'annonce d'attaque. */
 export const TG_LINE = 0;
 export const TG_CIRCLE = 1;
+/** Un anneau : `width` est le rayon extérieur, `length` le rayon intérieur. */
+export const TG_RING = 2;
 
 /** Événements émis pour le rendu et le son. `core` ne joue aucun son lui-même. */
 export const EV = {
@@ -309,7 +311,9 @@ export interface Director {
   bossUid: number;
   bossPhase: number;
   bossSummonT: number;
-  bossAlt: boolean;
+  /** Dernière attaque du boss, pour ne pas la répéter ; la suivante imposée (-1 : libre). */
+  bossLast: number;
+  bossNext: number;
   bossDead: boolean;
   arenaX: number; arenaY: number; arenaR: number;
   /** Poids de travail, un par sorte d'ennemi. */

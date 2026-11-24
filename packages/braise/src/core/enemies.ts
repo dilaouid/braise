@@ -1,8 +1,9 @@
+import type { EnemyDef } from '../content/index.ts';
 import { hurtHero, spawnEnemy, tickStatuses } from './combat.ts';
 import { isSolidAt, isSolidTile } from './map.ts';
 import { addTelegraph, emit, queryCircle, removeEnemyShot, removeTelegraph } from './stores.ts';
 import {
-  BH, CAP_ENEMY_SHOTS, EV, MAX_WEAPON_SLOTS, TG_CIRCLE, TG_LINE,
+  BH, CAP_ENEMY_SHOTS, EV, MAX_WEAPON_SLOTS, TG_CIRCLE, TG_LINE, TG_RING,
   type Run,
 } from './types.ts';
 
@@ -144,6 +145,260 @@ function clampToArena(run: Run, i: number): void {
   }
 }
 
+/** Les attaques du Cerf sans lumière. */
+const A_CHARGE = 0;
+const A_ROOTS = 1;
+const A_STOMP = 2;
+const A_STALK = 3;
+const A_VOLLEY = 4;
+const A_ROAR = 5;
+/** Ce qu'il peut tirer à chaque phase : il apprend ses coups en perdant ses forces. */
+const STAG_POOLS = [
+  [A_CHARGE, A_STOMP, A_STALK],
+  [A_CHARGE, A_ROOTS, A_STOMP, A_STALK, A_VOLLEY],
+  [A_CHARGE, A_ROOTS, A_STOMP, A_STALK, A_VOLLEY],
+];
+/** En phase 3, certaines attaques en appellent une autre sans souffle : l'étoile chasse Moon de sa place, les racines la suivent. */
+const STAG_CHAIN = [-1, A_STALK, A_CHARGE, -1, -1, -1];
+
+/** États du Cerf. La course reste l'état 2 : c'est elle qui donne les dégâts de charge au contact. */
+const ST_IDLE = 0;
+const ST_AIM = 1;
+const ST_RUN = 2;
+const ST_WAIT = 3;
+const ST_STALK = 4;
+const ST_VOLLEY = 5;
+
+function stagTele(run: Run, base: number, haste: number): number {
+  return Math.max(run.data.tuning.boss.minTelegraph, base * haste);
+}
+
+/** Fin d'une attaque : le Cerf souffle, moins longtemps à chaque phase, ou enchaîne en phase 3. */
+function stagRecover(run: Run, i: number, def: EnemyDef, attack: number, extra = 0): void {
+  const e = run.enemies;
+  const dir = run.director;
+  const phase = dir.bossPhase;
+  e.state[i] = ST_IDLE;
+  if (dir.bossNext === A_ROAR) {
+    e.timer2[i] = 0.2;
+    return;
+  }
+  const chained = phase === 3 ? STAG_CHAIN[attack] ?? -1 : -1;
+  if (chained >= 0) {
+    dir.bossNext = chained;
+    e.timer2[i] = 0.25;
+    return;
+  }
+  e.timer2[i] = def.pauses![phase - 1]! + extra;
+}
+
+function stagStart(run: Run, i: number, def: EnemyDef, attack: number, dx: number, dy: number, haste: number): void {
+  const e = run.enemies;
+  const dir = run.director;
+  const x = e.x[i]!;
+  const y = e.y[i]!;
+  const uid = e.uid[i]!;
+  const kind = e.kind[i]!;
+  dir.bossLast = attack;
+  switch (attack) {
+    case A_CHARGE: {
+      // Deux charges d'abord, trois ensuite.
+      e.counter[i] = dir.bossPhase === 1 ? Math.max(1, def.charge!.repeats - 1) : def.charge!.repeats;
+      e.state[i] = ST_AIM;
+      e.timer[i] = -1;
+      break;
+    }
+    case A_ROOTS: {
+      // L'étoile : une vague, puis une seconde tournée d'un demi-cran qui couvre les trous de la première.
+      const roots = def.roots!;
+      const tele = stagTele(run, roots.telegraph, haste);
+      const offset = run.rngSpawn.float() * TAU;
+      const step = TAU / roots.lines;
+      const dmg = roots.damage * run.dmgScale;
+      for (let k = 0; k < roots.lines; k++) {
+        addTelegraph(run, TG_LINE, x, y, offset + k * step, roots.length, roots.width, tele, dmg, uid, kind);
+      }
+      const second = dir.bossPhase >= 2;
+      if (second) {
+        for (let k = 0; k < roots.lines; k++) {
+          addTelegraph(run, TG_LINE, x, y, offset + (k + 0.5) * step, roots.length, roots.width, tele, dmg, uid, kind, roots.cooldown);
+        }
+      }
+      e.state[i] = ST_WAIT;
+      e.timer[i] = tele + (second ? roots.cooldown : 0) + 0.2;
+      emit(run, EV.telegraph, x, y, 2);
+      break;
+    }
+    case A_STOMP: {
+      // L'onde : des anneaux partent du Cerf l'un après l'autre. On s'en sort en rentrant dans celui qui vient de frapper.
+      const st = def.stomp!;
+      const tele = stagTele(run, st.telegraph, haste);
+      const stagger = st.stagger * (dir.bossPhase === 3 ? 0.85 : 1);
+      const dmg = st.damage * run.dmgScale;
+      for (let k = 0; k < st.rings; k++) {
+        const outer = (k + 1) * st.ringWidth;
+        if (k === 0) addTelegraph(run, TG_CIRCLE, x, y, 0, outer, outer, tele, dmg, uid, kind);
+        else addTelegraph(run, TG_RING, x, y, 0, k * st.ringWidth, outer, tele, dmg, uid, kind, k * stagger);
+      }
+      e.state[i] = ST_WAIT;
+      e.timer[i] = (st.rings - 1) * stagger + tele + 0.2;
+      emit(run, EV.telegraph, x, y, 2);
+      break;
+    }
+    case A_STALK: {
+      e.state[i] = ST_STALK;
+      e.counter[i] = def.stalk!.count + (dir.bossPhase - 1);
+      e.timer[i] = 0;
+      break;
+    }
+    case A_VOLLEY: {
+      e.state[i] = ST_VOLLEY;
+      e.counter[i] = def.volley!.waves;
+      e.timer[i] = stagTele(run, def.volley!.windup, haste);
+      emit(run, EV.telegraph, x, y, 2);
+      break;
+    }
+    default: {
+      // Le rugissement d'un changement de phase : il se fige, puis le sol se soulève tout autour de lui.
+      dir.bossNext = -1;
+      const slam = def.slam!;
+      const r = slam.radius * 1.6;
+      addTelegraph(run, TG_CIRCLE, x, y, 0, r, r, 1, slam.damage * run.dmgScale, uid, kind);
+      e.state[i] = ST_WAIT;
+      e.timer[i] = 1.3;
+      emit(run, EV.telegraph, x, y, 2);
+      if (dir.bossPhase === 3) dir.bossSummonT = 0.8;
+    }
+  }
+}
+
+/** Le Cerf sans lumière : six attaques, une phase de plus à chaque tiers de vie, de moins en moins de répit. */
+function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, dt: number): void {
+  const e = run.enemies;
+  const dir = run.director;
+  const def = run.data.enemies[e.kind[i]!]!;
+  const ch = def.charge!;
+  const summon = def.summon!;
+  const frac = e.hp[i]! / e.maxHp[i]!;
+  const phases = def.phases!;
+  const phase = frac > phases[0]! ? 1 : frac > phases[1]! ? 2 : 3;
+  if (phase !== dir.bossPhase) {
+    const first = dir.bossPhase === 0;
+    dir.bossPhase = phase;
+    emit(run, EV.bossPhase, e.x[i]!, e.y[i]!, phase);
+    if (!first) {
+      dir.bossNext = A_ROAR;
+      if (e.state[i] === ST_IDLE) e.timer2[i] = Math.min(e.timer2[i]!, 0.2);
+    }
+  }
+  const haste = phase === 3 ? (def.phase3Haste ?? 1) : 1;
+  if (phase === 3) {
+    dir.bossSummonT -= dt;
+    if (dir.bossSummonT <= 0) {
+      dir.bossSummonT = summon.cooldown;
+      for (let k = 0; k < summon.count; k++) {
+        const a = run.rngSpawn.float() * TAU;
+        const r = 30 + run.rngSpawn.float() * 50;
+        spawnEnemy(run, def.summonIndex, e.x[i]! + Math.cos(a) * r, e.y[i]! + Math.sin(a) * r, run.hpScaleNow);
+      }
+    }
+  }
+  const state = e.state[i]!;
+  if (state === ST_IDLE) {
+    approach(run, i, dx, dy, speed * (phase === 3 ? 1.2 : 1), false, 12, dt);
+    e.timer2[i]! -= dt;
+    if (e.timer2[i]! <= 0) {
+      let attack = dir.bossNext;
+      if (attack >= 0) {
+        if (attack !== A_ROAR) dir.bossNext = -1;
+      } else {
+        const pool = STAG_POOLS[phase - 1]!;
+        attack = pool[Math.floor(run.rngSpawn.float() * pool.length)]!;
+        if (attack === dir.bossLast) attack = pool[(pool.indexOf(attack) + 1) % pool.length]!;
+      }
+      stagStart(run, i, def, attack, dx, dy, haste);
+    }
+  } else if (state === ST_AIM) {
+    if (e.timer[i]! < 0) {
+      // Nouvelle visée : la charge est tracée au sol avant de partir.
+      const tele = stagTele(run, ch.telegraph, haste);
+      e.timer[i] = tele;
+      e.dirX[i] = dx;
+      e.dirY[i] = dy;
+      addTelegraph(run, TG_LINE, e.x[i]!, e.y[i]!, Math.atan2(dy, dx), ch.distance, ch.width, tele, 0, e.uid[i]!, e.kind[i]!);
+      emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 2);
+    } else {
+      e.timer[i]! -= dt;
+      if (e.timer[i]! <= 0) {
+        e.state[i] = ST_RUN;
+        e.timer[i] = ch.distance;
+        emit(run, EV.charge, e.x[i]!, e.y[i]!);
+      }
+    }
+  } else if (state === ST_RUN) {
+    const step = ch.speed * dt;
+    const blocked = moveGround(run, i, e.dirX[i]!, e.dirY[i]!, step, 12);
+    e.timer[i]! -= step;
+    if (blocked || e.timer[i]! <= 0) {
+      // En phase 3, chaque arrivée frappe le sol : ne pas rester collé à sa course.
+      if (phase === 3) {
+        const slam = def.slam!;
+        const tele = stagTele(run, slam.telegraph, 1);
+        addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, tele, slam.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+      }
+      e.counter[i]!--;
+      if (e.counter[i]! > 0) {
+        e.state[i] = ST_AIM;
+        e.timer[i] = -1;
+      } else {
+        stagRecover(run, i, def, A_CHARGE, ch.cooldown);
+      }
+    }
+  } else if (state === ST_STALK) {
+    // Les racines traquantes : un cercle là où se tient Moon, puis un autre, tant qu'il en reste.
+    const stalk = def.stalk!;
+    approach(run, i, dx, dy, speed * 0.5, false, 12, dt);
+    e.timer[i]! -= dt;
+    if (e.timer[i]! <= 0) {
+      const tele = stagTele(run, stalk.telegraph, haste);
+      if (e.counter[i]! > 0) {
+        e.counter[i]!--;
+        e.timer[i] = stalk.interval * (phase === 3 ? 0.85 : 1);
+        const hero = run.hero;
+        addTelegraph(run, TG_CIRCLE, hero.x, hero.y, 0, stalk.radius, stalk.radius, tele, stalk.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+        emit(run, EV.telegraph, hero.x, hero.y, 1);
+      } else {
+        e.state[i] = ST_WAIT;
+        e.timer[i] = tele * 0.6;
+      }
+    }
+  } else if (state === ST_VOLLEY) {
+    // La volée : des éclats d'andouiller en éventail, une vague sur deux décalée pour boucher les trous de l'autre.
+    const v = def.volley!;
+    e.timer[i]! -= dt;
+    if (e.timer[i]! <= 0) {
+      if (e.counter[i]! > 0) {
+        const wave = v.waves - e.counter[i]!;
+        e.counter[i]!--;
+        e.timer[i] = v.interval;
+        const base = Math.atan2(dy, dx);
+        const step = v.shots > 1 ? v.spread / (v.shots - 1) : 0;
+        const shift = (wave & 1) === 1 ? step / 2 : 0;
+        for (let k = 0; k < v.shots; k++) {
+          const a = base - v.spread / 2 + k * step + shift;
+          fireEnemyShot(run, e.kind[i]!, e.x[i]!, e.y[i]! - 14, Math.cos(a), Math.sin(a), v.speed, v.damage, v.radius, v.life);
+        }
+      } else {
+        stagRecover(run, i, def, A_VOLLEY);
+      }
+    }
+  } else {
+    e.timer[i]! -= dt;
+    if (e.timer[i]! <= 0) stagRecover(run, i, def, dir.bossLast);
+  }
+  clampToArena(run, i);
+}
+
 /** Comportement, déplacement et états de tous les ennemis. */
 export function updateEnemies(run: Run, dt: number): void {
   const e = run.enemies;
@@ -275,93 +530,9 @@ export function updateEnemies(run: Run, dt: number): void {
         }
         break;
       }
-      case BH['boss-stag']: {
-        const ch = def.charge!;
-        const roots = def.roots!;
-        const summon = def.summon!;
-        const frac = e.hp[i]! / e.maxHp[i]!;
-        const phases = def.phases!;
-        const phase = frac > phases[0]! ? 1 : frac > phases[1]! ? 2 : 3;
-        if (phase !== dir.bossPhase) {
-          dir.bossPhase = phase;
-          emit(run, EV.bossPhase, e.x[i]!, e.y[i]!, phase);
-        }
-        const haste = phase === 3 ? (def.phase3Haste ?? 1) : 1;
-        const minTele = tuning.boss.minTelegraph;
-        if (phase === 3) {
-          dir.bossSummonT -= dt;
-          if (dir.bossSummonT <= 0) {
-            dir.bossSummonT = summon.cooldown;
-            for (let k = 0; k < summon.count; k++) {
-              const a = run.rngSpawn.float() * TAU;
-              const r = 30 + run.rngSpawn.float() * 50;
-              spawnEnemy(run, def.summonIndex, e.x[i]! + Math.cos(a) * r, e.y[i]! + Math.sin(a) * r, run.hpScaleNow);
-            }
-          }
-        }
-        const state = e.state[i]!;
-        if (state === 0) {
-          approach(run, i, dx, dy, speed, false, 12, dt);
-          e.timer2[i]! -= dt;
-          if (e.timer2[i]! <= 0) {
-            const useRoots = phase >= 2 && dir.bossAlt;
-            dir.bossAlt = !dir.bossAlt;
-            if (useRoots) {
-              const tele = Math.max(minTele, roots.telegraph * haste);
-              e.state[i] = 3;
-              e.timer[i] = tele + 0.25;
-              const offset = run.rngSpawn.float() * TAU;
-              for (let k = 0; k < roots.lines; k++) {
-                addTelegraph(run, TG_LINE, e.x[i]!, e.y[i]!, offset + (k * TAU) / roots.lines, roots.length, roots.width, tele, roots.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
-              }
-              emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 2);
-            } else {
-              e.counter[i] = ch.repeats;
-              e.state[i] = 1;
-              e.timer[i] = -1;
-            }
-          }
-        } else if (state === 1) {
-          if (e.timer[i]! < 0) {
-            // Nouvelle visée : la charge est tracée au sol avant de partir.
-            const tele = Math.max(minTele, ch.telegraph * haste);
-            e.timer[i] = tele;
-            e.dirX[i] = dx;
-            e.dirY[i] = dy;
-            addTelegraph(run, TG_LINE, e.x[i]!, e.y[i]!, Math.atan2(dy, dx), ch.distance, ch.width, tele, 0, e.uid[i]!, e.kind[i]!);
-            emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 2);
-          } else {
-            e.timer[i]! -= dt;
-            if (e.timer[i]! <= 0) {
-              e.state[i] = 2;
-              e.timer[i] = ch.distance;
-              emit(run, EV.charge, e.x[i]!, e.y[i]!);
-            }
-          }
-        } else if (state === 2) {
-          const step = ch.speed * dt;
-          const blocked = moveGround(run, i, e.dirX[i]!, e.dirY[i]!, step, 12);
-          e.timer[i]! -= step;
-          if (blocked || e.timer[i]! <= 0) {
-            e.counter[i]!--;
-            if (e.counter[i]! > 0) {
-              e.state[i] = 1;
-              e.timer[i] = -1;
-            } else {
-              e.state[i] = 0;
-              e.timer2[i] = ch.cooldown * haste;
-            }
-          }
-        } else {
-          e.timer[i]! -= dt;
-          if (e.timer[i]! <= 0) {
-            e.state[i] = 0;
-            e.timer2[i] = roots.cooldown * haste * 0.5;
-          }
-        }
-        clampToArena(run, i);
+      case BH['boss-stag']:
+        updateStag(run, i, dx, dy, speed, dt);
         break;
-      }
       case BH['boss-watcher']: {
         // Le Guetteur : il approche, puis alterne une charge en ligne et un cercle autour de lui.
         const ch = def.charge!;
@@ -495,6 +666,10 @@ export function insideTelegraph(run: Run, t: number, x: number, y: number, margi
     const r = tg.width[t]! + margin;
     return dx * dx + dy * dy <= r * r;
   }
+  if (tg.shape[t] === TG_RING) {
+    const d = Math.hypot(dx, dy);
+    return d >= tg.length[t]! - margin && d <= tg.width[t]! + margin;
+  }
   const a = tg.angle[t]!;
   const ux = Math.cos(a);
   const uy = Math.sin(a);
@@ -511,7 +686,9 @@ export function updateTelegraphs(run: Run, dt: number): void {
     tg.t[t]! += dt;
     if (tg.t[t]! < tg.duration[t]!) continue;
     if (tg.damage[t]! > 0) {
-      emit(run, EV.telegraphHit, tg.x[t]!, tg.y[t]!, tg.shape[t]!, tg.angle[t]!, tg.shape[t] === TG_CIRCLE ? tg.width[t]! : tg.length[t]!);
+      // b : l'angle d'une ligne, le rayon intérieur d'un anneau. c : la longueur d'une ligne, le rayon d'un cercle ou d'un anneau.
+      const shape = tg.shape[t]!;
+      emit(run, EV.telegraphHit, tg.x[t]!, tg.y[t]!, shape, shape === TG_RING ? tg.length[t]! : tg.angle[t]!, shape === TG_LINE ? tg.length[t]! : tg.width[t]!);
       if (insideTelegraph(run, t, hero.x, hero.y, run.data.tuning.hero.radius * 0.5)) hurtHero(run, tg.damage[t]!, tg.kind[t]!);
     }
     removeTelegraph(tg, t);

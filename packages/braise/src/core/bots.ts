@@ -1,3 +1,4 @@
+import { insideTelegraph } from './enemies.ts';
 import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeBoon, takeEvolution } from './places.ts';
@@ -36,20 +37,7 @@ function dangerAt(run: Run, x: number, y: number): number {
     if (d2 < 40 * 40) danger += 2 / (d2 + 60);
   }
   const tg = run.telegraphs;
-  for (let t = 0; t < tg.count; t++) {
-    const dx = x - tg.x[t]!;
-    const dy = y - tg.y[t]!;
-    if (tg.shape[t] === 1) {
-      if (dx * dx + dy * dy < (tg.width[t]! + 14) * (tg.width[t]! + 14)) danger += 0.05;
-    } else {
-      const a = tg.angle[t]!;
-      const ux = Math.cos(a);
-      const uy = Math.sin(a);
-      const along = dx * ux + dy * uy;
-      const across = Math.abs(dx * uy - dy * ux);
-      if (along > -16 && along < tg.length[t]! + 16 && across < tg.width[t]! / 2 + 16) danger += 0.05;
-    }
-  }
+  for (let t = 0; t < tg.count; t++) if (insideTelegraph(run, t, x, y, 15)) danger += 0.05;
   if (isSolidAt(run.map, x, y)) danger += 1;
   const size = run.map.size * run.map.tile;
   const d = run.director;
@@ -287,19 +275,7 @@ export const explorerBot: Bot = (run, input) => {
 /** Vrai si le héros est dans le tracé d'une attaque annoncée. */
 function inTelegraph(run: Run): boolean {
   const tg = run.telegraphs;
-  const hero = run.hero;
-  for (let t = 0; t < tg.count; t++) {
-    const dx = hero.x - tg.x[t]!;
-    const dy = hero.y - tg.y[t]!;
-    if (tg.shape[t] === 1) {
-      if (dx * dx + dy * dy < (tg.width[t]! + 12) * (tg.width[t]! + 12)) return true;
-    } else {
-      const a = tg.angle[t]!;
-      const along = dx * Math.cos(a) + dy * Math.sin(a);
-      const across = Math.abs(dx * Math.sin(a) - dy * Math.cos(a));
-      if (along > -12 && along < tg.length[t]! + 12 && across < tg.width[t]! / 2 + 12) return true;
-    }
-  }
+  for (let t = 0; t < tg.count; t++) if (insideTelegraph(run, t, run.hero.x, run.hero.y, 12)) return true;
   return false;
 }
 
