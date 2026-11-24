@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { SimPad, capture, expectFocus, fixtureSave, plantSave, settle, skipDepartCinematic, watch } from './harness.ts';
+import { FR, SimPad, capture, expectFocus, fixtureSave, plantSave, settle, skipDepartCinematic, watch } from './harness.ts';
 
 const SHOTS = 'cerf';
 
@@ -42,6 +42,7 @@ test('Cerf jamais battu : l\'appel du Cerf, puis l\'expédition contre le Cerf v
   await depart(page, pad);
   await expect(page.locator('.screen.cinematic')).toBeVisible();
   await expect.poll(() => shot(page)).toBe('p01-loin');
+  await expect(page.locator('.cine-skip')).toContainText(FR['cine.skip']!);
   await capture(page, info, SHOTS, '01-appel');
   await skipDepartCinematic(page, pad);
   expect(await bossId(page)).toBe('boss.lightless-stag');
@@ -66,6 +67,8 @@ test('déjà vue : un seul appui sur B passe la cinématique', async ({ page }) 
   await plantSave(page, save(true, ['seen.stag-ash']));
   await depart(page, pad);
   await expect(page.locator('.screen.cinematic')).toBeVisible();
+  // L'invite dit ce qu'il faut faire : un appui, pas un maintien.
+  await expect(page.locator('.cine-skip')).toContainText('Appuyer pour passer');
   await settle(page);
   await pad.press('B');
   await expect(page.locator('.hud')).toBeVisible({ timeout: 1500 });

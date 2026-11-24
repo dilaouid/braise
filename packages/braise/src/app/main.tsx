@@ -10,6 +10,7 @@ import { AudioManager } from '../audio/audio.ts';
 import { cinematicById, introCinematic } from '../content/cinematic.ts';
 import { FR, loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
+import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
@@ -27,7 +28,7 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
   holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
@@ -435,6 +436,7 @@ async function boot(): Promise<void> {
     cineSkip.value = 0;
     cineCard.value = null;
     cineCaption.value = null;
+    cineQuick.value = holdMs !== undefined;
     memoryCard.value = null;
     audio.stopMusic();
     setScreen('cinematic');
@@ -975,7 +977,7 @@ async function boot(): Promise<void> {
       const e = r.enemies;
       for (let i = 0; i < e.count; i++) {
         if (e.uid[i] === r.director.bossUid) {
-          boss = { name: t(`${r.data.enemies[e.kind[i]!]!.id}.name`), frac: Math.max(0, e.hp[i]! / e.maxHp[i]!), phase: r.director.bossPhase };
+          boss = { name: t(`${r.data.enemies[e.kind[i]!]!.id}.name`), frac: bossBarFrac(r, i), phase: r.director.bossPhase };
         }
       }
     }

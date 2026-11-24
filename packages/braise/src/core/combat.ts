@@ -1,10 +1,10 @@
 import { DMG_FIRE, DMG_PHYSICAL, type Attribute } from '../content/index.ts';
 import { damageTaken } from './stats.ts';
-import { clearEnemy, emit, removeEnemy, removePickup } from './stores.ts';
+import { addTelegraph, clearEnemy, emit, removeEnemy, removePickup } from './stores.ts';
 import {
   CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_NO_NUMBER, HIT_RESIST, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
-  type Run,
+  TG_CIRCLE, type Run,
 } from './types.ts';
 
 /** Pose un ramassable au sol. Au-delà du plafond de gemmes, les plus anciennes fusionnent. */
@@ -62,6 +62,14 @@ function typedMultiplier(run: Run, i: number, type: number): number {
 export function isDust(run: Run, i: number): boolean {
   const d = run.director;
   return d.bossReformT > 0 && run.enemies.uid[i] === d.bossUid;
+}
+
+/** La part de la barre du boss : pendant la poussière, elle se remplit depuis zéro. */
+export function bossBarFrac(run: Run, i: number): number {
+  const e = run.enemies;
+  const reform = run.data.enemies[e.kind[i]!]!.reform;
+  if (reform && isDust(run, i)) return Math.max(0, 1 - run.director.bossReformT / reform.duration);
+  return Math.max(0, e.hp[i]! / e.maxHp[i]!);
 }
 
 function registerDamage(run: Run, i: number, dmg: number, slot: number, flags: number): void {
@@ -303,6 +311,10 @@ function reformBoss(run: Run, i: number, reform: { share: number; duration: numb
   d.bossReformT = reform.duration;
   if (shed) d.bossShed = 0;
   run.enemyShots.count = 0;
+  // Une annonce sans dégâts, le temps de la poussière : c'est là qu'il va se relever.
+  const def = run.data.enemies[e.kind[i]!]!;
+  const r = def.slam?.radius ?? def.radius;
+  addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, r, r, reform.duration, 0, e.uid[i]!, e.kind[i]!);
   emit(run, EV.bossReform, e.x[i]!, e.y[i]!);
 }
 

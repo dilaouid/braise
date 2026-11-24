@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { applyBurn, hurtEnemy, reapEnemies, spawnEnemy, tickStatuses } from '../../src/core/combat.ts';
+import { applyBurn, bossBarFrac, hurtEnemy, reapEnemies, spawnEnemy, tickStatuses } from '../../src/core/combat.ts';
 import { contactDamage, updateEnemies } from '../../src/core/enemies.ts';
-import { createRun } from '../../src/core/run.ts';
+import { createRun, idleInput, stepRun } from '../../src/core/run.ts';
 import { buildGrid } from '../../src/core/stores.ts';
 import { createTutorialRun } from '../../src/core/tutorial-run.ts';
-import { PK_ASH, PK_GOLD, type Run, type RunConfig } from '../../src/core/types.ts';
+import { PK_ASH, PK_GOLD, TG_CIRCLE, type Run, type RunConfig } from '../../src/core/types.ts';
 import { bossBeaten, buildSheet, pendingMemory, unlockedContent } from '../../src/meta/hero.ts';
 import { CLASS, REGION, data, makeImmortal, makeSave } from './helpers.ts';
 
@@ -136,6 +136,50 @@ describe('le Cerf de Cendre', () => {
     expect(countKind(run, SWARM)).toBe(12);
     updateEnemies(run, DT);
     expect(countKind(run, SWARM)).toBe(24);
+  });
+
+  it('une annonce au sol dure toute la poussière, là où il va se relever', () => {
+    const { run, i } = makeAsh();
+    run.enemies.hp[i] = 0;
+    stepRun(run, idleInput());
+    const b = bossIndex(run);
+    const tg = run.telegraphs;
+    const rings = [];
+    for (let t = 0; t < tg.count; t++) if (tg.owner[t] === run.director.bossUid) rings.push(t);
+    expect(rings.length).toBe(1);
+    const t = rings[0]!;
+    expect(tg.shape[t]).toBe(TG_CIRCLE);
+    expect([tg.x[t], tg.y[t]]).toEqual([run.enemies.x[b], run.enemies.y[b]]);
+    expect(tg.damage[t]).toBe(0);
+    expect(tg.duration[t]! - tg.t[t]!).toBeCloseTo(run.director.bossReformT, 2);
+  });
+
+  it('sa barre se vide à la chute, puis se remplit pendant la poussière', () => {
+    const { run, i } = makeAsh();
+    run.enemies.hp[i] = run.enemies.maxHp[i]! / 2;
+    expect(bossBarFrac(run, i)).toBeCloseTo(0.5, 3);
+    const b = reformNow(run);
+    expect(bossBarFrac(run, b)).toBeCloseTo(0, 3);
+    run.director.bossReformT = 1.5;
+    expect(bossBarFrac(run, b)).toBeCloseTo(0.5, 3);
+    run.director.bossReformT = 0;
+    expect(bossBarFrac(run, b)).toBe(1);
+  });
+
+  it('par le pas de jeu : il tombe, se relève, retombe, puis le portail apparaît', () => {
+    const { run, i } = makeAsh();
+    run.enemies.hp[i] = 0;
+    stepRun(run, idleInput());
+    expect(run.director.bossDead).toBe(false);
+    for (let k = 0; k < 60 * 3.2; k++) {
+      run.hero.invuln = 1;
+      stepRun(run, idleInput());
+    }
+    expect(run.director.bossReformT).toBe(0);
+    run.enemies.hp[bossIndex(run)] = 0;
+    stepRun(run, idleInput());
+    expect(run.director.bossDead).toBe(true);
+    expect(run.map.pois.some((p) => p.kind === 'portal')).toBe(true);
   });
 
   it('butin doublé', () => {

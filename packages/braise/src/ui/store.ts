@@ -163,6 +163,8 @@ export const replaySeed = signal(false);
 export const cineCard = signal<string | null>(null);
 export const cineCaption = signal<string | null>(null);
 export const cineSkip = signal(0);
+/** La cinématique en cours se passe d'un seul appui (déjà vue), sans maintien. */
+export const cineQuick = signal(false);
 /** Le carton posé après la scène d'un souvenir : son identifiant, et combien sont obtenus à ce moment. */
 export const memoryCard = signal<{ id: string; have: number; total: number } | null>(null);
 
