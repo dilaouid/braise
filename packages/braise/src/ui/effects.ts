@@ -1,4 +1,4 @@
-import type { GameData, PieceEffect } from '../content/index.ts';
+import type { GameData, PieceDef, PieceEffect } from '../content/index.ts';
 import { pieceById, type FaceView, type LanternView } from '../meta/lantern.ts';
 
 /** Un morceau de pastille : une image (barrée ou non) ou un court texte. */
@@ -76,6 +76,23 @@ export function pieceChips(data: GameData, face: FaceView): Chip[] {
   }
   const malus = effectChips(data, piece.malus, 'bad').map((c) => (face.malusCleared ? { ...c, cleared: true } : c));
   return [...good, ...bad, ...malus];
+}
+
+/** Les clés des phrases d'une pièce, et ce qui n'agit pas : un malus chiffré retiré, une rune éteinte. */
+export function pieceWords(data: GameData, face: FaceView): { bonus: string; malus: string; bonusOff: boolean; malusOff: boolean } {
+  const piece = pieceById(data, face.id)!;
+  const off = piece.kind === 'rune' && face.level === 0;
+  return {
+    bonus: piece.kind === 'glass' ? `${piece.id}.bonus` : `${piece.id}.bonus.${Math.max(1, face.level)}`,
+    malus: `${piece.id}.malus`,
+    bonusOff: off,
+    malusOff: off || (face.malusCleared && hasNumericMalus(piece)),
+  };
+}
+
+/** Un malus de niveau fait partie du verre : le Verre fendu ne retire que les malus chiffrés. */
+export function hasNumericMalus(piece: PieceDef): boolean {
+  return Object.keys(piece.malus.stats).length + Object.keys(piece.malus.mods).length > 0;
 }
 
 /** Tout ce que la Lanterne donne à l'expédition : sans les changements de niveau, ni les malus retirés. */

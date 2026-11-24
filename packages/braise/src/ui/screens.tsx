@@ -154,7 +154,7 @@ export function Camp(): JSX.Element {
           ? <MenuButton id="memories" label={t('camp.memories')} desc={t('camp.memories.desc')} onPress={() => actions().goto('memories')} />
           : null}
         {knowsCream(s) ? <MenuButton id="cream" label={t('camp.cream')} desc={t('camp.cream.desc')} onPress={() => actions().creamTalk()} /> : null}
-        <p class="seed">{t('camp.seed')} : {seedLabel}</p>
+        <p class="seed">{t('camp.seed')} : {seedLabel}{replaySeed.value ? ` · ${t('camp.seed.noPiece')}` : ''}</p>
       </Panel>
       <Panel class="camp-info">
         <Currencies />

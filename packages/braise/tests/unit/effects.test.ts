@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { PieceEffect } from '../../src/content/index.ts';
 import { previewLantern, resolveLantern, type FaceView } from '../../src/meta/lantern.ts';
 import { newSave, type LanternSave } from '../../src/meta/save.ts';
-import { effectChips, lanternChips, pieceChips, type Chip } from '../../src/ui/effects.ts';
+import { effectChips, lanternChips, pieceChips, pieceWords, type Chip } from '../../src/ui/effects.ts';
 import { data } from './helpers.ts';
 
 const atlas = JSON.parse(readFileSync(join(__dirname, '..', '..', 'public', 'atlas', 'atlas.json'), 'utf8')) as { frames: Record<string, unknown> };
@@ -65,6 +65,15 @@ describe('pastilles des effets', () => {
 
   it('un effet sans pastille est une erreur', () => {
     expect(() => effectChips(data, { stats: { banishes: 1 }, mods: {} } as PieceEffect, 'good')).toThrow('banishes');
+  });
+});
+
+describe('phrases d\'une pièce', () => {
+  it('disent ce qui agit : malus retiré et rune éteinte sont marqués', () => {
+    expect(pieceWords(data, face('rune.reprieve', 2))).toEqual({ bonus: 'rune.reprieve.bonus.2', malus: 'rune.reprieve.malus', bonusOff: false, malusOff: false });
+    expect(pieceWords(data, face('rune.reprieve', 2, true))).toMatchObject({ bonusOff: false, malusOff: true });
+    expect(pieceWords(data, face('rune.reprieve', 0))).toMatchObject({ bonus: 'rune.reprieve.bonus.1', bonusOff: true, malusOff: true });
+    expect(pieceWords(data, face('glass.tilted', 0, true))).toEqual({ bonus: 'glass.tilted.bonus', malus: 'glass.tilted.malus', bonusOff: false, malusOff: false });
   });
 });
 

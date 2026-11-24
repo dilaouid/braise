@@ -179,6 +179,7 @@ test('une face fermée dit sa condition et refuse A', async ({ page }, info) => 
   await pad.press('RIGHT');
   await expectFocus(page, 'face-2');
   await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.unlock.2']!);
+  await expect(page.locator('.helpbar')).not.toContainText(FR['lantern.choose']!);
   await settle(page);
   await pad.press('A');
   await expectFocus(page, 'face-2');
@@ -270,6 +271,15 @@ test('mourir avec une pièce la perd', async ({ page }) => {
   await expect(page.locator('.screen.end')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.end-piece.lost')).toContainText(FR['rune.hunger.name']!);
   expect((await saveView<any>(page)).account.lantern.owned).toEqual(['rune.call']);
+
+  // Au refuge, rejouer la même graine prévient qu'aucune pièce n'y tombera.
+  await settle(page);
+  await pad.press('A');
+  await expect(page.locator('.screen.camp')).toBeVisible();
+  await expect(page.locator('.seed')).not.toContainText(FR['camp.seed.noPiece']!);
+  await settle(page);
+  await pad.press('X');
+  await expect(page.locator('.seed')).toContainText(FR['camp.seed.noPiece']!);
 });
 
 test('rejouer une graine ne donne pas de pièce', async ({ page }) => {

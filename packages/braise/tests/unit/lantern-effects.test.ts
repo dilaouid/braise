@@ -103,6 +103,15 @@ describe('Ruée ardente', () => {
     expect(run.enemies.status[near]! & ST_BURN).toBe(0);
   });
 
+  it('le Cerf en poussière ne brûle pas', () => {
+    const run = calm({ dashBurn: 20, dashBurnRadius: 18 });
+    const i = spawnEnemy(run, BOSS, run.hero.x + 10, run.hero.y + 12, 1);
+    run.director.bossUid = run.enemies.uid[i]!;
+    run.director.bossReformT = 2;
+    stepRun(run, { ...idleInput(), dash: true });
+    expect(run.enemies.status[i]! & ST_BURN).toBe(0);
+  });
+
   it('la ruée recharge en 3,75 s', () => {
     const run = calm({ dashCooldownMult: 1.5 });
     expect(dashCooldown(run)).toBeCloseTo(3.75);

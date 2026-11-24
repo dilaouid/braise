@@ -29,7 +29,7 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  INTRO_SEEN, TUTORIAL_SEEN, UI_SOUNDS, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
   focusedId, holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
@@ -79,6 +79,10 @@ async function boot(): Promise<void> {
     // Le focus se pose après le rendu de l'écran, quand ses éléments existent.
     focus.setScope(el, key);
     requestAnimationFrame(() => focus.ensure());
+  };
+  focusRef.focusId = (id) => {
+    focus.focusId(id);
+    focus.onMove?.();
   };
   focus.onChange = (id) => {
     focusedId.value = id;
@@ -901,7 +905,7 @@ async function boot(): Promise<void> {
       });
     },
     uiSound(name) {
-      audio.play(`ui-${name}`, 0.6);
+      audio.play(UI_SOUNDS[name], 0.6);
     },
   };
   refs.actions = actions;

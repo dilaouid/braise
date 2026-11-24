@@ -1,7 +1,7 @@
 import { Rng, deriveSeed } from '@owl/kit/rng';
 import type { GameData, RegionDef } from '../content/index.ts';
 import { DAMAGE_TYPES } from '../content/index.ts';
-import { applyBurn, healHero, hurtEnemy, knockEnemy, reapEnemies } from './combat.ts';
+import { applyBurn, healHero, hurtEnemy, isDust, knockEnemy, reapEnemies } from './combat.ts';
 import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
@@ -286,7 +286,7 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
   // Ruée ardente : la Brûlure se rafraîchit sans se cumuler, la reposer à chaque pas ne change rien.
   if (run.mods.dashBurn > 0 && hero.dashT > 0) {
     const n = queryCircle(run, hero.x, hero.y, run.mods.dashBurnRadius);
-    for (let k = 0; k < n; k++) applyBurn(run, run.query[k]!, run.mods.dashBurn);
+    for (let k = 0; k < n; k++) if (!isDust(run, run.query[k]!)) applyBurn(run, run.query[k]!, run.mods.dashBurn);
   }
 
   const skill = cls.skill;

@@ -1,22 +1,13 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import type { GameData, PieceDef } from '../content/index.ts';
+import type { GameData } from '../content/index.ts';
 import { ownedPieces, pieceById, previewLantern, resolveLantern, type FaceView, type LanternView } from '../meta/lantern.ts';
 import { LANTERN_FACES, type LanternSave } from '../meta/save.ts';
-import { lanternChips, pieceChips } from './effects.ts';
+import { hasNumericMalus, lanternChips, pieceChips, pieceWords } from './effects.ts';
 import { Chips } from './effects.tsx';
-import { HelpBar, Icon, Pips, useFocusScope, useHandlers } from './parts.tsx';
+import { gridStep } from './grid.ts';
+import { HelpBar, Icon, Pips, focusRef, useFocusScope, useHandlers } from './parts.tsx';
 import { actions, focusedId, gameData, save, saveRev, t } from './store.ts';
-
-/** Le texte du bonus d'une pièce à ce niveau. */
-function bonusText(piece: PieceDef, level: number): string {
-  return piece.kind === 'glass' ? t(`${piece.id}.bonus`) : t(`${piece.id}.bonus.${Math.max(1, level)}`);
-}
-
-/** Un malus de niveau fait partie du verre : le Verre fendu ne retire que les malus chiffrés. */
-function hasNumericMalus(piece: PieceDef): boolean {
-  return Object.keys(piece.malus.stats).length + Object.keys(piece.malus.mods).length > 0;
-}
 
 function closedText(data: GameData, lantern: LanternSave, face: number): string {
   return t(`lantern.unlock.${face + 1}`, { have: Math.min(lantern.wins, data.lantern.winsForThird), total: data.lantern.winsForThird });
@@ -86,14 +77,32 @@ function FaceButton(props: { index: number; view: FaceView | null; closed: boole
   );
 }
 
+/** La grille des pièces : quatre colonnes, et la case « Retirer » au bout de la première rangée. */
+const GRID_COLS = 4;
+
 /** La grille ouverte sur une face : choisir une pièce, ou retirer celle qui y est. */
 function PieceChooser({ face, onClose, onDetails }: { face: number; onClose: () => void; onDetails: () => void }): JSX.Element {
   // Sans clé : le focus part toujours de la pièce posée, ou de la première.
   const ref = useFocusScope('');
-  useHandlers({ back: onClose, x: onDetails });
   const data = gameData();
   const lantern = save.value!.account.lantern;
   const here = lantern.faces[face] ?? null;
+  // Les pièces à trouver ne prennent pas le focus : la grille a des trous, elle se parcourt case par case.
+  const cells = new Map<number, string>();
+  data.lantern.pieces.forEach((p, i) => {
+    if (lantern.owned.includes(p.id)) cells.set(Math.floor(i / GRID_COLS) * (GRID_COLS + 1) + (i % GRID_COLS), p.id);
+  });
+  if (here !== null) cells.set(GRID_COLS, 'remove');
+  useHandlers({
+    back: onClose,
+    x: onDetails,
+    nav: (dx, dy) => {
+      const from = [...cells].find(([, id]) => id === focusedId.value)?.[0];
+      const next = from === undefined ? null : gridStep([...cells.keys()], from, dx, dy, GRID_COLS + 1);
+      if (next !== null) focusRef.focusId?.(cells.get(next)!);
+      return true;
+    },
+  });
   return (
     <div class="lantern-grid active" ref={ref}>
       {data.lantern.pieces.map((p) => (lantern.owned.includes(p.id) ? (
@@ -128,13 +137,14 @@ function PieceDetail({ data, face, details }: { data: GameData; face: FaceView; 
   const piece = pieceById(data, face.id);
   if (!piece) return null;
   const off = piece.kind === 'rune' && face.level === 0;
+  const words = pieceWords(data, face);
   return (
     <>
       <p class="piece-name"><Icon name={piece.icon} /> {t(`${piece.id}.name`)}{off ? <span class="dim">{t('lantern.off')}</span> : null}</p>
       <Chips chips={pieceChips(data, face)} />
       {details ? (
         <p class="piece-words">
-          {bonusText(piece, face.level)} <span class="piece-malus">{t(`${piece.id}.malus`)}</span>
+          <span class={words.bonusOff ? 'off' : ''}>{t(words.bonus)}</span> <span class={`piece-malus${words.malusOff ? ' off' : ''}`}>{t(words.malus)}</span>
         </p>
       ) : null}
     </>
@@ -208,7 +218,7 @@ export function LanternScreen(): JSX.Element {
       </div>
       <HelpBar
         items={[
-          ['confirm', t(editing !== null ? 'lantern.place' : 'lantern.choose')], shown !== null && ['x', t('lantern.details')],
+          editing !== null ? ['confirm', t('lantern.place')] : faceIndex < lantern.opened && owned.length > 0 && ['confirm', t('lantern.choose')], shown !== null && ['x', t('lantern.details')],
           editing === null && filled && ['y', t('lantern.clear')], ['back', t('ui.back')],
         ]}
       />

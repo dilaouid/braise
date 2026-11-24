@@ -164,6 +164,9 @@ export const ending = signal<{ result: RunResult; summary: RunSummary; stats: He
 export const pauseReason = signal<string | null>(null);
 export const pauseStats = signal<HeroStats | null>(null);
 export const notice = signal<string | null>(null);
+/** Le fichier de son de chaque son d'interface. */
+export const UI_SOUNDS = { move: 'ui-move', confirm: 'ui-confirm', back: 'ui-back', refuse: 'refuse' } as const;
+
 export const holdProgress = signal(0);
 /** L'identifiant `data-focus` de l'élément au focus. */
 export const focusedId = signal<string | null>(null);
