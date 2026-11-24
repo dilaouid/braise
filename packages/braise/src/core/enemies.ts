@@ -362,10 +362,57 @@ export function updateEnemies(run: Run, dt: number): void {
         clampToArena(run, i);
         break;
       }
+      case BH['boss-watcher']: {
+        // Le Guetteur : il approche, puis alterne une charge en ligne et un cercle autour de lui.
+        const ch = def.charge!;
+        const slam = def.slam!;
+        const state = e.state[i]!;
+        if (state === 0) {
+          approach(run, i, dx, dy, speed, false, def.radius, dt);
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0) {
+            if (e.counter[i] === 0) {
+              e.state[i] = 1;
+              e.timer[i] = ch.telegraph;
+              e.dirX[i] = dx;
+              e.dirY[i] = dy;
+              addTelegraph(run, TG_LINE, e.x[i]!, e.y[i]!, Math.atan2(dy, dx), ch.distance, ch.width, ch.telegraph, 0, e.uid[i]!, e.kind[i]!);
+            } else {
+              e.state[i] = 3;
+              e.timer[i] = slam.telegraph + 0.25;
+              addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+            }
+            e.counter[i] = e.counter[i] === 0 ? 1 : 0;
+            emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 2);
+          }
+        } else if (state === 1) {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            e.state[i] = 2;
+            e.timer[i] = ch.distance;
+            emit(run, EV.charge, e.x[i]!, e.y[i]!);
+          }
+        } else if (state === 2) {
+          const step = ch.speed * dt;
+          const blocked = moveGround(run, i, e.dirX[i]!, e.dirY[i]!, step, def.radius);
+          e.timer[i]! -= step;
+          if (blocked || e.timer[i]! <= 0) {
+            e.state[i] = 0;
+            e.timer2[i] = ch.cooldown;
+          }
+        } else {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            e.state[i] = 0;
+            e.timer2[i] = slam.cooldown;
+          }
+        }
+        break;
+      }
     }
 
     // Un ennemi ordinaire laissé trop loin est replacé sur l'anneau d'apparition, sans rien laisser.
-    if (def.rank === 'normal' && dist2 > leash2 && !dir.bossSpawned) {
+    if (def.rank === 'normal' && dist2 > leash2 && !dir.bossSpawned && !run.tutorial) {
       const a = run.rngSpawn.float() * TAU;
       const r = tuning.spawnRing[0] + run.rngSpawn.float() * (tuning.spawnRing[1] - tuning.spawnRing[0]);
       const nx = hero.x + Math.cos(a) * r;

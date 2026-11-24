@@ -154,6 +154,11 @@ export function updateDirector(run: Run, dt: number): void {
   const rng = run.rngSpawn;
   const m = run.time / 60;
   const v = run.cfg.vigil - 1;
+  // Le tutoriel n'a pas de horde : ses ennemis viennent du script.
+  if (run.tutorial) {
+    run.hpScaleNow = 1;
+    return;
+  }
   run.hpScaleNow = enemyHpScale(tuning.scale, Math.min(m, tuning.durationMin), v, 0);
 
   if (d.bossSpawned) return;

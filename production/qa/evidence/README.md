@@ -9,6 +9,7 @@ Les captures de chaque écran (document 08 §11), prises par les parcours Playwr
 |---|---|
 | `parcours-manette/` | De l'écran titre à l'écran de fin à la manette simulée, puis une seconde expédition avec un boost acheté |
 | `sauvegardes/` | Une sauvegarde du jalon M1 chargée ; une sauvegarde plus récente que le jeu, refusée |
+| `tutoriel-cream/` | Le tutoriel avec Cream : l’ouverture, une leçon, une réplique longue, le Guetteur, Cream au refuge |
 
 La manette est simulée : ces captures prouvent la logique et l'affichage, pas le comportement d'une vraie
 manette ni celui de la console.

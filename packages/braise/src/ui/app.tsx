@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { DialogueBox } from './dialogue.tsx';
 import { ChestScreen, FindScreen, Hud, LevelUp, PauseScreen, ShopScreen, TotemScreen } from './run.tsx';
 import { Altar, Camp, CinematicScreen, EndScreen, SettingsScreen, Title } from './screens.tsx';
 import { actions, overlay, screen } from './store.ts';
@@ -21,6 +22,7 @@ export function App(): JSX.Element {
       {s === 'run' && o === 'shop' ? <ShopScreen /> : null}
       {s === 'run' && o === 'find' ? <FindScreen /> : null}
       {s === 'run' && o === 'pause' ? <PauseScreen /> : null}
+      {(s === 'run' || s === 'camp') && o === 'dialogue' ? <DialogueBox /> : null}
       {s === 'end' ? <EndScreen /> : null}
       {s === 'boot' ? <div class="screen boot">…</div> : null}
     </>

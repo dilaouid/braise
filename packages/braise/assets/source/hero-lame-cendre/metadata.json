@@ -28,6 +28,33 @@
           "south-west": "Idle/rotations/south-west.png"
         },
         "animations": {
+          "pose-laugh": {
+            "south": [
+              "Idle/animations/pose-laugh/south/frame_000.png",
+              "Idle/animations/pose-laugh/south/frame_001.png",
+              "Idle/animations/pose-laugh/south/frame_002.png",
+              "Idle/animations/pose-laugh/south/frame_003.png",
+              "Idle/animations/pose-laugh/south/frame_004.png"
+            ]
+          },
+          "pose-think": {
+            "south": [
+              "Idle/animations/pose-think/south/frame_000.png",
+              "Idle/animations/pose-think/south/frame_001.png",
+              "Idle/animations/pose-think/south/frame_002.png",
+              "Idle/animations/pose-think/south/frame_003.png",
+              "Idle/animations/pose-think/south/frame_004.png"
+            ]
+          },
+          "pose-startle": {
+            "south": [
+              "Idle/animations/pose-startle/south/frame_000.png",
+              "Idle/animations/pose-startle/south/frame_001.png",
+              "Idle/animations/pose-startle/south/frame_002.png",
+              "Idle/animations/pose-startle/south/frame_003.png",
+              "Idle/animations/pose-startle/south/frame_004.png"
+            ]
+          },
           "idle": {
             "north": [
               "Idle/animations/idle/north/frame_000.png",
@@ -165,5 +192,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-23T12:11:49.444592"
+  "export_date": "2026-11-23T21:54:32.229586"
 }

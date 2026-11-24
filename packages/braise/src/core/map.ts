@@ -1,6 +1,6 @@
 import type { Rng } from '@owl/kit/rng';
 import type { ExpeditionTuning, RegionDef } from '../content/index.ts';
-import type { GameMap, Poi, Prop } from './types.ts';
+import { TILE_THICKET, type GameMap, type Poi, type Prop } from './types.ts';
 
 /** Écart minimal entre deux amas d'obstacles : aucun couloir de moins de 4 tuiles. */
 const MIN_GAP = 4;
@@ -11,6 +11,51 @@ export function isSolidAt(map: GameMap, x: number, y: number): boolean {
   const ty = Math.floor(y / map.tile);
   if (tx < 0 || ty < 0 || tx >= map.size || ty >= map.size) return true;
   return map.solid[ty * map.size + tx] !== 0;
+}
+
+/** Comme `isSolidAt`, pour le héros : une ruée traverse la rangée d'Éteints du tutoriel. */
+export function isSolidForHero(map: GameMap, x: number, y: number, dashing: boolean): boolean {
+  const tx = Math.floor(x / map.tile);
+  const ty = Math.floor(y / map.tile);
+  if (tx < 0 || ty < 0 || tx >= map.size || ty >= map.size) return true;
+  const v = map.solid[ty * map.size + tx]!;
+  return v === TILE_THICKET ? !dashing : v !== 0;
+}
+
+/**
+ * Plus court chemin de tuile en tuile (huit directions, sans couper les coins), par un parcours en largeur.
+ * Renvoie les indices des tuiles à suivre, arrivée comprise et départ exclu ; vide s'il n'y a pas de chemin.
+ */
+export function findPath(map: GameMap, from: number, to: number, passable: (tileValue: number) => boolean): number[] {
+  const size = map.size;
+  if (from === to) return [];
+  const prev = new Int32Array(size * size).fill(-1);
+  const queue = [from];
+  prev[from] = from;
+  for (let head = 0; head < queue.length; head++) {
+    const cur = queue[head]!;
+    if (cur === to) break;
+    const cx = cur % size;
+    const cy = (cur - cx) / size;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = cx + dx;
+        const ny = cy + dy;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+        const idx = ny * size + nx;
+        if (prev[idx] !== -1 || !passable(map.solid[idx]!)) continue;
+        // En diagonale, les deux tuiles voisines doivent être libres aussi.
+        if (dx !== 0 && dy !== 0 && (!passable(map.solid[cy * size + nx]!) || !passable(map.solid[ny * size + cx]!))) continue;
+        prev[idx] = cur;
+        queue.push(idx);
+      }
+    }
+  }
+  if (prev[to] === -1) return [];
+  const path: number[] = [];
+  for (let cur = to; cur !== from; cur = prev[cur]!) path.push(cur);
+  return path.reverse();
 }
 
 /** Vrai si la tuile est pleine ou hors de la carte. */

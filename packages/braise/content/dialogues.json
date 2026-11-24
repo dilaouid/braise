@@ -1,0 +1,105 @@
+{
+  "faces": {
+    "moon": [
+      "neutral",
+      "think",
+      "surprised",
+      "shocked",
+      "laugh",
+      "awkward",
+      "sad",
+      "resolute"
+    ],
+    "cream": [
+      "neutral",
+      "smug",
+      "serious",
+      "laugh",
+      "closed",
+      "surprised"
+    ]
+  },
+  "poses": {
+    "moon": [
+      "startle",
+      "think",
+      "laugh"
+    ],
+    "cream": [
+      "laugh",
+      "groom",
+      "scratch",
+      "rise"
+    ]
+  },
+  "dialogues": {
+    "tuto.opening": [
+      {"who":"moon","face":"think","text":"dialog.tuto.opening.1","poses":{"moon":"think"}},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.2"},
+      {"who":"moon","face":"neutral","text":"dialog.tuto.opening.3"},
+      {"seconds":1.2,"emotes":{"moon":"dots"}},
+      {"who":"moon","face":"shocked","text":"dialog.tuto.opening.4","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"},"sfx":"sfx-surprise"},
+      {"who":"cream","face":"smug","text":"dialog.tuto.opening.5","poses":{"cream":"groom"}},
+      {"who":"moon","face":"shocked","text":"dialog.tuto.opening.6"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.7"},
+      {"who":"moon","face":"awkward","text":"dialog.tuto.opening.8","emotes":{"moon":"drop"}},
+      {"who":"cream","face":"closed","text":"dialog.tuto.opening.9","poses":{"cream":"laugh"},"emotes":{"cream":"note"}},
+      {"who":"moon","face":"think","text":"dialog.tuto.opening.10","poses":{"moon":"think"},"emotes":{"moon":"question"}},
+      {"who":"cream","face":"serious","text":"dialog.tuto.opening.11"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.opening.12"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.opening.13"},
+      {"who":"moon","face":"sad","text":"dialog.tuto.opening.14"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.15"},
+      {"who":"moon","face":"resolute","text":"dialog.tuto.opening.16"},
+      {"who":"cream","face":"smug","text":"dialog.tuto.opening.17"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.opening.18","poses":{"cream":"rise"},"emotes":{"cream":"exclaim"}}
+    ],
+    "tuto.room1.a": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room1.a.1"}
+    ],
+    "tuto.room1.b": [
+      {"who":"moon","face":"surprised","text":"dialog.tuto.room1.b.1","emotes":{"moon":"question"}},
+      {"who":"cream","face":"smug","text":"dialog.tuto.room1.b.2"}
+    ],
+    "tuto.room2.a": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room2.a.1"}
+    ],
+    "tuto.room2.b": [
+      {"who":"moon","face":"laugh","text":"dialog.tuto.room2.b.1","poses":{"moon":"laugh"}},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room2.b.2"}
+    ],
+    "tuto.room3": [
+      {"who":"cream","face":"serious","text":"dialog.tuto.room3.1"},
+      {"who":"moon","face":"shocked","text":"dialog.tuto.room3.2","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"}}
+    ],
+    "tuto.room4.a": [
+      {"who":"cream","face":"serious","text":"dialog.tuto.room4.a.1"}
+    ],
+    "tuto.room4.b": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room4.b.1"}
+    ],
+    "tuto.room5.a": [
+      {"who":"moon","face":"think","text":"dialog.tuto.room5.a.1","poses":{"moon":"think"}},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room5.a.2"}
+    ],
+    "tuto.room5.b": [
+      {"who":"cream","face":"smug","text":"dialog.tuto.room5.b.1"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room5.b.2"}
+    ],
+    "tuto.room6": [
+      {"who":"cream","face":"serious","text":"dialog.tuto.room6.1"}
+    ],
+    "tuto.room7.a": [
+      {"who":"cream","face":"serious","text":"dialog.tuto.room7.a.1"}
+    ],
+    "tuto.room7.b": [
+      {"who":"moon","face":"laugh","text":"dialog.tuto.room7.b.1","poses":{"moon":"laugh"},"emotes":{"moon":"note"}},
+      {"who":"cream","face":"smug","text":"dialog.tuto.room7.b.2","poses":{"cream":"groom"}}
+    ],
+    "tuto.room8": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room8.1"},
+      {"who":"moon","face":"resolute","text":"dialog.tuto.room8.2"},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room8.3"}
+    ]
+  }
+}

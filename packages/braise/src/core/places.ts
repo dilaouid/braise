@@ -1,7 +1,7 @@
 import { healHero, spawnEnemy } from './combat.ts';
 import { applyCard, cardCandidates, recomputeStats, resumeRun } from './levelup.ts';
 import { isSolidAt } from './map.ts';
-import { emit } from './stores.ts';
+import { emit, tutorialNote } from './stores.ts';
 import { EV, SERVICES, type Card, type Poi, type Run, type ShopItem } from './types.ts';
 
 export { closeFind, resumeRun } from './levelup.ts';
@@ -88,7 +88,9 @@ export function updatePlace(run: Run, poi: Poi, index: number, dist: number, dt:
       if (poi.state === 0) {
         if (inside) {
           poi.state = 1;
-          convergingWave(run, poi, ev.totem.waveCount, ev.totem.waveEnemy);
+          // Dans le tutoriel, la vague vient du script : la vague habituelle naîtrait dans les murs.
+          if (run.tutorial) tutorialNote(run, 'totem');
+          else convergingWave(run, poi, ev.totem.waveCount, ev.totem.waveEnemy);
           emit(run, EV.poiStart, poi.x, poi.y, 1);
         }
       } else {
@@ -134,6 +136,7 @@ export function takeBoon(run: Run, index: number): boolean {
   if (boon === undefined) return false;
   run.boons.push(boon);
   run.totemChoices = [];
+  tutorialNote(run, 'boon');
   recomputeStats(run);
   resumeRun(run);
   return true;
@@ -190,6 +193,7 @@ export function buyItem(run: Run, index: number): boolean {
     run.serviceBuys[item.service]!++;
   }
   emit(run, EV.shopBuy, hero.x, hero.y, item.price);
+  tutorialNote(run, 'buy');
   return true;
 }
 
@@ -197,5 +201,6 @@ export function buyItem(run: Run, index: number): boolean {
 export function closeShop(run: Run): void {
   if (run.phase !== 'shop') return;
   run.shopPoi = -1;
+  tutorialNote(run, 'shopClosed');
   resumeRun(run);
 }

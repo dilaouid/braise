@@ -8,12 +8,15 @@ import { createSaveStore } from '@owl/kit/save';
 import { render } from 'preact';
 import { AudioManager } from '../audio/audio.ts';
 import { introCinematic } from '../content/cinematic.ts';
-import { loadGameData } from '../content/index.ts';
+import { FR, loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeBoon } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
 import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
+import { tutorialBot } from '../core/tutorial-bot.ts';
+import { createTutorialRun } from '../core/tutorial-run.ts';
+import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { applyRunResult, buildSheet, unlockedContent } from '../meta/hero.ts';
@@ -23,8 +26,9 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, ending, findState, holdProgress, hud, lastSeed, levelUp, notice, overlay,
-  pauseReason, pauseStats, refs, runExtras, save, saveRev, screen, shopState, t, totemState, type Actions, type HudState, type Screen,
+  INTRO_SEEN, TUTORIAL_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  holdProgress, hud, knowsCream, lastSeed, levelUp, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
+  shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
 /** Une couleur par sorte de lieu sur la mini-carte. */
@@ -37,6 +41,12 @@ const CLASS = 'class.ash-blade';
 const REGION = 'region.ash-woods';
 const HOLD_MS = 500;
 const SKIP_HOLD_MS = 600;
+/** Le texte d'un dialogue s'écrit à cette vitesse, et un son de voix part toutes les quelques lettres. */
+const DIALOGUE_CPS = 40;
+const TALK_EVERY = 4;
+const SPEAKERS = ['moon', 'cream'] as const;
+/** Les portraits que Cream peut avoir quand il parle au refuge. */
+const CAMP_CREAM_FACES = ['neutral', 'smug'] as const;
 
 async function boot(): Promise<void> {
   const data = loadGameData();
@@ -88,7 +98,22 @@ async function boot(): Promise<void> {
   const stepInput = idleInput();
   /** La cinématique en cours, où aller après, et le maintien de B pour la passer. */
   let cine: CinematicPlayer | null = null;
-  let cineAfter: 'camp' | 'title' = 'camp';
+  let cineAfter: 'camp' | 'title' | 'tutorial' = 'camp';
+  /** Le tutoriel rejoué depuis le titre ne touche pas à la sauvegarde et y revient. */
+  let tutoReplay = false;
+  /** La ligne de dialogue à l'écran (dialogue et indice), ses lettres écrites, le maintien de B. */
+  let dlgKey = '';
+  let dlgChars = 0;
+  let dlgLen = 0;
+  let dlgWho: 'moon' | 'cream' = 'moon';
+  let dlgId = 0;
+  let dlgHoldMs = 0;
+  let dlgEscape = false;
+  /** Cream parle au refuge : une réplique seule, hors de toute partie. */
+  let campTalk = false;
+  let campLast = 0;
+  /** Pour les parcours et leurs captures : la simulation et l'écriture des dialogues s'arrêtent, l'image continue. */
+  let held = false;
   let cineHoldMs = 0;
   let cinePaused = false;
 
@@ -132,7 +157,108 @@ async function boot(): Promise<void> {
     screen.value = next;
     overlay.value = 'none';
     confirm.value = null;
+    campTalk = false;
+    hideDialogue();
     guard();
+  }
+
+  /** Affiche une réplique dans la boîte de dialogue ; elle s'écrit lettre par lettre. */
+  function showLine(who: 'moon' | 'cream', face: string, key: string, single: boolean): void {
+    const text = t(key);
+    dlgId++;
+    dlgChars = 0;
+    dlgLen = text.length;
+    dlgWho = who;
+    dialogueShown.value = 0;
+    dialogueState.value = { who, face, text, id: dlgId, single };
+  }
+
+  function hideDialogue(): void {
+    dialogueState.value = null;
+    dlgKey = '';
+    dlgHoldMs = 0;
+    dlgEscape = false;
+    if (screen.value !== 'cinematic') cineSkip.value = 0;
+  }
+
+  /** Écrit les lettres suivantes de la réplique, avec le petit son de voix de celui qui parle. */
+  function typeDialogue(dt: number): void {
+    if (held || !dialogueState.value || dlgChars >= dlgLen) return;
+    const before = Math.floor(dlgChars);
+    dlgChars = Math.min(dlgLen, dlgChars + (dt * DIALOGUE_CPS) / 1000);
+    const after = Math.floor(dlgChars);
+    if (after === before) return;
+    dialogueShown.value = after;
+    if (Math.floor(after / TALK_EVERY) !== Math.floor(before / TALK_EVERY)) audio.play(`talk-${dlgWho}`, 0.22, 1, 70);
+  }
+
+  /** Recopie la ligne de dialogue de la partie vers l'écran, quand elle change. */
+  function syncDialogue(r: Run): void {
+    const tu = r.tutorial;
+    const line = r.phase === 'dialogue' ? currentLine(r) : null;
+    const key = line && tu ? `${tu.dialogue}#${tu.line}` : '';
+    if (key === dlgKey) return;
+    dlgKey = key;
+    if (!line) {
+      dialogueState.value = null;
+      dlgHoldMs = 0;
+      dlgEscape = false;
+      cineSkip.value = 0;
+      return;
+    }
+    if (line.sfx !== '') audio.play(line.sfx.replace(/^sfx-/, ''), 0.8);
+    // Une ligne muette (une pose, une bulle, un silence) n'affiche pas la boîte.
+    const who = SPEAKERS[line.who];
+    if (who) showLine(who, line.face, line.text, false);
+    else dialogueState.value = null;
+  }
+
+  function closeCampTalk(): void {
+    campTalk = false;
+    hideDialogue();
+    overlay.value = 'none';
+    audio.play('ui-back', 0.6);
+    guard(200);
+  }
+
+  /** Les boutons pendant un dialogue : A finit la ligne puis passe à la suivante, B maintenu passe tout. */
+  function handleDialogue(now: number, dt: number): void {
+    const f = input.frame;
+    if (now < guardUntil) return;
+    if (campTalk) {
+      if (f.pressed.confirm) actions.dialogueNext();
+      else if (f.pressed.back) closeCampTalk();
+      return;
+    }
+    if (f.pressed.confirm) actions.dialogueNext();
+    // Start met en pause. Au clavier, Échap est à la fois « pause » et « passer » : un appui court met
+    // en pause, un maintien passe le dialogue.
+    if (f.pressed.pause && !f.held.back) {
+      setPaused(true);
+      return;
+    }
+    if (f.pressed.back) dlgEscape = f.pressed.pause;
+    const hold = introCinematic().skipHoldMs;
+    if (f.held.back) {
+      dlgHoldMs += dt;
+    } else {
+      const tapped = dlgHoldMs > 0 && dlgEscape;
+      dlgHoldMs = 0;
+      dlgEscape = false;
+      if (tapped) {
+        cineSkip.value = 0;
+        setPaused(true);
+        return;
+      }
+    }
+    const k = Math.min(1, dlgHoldMs / hold);
+    if (k !== cineSkip.value) cineSkip.value = k;
+    if (dlgHoldMs >= hold) {
+      dlgHoldMs = 0;
+      dlgEscape = false;
+      cineSkip.value = 0;
+      actions.dialogueSkip();
+    }
   }
 
   function say(text: string, ms = 2600): void {
@@ -181,7 +307,7 @@ async function boot(): Promise<void> {
 
   function setPaused(on: boolean, reason: string | null = null): void {
     if (!run || screen.value !== 'run') return;
-    if (on && overlay.value !== 'none' && overlay.value !== 'pause') return;
+    if (on && overlay.value !== 'none' && overlay.value !== 'pause' && !(overlay.value === 'dialogue' && run.phase === 'dialogue')) return;
     if (on === paused) return;
     paused = on;
     pauseReason.value = on ? reason : null;
@@ -200,8 +326,67 @@ async function boot(): Promise<void> {
     setScreen('camp');
   }
 
+  function clearRunScreens(): void {
+    run = null;
+    hud.value = null;
+    tutoHud.value = null;
+    levelUp.value = null;
+    chest.value = null;
+    totemState.value = null;
+    shopState.value = null;
+    findState.value = null;
+    pauseReason.value = null;
+    paused = false;
+    held = false;
+  }
+
+  /**
+   * Lance le tutoriel. Sa feuille de statistiques est toujours celle d'une sauvegarde neuve, même en
+   * le rejouant : les leçons sont réglées pour un héros de niveau 1 sans Autel.
+   */
+  function startTutorial(replay: boolean): void {
+    const blank = newSave(0);
+    blank.heroes[CLASS] = newHero();
+    const { sheet } = buildSheet(data, blank, CLASS);
+    const unlocked = unlockedContent(data, blank);
+    tutoReplay = replay;
+    run = createTutorialRun(data, {
+      seed: (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0, regionId: REGION, classId: CLASS, vigil: 1, sheet,
+      unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: current.settings.autoSkills,
+    });
+    renderer.beginRun(run);
+    paused = false;
+    held = false;
+    acc = 0;
+    deadAt = 0;
+    banner = null;
+    ending.value = null;
+    tutoHud.value = { banner: null, glyph: null, bark: null };
+    audio.playMusic(run.region.music.calm);
+    audio.play('intro-miaou', 0.5);
+    setScreen('run');
+  }
+
+  /** Le tutoriel est fini ou passé : rien n'en est rapporté, pas de bilan, le refuge s'ouvre. */
+  function finishTutorial(): void {
+    clearRunScreens();
+    audio.duck(false);
+    if (tutoReplay) {
+      tutoReplay = false;
+      audio.stopMusic();
+      setScreen('title');
+      return;
+    }
+    if (!current.account.unlocks.includes(TUTORIAL_SEEN)) {
+      current.account.unlocks.push(TUTORIAL_SEEN);
+      changed();
+      persist();
+    }
+    enterCamp();
+  }
+
   /** Lance une cinématique. Pendant le chargement, l'écran reste noir. */
-  function playIntro(after: 'camp' | 'title'): void {
+  function playIntro(after: 'camp' | 'title' | 'tutorial'): void {
     cineAfter = after;
     cineHoldMs = 0;
     cineSkip.value = 0;
@@ -240,7 +425,8 @@ async function boot(): Promise<void> {
       changed();
       persist();
     }
-    if (cineAfter === 'camp') enterCamp();
+    if (cineAfter === 'tutorial') startTutorial(false);
+    else if (cineAfter === 'camp') enterCamp();
     else setScreen('title');
   }
 
@@ -248,15 +434,74 @@ async function boot(): Promise<void> {
     start() {
       audio.unlock();
       audio.play('ui-confirm');
-      // Le prologue se joue une fois, au tout premier départ d'une sauvegarde neuve (document 15 §1).
-      const fresh = Object.keys(current.heroes).length === 0 && !current.account.unlocks.includes(INTRO_SEEN);
-      if (fresh) playIntro('camp');
+      // Une sauvegarde sans héros : le prologue se joue une fois (document 15 §1), puis le tutoriel.
+      // Un tutoriel quitté en cours reprend au début, sans rejouer le prologue. Une sauvegarde qui a
+      // déjà un héros n'y est jamais envoyée.
+      const noHero = Object.keys(current.heroes).length === 0;
+      const unlocks = current.account.unlocks;
+      const needTutorial = noHero && !unlocks.includes(TUTORIAL_SEEN);
+      if (noHero && !unlocks.includes(INTRO_SEEN)) playIntro(needTutorial ? 'tutorial' : 'camp');
+      else if (needTutorial) startTutorial(false);
       else enterCamp();
     },
     prologue() {
       audio.unlock();
       audio.play('ui-confirm');
       playIntro('title');
+    },
+    tutorial() {
+      if (!knowsCream(current)) return;
+      audio.unlock();
+      audio.play('ui-confirm');
+      startTutorial(true);
+    },
+    skipTutorial() {
+      if (!run?.tutorial) return;
+      audio.play('ui-confirm');
+      finishTutorial();
+    },
+    dialogueNext() {
+      if (performance.now() < guardUntil) return;
+      const shown = dialogueState.value;
+      // La ligne s'écrit encore : A la finit d'abord.
+      if (shown && dlgChars < dlgLen) {
+        dlgChars = dlgLen;
+        dialogueShown.value = dlgLen;
+        return;
+      }
+      if (campTalk) {
+        closeCampTalk();
+        return;
+      }
+      // Une ligne muette passe seule : A ne coupe pas le silence.
+      if (!run || run.phase !== 'dialogue' || paused || !shown) return;
+      advanceDialogue(run);
+      audio.play('ui-move', 0.5);
+    },
+    dialogueSkip() {
+      if (performance.now() < guardUntil) return;
+      if (campTalk) {
+        closeCampTalk();
+        return;
+      }
+      if (!run || run.phase !== 'dialogue' || paused) return;
+      skipDialogue(run);
+      audio.play('ui-back', 0.6);
+    },
+    creamTalk() {
+      if (screen.value !== 'camp' || campTalk || !knowsCream(current)) return;
+      // Une réplique au hasard, jamais deux fois la même de suite.
+      let count = 0;
+      while (FR[`camp.cream.${count + 1}`] !== undefined) count++;
+      if (count === 0) return;
+      let pick = 1 + Math.floor(Math.random() * count);
+      if (pick === campLast && count > 1) pick = 1 + (pick % count);
+      campLast = pick;
+      campTalk = true;
+      showLine('cream', CAMP_CREAM_FACES[Math.floor(Math.random() * CAMP_CREAM_FACES.length)]!, `camp.cream.${pick}`, true);
+      overlay.value = 'dialogue';
+      audio.play('intro-miaou', 0.35);
+      guard(250);
     },
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
@@ -492,13 +737,21 @@ async function boot(): Promise<void> {
         case EV.bossSpawn:
           audio.play('boss', 1);
           audio.playMusic(r.region.music.boss);
-          say(t('hud.bossComing'), 3500);
+          // Le boss du tutoriel porte son propre nom, et sa leçon est déjà dans le bandeau.
+          if (!r.tutorial) say(t('hud.bossComing'), 3500);
           break;
         case EV.bossPhase: if (a > 1) audio.play('boss', 0.8, 1.15); break;
         case EV.bossDeath:
           audio.play('victory', 1);
           audio.playMusic(r.region.music.calm);
-          say(t('hud.portal'), 6000);
+          // Pas de portail en tutoriel : la dernière barrière tombe.
+          if (!r.tutorial) say(t('hud.portal'), 6000);
+          break;
+        case EV.gateOpen: audio.play('gate', 0.7, 1, 150); break;
+        case EV.bark: audio.play('talk-cream', 0.35); break;
+        case EV.tutoRespawn:
+          // Moon reprend à l'entrée de la salle. Face au Guetteur, il revient aussitôt : sa musique reste.
+          audio.play('death', 0.6);
           break;
         case EV.skill: audio.play('skill', 0.8); break;
         case EV.ultimate: audio.play('ultimate', 0.9); break;
@@ -509,7 +762,8 @@ async function boot(): Promise<void> {
           audio.play('evolution', 0.8, 1.2);
           say(t('hud.revive'));
           break;
-        case EV.poiStart: say(t(a === 1 ? 'hud.totem' : 'hud.brazier'), 3200); break;
+        // En tutoriel, le bandeau de leçon le dit déjà.
+        case EV.poiStart: if (!r.tutorial) say(t(a === 1 ? 'hud.totem' : 'hud.brazier'), 3200); break;
         case EV.poiDone:
           audio.play('buy', 0.8);
           say(a === 0 ? t('hud.brazierLit') : a === 1 ? t('hud.spring') : a === 3 ? t('hud.treasure') : t('hud.cache'));
@@ -530,7 +784,8 @@ async function boot(): Promise<void> {
     const h = r.hero;
     const tuning = r.data.tuning;
     let boss: HudState['boss'] = null;
-    if (r.director.bossSpawned && !r.director.bossDead) {
+    // Le boss du tutoriel n'a pas d'arène (`bossSpawned` reste faux) : seul son identifiant est posé.
+    if ((r.director.bossSpawned || (r.tutorial !== null && r.director.bossUid !== 0)) && !r.director.bossDead) {
       const e = r.enemies;
       for (let i = 0; i < e.count; i++) {
         if (e.uid[i] === r.director.bossUid) {
@@ -670,7 +925,10 @@ async function boot(): Promise<void> {
       return;
     }
 
-    if (playing && run && overlay.value === 'none' && !paused) {
+    if (overlay.value === 'dialogue') {
+      handleDialogue(now, dt);
+      typeDialogue(dt);
+    } else if (playing && run && overlay.value === 'none' && !paused) {
       if (f.pressed.pause && now >= guardUntil) setPaused(true);
       if (f.pressed.skill) pendSkill = true;
       if (f.pressed.ultimate) pendUlt = true;
@@ -681,7 +939,7 @@ async function boot(): Promise<void> {
 
     if (playing && run) {
       const r = run;
-      if (!paused && r.phase === 'playing') {
+      if (!paused && !held && r.phase === 'playing') {
         acc += dt;
         let steps = 0;
         const stepMs = STEP * 1000;
@@ -707,8 +965,28 @@ async function boot(): Promise<void> {
         acc = 0;
       }
 
+      // Un dialogue : la partie est en pause, les lignes muettes passent seules, la boîte suit la ligne.
+      if (r.phase === 'dialogue' && !paused && !held) tickDialogue(r, dt / 1000);
+      syncDialogue(r);
+      if (r.evCount > 0) processEvents(r);
+
       // La simulation attend un choix : l'écran correspondant s'ouvre, avec sa garde.
-      if (r.phase === 'levelup' && overlay.value !== 'levelup') {
+      if (r.phase === 'dialogue') {
+        // Un dialogue peut suivre un choix dans la même image (la carte prise, la trouvaille fermée) :
+        // l'écran du choix lui cède alors la place.
+        if (overlay.value !== 'dialogue' && !paused) {
+          overlay.value = 'dialogue';
+          levelUp.value = null;
+          chest.value = null;
+          totemState.value = null;
+          shopState.value = null;
+          findState.value = null;
+          pendSkill = false;
+          pendUlt = false;
+          pendFlask = false;
+          guard(250);
+        }
+      } else if (r.phase === 'levelup' && overlay.value !== 'levelup') {
         syncLevelUp();
         overlay.value = 'levelup';
         guard(350);
@@ -744,13 +1022,22 @@ async function boot(): Promise<void> {
       if (now - hudAt > 80) {
         hudAt = now;
         hud.value = buildHud(r, now);
+        const tu = r.tutorial;
+        if (tu) {
+          // Pendant un dialogue, le bandeau de leçon et la réplique courte s'effacent.
+          const quiet = r.phase === 'dialogue';
+          const next = { banner: quiet ? null : tu.banner, glyph: tu.bannerGlyph, bark: quiet ? null : tu.bark };
+          const was = tutoHud.value;
+          if (!was || was.banner !== next.banner || was.glyph !== next.glyph || was.bark !== next.bark) tutoHud.value = next;
+        }
       }
       if (now - mapAt > 250) {
         mapAt = now;
         drawMinimap(r);
       }
       if (r.phase === 'victory') {
-        finishRun();
+        if (r.tutorial) finishTutorial();
+        else finishRun();
       } else if (r.phase === 'dead') {
         // La lueur rétrécit jusqu'à un point avant l'écran de fin.
         if (deadAt === 0) deadAt = now;
@@ -758,7 +1045,7 @@ async function boot(): Promise<void> {
       }
     } else {
       const lit = current.account.regions[REGION]?.lit ?? false;
-      renderer.drawCamp(now, lit, data.classes[CLASS]!.sprite);
+      renderer.drawCamp(now, lit, data.classes[CLASS]!.sprite, screen.value !== 'title' && knowsCream(current));
     }
     requestAnimationFrame(frame);
   }
@@ -800,23 +1087,39 @@ async function boot(): Promise<void> {
     advance(steps: number, stopOnChoice = true): string {
       if (!run) return 'aucune partie';
       const bot = idleInput();
+      const tuto = run.tutorial !== null;
       for (let i = 0; i < steps; i++) {
         if (run.phase !== 'playing') {
           if (stopOnChoice) break;
           if (run.phase === 'levelup') takeCard(run, 0);
           else if (run.phase === 'chest') closeChest(run);
           else if (run.phase === 'totem') takeBoon(run, 0);
-          else if (run.phase === 'shop') closeShop(run);
-          else if (run.phase === 'find') closeFind(run);
+          else if (run.phase === 'shop') {
+            // En tutoriel, le robot achète la première carte qu'il peut payer : c'est la leçon.
+            const pick = tuto ? shopItems(run).findIndex((item) => item.card !== null && canBuy(run!, item)) : -1;
+            if (pick >= 0) buyItem(run, pick);
+            closeShop(run);
+          } else if (run.phase === 'find') closeFind(run);
+          else if (run.phase === 'dialogue') advanceDialogue(run);
           else break;
           continue;
         }
-        activeBot(run, bot);
+        if (tuto) {
+          bot.moveX = 0; bot.moveY = 0; bot.aimX = 0; bot.aimY = 0;
+          bot.dash = false; bot.skill = false; bot.ultimate = false; bot.flask = false;
+          tutorialBot(run, bot);
+        } else {
+          activeBot(run, bot);
+        }
         stepRun(run, bot);
         for (let k = 0; k < run.evCount; k++) renderer.onEvent(run, run.evType[k]!, run.evX[k]!, run.evY[k]!, run.evA[k]!, run.evB[k]!, run.evC[k]!);
         clearEvents(run);
       }
       return `${run.phase} à ${run.time.toFixed(1)} s, niveau ${run.hero.level}, ${run.enemies.count} ennemis`;
+    },
+    /** Arrête la simulation (vrai) ou la relance (faux) ; l'image continue d'être dessinée. */
+    hold(on: boolean): void {
+      held = on;
     },
   };
 }

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { FR, expectFocus, runView, settle, skipIntro, watch } from './harness.ts';
+import { FR, expectFocus, runView, settle, skipIntro, skipTutorial, watch } from './harness.ts';
 
 /** Le même jeu au clavier seul : menus, départ maintenu, pause. */
 test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }) => {
@@ -17,6 +17,8 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
   await page.waitForTimeout(300);
   await expect(page.locator('.screen.cinematic')).toBeVisible();
   await skipIntro(page);
+  // Le tutoriel suit le prologue : il se passe depuis la pause.
+  await skipTutorial(page);
 
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expectFocus(page, 'depart');

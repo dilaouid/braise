@@ -90,7 +90,7 @@ export class SimPad {
 
 /**
  * Passe la cinématique d'intro (document 15), qui se joue au premier départ d'une sauvegarde neuve :
- * B (ou Échap) maintenu un peu plus d'une seconde.
+ * B (ou Échap) maintenu un peu plus d'une seconde. Le tutoriel la suit : voir `skipTutorial`.
  */
 export async function skipIntro(page: Page, pad?: SimPad): Promise<void> {
   await expect(page.locator('.screen.cinematic')).toBeVisible();
@@ -100,6 +100,43 @@ export async function skipIntro(page: Page, pad?: SimPad): Promise<void> {
   await page.waitForTimeout(1400);
   if (pad) await pad.up('B');
   else await page.keyboard.up('Escape');
+}
+
+/**
+ * Passe le tutoriel, qui suit la cinématique sur une sauvegarde neuve : la première réplique est à
+ * l'écran, puis pause, « Passer le tutoriel », et la confirmation. Le refuge s'ouvre.
+ */
+export async function skipTutorial(page: Page, pad?: SimPad): Promise<void> {
+  const press = async (button: 'START' | 'DOWN' | 'RIGHT' | 'A'): Promise<void> => {
+    if (pad) await pad.press(button);
+    else await page.keyboard.press(({ START: 'Escape', DOWN: 'ArrowDown', RIGHT: 'ArrowRight', A: 'Enter' } as const)[button], { delay: 60 });
+  };
+  await expect(page.locator('.dialogue')).toBeVisible();
+  await settle(page);
+  await press('START');
+  await expect(page.locator('.backdrop.pause')).toBeVisible();
+  // On ne perd pas le tutoriel : « Abandonner » n'y est pas.
+  await expect(page.locator('[data-focus="abandon"]')).toHaveCount(0);
+  await settle(page);
+  await press('DOWN');
+  await press('DOWN');
+  await expectFocus(page, 'skip-tutorial');
+  await press('A');
+  await expect(page.locator('.dialog')).toContainText(FR['pause.skipTutorial.confirm']!);
+  await expectFocus(page, 'no');
+  await press('RIGHT');
+  await expectFocus(page, 'yes');
+  await press('A');
+  await expect(page.locator('.screen.camp')).toBeVisible();
+}
+
+/** Dépose un fichier de sauvegarde avant le premier chargement de la page, et seulement celui-là. */
+export async function plantSave(page: Page, text: string): Promise<void> {
+  await page.addInitScript(([key, value]) => {
+    if (sessionStorage.getItem('planted')) return;
+    sessionStorage.setItem('planted', '1');
+    localStorage.setItem(key!, value!);
+  }, [storageKey('save.json'), text] as const);
 }
 
 /** Attend `n` images affichées par le jeu. */

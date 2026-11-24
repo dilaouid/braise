@@ -4,8 +4,8 @@ import { heroXpForNext } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, lastSeed, notice, replaySeed, roman,
-  save, saveRev, t,
+  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, notice, overlay,
+  replaySeed, roman, save, saveRev, t,
 } from './store.ts';
 
 const CLASS = 'class.ash-blade';
@@ -23,6 +23,8 @@ function Currencies(): JSX.Element {
 
 export function Title(): JSX.Element {
   const ref = useFocusScope('title');
+  saveRev.value;
+  const s = save.value;
   return (
     <div class="screen title" ref={ref}>
       <div class="logo">
@@ -33,9 +35,17 @@ export function Title(): JSX.Element {
         {t('ui.press')} <Btn g="confirm" /> {t('ui.toStart')}
       </button>
       {/* Toujours là : une sauvegarde qui a déjà un héros ne rejoue pas le prologue d'elle-même. */}
-      <button type="button" class="press press-small" data-focus="prologue" onClick={() => actions().prologue()}>
-        {t('title.prologue')}
-      </button>
+      <div class="title-extras">
+        <button type="button" class="press press-small" data-focus="prologue" onClick={() => actions().prologue()}>
+          {t('title.prologue')}
+        </button>
+        {/* Le tutoriel se rejoue dès qu'un héros existe ou qu'il a été vu ; une sauvegarde neuve y passe d'elle-même. */}
+        {s && knowsCream(s) ? (
+          <button type="button" class="press press-small" data-focus="tutorial" onClick={() => actions().tutorial()}>
+            {t('title.tutorial')}
+          </button>
+        ) : null}
+      </div>
       {notice.value ? <p class="notice">{notice.value}</p> : null}
     </div>
   );
@@ -78,7 +88,7 @@ export function Camp(): JSX.Element {
     },
   });
   return (
-    <div class="screen camp" ref={ref}>
+    <div class={`screen camp${overlay.value === 'dialogue' ? ' talking' : ''}`} ref={ref}>
       <Panel class="camp-menu">
         <h1>{t('camp.title')}</h1>
         <MenuButton
@@ -89,6 +99,7 @@ export function Camp(): JSX.Element {
         <MenuButton id="altar" label={t('camp.altar')} desc={t('camp.altar.desc')} onPress={() => actions().goto('altar')} />
         {canBuy ? <span class="badge" /> : null}
         <MenuButton id="settings" label={t('ui.settings')} desc={t('camp.settings.desc')} onPress={() => actions().goto('settings')} />
+        {knowsCream(s) ? <MenuButton id="cream" label={t('camp.cream')} desc={t('camp.cream.desc')} onPress={() => actions().creamTalk()} /> : null}
         <p class="seed">{t('camp.seed')} : {seedLabel}</p>
       </Panel>
       <Panel class="camp-info">

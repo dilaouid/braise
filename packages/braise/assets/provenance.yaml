@@ -169,6 +169,174 @@
   prompt: "breathing-idle (south-east)"
   settings: {"size":48,"view":"low top-down","mode":"v3"}
   edits: "palette réduite ; images assemblées en bande"
+- file: sprites/hero-lame-cendre-pose-startle.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: b2c12880-2aac-4ca7-b57c-8a319cb5cd64
+  prompt: "startled jump of surprise: he flinches and hops back, both arms flung wide open to the sides, shocked"
+  settings: {"size":48,"view":"low top-down","mode":"v3"}
+  edits: "palette réduite ; animation « pose-startle », south, image 3 ; recadrée (8, 10, 52, 48)"
+- file: sprites/hero-lame-cendre-pose-think.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: b2c12880-2aac-4ca7-b57c-8a319cb5cd64
+  prompt: "thinking pose: he raises his right hand to his chin and tilts his head slightly, pondering, standing still"
+  settings: {"size":48,"view":"low top-down","mode":"v3"}
+  edits: "palette réduite ; animation « pose-think », south, image 3 ; recadrée (10, 10, 48, 48)"
+- file: sprites/hero-lame-cendre-pose-laugh.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: b2c12880-2aac-4ca7-b57c-8a319cb5cd64
+  prompt: "laughing out loud: head thrown back, mouth wide open, shoulders shaking, one hand on the belly"
+  settings: {"size":48,"view":"low top-down","mode":"v3"}
+  edits: "palette réduite ; animation « pose-laugh », south, image 3 ; recadrée (10, 10, 48, 48)"
+- file: sprites/cream-rot-0.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-1.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-2.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-3.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-4.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-5.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-6.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-rot-7.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite"
+- file: sprites/cream-walk-0@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (south)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-1@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (south-west)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-2@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (west)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-3@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (north-west)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-4@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (north)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-5@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (north-east)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-6@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (east)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-walk-7@8.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "walk-8-frames (south-east)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/cream-sit.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "sitting (template, south-west, last frame)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; animation « sit », south-west, image 7"
+- file: sprites/cream-pose-laugh.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "yawning (template, south, mouth wide open)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; animation « laugh », south, image 8"
+- file: sprites/cream-pose-groom.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "licking (template, south, paw raised to the face)"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; animation « groom », south, image 5"
+- file: sprites/cream-pose-scratch.png
+  tool: animate_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "the cat scratches and digs at the ground with one front paw, head lowered looking down at the ground"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; animation « scratch », south, image 2"
+- file: sprites/cream-pose-rise.png
+  tool: create_character
+  date: 2026-11-23
+  pixellab_id: d3984b51-f20e-4196-ba60-0496fc51df84
+  prompt: "standing rotation, south"
+  settings: {"size":32,"view":"low top-down","mode":"standard","body_type":"quadruped","template":"cat"}
+  edits: "palette réduite ; rotation south"
 - file: sprites/enemy-rampant@6.png
   tool: create_map_object + animate_object
   date: 2026-11-23
@@ -309,6 +477,20 @@
   prompt: "a small ancient closed casket of pale silvery-blue wood bound with tarnished copper bands, bluish silver tint, top-down prop"
   settings: {"width":32,"height":32,"view":"low top-down"}
   edits: "palette réduite"
+- file: sprites/boss-guetteur@6.png
+  tool: create_map_object + animate_object
+  date: 2026-11-23
+  pixellab_id: 3c787ace-3ecb-4182-b7cc-bee65748b1f2
+  prompt: "a very tall gaunt thin hunched creature made of ash and dead grey wood, stooped forward with long dangling arms and long thin legs, hollow body with holes, its head is one single huge round glowing magenta eye, angular jagged silhouette, standing side view facing right"
+  settings: {"width":96,"height":128,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/camp-cream.png
+  tool: create_map_object
+  date: 2026-11-23
+  pixellab_id: bfc14448-2076-4c03-8e42-73458b4d2329
+  prompt: "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
 - file: sprites/tile-bois-13.png
   tool: create_topdown_tileset
   date: 2026-11-23
@@ -420,6 +602,118 @@
   pixellab_id: b241daff-3ff8-419a-9fe8-44fc1f30d3ac
   prompt: "lower: dark forest floor covered in pale grey ash, sparse dead leaves · upper: dark packed earth path with small stones"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-13.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-10.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-4.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-12.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-6.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-8.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-0.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-1.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-11.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-3.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-2.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-5.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-15.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-14.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-9.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-cave-7.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
+  prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
+  settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/icon-weapon-scythe.png
   tool: create_image_pixen
@@ -771,6 +1065,125 @@
   prompt: "a single pale upright playing card crossed out by a big bold red X cross, banish symbol, filling the frame, game UI icon"
   settings: {"no_background":true}
   edits: "palette réduite"
+- file: sprites/decor-mur-cave.png
+  tool: create_image_pixen
+  date: 2026-11-23
+  pixellab_id: 641b500f-40ae-49ca-a03a-9b5d03d9b66b
+  prompt: "a solid block of dungeon wall made of large rough dark grey stone bricks, front face of the wall with a flat darker stone top edge, filling the whole image edge to edge, cellar ruin wall, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood"
+  settings: {"width":32,"height":48,"no_background":false}
+  edits: "palette réduite"
+- file: sprites/fx-barriere-fumee@4.png
+  tool: create_image_pixen
+  date: 2026-11-23
+  pixellab_id: 6a2bca99-395d-4fbd-aa62-0642914632d3
+  prompt: "a thick dense wall of billowing ash-grey smoke, wide heavy opaque smoke clouds stacked from the ground to the top, filling the whole frame, as wide at the bottom as at the top, no fire, no ground, 16-bit pixel art, three-tone shading, cool desaturated grey colors"
+  settings: {"width":32,"height":48,"no_background":true}
+  edits: "palette réduite ; 4 images faites par ondulation des lignes (tools/process-assets.mjs)"
+- file: sprites/decor-eteints-endormis.png
+  tool: create_map_object + edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: ec09c26c-cc39-477e-9056-2b3ea26cf427
+  prompt: "a tight huddle of several small sleeping creatures made of ash and twisted grey roots, packed and piled against each other, curled up asleep, half-closed dim magenta eyes, hollow bodies with holes, angular jagged silhouette, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood, transparent background · edit: recolor the creatures to dark ash grey and charcoal like burnt wood, and turn every eye into a thin glowing magenta pink slit, half-closed sleeping eyes; keep the same pile shape and outline"
+  settings: {"width":48,"height":48,"view":"low top-down","from_object":"3ccda38d-5537-4351-bc9d-523d59440b5d"}
+  edits: "palette réduite"
+- file: sprites/face-moon-neutral.png
+  tool: create_image_pixen + edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 8bff04ab-e97e-4823-8fbb-5c264abdfaa6
+  prompt: "face portrait of a tired gentle man in his thirties with a short dark brown beard, wearing a heavy ash-grey hood, neutral calm expression, mouth closed, looking at the viewer, head and shoulders, dialogue box portrait, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood, plain dark navy background · edit: remove the speech bubble in the top right corner, replace it with the plain dark navy background; keep the man's face, beard and hood exactly the same"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"308bd821-61b4-400a-aba9-b12c6132e0f5"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-think.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 5b688cb3-d3e9-44dc-9b79-e17128387d92
+  prompt: "change his expression to thinking: eyes looking up to the side, one eyebrow raised, mouth closed and slightly pursed; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-surprised.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 7bff90c6-8e6e-452b-b79c-98e4b727fff0
+  prompt: "change his expression to surprised: eyes wide open, eyebrows raised high, mouth slightly open in a small o; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-shocked.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 5c82355e-701f-40c1-b676-e1a13d74d9f9
+  prompt: "change his expression to comically shocked: eyes bulging wide with tiny pupils, eyebrows shot up, mouth gaping wide open in a huge scream showing teeth and tongue, funny cartoon shock; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-laugh.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 7698ae4d-f9dd-445a-ae32-5c477c3fd6d9
+  prompt: "change his expression to laughing heartily: eyes closed in happy arcs, big open smiling mouth showing teeth, cheeks raised; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-awkward.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: d705da40-2dd6-4afd-9abe-0345990d612f
+  prompt: "change his expression to awkward and embarrassed: eyes looking away to the side, crooked nervous half smile, a small sweat drop on the temple, slight blush; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-sad.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: e55cd82b-5e50-43a3-997b-29c2a8d89b82
+  prompt: "change his expression to sad: eyes lowered and half closed looking down, inner eyebrows raised, mouth turned down, grieving; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-moon-resolute.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 18b80e98-4098-4e39-9b17-8f8adb4e6300
+  prompt: "change his expression to resolute and determined: eyebrows lowered and firm, eyes sharp looking straight ahead, jaw set, mouth a firm confident line; keep the same face, beard, hood and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"8bff04ab-e97e-4823-8fbb-5c264abdfaa6"}
+  edits: "palette réduite ; couleurs remplacées (#5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-neutral.png
+  tool: create_image_pixen
+  date: 2026-11-23
+  pixellab_id: f094661e-ed2a-4bdd-bbe8-e34383396cae
+  prompt: "face portrait of a slim cream-coloured cat with pale amber eyes, pale cream fur, neutral calm watchful expression, mouth closed, looking at the viewer, head and neck, dialogue box portrait, 16-bit pixel art, 1px dark outline, three-tone shading, soft round shapes, plain dark navy background"
+  settings: {"width":64,"height":64,"no_background":false}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-smug.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 207db303-8e25-4c6e-b372-3951f9d6d878
+  prompt: "change the cat's expression to smug and mocking: eyes half closed with a sly look, one side of the mouth raised in a small smirk; keep the same cat face, fur and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-serious.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: b8a0681d-5255-43a1-b94b-b9eaecfceb91
+  prompt: "change the cat's expression to serious and grave: eyes narrowed and focused, brow lowered, mouth closed, stern; keep the same cat face, fur and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-laugh.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 02d595ed-3f16-4d6b-87ea-4dd5cf49f02b
+  prompt: "change the cat's expression to laughing: eyes squeezed shut in happy arcs, mouth wide open laughing showing small fangs and pink tongue; keep the same cat face, fur and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-closed.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 0f6a79a3-3a74-4d8a-973a-36aa71a4316c
+  prompt: "change the cat's expression to content with eyes closed: both eyes gently closed in soft curved lines, small calm happy smile, mouth closed, peaceful; keep the same cat face, fur and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/face-cream-surprised.png
+  tool: edit_image_pixen
+  date: 2026-11-23
+  pixellab_id: 11677157-23c2-47de-b301-12d537731857
+  prompt: "change the cat's expression to surprised: eyes very wide open and round with small pupils, ears perked straight up, mouth slightly open; keep the same cat face, fur and background"
+  settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
+  edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
 - file: sprites/pickup-gem-small.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-gem-medium.png
@@ -804,6 +1217,16 @@
 - file: sprites/fx-puff@4.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/ui-arrow.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/emote-exclaim.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/emote-question.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/emote-dots.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/emote-drop.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/emote-note.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/font-digits@10.png
   tool: dessiné à la main (tools/process-assets.mjs)
@@ -986,6 +1409,30 @@
   date: 2026-11-23
   pixellab_id: ec6507b9-914e-4db3-bef3-0fe6c1866586
   prompt: "a few coins dropped and set down on a wooden counter, satisfying purchase, short"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-talk-moon.ogg
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: f1f0b074-ee90-4f3a-901f-4ab28153307f
+  prompt: "a single very short low-pitched soft retro text blip, deep muted synth beep, dialogue typing sound for a calm man, one note"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-talk-cream.ogg
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: c3ba4f5b-2e32-44fb-848e-e82dad123f74
+  prompt: "a single very short high-pitched soft gentle retro text blip, light rounded chirp, dialogue typing sound for a small cat, one note"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-surprise.ogg
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: a667f73f-78e0-4e98-8bb0-7e03957638d9
+  prompt: "a short comic surprise sting, a quick bright cartoon boing with a pizzicato pluck, funny startled accent"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-gate.ogg
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: aff3d321-905a-4587-8c61-5dddba7bb0d1
+  prompt: "a thick smoke barrier dissipating, a short soft airy whoosh of breath fading away, no impact"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music

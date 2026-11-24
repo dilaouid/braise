@@ -126,6 +126,19 @@ for (const c of manifest.characters) {
       record(`sprites/${c.name}-${anim}-${i}@${frames.length}.png`, 'animate_character', c.id, `${c.animations[anim]} (${dir})`, c.settings, 'palette réduite ; images assemblées en bande');
     });
   }
+  // Les poses : une image fixe, prise dans une animation (ou une rotation) du personnage.
+  // « crop » ramène une image d'animation v3, stockée sur une toile plus grande, au cadrage du sprite.
+  for (const [name, p] of Object.entries(c.poses ?? {})) {
+    const file = p.rotation
+      ? join(base, state, 'rotations', `${p.rotation}.png`)
+      : join(base, state, 'animations', p.animation, p.direction, `frame_${String(p.frame).padStart(3, '0')}.png`);
+    if (!existsSync(file)) continue;
+    let png = quantize(read(file));
+    if (p.crop) png = crop(png, ...p.crop);
+    write(name, png);
+    const from = p.rotation ? `rotation ${p.rotation}` : `animation « ${p.animation} », ${p.direction}, image ${p.frame}`;
+    record(`sprites/${name}.png`, p.rotation ? c.tool : 'animate_character', c.id, p.prompt, c.settings, `palette réduite ; ${from}${p.crop ? ` ; recadrée (${p.crop.join(', ')})` : ''}`);
+  }
 }
 
 // ───────────── Les objets : ennemis, décors, points d'intérêt ─────────────
@@ -165,12 +178,54 @@ for (const t of manifest.tilesets) {
   }
 }
 
-// ───────────── Les icônes ─────────────
+// ───────────── Les icônes, les portraits et les images seules ─────────────
+/**
+ * Fait onduler une image fixe : chaque ligne glisse d'un pixel au plus, en une vague qui monte.
+ * Le bas de l'image ne bouge pas. Donne une petite animation sans rien redessiner.
+ */
+function wobble(png, count) {
+  const frames = [];
+  for (let f = 0; f < count; f++) {
+    const res = new PNG({ width: png.width, height: png.height });
+    for (let y = 0; y < png.height; y++) {
+      const amp = Math.min(1.4, (png.height - 1 - y) / 8);
+      const dx = Math.round(Math.sin(y / 4 + (f / count) * Math.PI * 2) * amp);
+      for (let x = 0; x < png.width; x++) {
+        const sx = x - dx;
+        if (sx < 0 || sx >= png.width) continue;
+        png.data.copy(res.data, (y * png.width + x) * 4, (y * png.width + sx) * 4, (y * png.width + sx) * 4 + 4);
+      }
+    }
+    frames.push(res);
+  }
+  return frames;
+}
+
 for (const img of manifest.images) {
   const file = join(source, 'images', `${img.name}.png`);
   if (!existsSync(file)) continue;
-  write(img.name, quantize(read(file)));
-  record(`sprites/${img.name}.png`, 'create_image_pixen', img.id, img.prompt, { no_background: true }, 'palette réduite');
+  const png = quantize(read(file));
+  const tool = img.tool ?? 'create_image_pixen';
+  const settings = img.settings ?? { no_background: true };
+  if (img.remap) {
+    // Une couleur de la palette en remplace une autre, là où la mise à la palette a mal choisi.
+    const hex = (i) => `#${[0, 1, 2].map((c) => png.data[i + c].toString(16).padStart(2, '0')).join('')}`;
+    for (let i = 0; i < png.data.length; i += 4) {
+      const to = png.data[i + 3] ? img.remap[hex(i)] : undefined;
+      if (!to) continue;
+      if (!PALETTE.includes(to)) throw new Error(`${img.name} : ${to} n'est pas dans la palette`);
+      for (let c = 0; c < 3; c++) png.data[i + c] = parseInt(to.slice(1 + c * 2, 3 + c * 2), 16);
+    }
+    write(img.name, png);
+    const pairs = Object.entries(img.remap).map(([a, b]) => `${a} → ${b}`).join(', ');
+    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, `palette réduite ; couleurs remplacées (${pairs})`);
+  } else if (img.wobble) {
+    write(`${img.name}@${img.wobble}`, strip(wobble(png, img.wobble)));
+    record(`sprites/${img.name}@${img.wobble}.png`, tool, img.id, img.prompt, settings, `palette réduite ; ${img.wobble} images faites par ondulation des lignes (tools/process-assets.mjs)`);
+  } else {
+    write(img.name, png);
+    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, 'palette réduite');
+  }
 }
 
 // ───────────── Les sprites dessinés à la main ─────────────
@@ -181,6 +236,7 @@ const INK = {
   m: '#ff3d81', M: '#c2185b', N: '#7a1048',
   T: '#b8fff0', t: '#4fe0c8', q: '#1f9e96',
   b: '#7a4a2e', B: '#c98b5e', n: '#4a2c1c',
+  c: '#7fd4ff', C: '#dff6ff',
 };
 
 function draw(rows) {
@@ -543,6 +599,72 @@ hand('ui-arrow', [
   '..kwwwk..',
   '..kkkkk..',
 ]);
+
+// Bulles d'émotion du tutoriel : une bulle blanche de 16 × 16 avec sa pointe, et un signe au milieu.
+function bubble(glyph) {
+  const rows = [
+    '..kkkkkkkkkkkk..',
+    '.kwwwwwwwwwwwwk.',
+    ...Array(9).fill('kwwwwwwwwwwwwwwk'),
+    '.kwwwwwwwwwwwwk.',
+    '..kkkkwwkkkkkk..',
+    '.....kwk........',
+    '.....kk.........',
+    '................',
+  ].map((r) => [...r]);
+  const gw = glyph[0].length;
+  const x0 = Math.floor((16 - gw) / 2);
+  const y0 = 1 + Math.floor((11 - glyph.length) / 2);
+  glyph.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch !== '.') rows[y0 + y][x0 + x] = ch;
+  }));
+  return rows.map((r) => r.join(''));
+}
+hand('emote-exclaim', bubble([
+  'rr',
+  'rr',
+  'rr',
+  'rr',
+  'rr',
+  '..',
+  'rr',
+  'rr',
+]));
+hand('emote-question', bubble([
+  '.qqqq.',
+  'qq..qq',
+  '....qq',
+  '...qq.',
+  '..qq..',
+  '......',
+  '..qq..',
+  '..qq..',
+]));
+hand('emote-dots', bubble([
+  'dd..dd..dd',
+  'dd..dd..dd',
+]));
+hand('emote-drop', bubble([
+  '...K...',
+  '..KcK..',
+  '..KcK..',
+  '.KcCcK.',
+  '.KcCcK.',
+  'KcCcccK',
+  'KcccccK',
+  '.KcccK.',
+  '..KKK..',
+]));
+hand('emote-note', bubble([
+  '...KKKK',
+  '...K..K',
+  '...K..K',
+  '...K..K',
+  '...K..K',
+  '.KKK.KK',
+  'KKKKKKK',
+  '.KK..K.',
+]));
 
 // Chiffres des nombres de dégâts : 4 × 6 px, blancs (teintés par le rendu), avec un contour sombre.
 const DIGITS = {

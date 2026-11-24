@@ -1,5 +1,5 @@
 import { Rng, deriveSeed } from '@owl/kit/rng';
-import type { GameData } from '../content/index.ts';
+import type { GameData, RegionDef } from '../content/index.ts';
 import { DAMAGE_TYPES } from '../content/index.ts';
 import { healHero, hurtEnemy, knockEnemy, reapEnemies } from './combat.ts';
 import { updateDirector } from './director.ts';
@@ -7,16 +7,17 @@ import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
 import { closeChest, gainXp, resumeRun } from './levelup.ts';
-import { generateMap, isSolidAt } from './map.ts';
+import { generateMap, isSolidForHero } from './map.ts';
 import { updatePois } from './poi.ts';
 import { cloneSheet, enemyDamageScale, resolveStats, runXpForNext, type HeroStats } from './stats.ts';
 import {
   CELL, buildGrid, createEnemyShotStore, createEnemyStore, createPickupStore, createShotStore, createTelegraphStore,
-  createZoneStore, emit, queryCircle, removePickup,
+  createZoneStore, emit, facingFromVector, queryCircle, removePickup, tutorialNote,
 } from './stores.ts';
+import { tutorialBossDead, tutorialRespawn, updateTutorial } from './tutorial.ts';
 import {
-  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SERVICES, STEP,
-  type Hero, type Run, type RunConfig, type StepInput,
+  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SERVICES, STEP, TILE_THICKET,
+  type GameMap, type Hero, type Run, type RunConfig, type StepInput,
 } from './types.ts';
 import { addWeapon, updateShots, updateWeapons, updateZones } from './weapons.ts';
 
@@ -25,9 +26,17 @@ export function idleInput(): StepInput {
   return { moveX: 0, moveY: 0, aimX: 0, aimY: 0, dash: false, skill: false, ultimate: false, flask: false };
 }
 
+/** Ce qu'une partie hors du commun impose : sa carte, sa région, son point de départ (le tutoriel). */
+export interface RunOverrides {
+  map?: GameMap;
+  region?: RegionDef;
+  startX?: number;
+  startY?: number;
+}
+
 /** Crée une expédition à partir des données du jeu et d'une configuration. */
-export function createRun(data: GameData, cfg: RunConfig): Run {
-  const region = data.regions[cfg.regionId];
+export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {}): Run {
+  const region = opts.region ?? data.regions[cfg.regionId];
   const cls = data.classes[cfg.classId];
   if (!region) throw new Error(`Région inconnue : ${cfg.regionId}`);
   if (!cls) throw new Error(`Classe inconnue : ${cfg.classId}`);
@@ -37,12 +46,14 @@ export function createRun(data: GameData, cfg: RunConfig): Run {
   const rngSpawn = new Rng(deriveSeed(cfg.seed, 1));
   const rngDraw = new Rng(deriveSeed(cfg.seed, 2));
   const rngCombat = new Rng(deriveSeed(cfg.seed, 3));
-  const map = generateMap(rngMap, tuning, region);
+  const map = opts.map ?? generateMap(rngMap, tuning, region);
   const sheet = cloneSheet(cfg.sheet);
   const stats = resolveStats(sheet, tuning, data.heroTuning, {} as HeroStats);
   const center = (map.size * map.tile) / 2;
+  const startX = opts.startX ?? center;
+  const startY = opts.startY ?? center;
   const hero: Hero = {
-    x: center, y: center, px: center, py: center,
+    x: startX, y: startY, px: startX, py: startY,
     faceX: 0, faceY: 1, aimX: 0, aimY: 1, facing: 0, moving: false,
     hp: stats.maxHp, invuln: 0,
     dashT: 0, dashCd: 0, dashX: 0, dashY: 1,
@@ -102,6 +113,7 @@ export function createRun(data: GameData, cfg: RunConfig): Run {
     killsByKind: new Uint32Array(kinds),
     damageByKind: new Float32Array(kinds),
     braziersLit: 0,
+    tutorial: null,
     outcome: null,
   };
   addWeapon(run, cls.startWeaponIndex);
@@ -109,9 +121,10 @@ export function createRun(data: GameData, cfg: RunConfig): Run {
 }
 
 /** Déplace le héros d'un vecteur, en glissant le long des obstacles. */
-function moveHeroBy(run: Run, dx: number, dy: number): void {
+function moveHeroBy(run: Run, dx: number, dy: number, dashing = false): void {
   const hero = run.hero;
   const map = run.map;
+  const isSolidAt = (m: GameMap, x: number, y: number): boolean => isSolidForHero(m, x, y, dashing);
   const r = run.data.tuning.hero.radius;
   const side = r * 0.7;
   if (dx !== 0) {
@@ -157,10 +170,19 @@ function moveHeroBy(run: Run, dx: number, dy: number): void {
   }
 }
 
-/** Direction de sprite, 0 à 7 : sud, sud-ouest, ouest, nord-ouest, nord, nord-est, est, sud-est. */
-export function facingFromVector(x: number, y: number): number {
-  const deg = (Math.atan2(y, x) * 180) / Math.PI;
-  return ((Math.round((deg - 90) / 45) % 8) + 8) % 8;
+export { facingFromVector };
+
+/** Vrai si le corps du héros mord sur une tuile de la rangée d'Éteints. */
+function inThicket(run: Run): boolean {
+  const map = run.map;
+  const hero = run.hero;
+  const r = run.data.tuning.hero.radius;
+  for (const [ox, oy] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]] as const) {
+    const tx = Math.floor((hero.x + ox) / map.tile);
+    const ty = Math.floor((hero.y + oy) / map.tile);
+    if (tx >= 0 && ty >= 0 && tx < map.size && ty < map.size && map.solid[ty * map.size + tx] === TILE_THICKET) return true;
+  }
+  return false;
 }
 
 function moveHero(run: Run, input: StepInput, dt: number): void {
@@ -204,13 +226,25 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
     hero.dashX = hero.faceX;
     hero.dashY = hero.faceY;
     emit(run, EV.heroDash, hero.x, hero.y, Math.atan2(hero.dashY, hero.dashX));
+    tutorialNote(run, 'dash');
   }
   if (hero.dashT > 0) {
     // La ruée traverse les ennemis, pas les obstacles. Découpée pour ne pas sauter une tuile.
     const dist = (tuning.dash.distance / tuning.dash.duration) * Math.min(dt, hero.dashT);
     const parts = Math.max(1, Math.ceil(dist / 5));
-    for (let k = 0; k < parts; k++) moveHeroBy(run, (hero.dashX * dist) / parts, (hero.dashY * dist) / parts);
+    for (let k = 0; k < parts; k++) moveHeroBy(run, (hero.dashX * dist) / parts, (hero.dashY * dist) / parts, true);
     hero.dashT -= dt;
+  } else if (run.tutorial && inThicket(run)) {
+    // Une ruée finie dans la rangée d'Éteints : l'élan l'emporte jusqu'à en sortir, et s'il bute, il revient.
+    const dist = (tuning.dash.distance / tuning.dash.duration) * dt;
+    const bx = hero.x;
+    const by = hero.y;
+    const parts = Math.max(1, Math.ceil(dist / 5));
+    for (let k = 0; k < parts && inThicket(run); k++) moveHeroBy(run, (hero.dashX * dist) / parts, (hero.dashY * dist) / parts, true);
+    if (hero.x === bx && hero.y === by) {
+      hero.dashX = -hero.dashX;
+      hero.dashY = -hero.dashY;
+    }
   } else if (hero.moving) {
     const speed = hero.stats.speed * dt;
     moveHeroBy(run, mx * speed, my * speed);
@@ -228,6 +262,7 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
     hero.flasks--;
     healHero(run, hero.stats.maxHp * tuning.flask.healShare);
     emit(run, EV.flask, hero.x, hero.y);
+    tutorialNote(run, 'flask');
   }
 
   const skill = cls.skill;
@@ -337,7 +372,8 @@ export function stepRun(run: Run, input: StepInput): void {
   const tuning = run.data.tuning;
   run.tick++;
   run.time += dt;
-  run.dmgScale = enemyDamageScale(tuning.scale, Math.min(run.time / 60, tuning.durationMin), run.cfg.vigil - 1, 0);
+  // Le tutoriel ne durcit pas avec le temps.
+  run.dmgScale = run.tutorial ? 1 : enemyDamageScale(tuning.scale, Math.min(run.time / 60, tuning.durationMin), run.cfg.vigil - 1, 0);
 
   updateDirector(run, dt);
   moveHero(run, input, dt);
@@ -359,7 +395,10 @@ export function stepRun(run: Run, input: StepInput): void {
     if (e.hp[i]! <= 0 && run.data.enemies[e.kind[i]!]!.rank !== 'normal') clearTelegraphsOf(run, e.uid[i]!);
   }
   const bossKilled = reapEnemies(run);
-  if (bossKilled) onBossDeath(run);
+  if (bossKilled) {
+    if (run.tutorial) tutorialBossDead(run);
+    else onBossDeath(run);
+  }
 
   // La mort est résolue avant toute montée de niveau : un héros mort ne choisit pas.
   const hero = run.hero;
@@ -377,6 +416,9 @@ export function stepRun(run: Run, input: StepInput): void {
         hurtEnemy(run, run.query[k]!, 1, 0, null, -1, HIT_NO_NUMBER);
       }
       emit(run, EV.heroRevive, hero.x, hero.y);
+    } else if (run.tutorial) {
+      // On ne perd pas le tutoriel : Moon reprend à l'entrée de la salle.
+      tutorialRespawn(run);
     } else {
       hero.hp = 0;
       run.outcome = 'death';
@@ -388,6 +430,8 @@ export function stepRun(run: Run, input: StepInput): void {
 
   updatePickups(run, dt);
   updatePois(run, dt);
+  if (run.phase !== 'playing') return;
+  updateTutorial(run, dt);
   if (run.phase !== 'playing') return;
   resumeRun(run);
 }

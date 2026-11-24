@@ -1,6 +1,6 @@
 import { healHero } from './combat.ts';
 import { addBonus, cloneSheet, resolveStats, runXpForNext } from './stats.ts';
-import { emit } from './stores.ts';
+import { emit, tutorialNote } from './stores.ts';
 import { EV, type Card, type Run, type WeaponInstance } from './types.ts';
 import { addWeapon } from './weapons.ts';
 
@@ -121,6 +121,7 @@ function finishChoice(run: Run): void {
   run.pendingLevels = Math.max(0, run.pendingLevels - 1);
   run.cards = [];
   run.director.breathT = run.data.tuning.director.breathSeconds;
+  tutorialNote(run, 'card');
   resumeRun(run);
 }
 
@@ -154,6 +155,7 @@ function openFind(run: Run): void {
     recomputeStats(run);
   }
   emit(run, EV.findGot, run.hero.x, run.hero.y, run.find);
+  tutorialNote(run, 'find');
   run.phase = 'find';
 }
 

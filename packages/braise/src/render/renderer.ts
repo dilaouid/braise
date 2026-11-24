@@ -3,8 +3,10 @@ import type { GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE,
+  TILE_GATE, TILE_THICKET,
   type Run,
 } from '../core/types.ts';
+import { tutorialTarget } from '../core/tutorial.ts';
 import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
 import { Atlas } from './atlas.ts';
 import { lightDisc } from './light.ts';
@@ -37,7 +39,32 @@ const FX_TRAIL = 8;
 const MAX_FX = 96;
 const MAX_PUFFS = 120;
 const MAX_NUMBERS = 110;
-const MAX_PROPS = 260;
+const MAX_PROPS = 420;
+const MAX_GATES = 24;
+const MAX_THICKETS = 16;
+const MAX_GATE_FADES = 12;
+/** La fumée d'une barrière ouverte met ce temps à se dissiper. */
+const GATE_FADE = 0.7;
+/** Où sont les pattes sur l'image : Cream tient sur une toile de 48 px, pattes à 33 px du haut. */
+const CREAM_ANCHOR = 33 / 48;
+/** Part de Cream qui reste visible dans le noir, hors de la lueur de Moon. */
+const CREAM_PALE = 0.5;
+/** L'ancre verticale des sprites dont les pieds ne sont pas là où la règle du rang les attend. */
+const SPRITE_ANCHOR: Record<string, number> = { 'boss-guetteur': 0.84 };
+/** Hauteur d'une bulle au-dessus de la position de Moon et de Cream. */
+const EMOTE_UP_MOON = 34;
+const EMOTE_UP_CREAM = 24;
+
+/** Un coin de dalle du donjon, tiré de sa position : le sol varie sans rien stocker. */
+function caveCorner(x: number, y: number): number {
+  let h = Math.imul((x >> 1) * 374761393 + (y >> 1) * 668265263, 1274126177);
+  h ^= h >>> 13;
+  h = Math.imul(h, 1274126177);
+  return ((h >>> 16) & 15) < 6 ? 1 : 0;
+}
+
+interface EmoteFx { sprite: Sprite; name: string; t: number }
+interface GateFade { sprite: Sprite; x: number; y: number; t: number }
 const MAX_LIGHTS = 140;
 
 interface Puff { sprite: Sprite; t: number; frames: Texture[]; rate: number }
@@ -105,6 +132,21 @@ export class GameRenderer {
   private heroWalk: Texture[][] = [];
   private heroIdle: Texture[][] = [];
   private readonly ghost: Sprite[] = [];
+  private heroSprite = '';
+
+  // Le tutoriel : Cream, les barrières de fumée, la rangée d'Éteints, les bulles.
+  private readonly cream: Sprite;
+  /** Une copie pâle de Cream par-dessus la pénombre : il reste hors de la lueur, mais on le voit. */
+  private readonly creamPale: Sprite;
+  private creamWalk: Texture[][] = [];
+  private readonly gateSprites: Sprite[] = [];
+  private readonly thicketSprites: Sprite[] = [];
+  private gateFrames: Texture[] = [];
+  private readonly gateFades: GateFade[] = [];
+  private readonly emotes: EmoteFx[] = [];
+  private animClock = 0;
+  private dialogueBlend = 0;
+  private respawnFade = 0;
 
   private readonly fx: Fx[] = [];
   private fxCount = 0;
@@ -126,6 +168,7 @@ export class GameRenderer {
   private currentRun: Run | null = null;
 
   private campHero!: Sprite;
+  private campCream!: Sprite;
   private campFlame!: Sprite;
   private campBuilt = false;
 
@@ -191,6 +234,13 @@ export class GameRenderer {
     };
     this.enemySprites = pool(CAP_ENEMIES, this.entities);
     this.propSprites = pool(MAX_PROPS, this.entities, 0.5, 0.92);
+    this.cream = pool(1, this.entities, 0.5, CREAM_ANCHOR)[0]!;
+    this.gateSprites = pool(MAX_GATES, this.entities, 0.5, 1);
+    this.thicketSprites = pool(MAX_THICKETS, this.entities, 0.5, 0.8);
+    for (const s of pool(MAX_GATE_FADES, this.entities, 0.5, 1)) this.gateFades.push({ sprite: s, x: 0, y: 0, t: -1 });
+    this.creamPale = pool(1, this.numberLayer, 0.5, CREAM_ANCHOR)[0]!;
+    this.creamPale.alpha = CREAM_PALE;
+    for (const s of pool(2, this.numberLayer, 0.5, 1)) this.emotes.push({ sprite: s, name: '', t: 0 });
     this.poiSprites = pool(28, this.entities, 0.5, 0.8);
     this.poiFlames = pool(28, this.entities, 0.5, 1);
     this.pickupSprites = pool(CAP_PICKUPS, this.pickups);
@@ -262,7 +312,30 @@ export class GameRenderer {
     this.borderTexture = a.get(run.region.borderDecor);
     this.enemyFrames = data.enemies.map((e) => a.anim(e.sprite));
     this.enemyWhite = data.enemies.map((e) => a.whiteAnim(e.sprite));
-    this.enemyAnchor = data.enemies.map((e) => (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
+    this.enemyAnchor = data.enemies.map((e) => SPRITE_ANCHOR[e.sprite] ?? (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
+    this.heroSprite = run.cls.sprite;
+    // Les murs du donjon sont posés au pied de leur tuile ; les décors du Bois gardent leur ancre.
+    for (const s of this.propSprites) s.anchor.set(0.5, run.tutorial ? 1 : 0.92);
+    this.cream.visible = false;
+    this.creamPale.visible = false;
+    for (const s of this.gateSprites) s.visible = false;
+    for (const s of this.thicketSprites) s.visible = false;
+    for (const f of this.gateFades) {
+      f.t = -1;
+      f.sprite.visible = false;
+    }
+    for (const em of this.emotes) {
+      em.name = '';
+      em.sprite.visible = false;
+    }
+    this.dialogueBlend = 0;
+    this.respawnFade = 0;
+    if (run.tutorial) {
+      this.creamWalk = [];
+      for (let d = 0; d < 8; d++) this.creamWalk.push(a.anim(`cream-walk-${d}`));
+      this.gateFrames = a.anim('fx-barriere-fumee');
+      for (const s of this.thicketSprites) s.texture = a.get('decor-eteints-endormis');
+    }
     this.heroWalk = [];
     this.heroIdle = [];
     for (let d = 0; d < 8; d++) {
@@ -377,6 +450,18 @@ export class GameRenderer {
       case EV.heroRevive: this.addFx(FX_RING, x, y, 110, C.emberWhite, 6, 0.5); break;
       case EV.flameCall: this.addFx(FX_RING, x, y, 300, C.tealPale, 2, 0.6); break;
       case EV.heroDeath: this.deathFade = 0.001; break;
+      case EV.gateOpen: {
+        // La fumée de la barrière monte et s'efface.
+        const f = this.gateFades.find((k) => k.t < 0);
+        if (f) {
+          f.t = 0;
+          f.x = x;
+          f.y = y;
+        }
+        this.puff(x, y - 6, this.puffFrames, 0xc9d1dc, 10);
+        break;
+      }
+      case EV.tutoRespawn: this.respawnFade = 1; break;
     }
   }
 
@@ -416,11 +501,36 @@ export class GameRenderer {
     const map = run.map;
     const hx = hero.px + (hero.x - hero.px) * alpha;
     const hy = hero.py + (hero.y - hero.py) * alpha;
+    const tuto = run.tutorial;
+    const talking = run.phase === 'dialogue';
+    // Pendant un dialogue le monde est figé, mais Moon, Cream et les bulles continuent de bouger.
+    if (!paused || talking) this.animClock += dt;
+    const animTime = this.animClock;
+    let gx = hx;
+    let gy = hy;
+    if (tuto) {
+      gx = tuto.guide.px + (tuto.guide.x - tuto.guide.px) * alpha;
+      gy = tuto.guide.py + (tuto.guide.y - tuto.guide.py) * alpha;
+    }
 
     // La caméra : centrée sur le héros, bornée à la carte, arrondie au pixel natif.
+    // Pendant un dialogue, elle glisse vers le milieu entre Moon et Cream, sans jamais perdre Moon.
+    let focusX = hx;
+    let focusY = hy;
+    if (tuto) {
+      const want = talking ? 1 : 0;
+      this.dialogueBlend += Math.max(-dt / 0.45, Math.min(dt / 0.45, want - this.dialogueBlend));
+      const b = this.dialogueBlend;
+      const k = b * b * (3 - 2 * b);
+      const maxX = VIEW_W / 2 - 96;
+      const maxY = VIEW_H / 2 - 100;
+      focusX += Math.max(-maxX, Math.min(maxX, (gx - hx) / 2)) * k;
+      // La boîte de dialogue couvre le bas de l'image : les deux sont cadrés un peu plus haut.
+      focusY += (Math.max(-maxY, Math.min(maxY, (gy - hy) / 2)) + 30) * k;
+    }
     const mapPx = map.size * map.tile;
-    let camX = Math.round(Math.min(mapPx - VIEW_W, Math.max(0, hx - VIEW_W / 2)));
-    let camY = Math.round(Math.min(mapPx - VIEW_H, Math.max(0, hy - VIEW_H / 2 - 8)));
+    let camX = Math.round(Math.min(mapPx - VIEW_W, Math.max(0, focusX - VIEW_W / 2)));
+    let camY = Math.round(Math.min(mapPx - VIEW_H, Math.max(0, focusY - VIEW_H / 2 - 8)));
     this.camX = camX;
     this.camY = camY;
     if (this.shake > 0.05 && this.settings.screenShake > 0) {
@@ -443,6 +553,8 @@ export class GameRenderer {
     const ty0 = Math.floor(camY / map.tile);
     const cs = map.size + 1;
     let ti = 0;
+    let gates = 0;
+    let thickets = 0;
     for (let r = 0; r < this.tileRows; r++) {
       for (let c = 0; c < this.tileCols; c++) {
         const s = this.tiles[ti++]!;
@@ -453,11 +565,50 @@ export class GameRenderer {
           continue;
         }
         const k = ty * cs + tx;
-        const mask = map.corners[k]! * 8 + map.corners[k + 1]! * 4 + map.corners[k + cs]! * 2 + map.corners[k + cs + 1]!;
+        let mask = map.corners[k]! * 8 + map.corners[k + 1]! * 4 + map.corners[k + cs]! * 2 + map.corners[k + cs + 1]!;
+        if (tuto) {
+          // Le donjon : rien n'est dessiné sous les murs ni hors des salles, tout y est noir.
+          const v = map.solid[ty * map.size + tx]!;
+          if (v === 1) {
+            s.visible = false;
+            continue;
+          }
+          mask = caveCorner(tx, ty) * 8 + caveCorner(tx + 1, ty) * 4 + caveCorner(tx, ty + 1) * 2 + caveCorner(tx + 1, ty + 1);
+          const cx = (tx + 0.5) * map.tile;
+          if (v === TILE_GATE && gates < MAX_GATES) {
+            const gs = this.gateSprites[gates++]!;
+            gs.texture = this.gateFrames[Math.floor(time * 6 + tx * 3 + ty) % this.gateFrames.length]!;
+            gs.position.set(cx, (ty + 1) * map.tile);
+            gs.zIndex = (ty + 0.9) * map.tile;
+            gs.visible = true;
+          } else if (v === TILE_THICKET && thickets < MAX_THICKETS) {
+            const ts = this.thicketSprites[thickets++]!;
+            ts.position.set(cx, (ty + 0.86) * map.tile);
+            ts.zIndex = (ty + 0.86) * map.tile;
+            ts.visible = true;
+          }
+        }
         s.texture = this.tileTextures[mask]!;
         s.position.set(tx * map.tile, ty * map.tile);
         s.visible = true;
       }
+    }
+    for (; gates < MAX_GATES; gates++) this.gateSprites[gates]!.visible = false;
+    for (; thickets < MAX_THICKETS; thickets++) this.thicketSprites[thickets]!.visible = false;
+    for (const f of this.gateFades) {
+      if (f.t < 0) continue;
+      if (!paused) f.t += dt;
+      if (f.t >= GATE_FADE) {
+        f.t = -1;
+        f.sprite.visible = false;
+        continue;
+      }
+      const k = f.t / GATE_FADE;
+      f.sprite.texture = this.gateFrames[Math.floor(f.t * 10) % this.gateFrames.length]!;
+      f.sprite.position.set(f.x, Math.round(f.y + map.tile / 2 - k * 14));
+      f.sprite.zIndex = f.y + map.tile * 0.4;
+      f.sprite.alpha = 1 - k;
+      f.sprite.visible = true;
     }
 
     // Décors : seuls ceux de l'écran sont dessinés (la liste est triée par ordonnée).
@@ -477,7 +628,8 @@ export class GameRenderer {
       if (p.x < camX - 40 || p.x > camX + VIEW_W + 40) continue;
       const s = this.propSprites[pi++]!;
       s.texture = p.decor < 0 ? this.borderTexture : this.propTextures[p.decor]!;
-      s.position.set(p.x, p.y);
+      // Un mur du donjon tient au pied de sa tuile et dépasse au-dessus d'elle.
+      s.position.set(p.x, tuto ? Math.ceil(p.y / map.tile) * map.tile : p.y);
       s.zIndex = p.y;
       s.visible = true;
     }
@@ -683,7 +835,9 @@ export class GameRenderer {
     // Héros.
     const frames = hero.moving || hero.dashT > 0 ? this.heroWalk[hero.facing]! : this.heroIdle[hero.facing]!;
     const rate = hero.moving ? 12 : 5;
-    this.hero.texture = frames[Math.floor(time * rate) % frames.length]!;
+    this.hero.texture = tuto && tuto.heroPose !== ''
+      ? this.atlas.get(`${this.heroSprite}-pose-${tuto.heroPose}`)
+      : frames[Math.floor(animTime * rate) % frames.length]!;
     this.hero.position.set(Math.round(hx), Math.round(hy));
     this.hero.zIndex = hy;
     const blink = hero.invuln > 0 && hero.dashT <= 0 && Math.floor(time * 20) % 2 === 0;
@@ -701,6 +855,32 @@ export class GameRenderer {
       } else {
         gs.visible = false;
       }
+    }
+    // Cream : il marche, s'assoit quand il attend, prend la pose de la ligne de dialogue. Pas d'ombre.
+    if (tuto) {
+      const guide = tuto.guide;
+      const cream = this.cream;
+      let flip = 1;
+      if (guide.pose !== '') {
+        cream.texture = this.atlas.get(`cream-pose-${guide.pose}`);
+      } else if (guide.moving && !talking) {
+        const walk = this.creamWalk[guide.facing]!;
+        cream.texture = walk[Math.floor(animTime * 12) % walk.length]!;
+      } else {
+        // Assis de trois quarts, la tête à gauche sur l'image : retourné quand Moon est à droite.
+        cream.texture = this.atlas.get('cream-sit');
+        if (hx > gx) flip = -1;
+      }
+      cream.scale.x = flip;
+      cream.position.set(Math.round(gx), Math.round(gy));
+      cream.zIndex = gy;
+      cream.visible = true;
+      this.creamPale.texture = cream.texture;
+      this.creamPale.scale.x = flip;
+      this.creamPale.position.copyFrom(cream.position);
+      this.creamPale.visible = true;
+      this.drawEmote(this.emotes[0]!, tuto.emoteMoon, hx, hy - EMOTE_UP_MOON, dt);
+      this.drawEmote(this.emotes[1]!, tuto.emoteCream, gx, gy - EMOTE_UP_CREAM, dt);
     }
     // Anneau de rechargement de la ruée, sous le héros.
     const dash = run.data.tuning.dash;
@@ -787,8 +967,32 @@ export class GameRenderer {
       this.darkness.alpha = Math.min(1, run.region.darkness.opacity + this.deathFade * 0.5);
     }
     this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : 0.1);
+    // Retour à l'entrée de la salle après une chute : un fondu court depuis le noir.
+    if (this.respawnFade > 0) {
+      this.screenFx.rect(0, 0, VIEW_W, VIEW_H).fill({ color: 0x000000, alpha: Math.min(1, this.respawnFade) });
+      this.respawnFade = Math.max(0, this.respawnFade - dt * 2.2);
+    }
     this.renderLight();
     this.app.renderer.render(this.app.stage);
+  }
+
+  /** Une bulle au-dessus d'une tête, avec un petit rebond quand elle apparaît ou change. */
+  private drawEmote(em: EmoteFx, name: string, x: number, y: number, dt: number): void {
+    if (name === '') {
+      em.name = '';
+      em.sprite.visible = false;
+      return;
+    }
+    if (name !== em.name) {
+      em.name = name;
+      em.t = 0;
+      em.sprite.texture = this.atlas.get(`emote-${name}`);
+    }
+    em.t += dt;
+    const k = Math.min(1, em.t / 0.32);
+    const hop = Math.sin(k * Math.PI) * 6;
+    em.sprite.position.set(Math.round(x), Math.round(y - hop));
+    em.sprite.visible = true;
   }
 
   private drawFx(run: Run, dt: number, paused: boolean, top: Graphics, ground: Graphics, hx: number, hy: number): void {
@@ -913,7 +1117,10 @@ export class GameRenderer {
     // Le point d'intérêt le plus proche encore à faire, ou le portail.
     let target: { x: number; y: number } | null = null;
     let best = Infinity;
-    for (const poi of run.map.pois) {
+    // En tutoriel, la flèche montre là où l'étape attend le joueur, et rien pendant un dialogue.
+    if (run.tutorial) {
+      if (run.phase !== 'dialogue') target = tutorialTarget(run);
+    } else for (const poi of run.map.pois) {
       // Les marchands ne sont jamais « à faire » : la flèche ne les montre pas.
       if (poi.state === 2 || poi.kind === 'smith' || poi.kind === 'herbalist') continue;
       if (poi.kind === 'portal') {
@@ -938,7 +1145,7 @@ export class GameRenderer {
   }
 
   /** Le camp : le fond des menus, entre deux expéditions. */
-  drawCamp(timeMs: number, lit: boolean, heroSprite: string): void {
+  drawCamp(timeMs: number, lit: boolean, heroSprite: string, cream = false): void {
     const a = this.atlas;
     if (!this.campBuilt) {
       this.campBuilt = true;
@@ -969,7 +1176,13 @@ export class GameRenderer {
       this.campHero.anchor.set(0.5, 0.8);
       this.campHero.position.set(366, 214);
       this.camp.addChild(this.campHero);
+      // Cream, couché contre une lanterne allumée, de l'autre côté du feu.
+      this.campCream = new Sprite(a.get('camp-cream'));
+      this.campCream.anchor.set(0.5, 0.85);
+      this.campCream.position.set(276, 216);
+      this.camp.addChild(this.campCream);
     }
+    this.campCream.visible = cream;
     this.currentRun = null;
     this.camp.visible = true;
     this.world.visible = false;
@@ -987,6 +1200,7 @@ export class GameRenderer {
     this.warmCount = 0;
     this.light(320, 176, (lit ? 150 : 104) + Math.round(Math.sin(t * 3) * 2), 0.13);
     this.light(366, 204, 40);
+    if (cream) this.light(272, 204, 30 + Math.round(Math.sin(t * 2.3)), 0.1);
     this.renderLight();
     this.app.renderer.render(this.app.stage);
   }

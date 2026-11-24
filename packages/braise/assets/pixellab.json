@@ -16,7 +16,91 @@
     "walk": "walking-8-frames",
     "idle": "breathing-idle"
    },
-   "prompt": "a sturdy warden in a heavy ash-grey hooded cloak over worn leather armor, a long curved blade on the back, holding a small glowing orange lantern in the left hand, soft round shapes, calm determined face"
+   "prompt": "a sturdy warden in a heavy ash-grey hooded cloak over worn leather armor, a long curved blade on the back, holding a small glowing orange lantern in the left hand, soft round shapes, calm determined face",
+   "poses": {
+    "hero-lame-cendre-pose-startle": {
+     "animation": "pose-startle",
+     "direction": "south",
+     "frame": 3,
+     "crop": [
+      8,
+      10,
+      52,
+      48
+     ],
+     "prompt": "startled jump of surprise: he flinches and hops back, both arms flung wide open to the sides, shocked"
+    },
+    "hero-lame-cendre-pose-think": {
+     "animation": "pose-think",
+     "direction": "south",
+     "frame": 3,
+     "crop": [
+      10,
+      10,
+      48,
+      48
+     ],
+     "prompt": "thinking pose: he raises his right hand to his chin and tilts his head slightly, pondering, standing still"
+    },
+    "hero-lame-cendre-pose-laugh": {
+     "animation": "pose-laugh",
+     "direction": "south",
+     "frame": 3,
+     "crop": [
+      10,
+      10,
+      48,
+      48
+     ],
+     "prompt": "laughing out loud: head thrown back, mouth wide open, shoulders shaking, one hand on the belly"
+    }
+   }
+  },
+  {
+   "name": "cream",
+   "id": "d3984b51-f20e-4196-ba60-0496fc51df84",
+   "tool": "create_character",
+   "settings": {
+    "size": 32,
+    "view": "low top-down",
+    "mode": "standard",
+    "body_type": "quadruped",
+    "template": "cat"
+   },
+   "animations": {
+    "walk": "walk-8-frames"
+   },
+   "poses": {
+    "cream-sit": {
+     "animation": "sit",
+     "direction": "south-west",
+     "frame": 7,
+     "prompt": "sitting (template, south-west, last frame)"
+    },
+    "cream-pose-laugh": {
+     "animation": "laugh",
+     "direction": "south",
+     "frame": 8,
+     "prompt": "yawning (template, south, mouth wide open)"
+    },
+    "cream-pose-groom": {
+     "animation": "groom",
+     "direction": "south",
+     "frame": 5,
+     "prompt": "licking (template, south, paw raised to the face)"
+    },
+    "cream-pose-scratch": {
+     "animation": "scratch",
+     "direction": "south",
+     "frame": 2,
+     "prompt": "the cat scratches and digs at the ground with one front paw, head lowered looking down at the ground"
+    },
+    "cream-pose-rise": {
+     "rotation": "south",
+     "prompt": "standing rotation, south"
+    }
+   },
+   "prompt": "a slim cream-coloured cat with pale amber eyes, pale cream fur, slender body, long thin tail, soft round shapes, calm and watchful, 16-bit pixel art, 1px dark outline, three-tone shading, dark night mood"
   }
  ],
  "objects": [
@@ -206,6 +290,25 @@
     32
    ],
    "prompt": "a small ancient closed casket of pale silvery-blue wood bound with tarnished copper bands, bluish silver tint, top-down prop"
+  },
+  {
+   "name": "boss-guetteur",
+   "id": "3c787ace-3ecb-4182-b7cc-bee65748b1f2",
+   "size": [
+    96,
+    128
+   ],
+   "animated": true,
+   "prompt": "a very tall gaunt thin hunched creature made of ash and dead grey wood, stooped forward with long dangling arms and long thin legs, hollow body with holes, its head is one single huge round glowing magenta eye, angular jagged silhouette, standing side view facing right"
+  },
+  {
+   "name": "camp-cream",
+   "id": "bfc14448-2076-4c03-8e42-73458b4d2329",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   }
  ],
  "tilesets": [
@@ -219,6 +322,17 @@
     "view": "low top-down"
    },
    "prompt": "lower: dark forest floor covered in pale grey ash, sparse dead leaves · upper: dark packed earth path with small stones"
+  },
+  {
+   "name": "tile-cave",
+   "id": "3f5dd6ec-39ea-45ed-a3d6-3d51305feca1",
+   "tool": "create_topdown_tileset",
+   "settings": {
+    "tile_size": 32,
+    "mode": "standard",
+    "view": "high top-down"
+   },
+   "prompt": "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
   }
  ],
  "images": [
@@ -471,6 +585,256 @@
    "name": "icon-service-banish",
    "id": "174adce2-a250-4da0-82ee-7ffc8c2efb4a",
    "prompt": "a single pale upright playing card crossed out by a big bold red X cross, banish symbol, filling the frame, game UI icon"
+  },
+  {
+   "name": "decor-mur-cave",
+   "id": "641b500f-40ae-49ca-a03a-9b5d03d9b66b",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 32,
+    "height": 48,
+    "no_background": false
+   },
+   "prompt": "a solid block of dungeon wall made of large rough dark grey stone bricks, front face of the wall with a flat darker stone top edge, filling the whole image edge to edge, cellar ruin wall, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood"
+  },
+  {
+   "name": "fx-barriere-fumee",
+   "id": "6a2bca99-395d-4fbd-aa62-0642914632d3",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 32,
+    "height": 48,
+    "no_background": true
+   },
+   "wobble": 4,
+   "prompt": "a thick dense wall of billowing ash-grey smoke, wide heavy opaque smoke clouds stacked from the ground to the top, filling the whole frame, as wide at the bottom as at the top, no fire, no ground, 16-bit pixel art, three-tone shading, cool desaturated grey colors"
+  },
+  {
+   "name": "decor-eteints-endormis",
+   "id": "ec09c26c-cc39-477e-9056-2b3ea26cf427",
+   "tool": "create_map_object + edit_image_pixen",
+   "settings": {
+    "width": 48,
+    "height": 48,
+    "view": "low top-down",
+    "from_object": "3ccda38d-5537-4351-bc9d-523d59440b5d"
+   },
+   "prompt": "a tight huddle of several small sleeping creatures made of ash and twisted grey roots, packed and piled against each other, curled up asleep, half-closed dim magenta eyes, hollow bodies with holes, angular jagged silhouette, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood, transparent background · edit: recolor the creatures to dark ash grey and charcoal like burnt wood, and turn every eye into a thin glowing magenta pink slit, half-closed sleeping eyes; keep the same pile shape and outline"
+  },
+  {
+   "name": "face-moon-neutral",
+   "id": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6",
+   "tool": "create_image_pixen + edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "308bd821-61b4-400a-aba9-b12c6132e0f5"
+   },
+   "prompt": "face portrait of a tired gentle man in his thirties with a short dark brown beard, wearing a heavy ash-grey hood, neutral calm expression, mouth closed, looking at the viewer, head and shoulders, dialogue box portrait, 16-bit pixel art, 1px dark outline, three-tone shading, cool desaturated colors, dark night mood, plain dark navy background · edit: remove the speech bubble in the top right corner, replace it with the plain dark navy background; keep the man's face, beard and hood exactly the same",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-think",
+   "id": "5b688cb3-d3e9-44dc-9b79-e17128387d92",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to thinking: eyes looking up to the side, one eyebrow raised, mouth closed and slightly pursed; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-surprised",
+   "id": "7bff90c6-8e6e-452b-b79c-98e4b727fff0",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to surprised: eyes wide open, eyebrows raised high, mouth slightly open in a small o; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-shocked",
+   "id": "5c82355e-701f-40c1-b676-e1a13d74d9f9",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to comically shocked: eyes bulging wide with tiny pupils, eyebrows shot up, mouth gaping wide open in a huge scream showing teeth and tongue, funny cartoon shock; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-laugh",
+   "id": "7698ae4d-f9dd-445a-ae32-5c477c3fd6d9",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to laughing heartily: eyes closed in happy arcs, big open smiling mouth showing teeth, cheeks raised; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-awkward",
+   "id": "d705da40-2dd6-4afd-9abe-0345990d612f",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to awkward and embarrassed: eyes looking away to the side, crooked nervous half smile, a small sweat drop on the temple, slight blush; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-sad",
+   "id": "e55cd82b-5e50-43a3-997b-29c2a8d89b82",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to sad: eyes lowered and half closed looking down, inner eyebrows raised, mouth turned down, grieving; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-moon-resolute",
+   "id": "18b80e98-4098-4e39-9b17-8f8adb4e6300",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "8bff04ab-e97e-4823-8fbb-5c264abdfaa6"
+   },
+   "prompt": "change his expression to resolute and determined: eyebrows lowered and firm, eyes sharp looking straight ahead, jaw set, mouth a firm confident line; keep the same face, beard, hood and background",
+   "remap": {
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-neutral",
+   "id": "f094661e-ed2a-4bdd-bbe8-e34383396cae",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false
+   },
+   "prompt": "face portrait of a slim cream-coloured cat with pale amber eyes, pale cream fur, neutral calm watchful expression, mouth closed, looking at the viewer, head and neck, dialogue box portrait, 16-bit pixel art, 1px dark outline, three-tone shading, soft round shapes, plain dark navy background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-smug",
+   "id": "207db303-8e25-4c6e-b372-3951f9d6d878",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "f094661e-ed2a-4bdd-bbe8-e34383396cae"
+   },
+   "prompt": "change the cat's expression to smug and mocking: eyes half closed with a sly look, one side of the mouth raised in a small smirk; keep the same cat face, fur and background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-serious",
+   "id": "b8a0681d-5255-43a1-b94b-b9eaecfceb91",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "f094661e-ed2a-4bdd-bbe8-e34383396cae"
+   },
+   "prompt": "change the cat's expression to serious and grave: eyes narrowed and focused, brow lowered, mouth closed, stern; keep the same cat face, fur and background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-laugh",
+   "id": "02d595ed-3f16-4d6b-87ea-4dd5cf49f02b",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "f094661e-ed2a-4bdd-bbe8-e34383396cae"
+   },
+   "prompt": "change the cat's expression to laughing: eyes squeezed shut in happy arcs, mouth wide open laughing showing small fangs and pink tongue; keep the same cat face, fur and background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-closed",
+   "id": "0f6a79a3-3a74-4d8a-973a-36aa71a4316c",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "f094661e-ed2a-4bdd-bbe8-e34383396cae"
+   },
+   "prompt": "change the cat's expression to content with eyes closed: both eyes gently closed in soft curved lines, small calm happy smile, mouth closed, peaceful; keep the same cat face, fur and background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
+  },
+  {
+   "name": "face-cream-surprised",
+   "id": "11677157-23c2-47de-b301-12d537731857",
+   "tool": "edit_image_pixen",
+   "settings": {
+    "width": 64,
+    "height": 64,
+    "no_background": false,
+    "from_image": "f094661e-ed2a-4bdd-bbe8-e34383396cae"
+   },
+   "prompt": "change the cat's expression to surprised: eyes very wide open and round with small pupils, ears perked straight up, mouth slightly open; keep the same cat face, fur and background",
+   "remap": {
+    "#d9480f": "#c98b5e",
+    "#5f8a4e": "#7a4a2e"
+   }
   }
  ],
  "sounds": [
@@ -653,6 +1017,30 @@
    "id": "ec6507b9-914e-4db3-bef3-0fe6c1866586",
    "prompt": "a few coins dropped and set down on a wooden counter, satisfying purchase, short",
    "seconds": 1
+  },
+  {
+   "name": "sfx-talk-moon",
+   "id": "f1f0b074-ee90-4f3a-901f-4ab28153307f",
+   "prompt": "a single very short low-pitched soft retro text blip, deep muted synth beep, dialogue typing sound for a calm man, one note",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-talk-cream",
+   "id": "c3ba4f5b-2e32-44fb-848e-e82dad123f74",
+   "prompt": "a single very short high-pitched soft gentle retro text blip, light rounded chirp, dialogue typing sound for a small cat, one note",
+   "seconds": 0.5
+  },
+  {
+   "name": "sfx-surprise",
+   "id": "a667f73f-78e0-4e98-8bb0-7e03957638d9",
+   "prompt": "a short comic surprise sting, a quick bright cartoon boing with a pizzicato pluck, funny startled accent",
+   "seconds": 0.8
+  },
+  {
+   "name": "sfx-gate",
+   "id": "aff3d321-905a-4587-8c61-5dddba7bb0d1",
+   "prompt": "a thick smoke barrier dissipating, a short soft airy whoosh of breath fading away, no impact",
+   "seconds": 1.2
   }
  ],
  "music": [

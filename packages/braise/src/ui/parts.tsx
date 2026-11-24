@@ -158,7 +158,8 @@ export function MenuButton(props: {
 
 /** Une boîte de confirmation : le focus est sur « Annuler ». */
 export function ConfirmDialog({ text, yes, onYes, onNo }: { text: string; yes: string; onYes: () => void; onNo: () => void }): JSX.Element {
-  const ref = useFocusScope('confirm');
+  // Sans clé : le focus n'est pas mémorisé d'une confirmation à l'autre, il revient toujours sur « Annuler ».
+  const ref = useFocusScope('');
   useHandlers({ back: onNo });
   return (
     <div class="backdrop" ref={ref}>
