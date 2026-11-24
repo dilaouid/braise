@@ -386,6 +386,13 @@
   prompt: "a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns, hollow chest, mournful, two glowing magenta eyes, standing side view facing right"
   settings: {"width":128,"height":128,"view":"low top-down"}
   edits: "palette réduite ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre@6.png
+  tool: create_map_object + animate_object
+  date: 2026-11-24
+  pixellab_id: 77f53df9-16cc-4782-bb08-dc1fe9f70cd2
+  prompt: "a huge stag rebuilt from grey ash and dust, cracked like dry clay, sharp pale wooden splinters and flakes falling from its body, enormous grey antlers hung with small broken dead lanterns, hollow chest, empty black eye sockets with no glow, lifeless and menacing, standing side view facing right"
+  settings: {"width":128,"height":128,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
 - file: sprites/decor-souche.png
   tool: create_map_object
   date: 2026-11-23
