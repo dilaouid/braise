@@ -86,6 +86,13 @@
             0
           ]
         }
+      ],
+      "cues": [
+        {
+          "at": 4,
+          "sfx": "memory-rire",
+          "volume": 0.7
+        }
       ]
     },
     {
