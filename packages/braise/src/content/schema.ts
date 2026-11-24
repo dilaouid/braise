@@ -199,6 +199,8 @@ export const campSchema = z
           id: z.string().regex(/^[a-z-]+$/),
           x: z.number(),
           y: z.number(),
+          /** Sa place à l'image, pour la souris et la croix : largeur et hauteur, posées sur (x, y). */
+          box: pointSchema,
           /** Distance à laquelle Moon l'ouvre ; 0 : un décor. */
           reach: z.number().nonnegative(),
           /** Où Moon s'arrête quand il y va de lui-même. */

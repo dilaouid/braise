@@ -11,7 +11,8 @@ import {
 
 const CLASS = 'class.ash-blade';
 
-function Currencies(): JSX.Element {
+/** L'or et les Cendres du compte. */
+export function Currencies(): JSX.Element {
   saveRev.value;
   const s = save.value!;
   return (
@@ -115,60 +116,6 @@ export function SceneScreen(): JSX.Element {
           <Btn g="back" /> {t('cine.skip')}
         </div>
       )}
-    </div>
-  );
-}
-
-export function Camp(): JSX.Element {
-  const ref = useFocusScope('camp');
-  saveRev.value;
-  const s = save.value!;
-  const data = gameData();
-  const hero = s.heroes[CLASS] ?? newHero();
-  const next = heroXpForNext(hero.level, data.heroTuning);
-  const region = s.account.regions['region.ash-woods'];
-  const canBuy = data.altar.some((b) => canBuyAltarRank(s, data, b.id) === null);
-  const seedLabel = replaySeed.value && lastSeed.value !== null ? String(lastSeed.value) : t('camp.seed.random');
-  useHandlers({
-    x: () => {
-      if (lastSeed.value !== null) replaySeed.value = !replaySeed.value;
-    },
-  });
-  return (
-    <div class={`screen camp${overlay.value === 'dialogue' ? ' talking' : ''}`} ref={ref}>
-      <Panel class="camp-menu">
-        <h1>{t('camp.title')}</h1>
-        <MenuButton
-          id="depart" label={t('camp.depart')} desc={t('camp.depart.desc')} default hold
-          onPress={() => actions().depart(replaySeed.value && lastSeed.value !== null ? lastSeed.value : undefined)}
-        />
-        <div class="hold-track"><div class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></div>
-        <MenuButton id="altar" label={t('camp.altar')} desc={t('camp.altar.desc')} onPress={() => actions().goto('altar')} />
-        {canBuy ? <span class="badge" /> : null}
-        <div class="camp-entry">
-          <MenuButton id="lantern" label={t('camp.lantern')} desc={t('camp.lantern.desc')} onPress={() => actions().goto('lantern')} />
-          {lanternNews(data, s.account.lantern) ? <span class="badge badge-lantern" /> : null}
-        </div>
-        <MenuButton id="settings" label={t('ui.settings')} desc={t('camp.settings.desc')} onPress={() => actions().goto('settings')} />
-        {memoryCount(data, s) > 0
-          ? <MenuButton id="memories" label={t('camp.memories')} desc={t('camp.memories.desc')} onPress={() => actions().goto('memories')} />
-          : null}
-        {knowsCream(s) ? <MenuButton id="cream" label={t('camp.cream')} desc={t('camp.cream.desc')} onPress={() => actions().creamTalk()} /> : null}
-        <p class="seed">{t('camp.seed')} : {seedLabel}{replaySeed.value ? ` · ${t('camp.seed.noPiece')}` : ''}</p>
-      </Panel>
-      <Panel class="camp-info">
-        <Currencies />
-        <h2>{t('camp.hero', { level: hero.level })}</h2>
-        <Bar class="bar-xp" value={hero.xp} max={next} />
-        <p class="dim">{t('camp.heroXp', { xp: fmt(hero.xp), next: fmt(next) })}</p>
-        <p>{region?.lit ? t('camp.brazierLit') : t('camp.brazierDark')}</p>
-        <p class="dim">
-          {t('camp.records', {
-            runs: s.account.stats.runs ?? 0, wins: s.account.stats.victories ?? 0, best: fmtTime(s.account.stats.bestSeconds ?? 0),
-          })}
-        </p>
-      </Panel>
-      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('camp.holdToLeave')], lastSeed.value !== null && ['x', t('camp.seed')]]} />
     </div>
   );
 }
@@ -455,7 +402,7 @@ export function EndScreen(): JSX.Element | null {
         </div>
         <div class="row">
           <MenuButton id="camp" label={t('end.camp')} onPress={() => actions().goto('camp')} default />
-          <MenuButton id="again" label={t('end.again')} onPress={() => actions().depart()} />
+          <MenuButton id="again" label={t('end.again')} onPress={() => actions().depart(undefined, result.regionId)} />
         </div>
       </Panel>
       <HelpBar items={[['nav', t('ui.move')], ['confirm', t('ui.confirm')]]} />

@@ -4,29 +4,29 @@ import { device, refs, t, type Handlers } from './store.ts';
 
 /** Gestion du focus, posée par `app`. */
 export const focusRef: {
-  setScope: ((el: HTMLElement | null, key: string) => void) | null;
-  stack: Array<{ el: HTMLElement; key: string }>;
+  setScope: ((el: HTMLElement | null, key: string, optional: boolean) => void) | null;
+  stack: Array<{ el: HTMLElement; key: string; optional: boolean }>;
   /** Donne le focus à l'élément portant cet identifiant, dans l'écran affiché. */
   focusId: ((id: string) => void) | null;
 } = { setScope: null, stack: [], focusId: null };
 
 /**
  * Restreint le focus à cet écran tant qu'il est affiché. À sa fermeture, le focus
- * revient à l'écran du dessous, là où il était.
+ * revient à l'écran du dessous, là où il était. `optional` : l'écran peut n'avoir rien au focus.
  */
-export function useFocusScope(key: string): { current: HTMLDivElement | null } {
+export function useFocusScope(key: string, optional = false): { current: HTMLDivElement | null } {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const entry = { el, key };
+    const entry = { el, key, optional };
     focusRef.stack.push(entry);
-    focusRef.setScope?.(el, key);
+    focusRef.setScope?.(el, key, optional);
     return () => {
       const i = focusRef.stack.indexOf(entry);
       if (i >= 0) focusRef.stack.splice(i, 1);
       const top = focusRef.stack[focusRef.stack.length - 1];
-      focusRef.setScope?.(top ? top.el : null, top ? top.key : '');
+      focusRef.setScope?.(top ? top.el : null, top ? top.key : '', top ? top.optional : false);
     };
   }, [key]);
   return ref;
