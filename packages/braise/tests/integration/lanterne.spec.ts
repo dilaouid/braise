@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  FR, SimPad, capture, expectFocus, fixtureSave, plantSave, saveView, settle, skipDepartCinematic, storedSave, watch,
+  FR, SimPad, capture, departFromCamp, expectFocus, fixtureSave, openDoor, plantSave, saveView, settle, skipDepartCinematic, storedSave, toObject, watch,
 } from './harness.ts';
 
 const SHOTS = 'lanterne';
@@ -28,15 +28,12 @@ async function toCamp(page: Page, pad: SimPad): Promise<void> {
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
+  await expectFocus(page, 'door');
   await settle(page);
 }
 
 async function toLantern(page: Page, pad: SimPad): Promise<void> {
-  await pad.press('DOWN');
-  await expectFocus(page, 'altar');
-  await pad.press('DOWN');
-  await expectFocus(page, 'lantern');
+  await toObject(page, pad, 'lantern');
   await pad.press('A');
   await expect(page.locator('.screen.lantern')).toBeVisible();
   await expectFocus(page, 'face-1');
@@ -58,11 +55,7 @@ async function focusTo(page: Page, pad: SimPad, id: string): Promise<void> {
 }
 
 async function depart(page: Page, pad: SimPad): Promise<void> {
-  await settle(page);
-  while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'depart') await pad.press('UP');
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await pad.up('A');
+  await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await page.waitForFunction(() => (window as any).__braise.run !== null);
 }
@@ -74,7 +67,7 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   const pad = await SimPad.install(page);
   await plantSave(page, saveWith({ owned: ['rune.hunger', 'rune.call', 'glass.polished'], opened: 2 }));
   await toCamp(page, pad);
-  await expect(page.locator('.badge-lantern')).toBeVisible();
+  await expect(page.locator('[data-focus="lantern"] .badge')).toBeVisible();
   await toLantern(page, pad);
 
   // Poser la première rune sur la face 1.
@@ -146,7 +139,7 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   await settle(page);
   await pad.press('B');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expect(page.locator('.badge-lantern')).toHaveCount(0);
+  await expect(page.locator('[data-focus="lantern"] .badge')).toHaveCount(0);
   await depart(page, pad);
   expect(await run(page, (r) => ({ mods: r.mods, placed: r.cfg.lantern.placed }))).toMatchObject({
     mods: { gemsPerHeal: 4, noFlask: true }, placed: 2,
@@ -195,7 +188,7 @@ test('une Lanterne vide le dit, et A n\'ouvre rien', async ({ page }, info) => {
   const pad = await SimPad.install(page);
   await plantSave(page, saveWith({}));
   await toCamp(page, pad);
-  await expect(page.locator('.badge-lantern')).toHaveCount(0);
+  await expect(page.locator('[data-focus="lantern"] .badge')).toHaveCount(0);
   await toLantern(page, pad);
   await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.empty']!);
   await pad.press('A');
@@ -254,7 +247,7 @@ test('une première victoire donne une rune : bilan, Lanterne, pastille', async 
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expect(page.locator('.badge-lantern')).toBeVisible();
+  await expect(page.locator('[data-focus="lantern"] .badge')).toBeVisible();
 });
 
 test('mourir avec une pièce la perd', async ({ page }) => {
@@ -272,12 +265,11 @@ test('mourir avec une pièce la perd', async ({ page }) => {
   await expect(page.locator('.end-piece.lost')).toContainText(FR['rune.hunger.name']!);
   expect((await saveView<any>(page)).account.lantern.owned).toEqual(['rune.call']);
 
-  // Au refuge, rejouer la même graine prévient qu'aucune pièce n'y tombera.
+  // À la porte, rejouer la même carte prévient qu'aucune pièce n'y tombera.
   await settle(page);
   await pad.press('A');
-  await expect(page.locator('.screen.camp')).toBeVisible();
-  await expect(page.locator('.seed')).not.toContainText(FR['camp.seed.noPiece']!);
-  await settle(page);
+  await openDoor(page, pad);
+  await expect(page.locator('.seed')).toHaveCount(0);
   await pad.press('X');
   await expect(page.locator('.seed')).toContainText(FR['camp.seed.noPiece']!);
 });

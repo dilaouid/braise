@@ -414,7 +414,7 @@ async function boot(): Promise<void> {
     const walk = free && !f.dpadHeld;
     stepCamp(camp, data.camp, visible, walk ? f.moveX : 0, walk ? f.moveY : 0, free ? Math.min(0.05, dt / 1000) : 0);
     if (!free) return;
-    if (walk && (f.moveX !== 0 || f.moveY !== 0)) campPinned = false;
+    if ((walk && (f.moveX !== 0 || f.moveY !== 0)) || focusedId.value === null) campPinned = false;
     if (campPinned) return;
     const near = nearestObject(camp, data.camp, visible);
     if (near === focusedId.value) return;
@@ -753,6 +753,10 @@ async function boot(): Promise<void> {
     },
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
+      if (screen.value === 'camp' && camp.goal) {
+        // Un objet ouvert de loin : au retour, Moon est déjà à côté.
+        camp = { ...camp, x: camp.goal.x, y: camp.goal.y, moving: false, goal: null };
+      }
       if (next === 'camp') {
         // Du bilan, on arrive devant la porte ; d'un écran du refuge, Moon est là où il était.
         if (ending.value) arriveAtCamp();
@@ -1429,6 +1433,10 @@ async function boot(): Promise<void> {
     },
     get save() {
       return current;
+    },
+    /** Moon au refuge. */
+    get camp() {
+      return camp;
     },
     actions,
     input,

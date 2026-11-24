@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  FR, SimPad, bossNow, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipDepartCinematic, storedSave, waitFrames, watch,
+  FR, SimPad, bossNow, capture, departFromCamp, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipDepartCinematic, storedSave, toObject, waitFrames, watch,
 } from './harness.ts';
 
 const SHOTS = 'souvenirs';
@@ -61,11 +61,8 @@ async function toFallenBoss(page: Page, pad: SimPad): Promise<void> {
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
-  await settle(page);
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await pad.up('A');
+  await expectFocus(page, 'door');
+  await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await settle(page);
   expect(await bossNow(page)).toBe(true);
@@ -224,13 +221,8 @@ test('première victoire : la gemme, la scène, le carton 1 / 5, le bilan avec s
 
   // --- Au refuge : « Souvenirs » ---------------------------------------------------------------
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expect(page.locator('[data-focus="memories"]')).toContainText(FR['camp.memories']!);
-  await settle(page);
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await expectFocus(page, 'memories');
+  await toObject(page, pad, 'memories');
+  await expect(page.locator('[data-focus="memories"]')).toContainText(FR['camp.object.memories']!);
   await capture(page, info, SHOTS, '04b-camp');
   await pad.press('A');
   await expect(page.locator('.screen.memories')).toBeVisible();

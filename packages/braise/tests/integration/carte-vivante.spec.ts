@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, watch } from './harness.ts';
+import {
+  FR, SimPad, capture, departFromCamp, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, watch,
+} from './harness.ts';
 
 const SHOTS = 'carte-vivante';
 
@@ -58,11 +60,8 @@ test('totem, Ferrailleur, Herboriste et trésor à la manette seule', async ({ p
   await skipIntro(page, pad);
   await skipTutorial(page, pad);
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
-  await settle(page);
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await pad.up('A');
+  await expectFocus(page, 'door');
+  await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await settle(page);
 
