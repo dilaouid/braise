@@ -9,16 +9,18 @@ import boonsJson from '../../content/boons.json';
 import findsJson from '../../content/finds.json';
 import dialoguesJson from '../../content/dialogues.json';
 import tutorialJson from '../../content/tutorial.json';
+import memoriesJson from '../../content/memories.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
 import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
 import {
   altarBoostSchema, boonSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
-  regionSchema, relicSchema, weaponSchema,
+  memoriesSchema, regionSchema, relicSchema, weaponSchema,
   type AltarBoostRaw, type Attribute, type BoonDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
   type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
+import { CINEMATICS_RAW } from './cinematic.ts';
 import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial.ts';
 
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
@@ -95,6 +97,16 @@ export interface RegionDef extends Omit<RegionRaw, 'horde' | 'waves'> {
 
 export type ClassDef = ClassRaw & { startWeaponIndex: number };
 
+/** Un souvenir gardé par un boss, et la cinématique qui le montre. */
+export interface MemoryDef {
+  id: string;
+  /** Rang dans la liste du refuge. */
+  index: number;
+  boss: string;
+  bossIdx: number;
+  cinematic: string;
+}
+
 /** Toutes les données du jeu, validées et indexées. */
 export interface GameData {
   tuning: ExpeditionTuning;
@@ -113,6 +125,10 @@ export interface GameData {
   dialogues: Record<string, DialogueLine[]>;
   /** La carte et le script du tutoriel. */
   tutorial: TutorialDef;
+  /** Les souvenirs que rendent les boss, dans l'ordre du refuge. */
+  memories: MemoryDef[];
+  /** Le nombre d'emplacements de souvenirs montrés au refuge. */
+  memoriesTotal: number;
 }
 
 /** Les données brutes telles qu'elles sont dans `content/`. */
@@ -128,6 +144,7 @@ export const RAW = {
   finds: findsJson as unknown,
   dialogues: dialoguesJson as unknown,
   tutorial: tutorialJson as unknown,
+  memories: memoriesJson as unknown,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
   fr: frJson as unknown as Record<string, string>,
@@ -162,9 +179,10 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   const altar = check(z.array(altarBoostSchema), raw.altar, 'altar.json', errors);
   const boons = check(z.array(boonSchema), raw.boons, 'boons.json', errors);
   const finds = check(z.array(findSchema), raw.finds, 'finds.json', errors);
+  const memoriesRaw = check(memoriesSchema, raw.memories, 'memories.json', errors);
   const regionsRaw = raw.regions.map((r, i) => check(regionSchema, r, `regions[${i}]`, errors));
   const classesRaw = raw.classes.map((c, i) => check(classSchema, c, `classes[${i}]`, errors));
-  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds
+  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw
     || regionsRaw.includes(null) || classesRaw.includes(null)) {
     return { data: null, errors };
   }
@@ -326,13 +344,27 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${c.ultimate.id}.desc`);
   }
 
+  const memories: MemoryDef[] = memoriesRaw.memories.map((m, index) => ({
+    id: m.id, index, boss: m.boss, bossIdx: ref(enemyIndex, m.boss, m.id), cinematic: m.cinematic,
+  }));
+  unique(memories.map((m) => m.id), 'memories.json');
+  if (memoriesRaw.total < memories.length) errors.push(`memories.json: ${memories.length} souvenirs pour ${memoriesRaw.total} emplacements`);
+  const keepers = new Set<string>();
+  for (const m of memories) {
+    if (keepers.has(m.boss)) errors.push(`memories.json: « ${m.boss} » garde plus d'un souvenir`);
+    keepers.add(m.boss);
+    if (m.bossIdx >= 0 && enemies[m.bossIdx]!.rank !== 'boss') errors.push(`${m.id}: « ${m.boss} » n'est pas un boss`);
+    if (CINEMATICS_RAW[m.cinematic] === undefined) errors.push(`${m.id}: cinématique inconnue « ${m.cinematic} »`);
+    needText(`${m.id}.name`);
+  }
+
   const tuto = compileTutorial(raw.dialogues, raw.tutorial, {
     tile: tuning.tileSize, fr, enemyIndex, findIds: finds.map((f) => f.id), smithPrice: tuning.events.smith.basePrice,
   }, errors);
 
   if (errors.length > 0 || !tuto) return { data: null, errors };
   return {
-    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial },
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total },
     errors,
   };
 }

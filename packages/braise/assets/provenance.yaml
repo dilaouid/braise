@@ -1184,6 +1184,13 @@
   prompt: "change the cat's expression to surprised: eyes very wide open and round with small pupils, ears perked straight up, mouth slightly open; keep the same cat face, fur and background"
   settings: {"width":64,"height":64,"no_background":false,"from_image":"f094661e-ed2a-4bdd-bbe8-e34383396cae"}
   edits: "palette réduite ; couleurs remplacées (#d9480f → #c98b5e, #5f8a4e → #7a4a2e)"
+- file: sprites/poi-souvenir.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 7c49059a-9c1d-452b-a6cf-39818f437dd9
+  prompt: "a single large faceted crystal gem standing upright, filling the whole frame, tall hexagonal cut, glowing sky blue with deep navy blue shaded facets and a pale white-blue shining core, pure blue colours only, no green, no teal, a precious memory stone, game item prop, 16-bit pixel art, 1px dark outline, three-tone shading, transparent background"
+  settings: {"width":40,"height":40,"no_background":true,"outline":"single color black outline","view":"low top-down"}
+  edits: "palette réduite ; couleurs remplacées (#4fe0c8 → #dff6ff, #b8fff0 → #eef2f6, #1f9e96 → #7fd4ff)"
 - file: sprites/pickup-gem-small.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-gem-medium.png
@@ -1433,6 +1440,18 @@
   date: 2026-11-23
   pixellab_id: aff3d321-905a-4587-8c61-5dddba7bb0d1
   prompt: "a thick smoke barrier dissipating, a short soft airy whoosh of breath fading away, no impact"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-memory.ogg
+  tool: create_sound_effect
+  date: 2026-11-24
+  pixellab_id: 3feaa415-28c1-4083-822e-25ce3ed36fce
+  prompt: "a single soft gentle music box chord, three warm tinkling notes played together and ringing out, tender and nostalgic, quiet"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-memory-rire.ogg
+  tool: create_sound_effect
+  date: 2026-11-24
+  pixellab_id: d5320858-2d63-4a12-bc14-d08f2e62119d
+  prompt: "a young woman's short light sincere laugh, a soft warm giggle, close and natural, no music"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music

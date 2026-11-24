@@ -90,8 +90,8 @@ function framesIn(dir) {
 const provenance = [];
 const today = manifest.date;
 
-function record(file, tool, id, prompt, settings, edits) {
-  provenance.push({ file, tool, id, prompt, settings, edits });
+function record(file, tool, id, prompt, settings, edits, date) {
+  provenance.push({ file, tool, id, prompt, settings, edits, date });
 }
 
 rmSync(out, { recursive: true, force: true });
@@ -152,12 +152,12 @@ for (const o of manifest.objects) {
     const dir = readdirSync(join(animRoot, anim))[0];
     const frames = framesIn(join(animRoot, anim, dir));
     write(`${o.name}@${frames.length}`, strip(frames));
-    record(`sprites/${o.name}@${frames.length}.png`, 'create_map_object + animate_object', o.id, o.prompt, settings, 'palette réduite ; images assemblées en bande');
+    record(`sprites/${o.name}@${frames.length}.png`, 'create_map_object + animate_object', o.id, o.prompt, settings, 'palette réduite ; images assemblées en bande', o.date);
   } else {
     const rot = join(base, 'rotations');
     const file = readdirSync(rot)[0];
     write(o.name, quantize(read(join(rot, file))));
-    record(`sprites/${o.name}.png`, 'create_map_object', o.id, o.prompt, settings, 'palette réduite');
+    record(`sprites/${o.name}.png`, 'create_map_object', o.id, o.prompt, settings, 'palette réduite', o.date);
   }
 }
 
@@ -218,13 +218,13 @@ for (const img of manifest.images) {
     }
     write(img.name, png);
     const pairs = Object.entries(img.remap).map(([a, b]) => `${a} → ${b}`).join(', ');
-    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, `palette réduite ; couleurs remplacées (${pairs})`);
+    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, `palette réduite ; couleurs remplacées (${pairs})`, img.date);
   } else if (img.wobble) {
     write(`${img.name}@${img.wobble}`, strip(wobble(png, img.wobble)));
-    record(`sprites/${img.name}@${img.wobble}.png`, tool, img.id, img.prompt, settings, `palette réduite ; ${img.wobble} images faites par ondulation des lignes (tools/process-assets.mjs)`);
+    record(`sprites/${img.name}@${img.wobble}.png`, tool, img.id, img.prompt, settings, `palette réduite ; ${img.wobble} images faites par ondulation des lignes (tools/process-assets.mjs)`, img.date);
   } else {
     write(img.name, png);
-    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, 'palette réduite');
+    record(`sprites/${img.name}.png`, tool, img.id, img.prompt, settings, 'palette réduite', img.date);
   }
 }
 
@@ -705,7 +705,7 @@ for (const p of provenance) {
   yaml.push(`- file: ${p.file}`);
   yaml.push(`  tool: ${p.tool}`);
   if (p.id) {
-    yaml.push(`  date: ${today}`);
+    yaml.push(`  date: ${p.date ?? today}`);
     yaml.push(`  pixellab_id: ${p.id}`);
     yaml.push(`  prompt: ${JSON.stringify(p.prompt)}`);
     yaml.push(`  settings: ${JSON.stringify(p.settings)}`);
@@ -717,7 +717,7 @@ for (const list of [manifest.sounds ?? [], manifest.music ?? []]) {
     const music = a.name.startsWith('music-');
     yaml.push(`- file: public/audio/${a.name}.ogg`);
     yaml.push(`  tool: ${music ? 'create_music' : 'create_sound_effect'}`);
-    yaml.push(`  date: ${today}`);
+    yaml.push(`  date: ${a.date ?? today}`);
     yaml.push(`  pixellab_id: ${a.id}`);
     yaml.push(`  prompt: ${JSON.stringify(a.prompt)}`);
     yaml.push(`  edits: ${JSON.stringify(music ? 'converti en OGG Vorbis stéréo' : 'converti en OGG Vorbis mono, volume normalisé')}`);

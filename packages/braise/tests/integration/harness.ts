@@ -224,6 +224,19 @@ export async function fastForward(page: Page, steps: number, stopOnChoice: boole
 }
 
 /**
+ * Amène le boss de la région tout de suite, à 1 PV (prise `bossNow`) : un parcours ne joue pas quinze
+ * minutes pour le voir tomber. Rend vrai si le boss est là.
+ */
+export function bossNow(page: Page): Promise<boolean> {
+  return page.evaluate(() => (window as unknown as { __braise: { bossNow(): boolean } }).__braise.bossNow());
+}
+
+/** Le fichier de sauvegarde tel qu'il est écrit sur le disque, ou `null`. */
+export function storedSave<T = any>(page: Page): Promise<T | null> {
+  return page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? 'null'), storageKey('save.json'));
+}
+
+/**
  * Garde une capture. Elle est jointe au rapport du test ; avec `pnpm evidence`, elle est aussi
  * écrite dans `production/qa/evidence/<dossier>/`.
  */

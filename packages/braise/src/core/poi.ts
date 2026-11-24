@@ -74,8 +74,16 @@ export function updatePois(run: Run, dt: number): void {
         }
         break;
       case 'portal':
+      case 'memory':
+        // Un Souvenir ne se prend pas à l'instant où il tombe : Moon a le temps de le voir, même s'il est dessus.
+        if (!poi.armed) {
+          poi.progress += dt;
+          if (poi.progress >= ev.memoryArmSeconds) poi.armed = true;
+          break;
+        }
         if (dist < 20) {
           poi.state = 2;
+          if (poi.kind === 'memory') run.memoryTaken = true;
           run.outcome = 'victory';
           run.phase = 'victory';
         }

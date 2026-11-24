@@ -88,7 +88,26 @@ describe('assets (documents 10 et 11)', () => {
     for (let mask = 0; mask < 16; mask++) need.push(`tile-cave-${mask}`);
     need.push('boss-guetteur', 'decor-mur-cave', 'fx-barriere-fumee', 'decor-eteints-endormis', 'camp-cream',
       'emote-exclaim', 'emote-question', 'emote-dots', 'emote-drop', 'emote-note');
+    // Les Souvenirs : la gemme que le boss laisse.
+    need.push('poi-souvenir');
     for (const name of need) expect(has(name), `image manquante dans l'atlas : ${name}`).toBe(true);
+  });
+
+  it('la gemme du Souvenir est une image seule, nettement plus grande que les gemmes d\'expérience', () => {
+    const atlas = JSON.parse(readFileSync(join(publicDir, 'atlas', 'atlas.json'), 'utf8')) as {
+      frames: Record<string, { w: number; h: number }>;
+    };
+    const gem = atlas.frames['poi-souvenir'];
+    expect(gem, 'poi-souvenir').toBeDefined();
+    expect(Math.min(gem!.w, gem!.h)).toBeGreaterThanOrEqual(2 * atlas.frames['pickup-gem-large']!.h);
+  });
+
+  it('les sons du Souvenir existent', () => {
+    const index = JSON.parse(readFileSync(join(publicDir, 'audio', 'index.json'), 'utf8')) as Record<string, string>;
+    for (const name of ['sfx-memory', 'sfx-memory-rire']) {
+      expect(index[name], name).toBeDefined();
+      expect(existsSync(join(publicDir, 'audio', index[name]!)), name).toBe(true);
+    }
   });
 
   it('les portraits du dialogue ont tous la même taille, et les poses fixes ne sont pas des bandes', () => {

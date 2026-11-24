@@ -7,7 +7,7 @@ import type { Card, ChestResult, ShopItem } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
-export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'altar' | 'settings' | 'run' | 'end';
+export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'memories' | 'altar' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
@@ -93,6 +93,10 @@ export interface Actions {
   dialogueSkip(): void;
   /** Cream, au refuge, dit une réplique. */
   creamTalk(): void;
+  /** Rejoue la scène d'un souvenir obtenu, depuis la liste du refuge, puis y revient. */
+  replayMemory(id: string): void;
+  /** Ferme le carton « Souvenir retrouvé » : le bilan s'affiche. */
+  closeMemoryCard(): void;
   goto(screen: Screen): void;
   depart(seed?: number): void;
   buyAltar(id: string): void;
@@ -155,6 +159,8 @@ export const replaySeed = signal(false);
 export const cineCard = signal<string | null>(null);
 export const cineCaption = signal<string | null>(null);
 export const cineSkip = signal(0);
+/** Le carton posé après la scène d'un souvenir : son identifiant, et combien sont obtenus à ce moment. */
+export const memoryCard = signal<{ id: string; have: number; total: number } | null>(null);
 
 /** Le dialogue : la réplique affichée (nulle pour une ligne muette) et le nombre de lettres déjà écrites. */
 export const dialogueState = signal<DialogueState | null>(null);

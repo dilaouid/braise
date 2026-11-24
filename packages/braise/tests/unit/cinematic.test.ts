@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
-import { INTRO_RAW, assetFrames, cinematicDuration, compileCinematic } from '../../src/content/cinematic.ts';
+import { CINEMATICS_RAW, INTRO_RAW, assetFrames, cinematicDuration, compileCinematic } from '../../src/content/cinematic.ts';
 import { RAW } from '../../src/content/index.ts';
 
 const publicDir = join(__dirname, '..', '..', 'public');
@@ -82,5 +82,31 @@ describe('cinématique d\'intro (document 15)', () => {
     expect(res.errors.join('\n')).toMatch(/nulle-part/);
     expect(res.errors.join('\n')).toMatch(/cle\.absente/);
     expect(res.errors.join('\n')).toMatch(/99 s/);
+  });
+});
+
+describe('scène de souvenir « La rencontre »', () => {
+  const { cinematic, errors } = compileCinematic(CINEMATICS_RAW['memory-meeting'], RAW.fr, sounds);
+
+  it('est valide, et son rire est un son connu', () => {
+    expect(errors).toEqual([]);
+    const sfx = cinematic!.shots.flatMap((s) => s.cues ?? []).map((c) => c.sfx).filter(Boolean);
+    expect(sfx).toContain('memory-rire');
+    expect(sounds.has('sfx-memory-rire')).toBe(true);
+  });
+
+  it('a quatre illustrations plein écran, construites et dans la palette', () => {
+    expect(Object.keys(cinematic!.assets)).toEqual(['ill-01', 'ill-02', 'ill-03', 'ill-04']);
+    for (const name of Object.keys(cinematic!.assets)) {
+      const file = join(publicDir, 'cinematics', 'memory-meeting', `${name}.png`);
+      expect(existsSync(file), `${name}.png manquant : lancer node tools/build-cinematic.mjs memory-meeting`).toBe(true);
+      const png = PNG.sync.read(readFileSync(file));
+      expect([png.width, png.height], name).toEqual([640, 360]);
+      for (let i = 0; i < png.data.length; i += 4) {
+        expect(png.data[i + 3], `${name} : image non opaque`).toBe(255);
+        const rgb = (png.data[i]! << 16) | (png.data[i + 1]! << 8) | png.data[i + 2]!;
+        if (!PALETTE.has(rgb)) throw new Error(`${name} : couleur hors palette #${rgb.toString(16).padStart(6, '0')}`);
+      }
+    }
   });
 });

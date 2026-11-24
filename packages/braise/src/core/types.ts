@@ -151,7 +151,7 @@ export interface PickupStore {
 
 /** Un point d'intérêt de la carte. */
 export interface Poi {
-  kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'totem' | 'smith' | 'herbalist' | 'treasure';
+  kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'memory' | 'totem' | 'smith' | 'herbalist' | 'treasure';
   x: number;
   y: number;
   /** 0 : intact · 1 : en cours · 2 : terminé. */
@@ -326,6 +326,8 @@ export interface RunConfig {
   unlockedWeapons: string[];
   unlockedRelics: string[];
   autoSkills: boolean;
+  /** Le souvenir que le boss de cette partie doit encore rendre : il le laisse à la place du portail. */
+  memory?: string | null;
 }
 
 /** Tuiles pleines propres au tutoriel. */
@@ -472,6 +474,8 @@ export interface Run {
   /** Dégâts subis par le héros, par sorte d'ennemi (pour l'équilibrage). */
   damageByKind: Float32Array;
   braziersLit: number;
+  /** Vrai une fois le Souvenir du boss ramassé. */
+  memoryTaken: boolean;
   /** L'état du tutoriel, ou null pour une expédition normale. */
   tutorial: TutorialState | null;
   outcome: 'victory' | 'death' | 'abandon' | null;

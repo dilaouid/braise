@@ -835,6 +835,25 @@
     "#d9480f": "#c98b5e",
     "#5f8a4e": "#7a4a2e"
    }
+  },
+  {
+   "name": "poi-souvenir",
+   "id": "7c49059a-9c1d-452b-a6cf-39818f437dd9",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 40,
+    "height": 40,
+    "no_background": true,
+    "outline": "single color black outline",
+    "view": "low top-down"
+   },
+   "prompt": "a single large faceted crystal gem standing upright, filling the whole frame, tall hexagonal cut, glowing sky blue with deep navy blue shaded facets and a pale white-blue shining core, pure blue colours only, no green, no teal, a precious memory stone, game item prop, 16-bit pixel art, 1px dark outline, three-tone shading, transparent background",
+   "date": "2026-11-24",
+   "remap": {
+    "#4fe0c8": "#dff6ff",
+    "#b8fff0": "#eef2f6",
+    "#1f9e96": "#7fd4ff"
+   }
   }
  ],
  "sounds": [
@@ -1041,6 +1060,20 @@
    "id": "aff3d321-905a-4587-8c61-5dddba7bb0d1",
    "prompt": "a thick smoke barrier dissipating, a short soft airy whoosh of breath fading away, no impact",
    "seconds": 1.2
+  },
+  {
+   "name": "sfx-memory",
+   "id": "3feaa415-28c1-4083-822e-25ce3ed36fce",
+   "prompt": "a single soft gentle music box chord, three warm tinkling notes played together and ringing out, tender and nostalgic, quiet",
+   "seconds": 1.6,
+   "date": "2026-11-24"
+  },
+  {
+   "name": "sfx-memory-rire",
+   "id": "d5320858-2d63-4a12-bc14-d08f2e62119d",
+   "prompt": "a young woman's short light sincere laugh, a soft warm giggle, close and natural, no music",
+   "seconds": 1.6,
+   "date": "2026-11-24"
   }
  ],
  "music": [

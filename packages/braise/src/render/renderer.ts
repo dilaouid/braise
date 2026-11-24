@@ -80,6 +80,7 @@ export interface RenderSettings {
 /** Le rendu du jeu : il lit l'état de `core` et ne le modifie jamais. */
 export class GameRenderer {
   readonly app: Application;
+  private readonly blank = new Container();
   readonly atlas: Atlas;
   settings: RenderSettings = { damageNumbers: true, screenShake: 1, flashes: 1 };
 
@@ -659,7 +660,17 @@ export class GameRenderer {
       s.zIndex = poi.y + 4;
       f.visible = false;
       s.tint = 0xffffff;
-      if (poi.kind === 'brazier') {
+      s.scale.set(1);
+      if (poi.kind === 'memory') {
+        // Le Souvenir : une grosse gemme bleue qui flotte et pulse doucement, avec sa lumière.
+        const pulse = Math.sin(time * 3);
+        s.texture = this.atlas.get('poi-souvenir');
+        s.scale.set(1 + pulse * 0.06);
+        s.position.set(poi.x, poi.y + 10 + Math.round(Math.sin(time * 1.7) * 2));
+        g.ellipse(poi.x, poi.y + 12, 13 - pulse, 4).fill({ color: C.night, alpha: 0.35 });
+        g.circle(poi.x, poi.y, 22 + pulse * 3).stroke({ width: 1, color: C.frost, alpha: 0.4 + pulse * 0.15 });
+        this.light(lightX(poi.x), lightY(poi.y - 6), 76 + Math.round(pulse * 5));
+      } else if (poi.kind === 'brazier') {
         s.texture = this.atlas.get('poi-brasero');
         if (poi.state === 2) {
           f.visible = true;
@@ -1123,7 +1134,7 @@ export class GameRenderer {
     } else for (const poi of run.map.pois) {
       // Les marchands ne sont jamais « à faire » : la flèche ne les montre pas.
       if (poi.state === 2 || poi.kind === 'smith' || poi.kind === 'herbalist') continue;
-      if (poi.kind === 'portal') {
+      if (poi.kind === 'portal' || poi.kind === 'memory') {
         target = poi;
         break;
       }
@@ -1137,6 +1148,11 @@ export class GameRenderer {
     const p = run.pickups;
     for (let i = 0; i < p.count; i++) if (p.kind[i] === PK_CHEST) arrow(p.x[i]!, p.y[i]!, C.ember);
     for (; used < this.arrows.length; used++) this.arrows[used]!.visible = false;
+  }
+
+  /** Une image noire : ce qu'on voit pendant qu'une cinématique charge. */
+  drawBlank(): void {
+    this.app.renderer.render(this.blank);
   }
 
   /** Efface le tracé d'écran (appelé au début de chaque image). */

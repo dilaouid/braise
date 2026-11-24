@@ -1,0 +1,127 @@
+{
+  "id": "memory-meeting",
+  "skipHoldMs": 1000,
+  "assets": {
+    "ill-01": {
+      "src": "ill-01.png"
+    },
+    "ill-02": {
+      "src": "ill-02.png"
+    },
+    "ill-03": {
+      "src": "ill-03.png"
+    },
+    "ill-04": {
+      "src": "ill-04.png"
+    }
+  },
+  "shots": [
+    {
+      "id": "p01",
+      "duration": 9,
+      "caption": "cine.memory-meeting.t1",
+      "captionAt": 1.2,
+      "fadeIn": 1,
+      "fadeOut": 0.8,
+      "layers": [
+        {
+          "type": "image",
+          "asset": "ill-01",
+          "at": [
+            0,
+            0
+          ],
+          "anchor": [
+            0,
+            0
+          ]
+        }
+      ],
+      "cues": [
+        {
+          "at": 0,
+          "music": "music-intro-a"
+        }
+      ]
+    },
+    {
+      "id": "p02",
+      "duration": 9,
+      "caption": "cine.memory-meeting.t2",
+      "captionAt": 1.2,
+      "fadeIn": 1,
+      "fadeOut": 0.8,
+      "layers": [
+        {
+          "type": "image",
+          "asset": "ill-02",
+          "at": [
+            0,
+            0
+          ],
+          "anchor": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p03",
+      "duration": 10,
+      "caption": "cine.memory-meeting.t3",
+      "captionAt": 1.2,
+      "fadeIn": 1,
+      "fadeOut": 0.8,
+      "layers": [
+        {
+          "type": "image",
+          "asset": "ill-03",
+          "at": [
+            0,
+            0
+          ],
+          "anchor": [
+            0,
+            0
+          ]
+        }
+      ],
+      "cues": [
+        {
+          "at": 4,
+          "sfx": "memory-rire",
+          "volume": 0.7
+        }
+      ]
+    },
+    {
+      "id": "p04",
+      "duration": 10,
+      "caption": "cine.memory-meeting.t4",
+      "captionAt": 1.2,
+      "fadeIn": 1,
+      "fadeOut": 1.6,
+      "layers": [
+        {
+          "type": "image",
+          "asset": "ill-04",
+          "at": [
+            0,
+            0
+          ],
+          "anchor": [
+            0,
+            0
+          ]
+        }
+      ],
+      "cues": [
+        {
+          "at": 9,
+          "musicStop": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 import type { JSX } from 'preact';
 import { altarCost, altarRank, altarSpent, canBuyAltarRank } from '../meta/altar.ts';
-import { heroXpForNext } from '../meta/hero.ts';
+import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, notice, overlay,
+  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
   replaySeed, roman, save, saveRev, t,
 } from './store.ts';
 
@@ -59,6 +59,20 @@ export function CinematicScreen(): JSX.Element {
   const card = cineCard.value;
   const caption = cineCaption.value;
   const hold = cineSkip.value;
+  const found = memoryCard.value;
+  // La scène d'un souvenir finit sur son carton : il attend A, il n'y a plus rien à passer.
+  if (found) {
+    return (
+      <div class="screen cinematic">
+        <button type="button" class="cine-memory" onClick={() => actions().closeMemoryCard()}>
+          <span class="cine-memory-found">{t('memory.found')}</span>
+          <span class="cine-memory-name">{t(`${found.id}.name`)}</span>
+          <span class="cine-memory-count">{t('memory.count', { have: found.have, total: found.total })}</span>
+        </button>
+        <div class="cine-next"><Btn g="confirm" /> {t('cine.next')}</div>
+      </div>
+    );
+  }
   return (
     <div class="screen cinematic">
       {card ? <p class="cine-card" key={card}>{t(card)}</p> : null}
@@ -99,6 +113,9 @@ export function Camp(): JSX.Element {
         <MenuButton id="altar" label={t('camp.altar')} desc={t('camp.altar.desc')} onPress={() => actions().goto('altar')} />
         {canBuy ? <span class="badge" /> : null}
         <MenuButton id="settings" label={t('ui.settings')} desc={t('camp.settings.desc')} onPress={() => actions().goto('settings')} />
+        {memoryCount(data, s) > 0
+          ? <MenuButton id="memories" label={t('camp.memories')} desc={t('camp.memories.desc')} onPress={() => actions().goto('memories')} />
+          : null}
         {knowsCream(s) ? <MenuButton id="cream" label={t('camp.cream')} desc={t('camp.cream.desc')} onPress={() => actions().creamTalk()} /> : null}
         <p class="seed">{t('camp.seed')} : {seedLabel}</p>
       </Panel>
@@ -115,6 +132,55 @@ export function Camp(): JSX.Element {
         </p>
       </Panel>
       <HelpBar items={[['nav', t('ui.move')], ['confirm', t('camp.holdToLeave')], lastSeed.value !== null && ['x', t('camp.seed')]]} />
+    </div>
+  );
+}
+
+/**
+ * Les Souvenirs au refuge : un emplacement par souvenir du jeu, dans l'ordre du contenu. Un souvenir
+ * obtenu porte son nom et se rejoue ; les autres sont des emplacements vides, sans nom ni indice.
+ */
+export function Memories(): JSX.Element {
+  const ref = useFocusScope('memories');
+  saveRev.value;
+  const s = save.value!;
+  const data = gameData();
+  useHandlers({ back: () => actions().goto('camp') });
+  const first = data.memories.find((m) => hasMemory(s, m.id));
+  const slots: JSX.Element[] = [];
+  for (let i = 0; i < data.memoriesTotal; i++) {
+    const memory = data.memories[i];
+    if (memory && hasMemory(s, memory.id)) {
+      slots.push(
+        <button
+          type="button" key={memory.id} class="memory-slot" data-focus={memory.id}
+          data-focus-default={memory === first ? '' : undefined} onClick={() => actions().replayMemory(memory.id)}
+        >
+          <span class="memory-rank">{i + 1}</span>
+          <Icon name="poi-souvenir" />
+          <span class="memory-name">{t(`${memory.id}.name`)}</span>
+        </button>,
+      );
+    } else {
+      slots.push(
+        <div class="memory-slot empty" key={i}>
+          <span class="memory-rank">{i + 1}</span>
+          <span class="memory-name">{t('camp.memories.empty')}</span>
+        </div>,
+      );
+    }
+  }
+  return (
+    <div class="screen memories" ref={ref}>
+      <Panel class="memories-panel" active>
+        <header>
+          <h1>{t('camp.memories')}</h1>
+          <span class="memories-count">{t('memory.count', { have: memoryCount(data, s), total: data.memoriesTotal })}</span>
+        </header>
+        <p class="dim">{t('camp.memories.desc')}</p>
+        <div class="memories-list">{slots}</div>
+      </Panel>
+      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('ui.confirm')], ['back', t('ui.back')]]} />
     </div>
   );
 }
@@ -307,6 +373,7 @@ export function EndScreen(): JSX.Element | null {
     <div class="screen end" ref={ref}>
       <Panel class="end-panel" active>
         <h1 class={victory ? 'gold' : 'danger-text'}>{t(`end.${result.outcome}`)}</h1>
+        {summary.memory ? <p class="end-memory">{t('end.memory', { name: t(`${summary.memory}.name`) })}</p> : null}
         <div class="end-cols">
           <div class="end-col">
             <p><span>{t('end.time')}</span><b>{fmtTime(result.seconds)}</b></p>
