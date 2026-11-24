@@ -110,3 +110,34 @@ describe('scène de souvenir « La rencontre »', () => {
     }
   });
 });
+
+describe('caméra des cinématiques', () => {
+  /** Le souvenir, avec une caméra posée sur son premier plan. */
+  function withCamera(camera: unknown): unknown {
+    const raw = structuredClone(CINEMATICS_RAW['memory-meeting']) as { shots: Array<Record<string, unknown>> };
+    raw.shots[0]!.camera = camera;
+    return raw;
+  }
+
+  it('une caméra peut zoomer vers un point', () => {
+    const res = compileCinematic(withCamera({ scale: [1, 1.12], focus: [400, 120] }), RAW.fr, sounds);
+    expect(res.errors).toEqual([]);
+  });
+
+  it('un panoramique seul reste valide', () => {
+    expect(compileCinematic(withCamera({ from: [0, 0], to: [-24, 0] }), RAW.fr, sounds).errors).toEqual([]);
+  });
+
+  it('un zoom hors de 1 à 2 est refusé', () => {
+    expect(compileCinematic(withCamera({ scale: [1, 3] }), RAW.fr, sounds).cinematic).toBeNull();
+    expect(compileCinematic(withCamera({ scale: [0.5, 1] }), RAW.fr, sounds).cinematic).toBeNull();
+  });
+
+  it('une caméra vide est refusée', () => {
+    expect(compileCinematic(withCamera({}), RAW.fr, sounds).cinematic).toBeNull();
+  });
+
+  it('les cinématiques existantes compilent toujours', () => {
+    for (const raw of Object.values(CINEMATICS_RAW)) expect(compileCinematic(raw, RAW.fr, sounds).errors).toEqual([]);
+  });
+});

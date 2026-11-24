@@ -288,10 +288,18 @@ export class CinematicPlayer {
   }
 
   private draw(shot: CineShot, t: number): void {
-    if (shot.camera) {
+    const cam = shot.camera;
+    if (cam) {
       const k = clamp01(t / shot.duration);
-      this.camera.position.set(Math.round(lerp(shot.camera.from[0], shot.camera.to[0], k)), Math.round(lerp(shot.camera.from[1], shot.camera.to[1], k)));
+      const ox = cam.from && cam.to ? lerp(cam.from[0], cam.to[0], k) : 0;
+      const oy = cam.from && cam.to ? lerp(cam.from[1], cam.to[1], k) : 0;
+      const s = cam.scale ? lerp(cam.scale[0], cam.scale[1], k) : 1;
+      // Le point visé reste à sa place à l'écran pendant que l'image grossit autour de lui.
+      const [fx, fy] = cam.focus ?? [VIEW_W / 2, VIEW_H / 2];
+      this.camera.scale.set(s);
+      this.camera.position.set(Math.round(fx * (1 - s) + ox), Math.round(fy * (1 - s) + oy));
     } else {
+      this.camera.scale.set(1);
       this.camera.position.set(0, 0);
     }
     for (const node of this.nodes) this.drawNode(node, shot, t);

@@ -12,6 +12,8 @@ import frJson from '../../content/i18n/fr.json';
 const vec = z.tuple([z.number(), z.number()]);
 const range = z.tuple([z.number(), z.number()]);
 const hex = z.string().regex(/^#[0-9a-f]{6}$/);
+/** Un zoom reste faible : au-delà, les pixels de l'illustration deviennent énormes. */
+const zoom = z.number().min(1).max(2);
 const timing = { start: z.number().min(0).optional(), end: z.number().min(0).optional() };
 
 const imageLayer = z
@@ -109,8 +111,16 @@ export const cineShotSchema = z
     captionAt: z.number().min(0).optional(),
     fadeIn: z.number().min(0).optional(),
     fadeOut: z.number().min(0).optional(),
-    /** Décalage du décor : il glisse de `from` à `to` pendant le plan. */
-    camera: z.object({ from: vec, to: vec }).strict().optional(),
+    /**
+     * Décalage du décor : il glisse de `from` à `to` pendant le plan. `scale` le grossit de la première
+     * valeur à la seconde, autour de `focus` (le centre de l'image par défaut), qui reste fixe à l'écran.
+     */
+    camera: z
+      .object({ from: vec.optional(), to: vec.optional(), scale: z.tuple([zoom, zoom]).optional(), focus: vec.optional() })
+      .strict()
+      .refine((c) => (c.from === undefined) === (c.to === undefined), { message: '`from` et `to` vont ensemble' })
+      .refine((c) => c.from !== undefined || c.scale !== undefined, { message: 'une caméra glisse ou zoome' })
+      .optional(),
     layers: z.array(cineLayerSchema),
     cues: z.array(cineCueSchema).optional(),
   })
