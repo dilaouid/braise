@@ -14,14 +14,14 @@ import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
-import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
+import { abandonRun, clearEvents, createRun, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
-import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
+import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
-import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece } from '../meta/lantern.ts';
+import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
@@ -352,7 +352,14 @@ async function boot(): Promise<void> {
     paused = on;
     pauseReason.value = on ? reason : null;
     pauseStats.value = on ? { ...run.hero.stats } : null;
-    if (on) runExtras.value = { boons: run.boons.slice(), finds: run.finds.slice() };
+    if (on) {
+      const worn = run.tutorial ? [] : resolveLantern(data, current.account.lantern).faces;
+      runExtras.value = {
+        boons: run.boons.slice(), finds: run.finds.slice(),
+        lantern: worn.flatMap((f) => (f ? [{ id: f.id, level: f.level }] : [])),
+        piece: run.piece?.taken ? data.lantern.pieces[run.piece.index]!.id : null,
+      };
+    }
     overlay.value = on ? 'pause' : 'none';
     audio.duck(on);
     guard(200);
@@ -939,7 +946,10 @@ async function boot(): Promise<void> {
         case EV.pickup:
           if (a === PK_GEM || a === PK_RED_GEM) audio.gem();
           else if (a === PK_GOLD) audio.play('coin', 0.5, 1, 60);
-          else if (a !== PK_CHEST) audio.play('coin', 0.5, 0.8, 60);
+          else if (a === PK_PIECE) {
+            audio.play('chest', 0.8);
+            say(t('hud.piece', { name: t(`${r.data.lantern.pieces[b]!.id}.name`) }), 4500);
+          } else if (a !== PK_CHEST) audio.play('coin', 0.5, 0.8, 60);
           break;
         case EV.levelUp: audio.play('levelup', 0.8); break;
         case EV.arc: audio.play('scythe', 0.4, 1, 90); break;
@@ -1001,6 +1011,8 @@ async function boot(): Promise<void> {
         case EV.shopBuy: audio.play('shop-buy', 0.9); break;
         case EV.bossWarning: say(t('hud.bossWarning'), 5000); break;
         case EV.flameCall: say(t('hud.flameCall')); break;
+        case EV.hunt: say(t('hud.hunt', { n: Math.round(a * 100) })); break;
+        case EV.pieceDrop: say(t('hud.pieceDrop'), 4500); break;
         case EV.telegraphHit: audio.play('hammer', 0.5, 1.3, 100); break;
         case EV.charge: audio.play('dash', 0.6, 0.6); break;
       }
@@ -1025,7 +1037,7 @@ async function boot(): Promise<void> {
     const minutes = r.time / 60;
     return {
       hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss,
-      flasks: h.flasks, maxFlasks: h.stats.flasks, gold: h.gold,
+      flasks: h.flasks, maxFlasks: h.stats.flasks, flaskBlocked: r.mods.noFlask, gold: h.gold,
       ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops), kills: h.kills, vigil: r.cfg.vigil,
       weapons: r.weapons.map((w) => {
         const def = r.data.weapons[w.def]!;
@@ -1033,10 +1045,10 @@ async function boot(): Promise<void> {
         return { icon: def.icon, level: def.evolved ? 6 : w.level, max: 6, ready: evolvable || w === ready };
       }),
       relics: r.relics.map((x) => ({ icon: r.data.relics[x.def]!.icon, level: x.level, max: r.data.relics[x.def]!.maxLevel })),
-      skillFrac: 1 - Math.max(0, h.skillCd) / r.cls.skill.cooldown,
+      skillFrac: 1 - Math.max(0, h.skillCd) / skillCooldown(r),
       ultFrac: h.ultT > 0 ? h.ultT / r.cls.ultimate.duration : h.ultGauge / tuning.ultimate.gaugeMax,
       ultActive: h.ultT > 0,
-      dashFrac: 1 - Math.max(0, h.dashCd) / tuning.dash.cooldown,
+      dashFrac: 1 - Math.max(0, h.dashCd) / dashCooldown(r),
       message: now < bannerUntil ? banner : null,
       fps: current.settings.showFps ? fps : 0,
     };

@@ -411,6 +411,9 @@ export function EndScreen(): JSX.Element | null {
       <Panel class="end-panel" active>
         <h1 class={victory ? 'gold' : 'danger-text'}>{t(`end.${result.outcome}`)}</h1>
         {summary.memory ? <p class="end-memory">{t('end.memory', { name: t(`${summary.memory}.name`) })}</p> : null}
+        {summary.lanternPiece ? <p class="end-piece">{t('end.piece', { name: t(`${summary.lanternPiece}.name`) })}</p> : null}
+        {summary.lanternLost ? <p class="end-piece lost">{t('end.pieceLost', { name: t(`${summary.lanternLost}.name`) })}</p> : null}
+        {summary.lanternFace ? <p class="end-piece">{t('end.lanternFace', { n: summary.lanternFace })}</p> : null}
         <div class="end-cols">
           <div class="end-col">
             <p><span>{t('end.time')}</span><b>{fmtTime(result.seconds)}</b></p>

@@ -549,5 +549,11 @@
   "lantern.choose": "Choisir",
   "lantern.clear": "Tout retirer",
   "lantern.summary": "Pendant l'expédition",
-  "lantern.summary.none": "La Lanterne est vide."
+  "lantern.summary.none": "La Lanterne est vide.",
+  "hud.piece": "Pièce de Lanterne : {name}. Ramène-la.",
+  "hud.pieceDrop": "Une pièce de Lanterne est tombée.",
+  "hud.hunt": "Chasse : +{n} % de Puissance",
+  "end.piece": "Pièce de Lanterne : {name}",
+  "end.pieceLost": "Pièce de Lanterne perdue : {name}",
+  "end.lanternFace": "La face {n} de la Lanterne s'ouvre."
 }

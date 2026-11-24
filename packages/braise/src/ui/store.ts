@@ -22,6 +22,8 @@ export interface HudState {
   boss: { name: string; frac: number; phase: number } | null;
   flasks: number;
   maxFlasks: number;
+  /** La Lanterne empêche de boire : les fioles sont grisées. */
+  flaskBlocked: boolean;
   gold: number;
   ashes: number;
   kills: number;
@@ -153,8 +155,10 @@ export const forgeState = signal<Array<{ from: number; to: number }> | null>(nul
 export const shopState = signal<ShopState | null>(null);
 /** La trouvaille affichée : son indice (-2 : de l'or à la place) et cet or. */
 export const findState = signal<{ find: number; gold: number } | null>(null);
-/** Buffs et trouvailles portés, pour l'écran de pause. */
-export const runExtras = signal<{ boons: number[]; finds: number[] }>({ boons: [], finds: [] });
+/** Ce que l'écran de pause montre en plus : buffs, trouvailles, pièces de Lanterne posées, et celle ramassée. */
+export const runExtras = signal<{
+  boons: number[]; finds: number[]; lantern: Array<{ id: string; level: number }>; piece: string | null;
+}>({ boons: [], finds: [], lantern: [], piece: null });
 export const confirm = signal<ConfirmState | null>(null);
 export const ending = signal<{ result: RunResult; summary: RunSummary; stats: HeroStats } | null>(null);
 export const pauseReason = signal<string | null>(null);

@@ -373,10 +373,10 @@ export function reapEnemies(run: Run): boolean {
       addPickup(run, PK_CHEST, x, y + 6, 1);
       addPickup(run, PK_ASH, x - 8, y, tuning.ashes.elite);
       if (rng.chance(tuning.drops.emberDropFromElite)) addPickup(run, PK_DROP, x + 8, y, 1);
-      rollPiece(run, x, y - 8, run.data.lantern.drops.elite, false);
       run.director.breathT = tuning.director.breathSeconds;
       emit(run, EV.eliteDeath, x, y, kind);
       if (run.mods.eliteKillPower > 0) emit(run, EV.hunt, x, y, run.mods.eliteKillPower * run.hero.elites);
+      rollPiece(run, x, y - 8, run.data.lantern.drops.elite, false);
     } else {
       run.hero.bossKills++;
       bossKilled = true;
