@@ -108,6 +108,11 @@ export function pendingMemory(data: GameData, save: Save, regionId: string): str
   return memory && !hasMemory(save, memory.id) ? memory.id : null;
 }
 
+/** Le boss de cette région a-t-il déjà été battu au moins une fois ? */
+export function bossBeaten(save: Save, regionId: string): boolean {
+  return (save.account.regions[regionId]?.bossKills ?? 0) > 0;
+}
+
 /** Ce qu'une expédition terminée a changé dans la sauvegarde. */
 export interface RunSummary {
   levelsGained: number;

@@ -58,6 +58,12 @@ function typedMultiplier(run: Run, i: number, type: number): number {
   return 1;
 }
 
+/** Le boss retombé en poussière : rien ne le touche jusqu'à ce qu'il se relève. */
+export function isDust(run: Run, i: number): boolean {
+  const d = run.director;
+  return d.bossReformT > 0 && run.enemies.uid[i] === d.bossUid;
+}
+
 function registerDamage(run: Run, i: number, dmg: number, slot: number, flags: number): void {
   const e = run.enemies;
   e.hp[i]! -= dmg;
@@ -75,7 +81,7 @@ function registerDamage(run: Run, i: number, dmg: number, slot: number, flags: n
  */
 export function hurtEnemy(run: Run, i: number, base: number, type: number, scale: Attribute | null, slot: number, flags = 0): number {
   const e = run.enemies;
-  if (e.hp[i]! <= 0) return 0;
+  if (e.hp[i]! <= 0 || isDust(run, i)) return 0;
   const hero = run.hero;
   const st = hero.stats;
   const def = run.data.enemies[e.kind[i]!]!;
@@ -108,7 +114,7 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
 
 /** Dégâts d'un état (Brûlure, Saignement) : ni Puissance ni critique. */
 function statusDamage(run: Run, i: number, amount: number, type: number): void {
-  if (run.enemies.hp[i]! <= 0) return;
+  if (run.enemies.hp[i]! <= 0 || isDust(run, i)) return;
   const dmg = Math.max(1, Math.round(amount * typedMultiplier(run, i, type)));
   registerDamage(run, i, dmg, -1, 0);
 }
@@ -283,6 +289,23 @@ function chargeUltimate(run: Run, amount: number): void {
  * Retire les ennemis morts et pose leur butin. Appelé une fois par pas, après les dégâts :
  * les indices restent stables pendant tout le reste du pas.
  */
+/** Première mort d'un boss qui se reforme : il retombe en poussière, puis se relèvera avec une part de sa vie. */
+function reformBoss(run: Run, i: number, reform: { share: number; duration: number }, shed: boolean): void {
+  const e = run.enemies;
+  const d = run.director;
+  if (e.dmgAcc[i]! > 0) emit(run, EV.damageNumber, e.x[i]!, e.y[i]!, e.dmgAcc[i]!, e.dmgFlags[i]!);
+  e.dmgAcc[i] = 0;
+  const hp = Math.max(1, Math.round(e.maxHp[i]! * reform.share));
+  e.maxHp[i] = hp;
+  e.hp[i] = hp;
+  e.status[i] = 0;
+  d.bossReformed = true;
+  d.bossReformT = reform.duration;
+  if (shed) d.bossShed = 0;
+  run.enemyShots.count = 0;
+  emit(run, EV.bossReform, e.x[i]!, e.y[i]!);
+}
+
 export function reapEnemies(run: Run): boolean {
   const e = run.enemies;
   const tuning = run.data.tuning;
@@ -294,6 +317,10 @@ export function reapEnemies(run: Run): boolean {
     const def = run.data.enemies[kind]!;
     const x = e.x[i]!;
     const y = e.y[i]!;
+    if (def.reform && !run.director.bossReformed && !run.tutorial) {
+      reformBoss(run, i, def.reform, def.shed !== undefined);
+      continue;
+    }
     if (e.dmgAcc[i]! > 0) emit(run, EV.damageNumber, x, y, e.dmgAcc[i]!, e.dmgFlags[i]!);
     run.hero.kills++;
     run.killsByKind[kind]!++;
@@ -318,8 +345,9 @@ export function reapEnemies(run: Run): boolean {
       // Le boss du tutoriel ne laisse rien : on n'en rapporte ni or ni Cendres.
       if (!run.tutorial) {
         addPickup(run, PK_CHEST, x, y + 10, 1);
-        addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss);
-        addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss);
+        const loot = def.loot ?? 1;
+        addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss * loot);
+        addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss * loot);
       }
       emit(run, EV.bossDeath, x, y, kind);
     }
