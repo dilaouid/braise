@@ -832,7 +832,14 @@ async function boot(): Promise<void> {
     },
     fullscreen() {
       if (document.fullscreenElement) void document.exitFullscreen();
-      else void document.documentElement.requestFullscreen?.().catch(() => undefined);
+      else {
+        // Échap quitte le plein écran par défaut ; on réserve la touche au jeu
+        // (Chromium) — un appui maintenu garde la sortie du plein écran.
+        void document.documentElement
+          .requestFullscreen?.()
+          .then(() => (navigator as { keyboard?: { lock?(keys: string[]): Promise<void> } }).keyboard?.lock?.(['Escape']))
+          .catch(() => undefined);
+      }
     },
     eraseSave() {
       void store.erase().then(() => {
