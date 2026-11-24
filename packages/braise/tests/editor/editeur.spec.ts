@@ -17,6 +17,8 @@ const EVIDENCE = resolve(PACKAGE, '../../production/qa/evidence/editeur');
 const FILES = ['dialogues.json', 'i18n/fr.json'];
 const shipped = (f: string): string => readFileSync(join(SHIPPED, f), 'utf8');
 const copy = (f: string): string => readFileSync(join(COPY, f), 'utf8');
+/** Le texte livré du deuxième message de l'ouverture. */
+const FR2: string = JSON.parse(shipped('i18n/fr.json'))['dialog.tuto.opening.19'];
 
 test.beforeAll(() => {
   expect(resolve(COPY)).not.toBe(resolve(SHIPPED));
@@ -40,7 +42,7 @@ test('changer la première réplique du tutoriel, insérer un message, enregistr
   await expect(page.locator('.ed-changes')).toContainText('1 changement');
   await page.getByRole('button', { name: 'Insérer un message à la place 2', exact: true }).click();
   await page.getByLabel('Texte, message 2', { exact: true }).fill('Je n\'ai rien dit.');
-  await expect(page.getByLabel('Texte, message 3', { exact: true })).toHaveValue('C\'est exact.');
+  await expect(page.getByLabel('Texte, message 3', { exact: true })).toHaveValue('... C\'est bizarre, ces créatures avaient l\'habitude de me fuir.');
   await page.keyboard.press('Control+s');
   await expect(page.locator('.ed-status')).toContainText('Enregistré');
   await expect(page.locator('.ed-changes')).toContainText('Tout est enregistré');
@@ -49,16 +51,17 @@ test('changer la première réplique du tutoriel, insérer un message, enregistr
   const before = shipped('i18n/fr.json').split('\r\n');
   const after = copy('i18n/fr.json').split('\r\n');
   expect(after.length).toBe(before.length + 1);
-  const i18 = before.indexOf('  "dialog.tuto.opening.18": "Ils t\'ont vu. Suis-moi.",');
-  expect(after[i18 + 1]).toBe('  "dialog.tuto.opening.19": "Je n\'ai rien dit.",');
-  expect([...after.slice(0, i18 + 1), ...after.slice(i18 + 2)].filter((l, i) => l !== before[i])).toEqual([
+  const last = before.map((l) => l.startsWith('  "dialog.tuto.opening.')).lastIndexOf(true);
+  expect(before[last]).toContain('"dialog.tuto.opening.22"');
+  expect(after[last + 1]).toBe('  "dialog.tuto.opening.23": "Je n\'ai rien dit.",');
+  expect([...after.slice(0, last + 1), ...after.slice(last + 2)].filter((l, i) => l !== before[i])).toEqual([
     '  "dialog.tuto.opening.1": "Wow… La lumière les attire, on dirait. « Vraiment » ?",',
   ]);
   // dialogues.json : une ligne de plus, à la deuxième place.
   const d0 = shipped('dialogues.json').split('\r\n');
   const d1 = copy('dialogues.json').split('\r\n');
   const first = d0.findIndex((l) => l.includes('"dialog.tuto.opening.1"'));
-  expect(d1[first + 1]).toBe('      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.19"},');
+  expect(d1[first + 1]).toBe('      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.23"},');
   expect([...d1.slice(0, first + 1), ...d1.slice(first + 2)]).toEqual(d0);
 });
 
@@ -110,7 +113,7 @@ test('le jeu ouvert se recharge après l\'enregistrement ; l\'éditeur garde ses
   // l'éditeur ne se recharge pas, garde son texte et montre le bandeau.
   await page.getByLabel('Texte, message 3', { exact: true }).fill('Pas encore enregistré.');
   const reloadedAgain = game.waitForEvent('load');
-  writeFileSync(join(COPY, 'i18n/fr.json'), copy('i18n/fr.json').replace('"Debout."', '"Debout, toi."'));
+  writeFileSync(join(COPY, 'i18n/fr.json'), copy('i18n/fr.json').replace('"Vraiment ? Tu t\'es endormi ?"', '"Vraiment ? Tu dormais ?"'));
   await reloadedAgain;
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __mark?: number }).__mark)).toBe(1);
@@ -121,7 +124,7 @@ test('le jeu ouvert se recharge après l\'enregistrement ; l\'éditeur garde ses
 test('changer la copie à la main fait apparaître le bandeau, et l\'enregistrement est refusé', async ({ page }) => {
   await openEditor(page);
   await page.getByLabel('Texte, message 2', { exact: true }).fill('Oui.');
-  writeFileSync(join(COPY, 'i18n/fr.json'), shipped('i18n/fr.json').replace('"Encore."', '"Encore une fois."'));
+  writeFileSync(join(COPY, 'i18n/fr.json'), shipped('i18n/fr.json').replace('"Recommence encore !"', '"Encore une fois."'));
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('.ed-status')).toContainText('a changé sur le disque');
@@ -130,7 +133,7 @@ test('changer la copie à la main fait apparaître le bandeau, et l\'enregistrem
   // Recharger reprend le disque.
   page.once('dialog', (d) => void d.accept());
   await page.getByRole('button', { name: 'Recharger sans mes changements' }).click();
-  await expect(page.getByLabel('Texte, message 2', { exact: true })).toHaveValue('C\'est exact.');
+  await expect(page.getByLabel('Texte, message 2', { exact: true })).toHaveValue(FR2);
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeHidden();
 });
 
@@ -204,21 +207,21 @@ test('la lecture de l\'aperçu n\'avale pas les touches tapées dans un champ', 
   await field.click();
   await field.press('End');
   await page.keyboard.type(' a A');
-  await expect(field).toHaveValue('C\'est exact. a A');
+  await expect(field).toHaveValue(`${FR2} a A`);
   await expect(page.getByRole('button', { name: /Arrêter/ })).toBeVisible();
 });
 
 test('déplacer un silence garde le focus sur son bouton', async ({ page }) => {
   await openEditor(page);
-  await page.getByRole('button', { name: 'Descendre le message 4', exact: true }).click();
-  await expect(page.locator('[data-line="4"] select').first()).toHaveValue('');
-  await expect(page.getByRole('button', { name: 'Descendre le message 5', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Descendre le message 5', exact: true }).click();
+  await expect(page.locator('[data-line="5"] select').first()).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Descendre le message 6', exact: true })).toBeFocused();
 });
 
 test('enregistrement refusé : recharger en gardant mes changements', async ({ page }) => {
   await openEditor(page);
   await page.getByLabel('Texte, message 2', { exact: true }).fill('Oui.');
-  writeFileSync(join(COPY, 'i18n/fr.json'), shipped('i18n/fr.json').replace('"Encore."', '"Encore une fois."'));
+  writeFileSync(join(COPY, 'i18n/fr.json'), shipped('i18n/fr.json').replace('"Recommence encore !"', '"Encore une fois."'));
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('.ed-status')).toContainText('a changé sur le disque');
@@ -227,7 +230,7 @@ test('enregistrement refusé : recharger en gardant mes changements', async ({ p
   await expect(page.getByText('Fichiers changés sur le disque.')).toBeHidden();
   await page.keyboard.press('Control+s');
   await expect(page.locator('.ed-status')).toContainText('Enregistré');
-  expect(copy('i18n/fr.json')).toContain('"dialog.tuto.opening.2": "Oui."');
+  expect(copy('i18n/fr.json')).toContain('"dialog.tuto.opening.19": "Oui."');
   expect(copy('i18n/fr.json')).toContain('"tuto.death.2": "Encore une fois."');
 });
 

@@ -88,9 +88,8 @@ describe('dialogue', () => {
   it('une ligne muette avance seule après sa durée', () => {
     const run = makeTutorial(1, [{ do: 'say', dialogue: 'tuto.opening' }, END]);
     steps(run, 1);
-    advanceDialogue(run);
-    advanceDialogue(run);
-    advanceDialogue(run);
+    // Le silence est la cinquième ligne de l'ouverture.
+    for (let i = 0; i < 4; i++) advanceDialogue(run);
     const silent = currentLine(run)!;
     expect(silent.who).toBe(-1);
     expect(run.tutorial!.emoteMoon).toBe('dots');

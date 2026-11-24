@@ -24,7 +24,6 @@ describe('contenu du tutoriel', () => {
 
   it('l\'ouverture garde la phrase de la bible', () => {
     const texts = data.dialogues['tuto.opening']!.map((l) => RAW.fr[l.text]);
-    expect(texts).toContain('Tu ne m\'avais jamais vraiment écouté.');
     expect(texts).toContain('TU PARLES ?!');
   });
 

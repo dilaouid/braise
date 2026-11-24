@@ -36,7 +36,7 @@ describe('cinématique d\'intro (document 15)', () => {
 
   it('a un seul carton, et une ligne de récit par illustration', () => {
     const cards = cinematic!.shots.filter((s) => s.card).map((s) => RAW.fr[s.card!]);
-    expect(cards).toEqual(['Un an plus tard.']);
+    expect(cards).toEqual(['Plus tard ...']);
     const silent = cinematic!.shots.filter((s) => s.layers.some((l) => l.type === 'image') && !s.caption).map((s) => s.id);
     expect(silent).toEqual([]);
   });

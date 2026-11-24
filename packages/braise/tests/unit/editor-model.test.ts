@@ -16,6 +16,8 @@ const fresh = (): EditorModel => parseFiles(FILES);
 const frOf = (m: EditorModel): Record<string, string> => Object.fromEntries(m.fr);
 const dlg = (m: EditorModel, id: string) => m.dialogues.find((d) => d.id === id)!;
 const validate = (m: EditorModel): string[] => compileContent({ ...RAW, ...toRaw(m) }).errors;
+/** Les clés de tuto.room8 dans l'ordre des messages (le silence n'en a pas). */
+const ROOM8 = dlg(fresh(), 'tuto.room8').lines.map((l) => l.key);
 
 describe('éditeur : relire puis réécrire', () => {
   it('redonne exactement les octets des fichiers livrés', () => {
@@ -29,20 +31,20 @@ describe('éditeur : relire puis réécrire', () => {
     expect(m.faces.moon).toContain('think');
     expect(m.poses.cream).toContain('groom');
     const opening = dlg(m, 'tuto.opening');
-    expect(opening.lines).toHaveLength(19);
+    expect(opening.lines).toHaveLength(23);
     expect(opening.lines[0]).toMatchObject({ key: 'dialog.tuto.opening.1', who: 'moon', face: 'think', poses: { moon: 'think', cream: '' } });
     expect(opening.lines[0]!.text).toBe(frOf(m)['dialog.tuto.opening.1']);
-    expect(opening.lines[3]).toMatchObject({ key: null, who: null, seconds: 1.2, emotes: { moon: 'dots', cream: '' } });
-    expect(opening.lines[4]!.sfx).toBe('sfx-surprise');
+    expect(opening.lines[4]).toMatchObject({ key: null, who: null, seconds: 1.2, emotes: { moon: 'dots', cream: 'dots' } });
+    expect(opening.lines[5]!.sfx).toBe('sfx-surprise');
   });
 
   it('garde les échappements écrits à la main tant que la phrase ne change pas', () => {
-    const fr = FILES.fr.replace('"tuto.death.2": "Encore."', '"tuto.death.2": "Enc\\u006fre\\u00a0!"');
+    const fr = FILES.fr.replace('"tuto.death.2": "Recommence encore !"', '"tuto.death.2": "Rec\\u006fmmence encore\\u00a0!"');
     const m = parseFiles({ dialogues: FILES.dialogues, fr });
-    expect(frOf(m)['tuto.death.2']).toBe('Encore\u00a0!');
+    expect(frOf(m)['tuto.death.2']).toBe('Recommence encore\u00a0!');
     expect(serialize(m).fr).toBe(fr);
-    const changed = serialize(setText(m, 'tuto.death.2', 'Encore !')).fr;
-    expect(changed).toContain('"tuto.death.2": "Encore !"');
+    const changed = serialize(setText(m, 'tuto.death.2', 'Recommence encore !')).fr;
+    expect(changed).toContain('"tuto.death.2": "Recommence encore !"');
   });
 
   it('suit les fins de ligne du fichier lu', () => {
@@ -63,7 +65,7 @@ describe('éditeur : une phrase difficile', () => {
     expect(out.fr.split('\r\n').length).toBe(FILES.fr.split('\r\n').length);
     const back = parseFiles(out);
     expect(frOf(back)['dialog.tuto.opening.2']).toBe(hard);
-    expect(dlg(back, 'tuto.opening').lines[1]!.text).toBe(hard);
+    expect(dlg(back, 'tuto.opening').lines[2]!.text).toBe(hard);
     expect(serialize(back)).toEqual(out);
   });
 
@@ -83,17 +85,17 @@ describe('éditeur : messages', () => {
   it('insère une réplique avec la prochaine clé libre, rangée après la dernière clé du dialogue', () => {
     const m = insertLine(fresh(), 'tuto.room1.b', 1, 'speech');
     const lines = dlg(m, 'tuto.room1.b').lines;
-    expect(lines).toHaveLength(3);
-    expect(lines[1]!.key).toBe('dialog.tuto.room1.b.3');
+    expect(lines).toHaveLength(4);
+    expect(lines[1]!.key).toBe('dialog.tuto.room1.b.4');
     expect(lines[1]!.who).toBe('cream');
     const keys = m.fr.map(([k]) => k);
-    expect(keys.indexOf('dialog.tuto.room1.b.3')).toBe(keys.indexOf('dialog.tuto.room1.b.2') + 1);
-    const out = serialize(setText(m, 'dialog.tuto.room1.b.3', 'Et alors ?'));
+    expect(keys.indexOf('dialog.tuto.room1.b.4')).toBe(keys.indexOf('dialog.tuto.room1.b.3') + 1);
+    const out = serialize(setText(m, 'dialog.tuto.room1.b.4', 'Et alors ?'));
     expect(out.dialogues).toContain('      {"who":"moon","face":"surprised","text":"dialog.tuto.room1.b.1","emotes":{"moon":"question"}},\r\n'
-      + '      {"who":"cream","face":"neutral","text":"dialog.tuto.room1.b.3"},\r\n'
-      + '      {"who":"cream","face":"smug","text":"dialog.tuto.room1.b.2"}\r\n');
-    expect(out.fr).toContain('  "dialog.tuto.room1.b.2": "Depuis que tu espères. Ramasse les éclats bleus. Ce sont des souvenirs.",\r\n'
-      + '  "dialog.tuto.room1.b.3": "Et alors ?",\r\n');
+      + '      {"who":"cream","face":"neutral","text":"dialog.tuto.room1.b.4"},\r\n'
+      + '      {"who":"cream","face":"smug","text":"dialog.tuto.room1.b.2"},\r\n');
+    expect(out.fr).toContain('  "dialog.tuto.room1.b.3": "Regarde, les souvenirs vont vers la Lanterne. Ces souvenirs te rendront plus fort !",\r\n'
+      + '  "dialog.tuto.room1.b.4": "Et alors ?",\r\n');
   });
 
   it('insère un silence sans clé', () => {
@@ -108,21 +110,22 @@ describe('éditeur : messages', () => {
 
   it('déplace un message sans renuméroter les clés', () => {
     const m = moveLine(fresh(), 'tuto.room8', 0, 2);
-    expect(dlg(m, 'tuto.room8').lines.map((l) => l.key)).toEqual(['dialog.tuto.room8.2', 'dialog.tuto.room8.3', 'dialog.tuto.room8.1']);
+    expect(dlg(m, 'tuto.room8').lines.map((l) => l.key)).toEqual([...ROOM8.slice(1, 3), ROOM8[0], ...ROOM8.slice(3)]);
     expect(serialize(m).fr).toBe(FILES.fr);
   });
 
   it('supprime un message et sa clé, qui n\'est jamais reprise', () => {
-    let m = removeLine(fresh(), 'tuto.room8', 2);
-    expect(dlg(m, 'tuto.room8').lines).toHaveLength(2);
-    expect(frOf(m)['dialog.tuto.room8.3']).toBeUndefined();
-    expect(nextKey(m, 'tuto.room8')).toBe('dialog.tuto.room8.4');
+    let m = removeLine(fresh(), 'tuto.room8', 8);
+    expect(dlg(m, 'tuto.room8').lines).toHaveLength(8);
+    expect(frOf(m)['dialog.tuto.room8.8']).toBeUndefined();
+    expect(nextKey(m, 'tuto.room8')).toBe('dialog.tuto.room8.9');
     // Supprimer au milieu, puis ajouter : la clé d'un message encore là n'est pas reprise.
     m = removeLine(fresh(), 'tuto.room8', 0);
     m = insertLine(m, 'tuto.room8', 2, 'speech');
     const keys = dlg(m, 'tuto.room8').lines.map((l) => l.key);
-    expect(keys).toEqual(['dialog.tuto.room8.2', 'dialog.tuto.room8.3', 'dialog.tuto.room8.4']);
-    expect(new Set(keys).size).toBe(3);
+    expect(keys).toEqual([ROOM8[1], ROOM8[2], 'dialog.tuto.room8.9', ...ROOM8.slice(3)]);
+    const spoken = keys.filter((k) => k !== null);
+    expect(new Set(spoken).size).toBe(spoken.length);
   });
 
   it('garde une clé encore citée, et ne retire jamais un nom', () => {
@@ -137,13 +140,13 @@ describe('éditeur : messages', () => {
   });
 
   it('change qui parle : une clé pour une réplique, aucune pour un silence', () => {
-    let m = setWho(fresh(), 'tuto.opening', 3, 'cream');
-    const line = dlg(m, 'tuto.opening').lines[3]!;
-    expect(line.key).toBe('dialog.tuto.opening.19');
+    let m = setWho(fresh(), 'tuto.opening', 4, 'cream');
+    const line = dlg(m, 'tuto.opening').lines[4]!;
+    expect(line.key).toBe('dialog.tuto.opening.23');
     expect(m.faces.cream).toContain(line.face);
-    m = setWho(m, 'tuto.opening', 3, null);
-    expect(dlg(m, 'tuto.opening').lines[3]!.key).toBeNull();
-    expect(frOf(m)['dialog.tuto.opening.19']).toBeUndefined();
+    m = setWho(m, 'tuto.opening', 4, null);
+    expect(dlg(m, 'tuto.opening').lines[4]!.key).toBeNull();
+    expect(frOf(m)['dialog.tuto.opening.23']).toBeUndefined();
     m = updateLine(m, 'tuto.opening', 0, { face: 'sad', poses: { moon: '', cream: 'scratch' }, sfx: 'sfx-gem' });
     expect(serialize(m).dialogues).toContain('{"who":"moon","face":"sad","text":"dialog.tuto.opening.1","poses":{"cream":"scratch"},"sfx":"sfx-gem"}');
   });
@@ -208,7 +211,7 @@ describe('éditeur : validation du jeu', () => {
   });
 
   it('un message ajouté sans texte est refusé', () => {
-    expect(validate(insertLine(fresh(), 'tuto.room3', 0, 'speech')).join('\n')).toContain('dialog.tuto.room3.3');
+    expect(validate(insertLine(fresh(), 'tuto.room3', 0, 'speech')).join('\n')).toContain('dialog.tuto.room3.6');
   });
 });
 
@@ -233,15 +236,15 @@ describe('éditeur : un silence garde le texte qu\'il remplace', () => {
 describe('éditeur : identifiants stables des messages', () => {
   it('chaque message a un identifiant qui le suit quand il bouge ou change', () => {
     const m = fresh();
-    const silence = dlg(m, 'tuto.opening').lines[3]!;
+    const silence = dlg(m, 'tuto.opening').lines[4]!;
     expect(silence.uid).toBeTruthy();
     const ids = m.dialogues.flatMap((d) => d.lines.map((l) => l.uid));
     expect(new Set(ids).size).toBe(ids.length);
-    const moved = moveLine(m, 'tuto.opening', 3, 4);
-    expect(dlg(moved, 'tuto.opening').lines[4]!.uid).toBe(silence.uid);
-    const changed = updateLine(moved, 'tuto.opening', 4, { seconds: 2 });
-    expect(dlg(changed, 'tuto.opening').lines[4]!.uid).toBe(silence.uid);
-    expect(dlg(setWho(changed, 'tuto.opening', 4, 'moon'), 'tuto.opening').lines[4]!.uid).toBe(silence.uid);
+    const moved = moveLine(m, 'tuto.opening', 4, 5);
+    expect(dlg(moved, 'tuto.opening').lines[5]!.uid).toBe(silence.uid);
+    const changed = updateLine(moved, 'tuto.opening', 5, { seconds: 2 });
+    expect(dlg(changed, 'tuto.opening').lines[5]!.uid).toBe(silence.uid);
+    expect(dlg(setWho(changed, 'tuto.opening', 5, 'moon'), 'tuto.opening').lines[5]!.uid).toBe(silence.uid);
     const added = insertLine(m, 'tuto.opening', 0, 'silence');
     expect(ids).not.toContain(dlg(added, 'tuto.opening').lines[0]!.uid);
   });
@@ -252,8 +255,8 @@ describe('éditeur : reprendre ses changements sur des fichiers plus récents', 
 
   it('réapplique les phrases changées et les messages ajoutés, et garde ce qui a changé sur le disque', () => {
     let mine = setText(fresh(), 'dialog.tuto.room8.1', 'Les cinq vrais sont ailleurs.');
-    mine = insertLine(mine, 'tuto.room8', 3, 'speech');
-    mine = setText(mine, 'dialog.tuto.room8.4', 'Une réplique de plus.');
+    mine = insertLine(mine, 'tuto.room8', ROOM8.length, 'speech');
+    mine = setText(mine, 'dialog.tuto.room8.9', 'Une réplique de plus.');
     mine = setText(mine, 'tuto.death.1', 'Lève-toi.');
     // Sur le disque, entre-temps : une autre phrase, et un autre dialogue changé.
     const theirs = disk((m) => insertLine(setText(m, 'tuto.death.3', 'Rien vu.'), 'tuto.room3', 2, 'silence'));
@@ -261,26 +264,26 @@ describe('éditeur : reprendre ses changements sur des fichiers plus récents', 
     expect(conflicts).toEqual([]);
     const fr = frOf(model);
     expect(fr['dialog.tuto.room8.1']).toBe('Les cinq vrais sont ailleurs.');
-    expect(fr['dialog.tuto.room8.4']).toBe('Une réplique de plus.');
+    expect(fr['dialog.tuto.room8.9']).toBe('Une réplique de plus.');
     expect(fr['tuto.death.1']).toBe('Lève-toi.');
     expect(fr['tuto.death.3']).toBe('Rien vu.');
-    expect(dlg(model, 'tuto.room8').lines.map((l) => l.key)).toEqual(['dialog.tuto.room8.1', 'dialog.tuto.room8.2', 'dialog.tuto.room8.3', 'dialog.tuto.room8.4']);
-    expect(dlg(model, 'tuto.room8').lines[3]!.text).toBe('Une réplique de plus.');
-    expect(dlg(model, 'tuto.room3').lines).toHaveLength(3);
+    expect(dlg(model, 'tuto.room8').lines.map((l) => l.key)).toEqual([...ROOM8, 'dialog.tuto.room8.9']);
+    expect(dlg(model, 'tuto.room8').lines[ROOM8.length]!.text).toBe('Une réplique de plus.');
+    expect(dlg(model, 'tuto.room3').lines).toHaveLength(6);
     // La clé ajoutée garde sa place, après la dernière du dialogue.
     const keys = model.fr.map(([k]) => k);
-    expect(keys.indexOf('dialog.tuto.room8.4')).toBe(keys.indexOf('dialog.tuto.room8.3') + 1);
-    expect(nextKey(model, 'tuto.room8')).toBe('dialog.tuto.room8.5');
+    expect(keys.indexOf('dialog.tuto.room8.9')).toBe(keys.indexOf('dialog.tuto.room8.8') + 1);
+    expect(nextKey(model, 'tuto.room8')).toBe('dialog.tuto.room8.10');
   });
 
   it('un même dialogue changé des deux côtés : la version du disque, plus mes messages ajoutés, et un avertissement', () => {
-    let mine = insertLine(fresh(), 'tuto.room8', 3, 'speech');
-    mine = setText(mine, 'dialog.tuto.room8.4', 'Moi aussi.');
+    let mine = insertLine(fresh(), 'tuto.room8', ROOM8.length, 'speech');
+    mine = setText(mine, 'dialog.tuto.room8.9', 'Moi aussi.');
     mine = setText(mine, 'dialog.tuto.room8.2', 'Alors allons-y.');
     const theirs = disk((m) => setText(removeLine(m, 'tuto.room8', 0), 'dialog.tuto.room8.2', 'On y va.'));
     const { model, conflicts } = rebase(mine, fresh(), theirs);
-    expect(dlg(model, 'tuto.room8').lines.map((l) => l.key)).toEqual(['dialog.tuto.room8.2', 'dialog.tuto.room8.3', 'dialog.tuto.room8.4']);
-    expect(frOf(model)['dialog.tuto.room8.4']).toBe('Moi aussi.');
+    expect(dlg(model, 'tuto.room8').lines.map((l) => l.key)).toEqual([...ROOM8.slice(1), 'dialog.tuto.room8.9']);
+    expect(frOf(model)['dialog.tuto.room8.9']).toBe('Moi aussi.');
     expect(frOf(model)['dialog.tuto.room8.2']).toBe('Alors allons-y.');
     expect(frOf(model)['dialog.tuto.room8.1']).toBeUndefined();
     expect(conflicts.join('\n')).toContain('tuto.room8');
