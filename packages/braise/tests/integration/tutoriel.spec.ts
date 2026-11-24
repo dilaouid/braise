@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  DIALOGUES, FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipTutorial, storageKey, watch,
+  DIALOGUES, FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipScene, skipTutorial, storageKey, watch,
 } from './harness.ts';
 
 const SHOTS = 'tutoriel-cream';
@@ -338,8 +338,23 @@ test('le tutoriel entier se termine : le robot le joue jusqu\'au bout, puis le r
   await page.waitForTimeout(900);
   await capture(page, info, SHOTS, '03-guetteur');
 
-  // Jusqu'au bout : toutes les leçons faites, puis le refuge.
+  // Jusqu'au bout : toutes les leçons faites, puis la scène de route, puis le refuge.
   expect(await botUntil(page, 'done')).toBe(true);
+  await expect(page.locator('.screen.scene')).toBeVisible();
+  await expect(page.locator('.screen.end')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { __braise: { scene: { id: string | null } } }).__braise.scene.id)).toBe('after-tutorial');
+  // Ils marchent jusqu'à leur halte, puis Cream parle.
+  await page.evaluate(() => (window as unknown as { __braise: { scene: { advance(s: number): void } } }).__braise.scene.advance(6));
+  await expect(page.locator('.dialogue.dialogue-cream')).toBeVisible();
+  await expect(text(page)).toHaveText(FR['dialog.scene.after-tutorial.1.1']!);
+  await page.waitForTimeout(600);
+  await capture(page, info, SHOTS, '06-scene-route');
+  // A passe à la réplique suivante.
+  await settle(page);
+  await expect(page.locator('.dialogue-next.ready')).toBeVisible();
+  await pad.press('A');
+  await expect(text(page)).toHaveText(FR['dialog.scene.after-tutorial.1.2']!);
+  await skipScene(page, pad);
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expect(page.locator('.screen.end')).toHaveCount(0);
   expect(await runView(page)).toBeNull();

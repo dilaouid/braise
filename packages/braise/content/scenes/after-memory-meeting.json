@@ -4,7 +4,7 @@
   "moon": [-30, 250],
   "cream": [-56, 258],
   "steps": [
-    { "do": "move", "moon": [180, 248], "cream": [150, 256] },
+    { "do": "move", "moon": [204, 232], "cream": [172, 238] },
     { "do": "say", "dialogue": "scene.after-memory-meeting.1" },
     { "do": "move", "moon": [366, 214], "cream": [276, 216] },
     { "do": "kindle" },

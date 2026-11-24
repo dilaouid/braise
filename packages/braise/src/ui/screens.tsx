@@ -4,7 +4,7 @@ import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCaption, cineCard, cineSkip, confirm, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
+  actions, cineCaption, cineCard, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
   replaySeed, roman, save, saveRev, t,
 } from './store.ts';
 
@@ -82,6 +82,38 @@ export function CinematicScreen(): JSX.Element {
         <span class="cine-ring" style={{ '--hold': String(hold) }} />
         <Btn g="back" /> {t('cine.skip')}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Une scène de route : le jeu dessine Moon et Cream sur le décor du refuge ; la boîte de dialogue
+ * s'affiche par-dessus quand l'un d'eux parle. Ici : l'anneau « maintenir pour passer » quand aucune
+ * boîte n'est ouverte, puis le carton du souvenir, par-dessus le refuge.
+ */
+export function SceneScreen(): JSX.Element {
+  const found = memoryCard.value;
+  if (found) {
+    return (
+      <div class="screen scene">
+        <button type="button" class="cine-memory" onClick={() => actions().closeMemoryCard()}>
+          <span class="cine-memory-found">{t('memory.found')}</span>
+          <span class="cine-memory-name">{t(`${found.id}.name`)}</span>
+          <span class="cine-memory-count">{t('memory.count', { have: found.have, total: found.total })}</span>
+        </button>
+        <div class="cine-next"><Btn g="confirm" /> {t('cine.next')}</div>
+      </div>
+    );
+  }
+  const hold = cineSkip.value;
+  return (
+    <div class="screen scene">
+      {dialogueState.value ? null : (
+        <div class={`cine-skip${hold > 0 ? ' active' : ''}`}>
+          <span class="cine-ring" style={{ '--hold': String(hold) }} />
+          <Btn g="back" /> {t('cine.skip')}
+        </div>
+      )}
     </div>
   );
 }

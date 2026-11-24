@@ -136,6 +136,9 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
   width: 10px; height: 10px; border-radius: 50%;
   background: conic-gradient(var(--ember-1) calc(var(--hold) * 360deg), var(--night-3) 0);
 }
+/* Après une scène de route, le carton laisse voir le refuge. */
+.scene { pointer-events: none; }
+.scene .cine-memory { background: rgba(11, 15, 26, 0.62); }
 /* Le carton d'un souvenir : trois lignes sur le noir, posées par l'application après la scène. */
 .cine-memory {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;

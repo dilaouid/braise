@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import { DialogueBox } from './dialogue.tsx';
 import { ChestScreen, FindScreen, ForgeScreen, Hud, LevelUp, PauseScreen, ShopScreen, TotemScreen } from './run.tsx';
-import { Altar, Camp, CinematicScreen, EndScreen, Memories, SettingsScreen, Title } from './screens.tsx';
+import { Altar, Camp, CinematicScreen, EndScreen, Memories, SceneScreen, SettingsScreen, Title } from './screens.tsx';
 import { actions, overlay, screen } from './store.ts';
 
 /** La racine de l'interface : un écran, et au plus un calque par-dessus. */
@@ -12,6 +12,7 @@ export function App(): JSX.Element {
     <>
       {s === 'title' ? <Title /> : null}
       {s === 'cinematic' ? <CinematicScreen /> : null}
+      {s === 'scene' ? <SceneScreen /> : null}
       {s === 'camp' ? <Camp /> : null}
       {s === 'memories' ? <Memories /> : null}
       {s === 'altar' ? <Altar /> : null}
@@ -24,7 +25,7 @@ export function App(): JSX.Element {
       {s === 'run' && o === 'shop' ? <ShopScreen /> : null}
       {s === 'run' && o === 'find' ? <FindScreen /> : null}
       {s === 'run' && o === 'pause' ? <PauseScreen /> : null}
-      {(s === 'run' || s === 'camp') && o === 'dialogue' ? <DialogueBox /> : null}
+      {(s === 'run' || s === 'camp' || s === 'scene') && o === 'dialogue' ? <DialogueBox /> : null}
       {s === 'end' ? <EndScreen /> : null}
       {s === 'boot' ? <div class="screen boot">…</div> : null}
     </>

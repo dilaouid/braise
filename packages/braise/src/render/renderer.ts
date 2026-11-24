@@ -6,6 +6,8 @@ import {
   TILE_GATE, TILE_THICKET,
   type Run,
 } from '../core/types.ts';
+import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
+import type { SceneState } from '../core/scene.ts';
 import { tutorialTarget } from '../core/tutorial.ts';
 import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
 import { Atlas } from './atlas.ts';
@@ -172,6 +174,10 @@ export class GameRenderer {
   private campCream!: Sprite;
   private campFlame!: Sprite;
   private campBuilt = false;
+  /** Cream pendant une scène de route (Moon reprend `campHero`), leurs bulles, et la flamme qui prend. */
+  private sceneCream!: Sprite;
+  private readonly sceneEmotes: EmoteFx[] = [];
+  private sceneFire = 1;
 
   private constructor(app: Application, atlas: Atlas) {
     this.app = app;
@@ -1166,64 +1172,148 @@ export class GameRenderer {
     this.screenFx.clear();
   }
 
-  /** Le camp : le fond des menus, entre deux expéditions. */
-  drawCamp(timeMs: number, lit: boolean, heroSprite: string, cream = false): void {
+  /** Le décor du refuge, construit une fois : sol, arbres, braséro, flamme, et les personnages. */
+  private buildCamp(): void {
+    if (this.campBuilt) return;
+    this.campBuilt = true;
     const a = this.atlas;
-    if (!this.campBuilt) {
-      this.campBuilt = true;
-      for (let y = 0; y < 12; y++) {
-        for (let x = 0; x < 20; x++) {
-          const near = Math.hypot(x - 9.5, y - 6.5);
-          const mask = near < 3.2 ? 15 : near < 4.2 ? [7, 11, 13, 14][(x + y) % 4]! : 0;
-          const s = new Sprite(a.get(`tile-bois-${mask}`));
-          s.position.set(x * 32, y * 32 - 12);
-          this.camp.addChild(s);
-        }
-      }
-      const prop = (name: string, x: number, y: number): void => {
-        const s = new Sprite(a.get(name));
-        s.anchor.set(0.5, 0.92);
-        s.position.set(x, y);
+    // Les personnages d'une scène passent devant ou derrière le décor selon leur hauteur.
+    this.camp.sortableChildren = true;
+    for (let y = 0; y < 12; y++) {
+      for (let x = 0; x < 20; x++) {
+        const near = Math.hypot(x - 9.5, y - 6.5);
+        const mask = near < 3.2 ? 15 : near < 4.2 ? [7, 11, 13, 14][(x + y) % 4]! : 0;
+        const s = new Sprite(a.get(`tile-bois-${mask}`));
+        s.position.set(x * 32, y * 32 - 12);
+        s.zIndex = -10000;
         this.camp.addChild(s);
-      };
-      prop('decor-arbre', 60, 120); prop('decor-arbre', 130, 70); prop('decor-arbre', 560, 110); prop('decor-arbre', 600, 230);
-      prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
-      prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
-      prop('poi-brasero', 320, 196);
-      this.campFlame = new Sprite(this.flameFrames[0]!);
-      this.campFlame.anchor.set(0.5, 1);
-      this.campFlame.position.set(320, 176);
-      this.camp.addChild(this.campFlame);
-      this.campHero = new Sprite(Texture.EMPTY);
-      this.campHero.anchor.set(0.5, 0.8);
-      this.campHero.position.set(366, 214);
-      this.camp.addChild(this.campHero);
-      // Cream, couché contre une lanterne allumée, de l'autre côté du feu.
-      this.campCream = new Sprite(a.get('camp-cream'));
-      this.campCream.anchor.set(0.5, 0.85);
-      this.campCream.position.set(276, 216);
-      this.camp.addChild(this.campCream);
+      }
     }
-    this.campCream.visible = cream;
+    const prop = (name: string, x: number, y: number): void => {
+      const s = new Sprite(a.get(name));
+      s.anchor.set(0.5, 0.92);
+      s.position.set(x, y);
+      s.zIndex = y;
+      this.camp.addChild(s);
+    };
+    prop('decor-arbre', 60, 120); prop('decor-arbre', 130, 70); prop('decor-arbre', 560, 110); prop('decor-arbre', 600, 230);
+    prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
+    prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
+    prop('poi-brasero', 320, 196);
+    this.campFlame = new Sprite(this.flameFrames[0]!);
+    this.campFlame.anchor.set(0.5, 1);
+    this.campFlame.position.set(320, 176);
+    this.campFlame.zIndex = 197;
+    this.camp.addChild(this.campFlame);
+    this.campHero = new Sprite(Texture.EMPTY);
+    this.campHero.anchor.set(0.5, 0.8);
+    this.campHero.position.set(CAMP_MOON.x, CAMP_MOON.y);
+    this.campHero.zIndex = CAMP_MOON.y;
+    this.camp.addChild(this.campHero);
+    // Cream, couché contre une lanterne allumée, de l'autre côté du feu.
+    this.campCream = new Sprite(a.get('camp-cream'));
+    this.campCream.anchor.set(0.5, 0.85);
+    this.campCream.position.set(CAMP_CREAM.x, CAMP_CREAM.y);
+    this.campCream.zIndex = CAMP_CREAM.y;
+    this.camp.addChild(this.campCream);
+    // Les personnages d'une scène de route, et leurs bulles.
+    this.sceneCream = new Sprite(Texture.EMPTY);
+    this.sceneCream.anchor.set(0.5, CREAM_ANCHOR);
+    this.camp.addChild(this.sceneCream);
+    for (let i = 0; i < 2; i++) {
+      const s = new Sprite(Texture.EMPTY);
+      s.anchor.set(0.5, 1);
+      s.zIndex = 10000;
+      this.camp.addChild(s);
+      this.sceneEmotes.push({ sprite: s, name: '', t: 0 });
+    }
+  }
+
+  /** Ce qui est commun au refuge et aux scènes : le décor, la flamme (`fire` de 0 à 1), la nuit. */
+  private campBase(t: number, lit: boolean, fire: number): void {
+    this.buildCamp();
     this.currentRun = null;
     this.camp.visible = true;
     this.world.visible = false;
     this.numberLayer.visible = false;
     this.screen.visible = false;
-    const t = timeMs / 1000;
     this.campFlame.texture = this.flameFrames[Math.floor(t * 10) % this.flameFrames.length]!;
-    this.campFlame.visible = true;
-    this.campFlame.scale.set(lit ? 2 : 1);
-    const idle = a.anim(`${heroSprite}-idle-1`);
-    this.campHero.texture = idle[Math.floor(t * 5) % idle.length]!;
+    this.campFlame.visible = fire > 0;
+    this.campFlame.scale.set((lit ? 2 : 1) * fire);
     this.darkness.tint = C.night;
-    this.darkness.alpha = lit ? 0.4 : 0.52;
+    this.darkness.alpha = (lit ? 0.4 : 0.52) + (1 - fire) * 0.12;
     this.lightCount = 0;
     this.warmCount = 0;
-    this.light(320, 176, (lit ? 150 : 104) + Math.round(Math.sin(t * 3) * 2), 0.13);
+    if (fire > 0) this.light(320, 176, Math.round(((lit ? 150 : 104) + Math.sin(t * 3) * 2) * fire), 0.13);
+  }
+
+  /** Le camp : le fond des menus, entre deux expéditions. */
+  drawCamp(timeMs: number, lit: boolean, heroSprite: string, cream = false): void {
+    const t = timeMs / 1000;
+    this.campBase(t, lit, 1);
+    this.sceneFire = 1;
+    this.sceneCream.visible = false;
+    for (const em of this.sceneEmotes) em.sprite.visible = false;
+    this.campCream.visible = cream;
+    this.campHero.visible = true;
+    this.campHero.position.set(CAMP_MOON.x, CAMP_MOON.y);
+    this.campHero.zIndex = CAMP_MOON.y;
+    this.campHero.scale.x = 1;
+    const idle = this.atlas.anim(`${heroSprite}-idle-1`);
+    this.campHero.texture = idle[Math.floor(t * 5) % idle.length]!;
     this.light(366, 204, 40);
     if (cream) this.light(272, 204, 30 + Math.round(Math.sin(t * 2.3)), 0.1);
     this.renderLight();
     this.app.renderer.render(this.app.stage);
+  }
+
+  /**
+   * Une scène de route : le décor du refuge, Moon et Cream qui marchent et se parlent. `fade` (de 0 à 1)
+   * sort l'image du noir au début. `dt` en secondes.
+   */
+  drawScene(timeMs: number, dt: number, lit: boolean, heroSprite: string, s: SceneState, fade: number): void {
+    const t = timeMs / 1000;
+    // Le feu qui prend grandit en une demi-seconde.
+    this.sceneFire = s.fire ? Math.min(1, this.sceneFire + dt * 2) : 0;
+    this.campBase(t, lit, this.sceneFire);
+    this.campCream.visible = false;
+    const a = this.atlas;
+    const moon = s.moon;
+    const hero = this.campHero;
+    hero.visible = true;
+    if (moon.pose !== '') hero.texture = a.get(`${heroSprite}-pose-${moon.pose}`);
+    else {
+      const walk = moon.moving ? a.anim(`${heroSprite}-walk-${moon.facing}`) : a.anim(`${heroSprite}-idle-${moon.facing}`);
+      const frames = walk[0] === Texture.EMPTY ? [a.get(`${heroSprite}-rot-${moon.facing}`)] : walk;
+      hero.texture = frames[Math.floor(t * (moon.moving ? 12 : 5)) % frames.length]!;
+    }
+    hero.position.set(Math.round(moon.x), Math.round(moon.y));
+    hero.zIndex = moon.y;
+    const cat = s.cream;
+    const cream = this.sceneCream;
+    let flip = 1;
+    if (cat.pose !== '') cream.texture = a.get(`cream-pose-${cat.pose}`);
+    else if (cat.moving) {
+      const walk = a.anim(`cream-walk-${cat.facing}`);
+      cream.texture = walk[Math.floor(t * 12) % walk.length]!;
+    } else {
+      // Assis de trois quarts, la tête à gauche sur l'image : retourné quand Moon est à droite.
+      cream.texture = a.get('cream-sit');
+      if (moon.x > cat.x) flip = -1;
+    }
+    cream.scale.x = flip;
+    cream.position.set(Math.round(cat.x), Math.round(cat.y));
+    cream.zIndex = cat.y;
+    cream.visible = true;
+    this.drawEmote(this.sceneEmotes[0]!, moon.emote, moon.x, moon.y - EMOTE_UP_MOON, dt);
+    this.drawEmote(this.sceneEmotes[1]!, cat.emote, cat.x, cat.y - EMOTE_UP_CREAM, dt);
+    // La lanterne de Moon éclaire le chemin ; Cream a sa petite lueur.
+    this.light(moon.x, moon.y - 10, 52 + Math.round(Math.sin(t * 2.7)), 0.1);
+    this.light(cat.x, cat.y - 8, 26);
+    this.renderLight();
+    // Le fondu d'entrée : l'image sort de la nuit (la couleur de fond).
+    this.app.stage.alpha = Math.max(0, Math.min(1, fade));
+    this.app.renderer.render(this.app.stage);
+    this.app.stage.alpha = 1;
   }
 }

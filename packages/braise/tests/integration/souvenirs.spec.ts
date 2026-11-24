@@ -190,7 +190,17 @@ test('première victoire : la gemme, la scène, le carton 1 / 5, le bilan avec s
   await expect.poll(() => shot(page)).toBe('p02');
   await expect(page.locator('.cine-caption')).toHaveText(FR['cine.memory-meeting.t2']!);
 
-  // --- B maintenu : le carton, posé par l'application ------------------------------------------
+  // --- B maintenu : la scène de route, Moon et Cream rentrent au refuge en parlant du souvenir ----
+  await holdSkip(page, pad);
+  await expect(page.locator('.screen.scene')).toBeVisible();
+  await expect(page.locator('.screen.cinematic')).toHaveCount(0);
+  // Ils marchent jusqu'à leur halte ; un silence, puis Moon parle.
+  await page.evaluate(() => (window as unknown as { __braise: { scene: { advance(s: number): void } } }).__braise.scene.advance(7));
+  await expect(page.locator('.dialogue .dialogue-text')).toHaveText(FR['dialog.scene.after-memory-meeting.1.1']!);
+  await page.waitForTimeout(600);
+  await capture(page, info, SHOTS, '02b-route');
+
+  // --- B maintenu : le carton, par-dessus le refuge -------------------------------------------------
   await holdSkip(page, pad);
   const card = page.locator('.cine-memory');
   await expect(card).toBeVisible();

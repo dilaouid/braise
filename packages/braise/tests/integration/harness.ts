@@ -106,8 +106,23 @@ export async function skipIntro(page: Page, pad?: SimPad): Promise<void> {
 }
 
 /**
+ * Passe une scène de route (Moon et Cream rentrent au refuge) : B (ou Échap) maintenu un peu plus
+ * d'une seconde.
+ */
+export async function skipScene(page: Page, pad?: SimPad): Promise<void> {
+  await expect(page.locator('.screen.scene')).toBeVisible();
+  await settle(page);
+  if (pad) await pad.down('B');
+  else await page.keyboard.down('Escape');
+  await page.waitForTimeout(1400);
+  if (pad) await pad.up('B');
+  else await page.keyboard.up('Escape');
+}
+
+/**
  * Passe le tutoriel, qui suit la cinématique sur une sauvegarde neuve : la première réplique est à
- * l'écran, puis pause, « Passer le tutoriel », et la confirmation. Le refuge s'ouvre.
+ * l'écran, puis pause, « Passer le tutoriel », et la confirmation. La scène de route, passée elle aussi,
+ * puis le refuge.
  */
 export async function skipTutorial(page: Page, pad?: SimPad): Promise<void> {
   const press = async (button: 'START' | 'DOWN' | 'RIGHT' | 'A'): Promise<void> => {
@@ -134,6 +149,7 @@ export async function skipTutorial(page: Page, pad?: SimPad): Promise<void> {
   await press('RIGHT');
   await expectFocus(page, 'yes');
   await press('A');
+  await skipScene(page, pad);
   await expect(page.locator('.screen.camp')).toBeVisible();
 }
 

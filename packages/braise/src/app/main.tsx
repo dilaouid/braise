@@ -15,6 +15,7 @@ import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolut
 import { computeResult } from '../core/rewards.ts';
 import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
+import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
@@ -45,6 +46,9 @@ const SKIP_HOLD_MS = 600;
 const DIALOGUE_CPS = 40;
 const TALK_EVERY = 4;
 const SPEAKERS = ['moon', 'cream'] as const;
+/** Une scène de route sort du noir en ce temps, et se passe en maintenant B ce temps. */
+const SCENE_FADE_S = 0.9;
+const SCENE_SKIP_MS = 1000;
 /** Les portraits que Cream peut avoir quand il parle au refuge. */
 const CAMP_CREAM_FACES = ['neutral', 'smug'] as const;
 
@@ -119,6 +123,12 @@ async function boot(): Promise<void> {
   let held = false;
   let cineHoldMs = 0;
   let cinePaused = false;
+  /** La scène de route en cours, ce qui la suit, son temps, la ligne affichée, le maintien de B. */
+  let scene: SceneState | null = null;
+  let sceneAfter: () => void = () => undefined;
+  let sceneT = 0;
+  let sceneKey = '';
+  let sceneHoldMs = 0;
 
   function applySettings(): void {
     const s = current.settings;
@@ -313,9 +323,13 @@ async function boot(): Promise<void> {
     }
     // Un Souvenir vient d'être pris : sa scène, son carton, puis le bilan. Sans images, le bilan tout de suite.
     audio.play('memory', 0.9);
-    playCinematic(memory.cinematic, () => {
+    const card = (): void => {
       memoryCard.value = { id: memory.id, have: memoryCount(data, current), total: data.memoriesTotal };
       guard();
+    };
+    playCinematic(memory.cinematic, () => {
+      if (memory.scene !== '') playScene(memory.scene, card);
+      else card();
     }, showEnd);
   }
 
@@ -404,7 +418,10 @@ async function boot(): Promise<void> {
       changed();
       persist();
     }
-    enterCamp();
+    // Moon et Cream rentrent à pied au refuge : il s'ouvre sans coupure.
+    current.heroes[CLASS] ??= newHero();
+    current.activeHero = CLASS;
+    playScene('after-tutorial', enterCamp);
   }
 
   /**
@@ -467,6 +484,58 @@ async function boot(): Promise<void> {
     after();
   }
 
+  /**
+   * Lance une scène de route (Moon et Cream rentrent au refuge). `after` est appelé quand elle finit ou
+   * qu'elle est passée ; la scène reste dessinée, à sa dernière image, derrière ce qui suit. Une scène
+   * inconnue n'arrête pas le jeu : `after` tout de suite.
+   */
+  function playScene(id: string, after: () => void): void {
+    const def = data.scenes[id];
+    if (!def) {
+      console.error(`Scène inconnue : ${id}`);
+      after();
+      return;
+    }
+    scene = newScene(def, data.dialogues);
+    sceneAfter = after;
+    sceneT = 0;
+    sceneKey = '';
+    sceneHoldMs = 0;
+    cineSkip.value = 0;
+    setScreen('scene');
+    audio.playMusic('music-camp');
+  }
+
+  /** La scène est finie ou passée : on rend la main à ce qui la suit. */
+  function endScene(): void {
+    if (scene && !scene.done) finishScene(scene);
+    hideDialogue();
+    overlay.value = 'none';
+    sceneKey = '';
+    sceneHoldMs = 0;
+    cineSkip.value = 0;
+    const after = sceneAfter;
+    sceneAfter = () => undefined;
+    after();
+  }
+
+  /** Recopie la ligne de la scène vers la boîte de dialogue, quand elle change. */
+  function syncSceneLine(s: SceneState): void {
+    const line = sceneLine(s);
+    const key = line ? `${s.step}#${s.line}` : '';
+    if (key === sceneKey) return;
+    sceneKey = key;
+    if (line && line.sfx !== '') audio.play(line.sfx.replace(/^sfx-/, ''), 0.8);
+    const who = line ? SPEAKERS[line.who] : undefined;
+    if (line && who) {
+      showLine(who, line.face, line.text, false);
+      overlay.value = 'dialogue';
+    } else {
+      dialogueState.value = null;
+      overlay.value = 'none';
+    }
+  }
+
   /** Le prologue : il est noté comme vu, puis le jeu continue là où on l'attendait. */
   function playIntro(after: 'camp' | 'title' | 'tutorial'): void {
     playCinematic(introCinematic().id, () => {
@@ -524,6 +593,13 @@ async function boot(): Promise<void> {
         closeCampTalk();
         return;
       }
+      if (screen.value === 'scene') {
+        if (scene && shown) {
+          advanceScene(scene);
+          audio.play('ui-move', 0.5);
+        }
+        return;
+      }
       // Une ligne muette passe seule : A ne coupe pas le silence.
       if (!run || run.phase !== 'dialogue' || paused || !shown) return;
       advanceDialogue(run);
@@ -533,6 +609,13 @@ async function boot(): Promise<void> {
       if (performance.now() < guardUntil) return;
       if (campTalk) {
         closeCampTalk();
+        return;
+      }
+      if (screen.value === 'scene') {
+        if (scene && !scene.done) {
+          audio.play('ui-back', 0.6);
+          endScene();
+        }
         return;
       }
       if (!run || run.phase !== 'dialogue' || paused) return;
@@ -1010,6 +1093,38 @@ async function boot(): Promise<void> {
       return;
     }
 
+    if (screen.value === 'scene') {
+      const lit = current.account.regions[REGION]?.lit ?? false;
+      const s = scene;
+      if (memoryCard.value) {
+        // Le carton du souvenir, par-dessus le refuge : A ou B mène au bilan.
+        if (f.pressed.confirm || f.pressed.back) actions.closeMemoryCard();
+      } else if (s && !s.done) {
+        // A : finit la réplique, puis passe à la suivante. B maintenu : passe toute la scène.
+        if (f.pressed.confirm && now >= guardUntil && dialogueState.value) actions.dialogueNext();
+        if (f.held.back && now >= guardUntil) sceneHoldMs += dt;
+        else sceneHoldMs = 0;
+        const k = Math.min(1, sceneHoldMs / SCENE_SKIP_MS);
+        if (k !== cineSkip.value) cineSkip.value = k;
+        if (!held) {
+          sceneT += dt / 1000;
+          stepScene(s, Math.min(0.1, dt / 1000));
+          if (s.kindled) audio.play('intro-flamme', 0.7);
+          typeDialogue(dt);
+        }
+        syncSceneLine(s);
+        if (sceneHoldMs >= SCENE_SKIP_MS) {
+          audio.play('ui-back', 0.6);
+          endScene();
+        } else if (s.done) {
+          endScene();
+        }
+      }
+      if (scene) renderer.drawScene(now, Math.min(0.1, dt / 1000), lit, data.classes[CLASS]!.sprite, scene, Math.min(1, sceneT / SCENE_FADE_S));
+      requestAnimationFrame(frame);
+      return;
+    }
+
     if (overlay.value === 'dialogue') {
       handleDialogue(now, dt);
       typeDialogue(dt);
@@ -1156,6 +1271,23 @@ async function boot(): Promise<void> {
     },
     actions,
     input,
+    /** La scène de route en cours : son identifiant, son étape, une avance rapide pour les captures. */
+    scene: {
+      get id(): string | null {
+        return scene && screen.value === 'scene' ? scene.def.id : null;
+      },
+      get step(): number | null {
+        return scene && screen.value === 'scene' ? scene.step : null;
+      },
+      /** Avance la scène de `seconds` secondes ; avec `talk`, A passe chaque réplique. */
+      advance(seconds: number, talk = false): void {
+        for (let ms = 0; scene && !scene.done && ms < seconds * 1000; ms += 50) {
+          stepScene(scene, 0.05);
+          sceneT += 0.05;
+          if (talk && sceneLine(scene)) advanceScene(scene);
+        }
+      },
+    },
     /** La cinématique en cours : son temps, son plan, et une avance rapide pour les captures. */
     cinematic: {
       get time(): number | null {
