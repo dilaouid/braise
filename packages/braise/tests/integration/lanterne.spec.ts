@@ -43,6 +43,20 @@ async function toLantern(page: Page, pad: SimPad): Promise<void> {
   await settle(page);
 }
 
+/** Déplace le focus, une direction à la fois, jusqu'à cet élément (d'après sa place à l'écran). */
+async function focusTo(page: Page, pad: SimPad, id: string): Promise<void> {
+  for (let k = 0; k < 12; k++) {
+    const from = page.locator('#ui .is-focused');
+    if ((await from.getAttribute('data-focus')) === id) return;
+    const a = (await from.boundingBox())!;
+    const b = (await page.locator(`[data-focus="${id}"]`).boundingBox())!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    await pad.press(Math.abs(dy) > 20 ? (dy > 0 ? 'DOWN' : 'UP') : dx > 0 ? 'RIGHT' : 'LEFT');
+  }
+  await expectFocus(page, id);
+}
+
 async function depart(page: Page, pad: SimPad): Promise<void> {
   await settle(page);
   while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'depart') await pad.press('UP');
@@ -70,7 +84,15 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   await pad.press('A');
   await expectFocus(page, 'face-1');
   expect(await faces(page)).toEqual(['rune.hunger', null, null, null]);
-  await expect(page.locator('[data-focus="face-1"]')).toContainText(`${FR['rune.hunger.name']} I`);
+  await expect(page.locator('[data-focus="face-1"]')).toHaveAttribute('data-level', '1');
+  await expect(page.locator('.lantern-detail')).toContainText(FR['rune.hunger.name']!);
+  // Une seule phrase au plus : les images suffisent, X donne les mots.
+  await expect(page.locator('.piece-words')).toHaveCount(0);
+  await settle(page);
+  await pad.press('X');
+  await expect(page.locator('.piece-words')).toContainText(FR['rune.hunger.malus']!);
+  await pad.press('X');
+  await expect(page.locator('.piece-words')).toHaveCount(0);
 
   // Le Verre poli sur la face 2 : l'aperçu montre déjà le niveau II, avant de valider.
   await settle(page);
@@ -79,10 +101,10 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   await settle(page);
   await pad.press('A');
   await settle(page);
-  while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'glass.polished') {
-    await pad.press((await page.locator('#ui .is-focused').getAttribute('data-focus')) === 'rune.call' ? 'LEFT' : 'DOWN');
-  }
-  await expect(page.locator('.lantern-face.face-1')).toContainText(`${FR['rune.hunger.name']} II`);
+  await focusTo(page, pad, 'glass.polished');
+  await expect(page.locator('.lantern-face.face-1')).toHaveAttribute('data-level', '2');
+  await expect(page.locator('.lantern-link.up[data-from="2"][data-to="1"]')).toHaveCount(1);
+  await expect(page.locator('.lantern-grid .piece-cell.missing')).toHaveCount(9);
   expect(await faces(page)).toEqual(['rune.hunger', null, null, null]);
   await capture(page, info, SHOTS, 'apercu');
   await pad.press('A');
@@ -100,18 +122,16 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   await settle(page);
   await pad.press('A');
   await settle(page);
-  while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'rune.hunger') await pad.press('UP');
+  await focusTo(page, pad, 'rune.hunger');
   await pad.press('A');
   await expectFocus(page, 'face-2');
   expect(await faces(page)).toEqual(['glass.polished', 'rune.hunger', null, null]);
 
-  // Retirer, depuis la tête de la liste.
+  // Retirer, depuis la case à la croix.
   await settle(page);
   await pad.press('A');
   await settle(page);
-  while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'remove') {
-    await pad.press((await page.locator('#ui .is-focused').getAttribute('data-focus')) === 'rune.hunger' ? 'LEFT' : 'UP');
-  }
+  await focusTo(page, pad, 'remove');
   await pad.press('A');
   await expectFocus(page, 'face-2');
   expect(await faces(page)).toEqual(['glass.polished', null, null, null]);
@@ -120,7 +140,7 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   await settle(page);
   await pad.press('A');
   await settle(page);
-  while ((await page.locator('#ui .is-focused').getAttribute('data-focus')) !== 'rune.hunger') await pad.press('UP');
+  await focusTo(page, pad, 'rune.hunger');
   await pad.press('A');
   await expectFocus(page, 'face-2');
   await settle(page);
@@ -162,7 +182,7 @@ test('une face fermée dit sa condition et refuse A', async ({ page }, info) => 
   await settle(page);
   await pad.press('A');
   await expectFocus(page, 'face-2');
-  await expect(page.locator('.lantern-list.active')).toHaveCount(0);
+  await expect(page.locator('.lantern-grid.active')).toHaveCount(0);
   await pad.press('DOWN');
   await expectFocus(page, 'face-3');
   await expect(page.locator('.lantern-detail')).toContainText('2 / 3');
@@ -176,9 +196,9 @@ test('une Lanterne vide le dit, et A n\'ouvre rien', async ({ page }, info) => {
   await toCamp(page, pad);
   await expect(page.locator('.badge-lantern')).toHaveCount(0);
   await toLantern(page, pad);
-  await expect(page.locator('.lantern-right')).toContainText(FR['lantern.empty']!);
+  await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.empty']!);
   await pad.press('A');
-  await expect(page.locator('.lantern-list.active')).toHaveCount(0);
+  await expect(page.locator('.lantern-grid.active')).toHaveCount(0);
   await capture(page, info, SHOTS, 'vide');
   await pad.press('B');
   await expect(page.locator('.screen.camp')).toBeVisible();
@@ -199,7 +219,7 @@ test('à la souris : poser et retirer ; recharger la page garde la pose', async 
   await page.locator('[data-focus="start"]').click();
   await expect(page.locator('.screen.camp')).toBeVisible();
   await page.locator('[data-focus="lantern"]').click();
-  await expect(page.locator('[data-focus="face-1"]')).toContainText(FR['rune.call.name']!);
+  await expect(page.locator('[data-focus="face-1"]')).toHaveAttribute('data-piece', 'rune.call');
   await page.locator('[data-focus="face-1"]').click();
   await page.locator('[data-focus="remove"]').click();
   expect(await faces(page)).toEqual([null, null, null, null]);
