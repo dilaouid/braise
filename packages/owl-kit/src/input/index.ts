@@ -73,6 +73,11 @@ export interface InputFrame {
   /** Direction de menu de cette image, avec répétition : -1, 0 ou 1. */
   navX: number;
   navY: number;
+  /** La croix de la manette seule (ni stick ni clavier), à l'appui : -1, 0 ou 1. */
+  dpadX: number;
+  dpadY: number;
+  /** La croix est maintenue. */
+  dpadHeld: boolean;
   device: DeviceKind;
 }
 
@@ -107,7 +112,7 @@ export type GamepadProvider = () => ArrayLike<Gamepad | null>;
 export class InputManager {
   readonly frame: InputFrame = {
     moveX: 0, moveY: 0, aimX: 0, aimY: 0,
-    held: emptyFlags(), pressed: emptyFlags(), navX: 0, navY: 0, device: 'keyboard',
+    held: emptyFlags(), pressed: emptyFlags(), navX: 0, navY: 0, dpadX: 0, dpadY: 0, dpadHeld: false, device: 'keyboard',
   };
 
   bindings: Bindings = defaultBindings();
@@ -128,6 +133,8 @@ export class InputManager {
   private navDirX = 0;
   private navDirY = 0;
   private navNextAt = 0;
+  private dpadDirX = 0;
+  private dpadDirY = 0;
   private bridge: PadState | null = null;
   private activePad = -1;
   private lastPadStamp = new Map<number, string>();
@@ -315,6 +322,15 @@ export class InputManager {
       }
     }
     if (padUsed) this.setDevice('gamepad');
+
+    // La croix seule.
+    const cx = (pad?.buttons[PAD.RIGHT] ? 1 : 0) - (pad?.buttons[PAD.LEFT] ? 1 : 0);
+    const cy = (pad?.buttons[PAD.DOWN] ? 1 : 0) - (pad?.buttons[PAD.UP] ? 1 : 0);
+    f.dpadHeld = cx !== 0 || cy !== 0;
+    f.dpadX = cx !== this.dpadDirX ? cx : 0;
+    f.dpadY = cy !== this.dpadDirY ? cy : 0;
+    this.dpadDirX = cx;
+    this.dpadDirY = cy;
 
     // Navigation de menu, avec répétition.
     let nx = (f.held.right ? 1 : 0) - (f.held.left ? 1 : 0);

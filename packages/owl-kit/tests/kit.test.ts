@@ -256,6 +256,41 @@ describe('changement de focus', () => {
   });
 });
 
+describe('portée sans focus obligatoire', () => {
+  it('rien n\'est choisi d\'office, et valider ne fait rien', () => {
+    const items = [fakeItem('a', 0), fakeItem('b', 60)];
+    let clicks = 0;
+    for (const el of items) el.click = () => clicks++;
+    const root = fakeRoot(items);
+    const focus = new FocusManager(root);
+    focus.setScope(root, 'camp', { optional: true });
+    focus.ensure();
+    expect(focus.focused).toBeNull();
+    expect(focus.activate()).toBe(false);
+    focus.focusId('b');
+    expect(focus.focused).toBe(items[1]);
+    expect(focus.activate()).toBe(true);
+    expect(clicks).toBe(1);
+    focus.clear();
+    focus.ensure();
+    expect(focus.focused).toBeNull();
+    // Un élément au focus qui disparaît n'est pas remplacé.
+    focus.focusId('a');
+    items[0].isConnected = false;
+    focus.ensure();
+    expect(focus.focused).toBeNull();
+  });
+
+  it('revenir à une portée normale choisit de nouveau', () => {
+    const items = [fakeItem('a', 0)];
+    const root = fakeRoot(items);
+    const focus = new FocusManager(root);
+    focus.setScope(root, 'camp', { optional: true });
+    focus.setScope(root, 'altar');
+    expect(focus.focused).toBe(items[0]);
+  });
+});
+
 /** Une cible d'événements factice, à la place de `window`. */
 function fakeTarget() {
   const listeners = new Map<string, Array<(e: any) => void>>();
@@ -346,6 +381,35 @@ describe('entrées', () => {
     const asAxes = new InputManager(fakeTarget(), () => [pad([], [0, 0, 0, 0, 0, 0, 0, 1])]);
     asAxes.poll(0);
     expect(asAxes.frame.moveY).toBe(1);
+  });
+
+  it('la croix seule : à l\'appui, jamais le stick ni le clavier', () => {
+    let buttons: number[] = [PAD.RIGHT];
+    let axes = [0, 0, 0, 0];
+    const target = fakeTarget();
+    const input = new InputManager(target, () => [pad(buttons, axes)]);
+    input.poll(0);
+    expect([input.frame.dpadX, input.frame.dpadY, input.frame.dpadHeld]).toEqual([1, 0, true]);
+    input.poll(16);
+    expect([input.frame.dpadX, input.frame.dpadY, input.frame.dpadHeld]).toEqual([0, 0, true]);
+    buttons = [];
+    axes = [1, 0, 0, 0];
+    target.emit('keydown', { code: 'ArrowUp' });
+    input.poll(32);
+    expect([input.frame.dpadX, input.frame.dpadY, input.frame.dpadHeld]).toEqual([0, 0, false]);
+    expect(input.frame.moveX).toBe(1);
+  });
+
+  it('la croix seule se lit aussi en axes HAT', () => {
+    const input = new InputManager(fakeTarget(), () => [pad([], [0, 0, 0, 0, 0, 0, 0, -1])]);
+    input.poll(0);
+    expect([input.frame.dpadX, input.frame.dpadY]).toEqual([0, -1]);
+  });
+
+  it('sans manette, la croix est au repos', () => {
+    const input = new InputManager(fakeTarget(), () => []);
+    input.poll(0);
+    expect([input.frame.dpadX, input.frame.dpadY, input.frame.dpadHeld]).toEqual([0, 0, false]);
   });
 
   it('le pont natif owl:gamepad est traité comme une manette standard', () => {
