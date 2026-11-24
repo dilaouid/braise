@@ -1214,6 +1214,10 @@ async function boot(): Promise<void> {
   };
 }
 
+// En développement seulement : un texte de content/ enregistré par l'éditeur (ou changé à la main) recharge le jeu.
+// Vite ne recharge plus lui-même ces fichiers (tools/vite-editor.ts) ; `import.meta.hot` n'existe pas dans le jeu construit.
+if (import.meta.hot) import.meta.hot.on('braise:content', () => location.reload());
+
 boot().catch((err) => {
   console.error(err);
   const fail = (window as unknown as { __braiseBootFail?: (text: string) => void }).__braiseBootFail;
