@@ -220,7 +220,7 @@ function nextPlace(run: Run): Poi | null {
   let found: Poi | null = null;
   let foundD = Infinity;
   for (const poi of run.map.pois) {
-    if (poi.state === 2 || poi.kind === 'portal') continue;
+    if (poi.state === 2 || poi.kind === 'portal' || poi.kind === 'memory') continue;
     if (poi.kind === 'spring' && hero.hp > hero.stats.maxHp * 0.6) continue;
     if (poi.kind === 'smith') {
       if (hero.gold < ev.smith.basePrice + ev.smith.priceStep * run.smithBuys) continue;
@@ -386,8 +386,8 @@ export function simulate(run: Run, options: SimOptions): Run {
     input.moveX = 0; input.moveY = 0; input.aimX = 0; input.aimY = 0;
     input.dash = false; input.skill = false; input.ultimate = false; input.flask = false;
     options.bot(run, input);
-    // Après le boss, le robot rentre par le portail.
-    const portal = run.map.pois.find((p) => p.kind === 'portal' && p.state === 0);
+    // Après le boss, le robot rentre par le portail, ou par le Souvenir que le boss a laissé.
+    const portal = run.map.pois.find((p) => (p.kind === 'portal' || p.kind === 'memory') && p.state === 0);
     if (portal) {
       const dx = portal.x - run.hero.x;
       const dy = portal.y - run.hero.y;

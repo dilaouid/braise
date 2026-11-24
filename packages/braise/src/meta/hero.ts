@@ -90,11 +90,31 @@ export function unlockedContent(data: GameData, save: Save): { weapons: string[]
   };
 }
 
+/** Vrai si ce souvenir a déjà été repris à son boss. */
+export function hasMemory(save: Save, id: string): boolean {
+  return save.account.unlocks.includes(id);
+}
+
+/** Le nombre de souvenirs retrouvés. */
+export function memoryCount(data: GameData, save: Save): number {
+  return data.memories.filter((m) => hasMemory(save, m.id)).length;
+}
+
+/** Le souvenir que le boss de cette région garde encore, ou null. */
+export function pendingMemory(data: GameData, save: Save, regionId: string): string | null {
+  const region = data.regions[regionId];
+  if (!region) return null;
+  const memory = data.memories.find((m) => m.bossIdx === region.bossIdx);
+  return memory && !hasMemory(save, memory.id) ? memory.id : null;
+}
+
 /** Ce qu'une expédition terminée a changé dans la sauvegarde. */
 export interface RunSummary {
   levelsGained: number;
   heroLevel: number;
   firstBossKill: boolean;
+  /** Le souvenir obtenu par cette expédition (null s'il l'était déjà, ou s'il n'y en a pas). */
+  memory: string | null;
 }
 
 /** Verse le résultat d'une expédition dans la sauvegarde : monnaies, expérience, codex, régions. */
@@ -123,5 +143,10 @@ export function applyRunResult(save: Save, data: GameData, result: RunResult): R
   s.bestSeconds = Math.max(s.bestSeconds ?? 0, Math.floor(result.seconds));
   s.bestRunLevel = Math.max(s.bestRunLevel ?? 0, result.runLevel);
   save.playSeconds += result.seconds;
-  return { levelsGained, heroLevel: hero.level, firstBossKill };
+  let memory: string | null = null;
+  if (result.memory !== null && !hasMemory(save, result.memory)) {
+    acc.unlocks.push(result.memory);
+    memory = result.memory;
+  }
+  return { levelsGained, heroLevel: hero.level, firstBossKill, memory };
 }

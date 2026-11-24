@@ -25,6 +25,8 @@ export interface RunResult {
   heroXp: number;
   damageByWeapon: Array<{ id: string; damage: number }>;
   killsByEnemy: Record<string, number>;
+  /** Le souvenir ramassé dans l'arène, ou null. */
+  memory: string | null;
 }
 
 /** Calcule les récompenses de fin d'expédition (document 02 §11 et document 05 §5). */
@@ -72,5 +74,6 @@ export function computeResult(run: Run): RunResult {
       .map((w) => ({ id: run.data.weapons[w.def]!.id, damage: Math.round(w.damageDone) }))
       .sort((a, b) => b.damage - a.damage),
     killsByEnemy,
+    memory: victory && run.memoryTaken ? (run.cfg.memory ?? null) : null,
   };
 }

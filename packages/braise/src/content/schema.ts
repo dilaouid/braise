@@ -359,7 +359,9 @@ export const expeditionTuningSchema = z
           })
           .strict(),
         treasure: z.object({ count: z.number().int(), radius: z.number() }).strict(),
-        bossWarningMinute: z.number(),
+        /** Distance dont Moon doit s'écarter d'un Souvenir tombé sous ses pieds avant de pouvoir le prendre, en pixels. */
+    memoryArmRadius: z.number().positive(),
+    bossWarningMinute: z.number(),
       })
       .strict(),
     damageNumberInterval: z.number(),
@@ -487,6 +489,17 @@ export const tutorialSchema = z
     steps: z.array(tutorialStepSchema).min(2),
   })
   .strict();
+
+/** Les souvenirs que gardent les boss. `total` : le nombre d'emplacements montrés au refuge. */
+export const memoriesSchema = z
+  .object({
+    total: z.number().int().positive(),
+    memories: z.array(
+      z.object({ id: z.string().regex(/^memory\.[a-z-]+$/), boss: enemyId, cinematic: z.string() }).strict(),
+    ),
+  })
+  .strict();
+export type MemoriesRaw = z.infer<typeof memoriesSchema>;
 
 export type DialoguesRaw = z.infer<typeof dialoguesSchema>;
 export type TutorialRaw = z.infer<typeof tutorialSchema>;

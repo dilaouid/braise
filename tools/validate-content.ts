@@ -3,16 +3,18 @@
  * Une donnée fausse fait échouer la construction, pas le jeu.
  */
 import { readFileSync } from 'node:fs';
-import { compileCinematic, INTRO_RAW } from '../packages/braise/src/content/cinematic.ts';
+import { CINEMATICS_RAW, compileCinematic } from '../packages/braise/src/content/cinematic.ts';
 import { RAW, compileContent } from '../packages/braise/src/content/index.ts';
 
 const { data, errors } = compileContent();
 const audioIndex = JSON.parse(readFileSync(new URL('../packages/braise/public/audio/index.json', import.meta.url), 'utf8')) as Record<string, string>;
-const intro = compileCinematic(INTRO_RAW, RAW.fr, new Set(Object.keys(audioIndex)));
-if (!intro.cinematic) {
-  console.error(`Cinématique d'intro invalide (${intro.errors.length}) :`);
-  for (const e of intro.errors) console.error(`  - ${e}`);
-  process.exit(1);
+for (const [id, raw] of Object.entries(CINEMATICS_RAW)) {
+  const cine = compileCinematic(raw, RAW.fr, new Set(Object.keys(audioIndex)));
+  if (!cine.cinematic) {
+    console.error(`Cinématique « ${id} » invalide (${cine.errors.length}) :`);
+    for (const e of cine.errors) console.error(`  - ${e}`);
+    process.exit(1);
+  }
 }
 if (!data) {
   console.error(`Données invalides (${errors.length}) :`);

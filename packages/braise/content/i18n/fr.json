@@ -410,5 +410,17 @@
   "camp.cream.3": "Ne me regarde pas comme ça. Je garde.",
   "camp.cream.4": "Cinq Souvenirs. Tu comptes rester assis longtemps ?",
   "camp.cream.5": "Si tu reviens entier, je te laisse la bonne place près du feu.",
-  "camp.cream.6": "Tu parles moins qu'avant. Dommage, je commençais à écouter."
+  "camp.cream.6": "Tu parles moins qu'avant. Dommage, je commençais à écouter.",
+  "memory.meeting.name": "La rencontre",
+  "cine.memory-meeting.t1": "Une nuit, en forêt. Moon et Astrid se connaissaient depuis peu.",
+  "cine.memory-meeting.t2": "Astrid avait peur du noir. Elle n'a rien dit, mais elle s'est arrêtée.",
+  "cine.memory-meeting.t3": "Moon a fait un lapin avec sa lampe. Elle a ri.",
+  "cine.memory-meeting.t4": "Ils sont rentrés ensemble, avec cette petite lumière.",
+  "memory.found": "Souvenir retrouvé",
+  "memory.count": "{have} / {total}",
+  "hud.memory": "Un Souvenir. Prends-le.",
+  "camp.memories": "Souvenirs",
+  "camp.memories.desc": "Ce que Moon a repris aux Éteints.",
+  "camp.memories.empty": "···",
+  "end.memory": "Souvenir retrouvé : {name}"
 }

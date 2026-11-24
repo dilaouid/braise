@@ -74,8 +74,15 @@ export function updatePois(run: Run, dt: number): void {
         }
         break;
       case 'portal':
+      case 'memory':
+        // Un Souvenir tombé sous les pieds de Moon attend qu'il s'écarte : il doit le voir avant de le prendre.
+        if (!poi.armed) {
+          if (dist >= ev.memoryArmRadius) poi.armed = true;
+          break;
+        }
         if (dist < 20) {
           poi.state = 2;
+          if (poi.kind === 'memory') run.memoryTaken = true;
           run.outcome = 'victory';
           run.phase = 'victory';
         }

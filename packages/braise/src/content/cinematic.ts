@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import introJson from '../../content/cinematics/intro.json';
+import memoryMeetingJson from '../../content/cinematics/memory-meeting.json';
 import frJson from '../../content/i18n/fr.json';
 
 /**
@@ -183,15 +184,30 @@ export function compileCinematic(raw: unknown, fr: Record<string, string>, sound
   return errors.length > 0 ? { cinematic: null, errors } : { cinematic: c, errors };
 }
 
-let intro: Cinematic | null = null;
+/** Les fichiers bruts de toutes les cinématiques, par identifiant. Une cinématique de plus : une ligne ici. */
+export const CINEMATICS_RAW: Record<string, unknown> = {
+  intro: introJson,
+  'memory-meeting': memoryMeetingJson,
+};
 
-/** La cinématique d'intro, validée. Lève une erreur lisible si elle est fausse. */
-export function introCinematic(): Cinematic {
-  if (intro) return intro;
-  const { cinematic, errors } = compileCinematic(introJson, frJson as unknown as Record<string, string>);
+const compiled = new Map<string, Cinematic>();
+
+/** Une cinématique validée, par son identifiant. Lève une erreur lisible si elle est inconnue ou fausse. */
+export function cinematicById(id: string): Cinematic {
+  const cached = compiled.get(id);
+  if (cached) return cached;
+  const raw = CINEMATICS_RAW[id];
+  if (raw === undefined) throw new Error(`Cinématique inconnue : ${id}`);
+  const { cinematic, errors } = compileCinematic(raw, frJson as unknown as Record<string, string>);
   if (!cinematic) throw new Error(`Cinématique invalide :\n${errors.join('\n')}`);
-  intro = cinematic;
-  return intro;
+  if (cinematic.id !== id) throw new Error(`Cinématique « ${id} » : son fichier porte l'identifiant « ${cinematic.id} »`);
+  compiled.set(id, cinematic);
+  return cinematic;
+}
+
+/** La cinématique d'intro, validée. */
+export function introCinematic(): Cinematic {
+  return cinematicById('intro');
 }
 
 /** Le fichier brut, pour les outils et les tests. */
