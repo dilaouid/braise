@@ -121,7 +121,7 @@
     },
     {
       "id": "p03-fumee",
-      "duration": 9.5,
+      "duration": 10.5,
       "caption": "cine.intro.t03",
       "captionAt": 1.2,
       "fadeIn": 0.8,
@@ -151,7 +151,7 @@
     },
     {
       "id": "p04-course",
-      "duration": 8.5,
+      "duration": 9.5,
       "caption": "cine.intro.t04",
       "captionAt": 1.2,
       "fadeIn": 0.5,
@@ -176,7 +176,7 @@
           "radius": [18, 40],
           "alpha": [0.15, 0.55],
           "start": 0,
-          "end": 7,
+          "end": 8,
           "colors": [
             "#454a5c",
             "#6b7285",
@@ -225,7 +225,7 @@
     },
     {
       "id": "p05-porte",
-      "duration": 12,
+      "duration": 13,
       "caption": "cine.intro.t05",
       "captionAt": 2.4,
       "fadeIn": 1.8,
@@ -250,7 +250,7 @@
           "radius": [10, 22],
           "alpha": [0.3, 0.3],
           "start": 0,
-          "end": 10,
+          "end": 11,
           "colors": [
             "#6b7285",
             "#9aa3b5"
@@ -340,7 +340,7 @@
     },
     {
       "id": "p09-ruine",
-      "duration": 9.5,
+      "duration": 10.5,
       "caption": "cine.intro.t09",
       "captionAt": 1.2,
       "fadeIn": 0.8,
@@ -400,7 +400,7 @@
     },
     {
       "id": "p11-mains",
-      "duration": 9.5,
+      "duration": 10,
       "caption": "cine.intro.t11",
       "captionAt": 2.2,
       "fadeIn": 1,
@@ -440,7 +440,7 @@
     },
     {
       "id": "p12-lueur",
-      "duration": 12.5,
+      "duration": 14,
       "caption": "cine.intro.t12",
       "captionAt": 1.6,
       "fadeIn": 1,
@@ -457,7 +457,7 @@
           "at": [376, 134],
           "radius": [14, 17],
           "start": 0,
-          "end": 11,
+          "end": 12.5,
           "warm": 0.3
         },
         {

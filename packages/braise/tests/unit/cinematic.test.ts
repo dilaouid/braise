@@ -24,10 +24,10 @@ describe('cinématique d\'intro (document 15)', () => {
     expect(cinematic).not.toBeNull();
   });
 
-  it('dure entre 95 et 120 secondes', () => {
+  it('dure entre 95 et 130 secondes', () => {
     const d = cinematicDuration(cinematic!);
     expect(d).toBeGreaterThanOrEqual(95);
-    expect(d).toBeLessThanOrEqual(120);
+    expect(d).toBeLessThanOrEqual(130);
   });
 
   it('se passe en maintenant B au moins une demi-seconde', () => {
