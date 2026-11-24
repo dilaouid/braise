@@ -1,5 +1,6 @@
 import type { Rng } from '@owl/kit/rng';
 import type { ClassDef, GameData, RegionDef, TutorialDef } from '../content/index.ts';
+import type { RunMods } from './mods.ts';
 import type { HeroStats, StatSheet } from './stats.ts';
 
 /** Pas de simulation, en secondes. */
@@ -42,6 +43,8 @@ export const PK_DROP = 3;
 export const PK_CHEST = 4;
 export const PK_CALL = 5;
 export const PK_RED_GEM = 6;
+/** Une pièce de la Lanterne ; sa valeur est son indice dans `data.lantern.pieces`. */
+export const PK_PIECE = 7;
 
 /** Sortes de projectiles du joueur. */
 export const SHOT_STRAIGHT = 0;
@@ -72,6 +75,10 @@ export const EV = {
   brazierNone: 45,
   /** Le boss retombe en poussière avant de se relever (x, y). */
   bossReform: 46,
+  /** Chasse : un élite battu de plus (a : le bonus de Puissance atteint). */
+  hunt: 47,
+  /** Une pièce de la Lanterne tombe (a : son indice). */
+  pieceDrop: 48,
 } as const;
 
 export interface EnemyStore {
@@ -343,6 +350,13 @@ export interface RunConfig {
   memory?: string | null;
   /** Le boss de la région est déjà battu : c'est son boss reformé qui l'attend. */
   reborn?: boolean;
+  /** Ce que la Lanterne change aux règles. Absent : rien. */
+  mods?: RunMods;
+  /**
+   * Les pièces qui peuvent tomber (identifiants), si le boss en doit une, et combien étaient posées au départ.
+   * Absent : aucune pièce ne tombe.
+   */
+  lantern?: { pool: string[]; guaranteed: boolean; placed: number };
 }
 
 /** Tuiles pleines propres au tutoriel. */
@@ -413,6 +427,8 @@ export interface Run {
   region: RegionDef;
   cls: ClassDef;
   rngMap: Rng; rngSpawn: Rng; rngDraw: Rng; rngCombat: Rng;
+  /** Le tirage des pièces de la Lanterne, à part : il ne déplace rien d'autre. */
+  rngLantern: Rng;
   tick: number;
   /** Temps de jeu écoulé, en secondes (les pauses ne comptent pas). */
   time: number;
@@ -420,6 +436,12 @@ export interface Run {
   map: GameMap;
   hero: Hero;
   sheet: StatSheet;
+  /** Les règles changées par la Lanterne ; neutres sans elle. */
+  mods: Readonly<RunMods>;
+  /** Gemmes ramassées depuis le dernier point de vie rendu par Faim. */
+  gemsHeld: number;
+  /** Résurrections déjà utilisées. */
+  revived: number;
   weapons: WeaponInstance[];
   relics: RelicInstance[];
   acquired: number;
@@ -493,6 +515,8 @@ export interface Run {
   /** Dégâts subis par le héros, par sorte d'ennemi (pour l'équilibrage). */
   damageByKind: Float32Array;
   braziersLit: number;
+  /** La pièce de la Lanterne tombée dans cette partie (une au plus), ou null. */
+  piece: { index: number; taken: boolean; fromBoss: boolean } | null;
   /** Vrai une fois le Souvenir du boss ramassé. */
   memoryTaken: boolean;
   /** L'état du tutoriel, ou null pour une expédition normale. */

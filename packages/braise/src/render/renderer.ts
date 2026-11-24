@@ -2,11 +2,12 @@ import { Application, Container, Graphics, RenderTexture, Sprite, Texture, Textu
 import type { GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
-  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
   TILE_GATE, TILE_THICKET,
   type Run,
 } from '../core/types.ts';
 import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
+import { lowHp } from '../core/combat.ts';
 import type { SceneState } from '../core/scene.ts';
 import { tutorialTarget } from '../core/tutorial.ts';
 import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
@@ -307,6 +308,7 @@ export class GameRenderer {
     this.pickupTextures[PK_CHEST] = a.get('pickup-coffre');
     this.pickupTextures[PK_CALL] = a.get('pickup-call');
     this.pickupTextures[PK_RED_GEM] = a.get('pickup-gem-red');
+    this.pickupTextures[PK_PIECE] = a.get('pickup-lantern-piece');
     this.shotTextures = SHOT_SPRITES.map((name) => a.get(name));
     this.digitTextures = a.anim('font-digits');
     this.flameFrames = a.anim('fx-flame');
@@ -503,7 +505,7 @@ export class GameRenderer {
   }
 
   /** Perce la couche sombre d'un disque de lumière. `warm` ajoute une teinte chaude (lanterne, feux). */
-  private light(x: number, y: number, radius: number, warm = 0): void {
+  private light(x: number, y: number, radius: number, warm = 0, tint: number = C.emberHot): void {
     if (this.lightCount >= MAX_LIGHTS || radius < 3) return;
     const s = this.lights[this.lightCount++]!;
     s.texture = lightDisc(radius);
@@ -514,6 +516,7 @@ export class GameRenderer {
       w.texture = s.texture;
       w.position.copyFrom(s.position);
       w.alpha = warm;
+      w.tint = tint;
       w.visible = true;
     }
   }
@@ -868,6 +871,7 @@ export class GameRenderer {
       s.position.set(Math.round(x), Math.round(y) + bob);
       s.visible = true;
       if (kind === PK_CHEST) this.light(lightX(x), lightY(y), 26);
+      else if (kind === PK_PIECE) this.light(lightX(x), lightY(y), 18, 0.25);
       else if (kind === PK_CALL || kind === PK_DROP || kind === PK_RED_GEM) this.light(lightX(x), lightY(y), 12);
       else this.light(lightX(x), lightY(y), 6);
     }
@@ -1053,7 +1057,10 @@ export class GameRenderer {
       glow *= Math.max(0, 1 - this.deathFade);
       this.darkness.alpha = Math.min(1, run.region.darkness.opacity + this.deathFade * 0.5);
     }
-    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : 0.1);
+    // Dernière lueur : le disque rougit sous son seuil, plus ou moins selon le réglage des flashs.
+    const last = lowHp(run) && this.settings.flashes > 0;
+    const warmth = last ? 0.1 + 0.18 * this.settings.flashes : 0.1;
+    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : warmth, last ? C.emberDark : C.emberHot);
     // Retour à l'entrée de la salle après une chute : un fondu court depuis le noir.
     if (this.respawnFade > 0) {
       this.screenFx.rect(0, 0, VIEW_W, VIEW_H).fill({ color: 0x000000, alpha: Math.min(1, this.respawnFade) });
@@ -1284,7 +1291,7 @@ export class GameRenderer {
     }
     if (target && !(run.director.bossSpawned && !run.director.bossDead)) arrow(target.x, target.y, C.emberPale);
     const p = run.pickups;
-    for (let i = 0; i < p.count; i++) if (p.kind[i] === PK_CHEST) arrow(p.x[i]!, p.y[i]!, C.ember);
+    for (let i = 0; i < p.count; i++) if (p.kind[i] === PK_CHEST || p.kind[i] === PK_PIECE) arrow(p.x[i]!, p.y[i]!, C.ember);
     for (; used < this.arrows.length; used++) this.arrows[used]!.visible = false;
   }
 

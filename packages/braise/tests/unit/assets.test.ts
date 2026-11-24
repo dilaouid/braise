@@ -61,6 +61,8 @@ describe('assets (documents 10 et 11)', () => {
     for (const r of data.relics) need.push(r.icon);
     for (const e of data.enemies) need.push(e.sprite);
     for (const a of data.altar) need.push(a.icon);
+    for (const p of data.lantern.pieces) need.push(p.icon);
+    need.push('pickup-lantern-piece', 'lantern-frame', 'lantern-face-closed');
     for (const region of Object.values(data.regions)) {
       for (let mask = 0; mask < 16; mask++) need.push(`${region.tileset}-${mask}`);
       for (const d of region.decor) need.push(d.sprite);

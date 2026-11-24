@@ -1,5 +1,6 @@
-import { loadGameData, type GameData, type TutorialStep } from '../../src/content/index.ts';
+import { loadGameData, type GameData, type RunModsRaw, type TutorialStep } from '../../src/content/index.ts';
 import { recomputeStats } from '../../src/core/levelup.ts';
+import { NEUTRAL_MODS, mergeMods } from '../../src/core/mods.ts';
 import { createRun } from '../../src/core/run.ts';
 import { createTutorialRun } from '../../src/core/tutorial-run.ts';
 import type { Run } from '../../src/core/types.ts';
@@ -35,6 +36,12 @@ export function makeRun(seed = 1234, save: Save = makeSave(), autoSkills = false
     seed, regionId: REGION, classId: CLASS, vigil: 1, sheet,
     unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills,
   });
+}
+
+/** Une expédition de test avec ces modificateurs de Lanterne. */
+export function makeModRun(mods: RunModsRaw, seed = 1234): Run {
+  const base = makeRun(seed);
+  return createRun(data, { ...base.cfg, mods: mergeMods({ ...NEUTRAL_MODS }, mods) });
 }
 
 /**

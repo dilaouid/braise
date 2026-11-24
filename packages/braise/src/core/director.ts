@@ -175,7 +175,8 @@ export function updateDirector(run: Run, dt: number): void {
   }
 
   // Budget, avec la respiration après un élite battu ou une montée de niveau.
-  let income = threatPerSecond(tuning.threat, m, v, 0) * dt;
+  const threat = threatPerSecond(tuning.threat, m, v, 0) * run.mods.threatMult;
+  let income = threat * dt;
   if (d.breathT > 0) {
     d.breathT -= dt;
     income *= tuning.director.breathFactor;
@@ -183,7 +184,7 @@ export function updateDirector(run: Run, dt: number): void {
   d.budget += income;
   // Aucun ennemi vivant : un budget immédiat, pour que l'écran ne reste pas vide.
   if (e.count === 0 && run.time > 1.5) {
-    d.budget += threatPerSecond(tuning.threat, m, v, 0) * tuning.director.emptyBurstSeconds;
+    d.budget += threat * tuning.director.emptyBurstSeconds;
   }
 
   // Vagues scriptées de la région, annoncées une seconde avant.

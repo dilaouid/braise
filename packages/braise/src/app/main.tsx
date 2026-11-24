@@ -14,13 +14,14 @@ import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
-import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
+import { abandonRun, clearEvents, createRun, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
-import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
+import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
+import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
@@ -28,8 +29,8 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
-  holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
+  INTRO_SEEN, TUTORIAL_SEEN, UI_SOUNDS, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  focusedId, holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
@@ -79,6 +80,13 @@ async function boot(): Promise<void> {
     focus.setScope(el, key);
     requestAnimationFrame(() => focus.ensure());
   };
+  focusRef.focusId = (id) => {
+    focus.focusId(id);
+    focus.onMove?.();
+  };
+  focus.onChange = (id) => {
+    focusedId.value = id;
+  };
   const audio = new AudioManager();
   void audio.load(base);
 
@@ -96,6 +104,8 @@ async function boot(): Promise<void> {
   let pendFlask = false;
   let banner: string | null = null;
   let bannerUntil = 0;
+  /** Un bandeau qui attend la fin de celui affiché. */
+  let bannerNext: { text: string; ms: number } | null = null;
   let saveTimer = 0;
   let frames = 0;
   let fps = 0;
@@ -280,6 +290,12 @@ async function boot(): Promise<void> {
     bannerUntil = performance.now() + ms;
   }
 
+  /** Affiche ce texte une fois le bandeau en cours fini : il n'efface pas une consigne. */
+  function sayAfter(text: string, ms: number): void {
+    if (banner !== null && performance.now() < bannerUntil) bannerNext = { text, ms };
+    else say(text, ms);
+  }
+
   function syncLevelUp(): void {
     if (!run) return;
     levelUp.value = { level: run.hero.level - run.pendingLevels + 1, cards: run.cards.slice(), rerolls: run.hero.rerolls, banishes: run.hero.banishes, skipHold: 0 };
@@ -348,7 +364,14 @@ async function boot(): Promise<void> {
     paused = on;
     pauseReason.value = on ? reason : null;
     pauseStats.value = on ? { ...run.hero.stats } : null;
-    if (on) runExtras.value = { boons: run.boons.slice(), finds: run.finds.slice() };
+    if (on) {
+      const worn = run.tutorial ? [] : resolveLantern(data, current.account.lantern).faces;
+      runExtras.value = {
+        boons: run.boons.slice(), finds: run.finds.slice(),
+        lantern: worn.flatMap((f) => (f ? [{ id: f.id, level: f.level }] : [])),
+        piece: run.piece?.taken ? data.lantern.pieces[run.piece.index]!.id : null,
+      };
+    }
     overlay.value = on ? 'pause' : 'none';
     audio.duck(on);
     guard(200);
@@ -397,6 +420,7 @@ async function boot(): Promise<void> {
     acc = 0;
     deadAt = 0;
     banner = null;
+    bannerNext = null;
     ending.value = null;
     tutoHud.value = { banner: null, glyph: null, bark: null };
     audio.playMusic(run.region.music.calm);
@@ -538,8 +562,11 @@ async function boot(): Promise<void> {
     }
   }
 
-  /** L'expédition au Bois commence. `reborn` : le boss de la région est déjà battu, son boss reformé l'attend. */
-  function startExpedition(seed: number, reborn: boolean): void {
+  /**
+   * L'expédition au Bois commence. `reborn` : le boss de la région est déjà battu, son boss reformé l'attend.
+   * `replay` : la graine est rejouée, aucune pièce de Lanterne n'y tombe.
+   */
+  function startExpedition(seed: number, reborn: boolean, replay: boolean): void {
     const { sheet } = buildSheet(data, current, CLASS);
     const unlocked = unlockedContent(data, current);
     run = createRun(data, {
@@ -548,12 +575,14 @@ async function boot(): Promise<void> {
       // Le souvenir que le boss de la région garde encore, s'il y en a un.
       memory: pendingMemory(data, current, REGION),
       reborn,
+      ...lanternRun(data, current, replay),
     });
     renderer.beginRun(run);
     paused = false;
     acc = 0;
     deadAt = 0;
     banner = null;
+    bannerNext = null;
     ending.value = null;
     audio.play('ui-confirm');
     audio.playMusic(run.region.music.calm);
@@ -680,6 +709,11 @@ async function boot(): Promise<void> {
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
       if (next === 'camp') ending.value = null;
+      if (next === 'lantern') {
+        markLanternSeen(current.account.lantern);
+        changed();
+        persistSoon();
+      }
       setScreen(next);
     },
     depart(seed) {
@@ -687,10 +721,11 @@ async function boot(): Promise<void> {
       // La graine est tirée avant la cinématique : « rejouer la même carte » reste la même carte.
       const chosen = seed ?? ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
       const reborn = bossBeaten(current, REGION);
+      const replay = seed !== undefined;
       const cinematics = data.regions[REGION]?.cinematics;
       const id = cinematics ? (reborn ? cinematics.reborn : cinematics.first) : null;
       if (!id) {
-        startExpedition(chosen, reborn);
+        startExpedition(chosen, reborn, replay);
         return;
       }
       audio.play('ui-confirm');
@@ -703,8 +738,8 @@ async function boot(): Promise<void> {
           changed();
           persist();
         }
-        startExpedition(chosen, reborn);
-      }, () => startExpedition(chosen, reborn), seen ? 1 : undefined);
+        startExpedition(chosen, reborn, replay);
+      }, () => startExpedition(chosen, reborn, replay), seen ? 1 : undefined);
     },
     buyAltar(id) {
       const res = buyAltarRank(current, data, id);
@@ -731,6 +766,25 @@ async function boot(): Promise<void> {
       audio.play('ui-confirm', 0.7);
       changed();
       persistSoon();
+    },
+    lanternPlace(face, id) {
+      const ok = placePiece(data, current.account.lantern, face, id);
+      audio.play(ok ? 'ui-confirm' : 'refuse');
+      if (!ok) return;
+      changed();
+      persist();
+    },
+    lanternClear(face) {
+      clearFace(current.account.lantern, face);
+      audio.play('ui-back', 0.7);
+      changed();
+      persist();
+    },
+    lanternClearAll() {
+      clearLantern(current.account.lantern);
+      audio.play('ui-back', 0.7);
+      changed();
+      persist();
     },
     takeCard(index) {
       if (!run || performance.now() < guardUntil) return;
@@ -851,7 +905,7 @@ async function boot(): Promise<void> {
       });
     },
     uiSound(name) {
-      audio.play(`ui-${name}`, 0.6);
+      audio.play(UI_SOUNDS[name], 0.6);
     },
   };
   refs.actions = actions;
@@ -906,7 +960,10 @@ async function boot(): Promise<void> {
         case EV.pickup:
           if (a === PK_GEM || a === PK_RED_GEM) audio.gem();
           else if (a === PK_GOLD) audio.play('coin', 0.5, 1, 60);
-          else if (a !== PK_CHEST) audio.play('coin', 0.5, 0.8, 60);
+          else if (a === PK_PIECE) {
+            audio.play('chest', 0.8);
+            sayAfter(t('hud.piece', { name: t(`${r.data.lantern.pieces[b]!.id}.name`) }), 4500);
+          } else if (a !== PK_CHEST) audio.play('coin', 0.5, 0.8, 60);
           break;
         case EV.levelUp: audio.play('levelup', 0.8); break;
         case EV.arc: audio.play('scythe', 0.4, 1, 90); break;
@@ -968,6 +1025,8 @@ async function boot(): Promise<void> {
         case EV.shopBuy: audio.play('shop-buy', 0.9); break;
         case EV.bossWarning: say(t('hud.bossWarning'), 5000); break;
         case EV.flameCall: say(t('hud.flameCall')); break;
+        case EV.hunt: say(t('hud.hunt', { n: Math.round(a * 100) })); break;
+        case EV.pieceDrop: say(t('hud.pieceDrop'), 4500); break;
         case EV.telegraphHit: audio.play('hammer', 0.5, 1.3, 100); break;
         case EV.charge: audio.play('dash', 0.6, 0.6); break;
       }
@@ -978,6 +1037,11 @@ async function boot(): Promise<void> {
   function buildHud(r: Run, now: number): HudState {
     const h = r.hero;
     const tuning = r.data.tuning;
+    if (bannerNext && now >= bannerUntil) {
+      const next = bannerNext;
+      bannerNext = null;
+      say(next.text, next.ms);
+    }
     let boss: HudState['boss'] = null;
     // Le boss du tutoriel n'a pas d'arène (`bossSpawned` reste faux) : seul son identifiant est posé.
     if ((r.director.bossSpawned || (r.tutorial !== null && r.director.bossUid !== 0)) && !r.director.bossDead) {
@@ -992,7 +1056,7 @@ async function boot(): Promise<void> {
     const minutes = r.time / 60;
     return {
       hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss,
-      flasks: h.flasks, maxFlasks: h.stats.flasks, gold: h.gold,
+      flasks: h.flasks, maxFlasks: h.stats.flasks, flaskBlocked: r.mods.noFlask, gold: h.gold,
       ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops), kills: h.kills, vigil: r.cfg.vigil,
       weapons: r.weapons.map((w) => {
         const def = r.data.weapons[w.def]!;
@@ -1000,10 +1064,10 @@ async function boot(): Promise<void> {
         return { icon: def.icon, level: def.evolved ? 6 : w.level, max: 6, ready: evolvable || w === ready };
       }),
       relics: r.relics.map((x) => ({ icon: r.data.relics[x.def]!.icon, level: x.level, max: r.data.relics[x.def]!.maxLevel })),
-      skillFrac: 1 - Math.max(0, h.skillCd) / r.cls.skill.cooldown,
+      skillFrac: 1 - Math.max(0, h.skillCd) / skillCooldown(r),
       ultFrac: h.ultT > 0 ? h.ultT / r.cls.ultimate.duration : h.ultGauge / tuning.ultimate.gaugeMax,
       ultActive: h.ultT > 0,
-      dashFrac: 1 - Math.max(0, h.dashCd) / tuning.dash.cooldown,
+      dashFrac: 1 - Math.max(0, h.dashCd) / dashCooldown(r),
       message: now < bannerUntil ? banner : null,
       fps: current.settings.showFps ? fps : 0,
     };

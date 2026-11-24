@@ -107,6 +107,9 @@ test('une sauvegarde plus récente que le jeu est refusée, et rien n\'est écra
   await expectFocus(page, 'altar');
   await page.waitForTimeout(150);
   await page.keyboard.press('ArrowDown', { delay: 60 });
+  await expectFocus(page, 'lantern');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('ArrowDown', { delay: 60 });
   await expectFocus(page, 'settings');
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });

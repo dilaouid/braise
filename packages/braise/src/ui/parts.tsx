@@ -6,7 +6,9 @@ import { device, refs, t, type Handlers } from './store.ts';
 export const focusRef: {
   setScope: ((el: HTMLElement | null, key: string) => void) | null;
   stack: Array<{ el: HTMLElement; key: string }>;
-} = { setScope: null, stack: [] };
+  /** Donne le focus à l'élément portant cet identifiant, dans l'écran affiché. */
+  focusId: ((id: string) => void) | null;
+} = { setScope: null, stack: [], focusId: null };
 
 /**
  * Restreint le focus à cet écran tant qu'il est affiché. À sa fermeture, le focus

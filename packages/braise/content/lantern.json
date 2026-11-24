@@ -1,0 +1,48 @@
+{
+  "drops": { "elite": 0.03, "reborn": 0.25 },
+  "winsForThird": 3,
+  "runes": [
+    { "id": "rune.hunger", "icon": "icon-rune-hunger",
+      "levels": [{ "mods": { "gemsPerHeal": 5 } }, { "mods": { "gemsPerHeal": 4 } }, { "mods": { "gemsPerHeal": 3 } }],
+      "malus": { "mods": { "noFlask": true } } },
+    { "id": "rune.burning-dash", "icon": "icon-rune-burning-dash",
+      "levels": [
+        { "mods": { "dashBurn": 20, "dashBurnRadius": 18 } },
+        { "mods": { "dashBurn": 30, "dashBurnRadius": 18 } },
+        { "mods": { "dashBurn": 40, "dashBurnRadius": 18 } }
+      ],
+      "malus": { "mods": { "dashCooldownMult": 1.5 } } },
+    { "id": "rune.last-glow", "icon": "icon-rune-last-glow",
+      "levels": [
+        { "mods": { "lowHpPower": 0.6, "lowHpShare": 0.3 } },
+        { "mods": { "lowHpPower": 0.8, "lowHpShare": 0.3 } },
+        { "mods": { "lowHpPower": 1, "lowHpShare": 0.3 } }
+      ],
+      "malus": { "mods": { "healMult": 0.5 } } },
+    { "id": "rune.call", "icon": "icon-rune-call",
+      "levels": [{ "stats": { "wisdom": 0.15 } }, { "stats": { "wisdom": 0.25 } }, { "stats": { "wisdom": 0.35 } }],
+      "malus": { "mods": { "threatMult": 1.4 } } },
+    { "id": "rune.live-ember", "icon": "icon-rune-live-ember",
+      "levels": [{ "mods": { "ultChargeMult": 1.5 } }, { "mods": { "ultChargeMult": 1.75 } }, { "mods": { "ultChargeMult": 2 } }],
+      "malus": { "mods": { "skillCooldownMult": 1.5 } } },
+    { "id": "rune.black-night", "icon": "icon-rune-black-night",
+      "levels": [{ "stats": { "critMult": 0.6 } }, { "stats": { "critMult": 0.8 } }, { "stats": { "critMult": 1 } }],
+      "malus": { "stats": { "glowShare": -0.5 } } },
+    { "id": "rune.hunt", "icon": "icon-rune-hunt",
+      "levels": [{ "mods": { "eliteKillPower": 0.05 } }, { "mods": { "eliteKillPower": 0.07 } }, { "mods": { "eliteKillPower": 0.1 } }],
+      "malus": { "mods": { "eliteHpMult": 1.5 } } },
+    { "id": "rune.reprieve", "icon": "icon-rune-reprieve",
+      "levels": [
+        { "stats": { "revives": 1 }, "mods": { "firstReviveShare": 0.5 } },
+        { "stats": { "revives": 1 }, "mods": { "firstReviveShare": 0.75 } },
+        { "stats": { "revives": 1 }, "mods": { "firstReviveShare": 1 } }
+      ],
+      "malus": { "stats": { "maxHpShare": -0.35 } } }
+  ],
+  "glasses": [
+    { "id": "glass.polished", "icon": "icon-glass-polished", "shifts": { "next": 1, "previous": 1 }, "malus": { "stats": { "maxHpShare": -0.15 } } },
+    { "id": "glass.cracked", "icon": "icon-glass-cracked", "shifts": { "next": -1, "previous": -1 }, "clearsOpposite": true },
+    { "id": "glass.smoked", "icon": "icon-glass-smoked", "shifts": { "opposite": 2 }, "malus": { "stats": { "glowShare": -0.2 } } },
+    { "id": "glass.tilted", "icon": "icon-glass-tilted", "shifts": { "next": 2, "previous": -1 } }
+  ]
+}

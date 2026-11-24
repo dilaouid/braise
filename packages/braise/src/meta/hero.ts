@@ -1,5 +1,6 @@
 import type { Attribute, ClassDef, GameData, HeroTuning, StatBonus } from '../content/index.ts';
 import { addBonus, emptySheet, type Attributes, type StatSheet } from '../core/stats.ts';
+import { applyLantern, resolveLantern } from './lantern.ts';
 import { CURRENCY_CAP, newHero, type HeroSave, type Save } from './save.ts';
 import type { RunResult } from '../core/rewards.ts';
 
@@ -78,6 +79,10 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     addBonus(sheet, boost.perRank, rank);
     sources.push({ label: boost.id, bonus: boost.perRank, times: rank });
   }
+  for (const source of resolveLantern(data, save.account.lantern).sources) {
+    addBonus(sheet, source.bonus, source.times);
+    sources.push(source);
+  }
   return { sheet, sources };
 }
 
@@ -120,6 +125,10 @@ export interface RunSummary {
   firstBossKill: boolean;
   /** Le souvenir obtenu par cette expédition (null s'il l'était déjà, ou s'il n'y en a pas). */
   memory: string | null;
+  /** La pièce de Lanterne gagnée, celle perdue, et la face qui s'ouvre (2 à 4) ; null sinon. */
+  lanternPiece: string | null;
+  lanternLost: string | null;
+  lanternFace: number | null;
 }
 
 /** Verse le résultat d'une expédition dans la sauvegarde : monnaies, expérience, codex, régions. */
@@ -153,5 +162,9 @@ export function applyRunResult(save: Save, data: GameData, result: RunResult): R
     acc.unlocks.push(result.memory);
     memory = result.memory;
   }
-  return { levelsGained, heroLevel: hero.level, firstBossKill, memory };
+  const lantern = applyLantern(data, acc.lantern, result);
+  return {
+    levelsGained, heroLevel: hero.level, firstBossKill, memory,
+    lanternPiece: lantern.piece, lanternLost: result.lantern.lost, lanternFace: lantern.face,
+  };
 }

@@ -27,6 +27,8 @@ export interface RunResult {
   killsByEnemy: Record<string, number>;
   /** Le souvenir ramassé dans l'arène, ou null. */
   memory: string | null;
+  /** La Lanterne : la pièce ramenée ou perdue, les pièces posées au départ, et si c'était le boss reformé. */
+  lantern: { kept: string | null; lost: string | null; placed: number; reborn: boolean };
 }
 
 /** Calcule les récompenses de fin d'expédition (document 02 §11 et document 05 §5). */
@@ -46,6 +48,10 @@ export function computeResult(run: Run): RunResult {
     (rw.perMinute * minutes + rw.perRunLevelSq * hero.level * hero.level + rw.perElite * hero.elites + rw.perBoss * hero.bossKills)
       * (1 + hero.stats.wisdom) * Math.pow(rw.vigilGrowth, v),
   );
+  const piece = run.piece;
+  const pieceId = piece ? run.data.lantern.pieces[piece.index]!.id : null;
+  // Une pièce du boss, ou la première de toutes, n'a pas besoin d'avoir été ramassée.
+  const pieceKept = victory && piece !== null && (piece.taken || piece.fromBoss || run.cfg.lantern?.guaranteed === true);
   const killsByEnemy: Record<string, number> = {};
   run.data.enemies.forEach((e, i) => {
     if (run.killsByKind[i]! > 0) killsByEnemy[e.id] = run.killsByKind[i]!;
@@ -75,5 +81,11 @@ export function computeResult(run: Run): RunResult {
       .sort((a, b) => b.damage - a.damage),
     killsByEnemy,
     memory: victory && run.memoryTaken ? (run.cfg.memory ?? null) : null,
+    lantern: {
+      kept: pieceKept ? pieceId : null,
+      lost: !victory && piece?.taken ? pieceId : null,
+      placed: run.cfg.lantern?.placed ?? 0,
+      reborn: run.cfg.reborn === true && run.region.rebornBossIdx >= 0 && run.region.bossIdx === run.region.rebornBossIdx,
+    },
   };
 }

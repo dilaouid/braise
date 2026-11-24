@@ -2,13 +2,16 @@
  * Joue des parties sans affichage, pour l'équilibrage.
  * Usage : pnpm sim -- --runs 50 --bot active --level 10 --minutes 16 --ardor 0
  * Tutoriel : pnpm sim -- --tutorial --runs 10 (le robot de tutoriel joue le script livré).
+ * Une pièce de Lanterne seule : pnpm sim -- --piece rune.call --plevel 3 (son effet à ce niveau, et son malus).
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
 import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate } from '../packages/braise/src/core/bots.ts';
+import { NEUTRAL_MODS, mergeMods } from '../packages/braise/src/core/mods.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
 import { createRun } from '../packages/braise/src/core/run.ts';
 import { simulateTutorial } from '../packages/braise/src/core/tutorial-bot.ts';
+import { addBonus } from '../packages/braise/src/core/stats.ts';
 import { createTutorialRun } from '../packages/braise/src/core/tutorial-run.ts';
 import { buildSheet, unlockedContent } from '../packages/braise/src/meta/hero.ts';
 import { newHero, newSave } from '../packages/braise/src/meta/save.ts';
@@ -53,6 +56,18 @@ if (ardor > 0) {
 }
 const { sheet } = buildSheet(data, save, classId);
 const unlocked = unlockedContent(data, save);
+const pieceId = arg('piece', '');
+const pieceLevel = Number(arg('plevel', '1'));
+let mods = { ...NEUTRAL_MODS };
+if (pieceId !== '') {
+  const piece = data.lantern.pieces.find((p) => p.id === pieceId);
+  if (!piece) throw new Error(`Pièce inconnue : ${pieceId}`);
+  for (const effect of [piece.levels[pieceLevel - 1], piece.malus]) {
+    if (!effect) continue;
+    addBonus(sheet, effect.stats);
+    mods = mergeMods(mods, effect.mods);
+  }
+}
 
 const fmt = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
@@ -102,7 +117,7 @@ const hurtBy = new Float64Array(data.enemies.length);
 for (let r = 0; r < runs; r++) {
   const run = createRun(data, {
     seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
-    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee',
+    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods,
   });
   let maxEnemies = 0;
   simulate(run, {
@@ -144,7 +159,7 @@ for (let r = 0; r < runs; r++) {
   }
 }
 
-console.log(`\n${runs} parties · robot « ${botName} » · héros niveau ${level} · Autel ${ardor} · ${((Date.now() - started) / 1000).toFixed(1)} s`);
+console.log(`\n${runs} parties · robot « ${botName} » · héros niveau ${level} · Autel ${ardor}${pieceId ? ` · ${pieceId} ${pieceLevel}` : ''} · ${((Date.now() - started) / 1000).toFixed(1)} s`);
 console.log(`boss atteint : ${Math.round((100 * reachedBoss) / runs)} %   victoires : ${Math.round((100 * victories) / runs)} %`);
 console.log(`temps moyen : ${fmt(totalTime / runs)}   niveau de partie moyen : ${(totalLevel / runs).toFixed(1)}   battus : ${Math.round(totalKills / runs)}`);
 console.log(

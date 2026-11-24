@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { altarCost, altarRank, altarSpent, canBuyAltarRank } from '../meta/altar.ts';
 import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
+import { lanternNews } from '../meta/lantern.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
@@ -144,12 +145,16 @@ export function Camp(): JSX.Element {
         <div class="hold-track"><div class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></div>
         <MenuButton id="altar" label={t('camp.altar')} desc={t('camp.altar.desc')} onPress={() => actions().goto('altar')} />
         {canBuy ? <span class="badge" /> : null}
+        <div class="camp-entry">
+          <MenuButton id="lantern" label={t('camp.lantern')} desc={t('camp.lantern.desc')} onPress={() => actions().goto('lantern')} />
+          {lanternNews(data, s.account.lantern) ? <span class="badge badge-lantern" /> : null}
+        </div>
         <MenuButton id="settings" label={t('ui.settings')} desc={t('camp.settings.desc')} onPress={() => actions().goto('settings')} />
         {memoryCount(data, s) > 0
           ? <MenuButton id="memories" label={t('camp.memories')} desc={t('camp.memories.desc')} onPress={() => actions().goto('memories')} />
           : null}
         {knowsCream(s) ? <MenuButton id="cream" label={t('camp.cream')} desc={t('camp.cream.desc')} onPress={() => actions().creamTalk()} /> : null}
-        <p class="seed">{t('camp.seed')} : {seedLabel}</p>
+        <p class="seed">{t('camp.seed')} : {seedLabel}{replaySeed.value ? ` · ${t('camp.seed.noPiece')}` : ''}</p>
       </Panel>
       <Panel class="camp-info">
         <Currencies />
@@ -406,6 +411,9 @@ export function EndScreen(): JSX.Element | null {
       <Panel class="end-panel" active>
         <h1 class={victory ? 'gold' : 'danger-text'}>{t(`end.${result.outcome}`)}</h1>
         {summary.memory ? <p class="end-memory">{t('end.memory', { name: t(`${summary.memory}.name`) })}</p> : null}
+        {summary.lanternPiece ? <p class="end-piece">{t('end.piece', { name: t(`${summary.lanternPiece}.name`) })}</p> : null}
+        {summary.lanternLost ? <p class="end-piece lost">{t('end.pieceLost', { name: t(`${summary.lanternLost}.name`) })}</p> : null}
+        {summary.lanternFace ? <p class="end-piece">{t('end.lanternFace', { n: summary.lanternFace })}</p> : null}
         <div class="end-cols">
           <div class="end-col">
             <p><span>{t('end.time')}</span><b>{fmtTime(result.seconds)}</b></p>

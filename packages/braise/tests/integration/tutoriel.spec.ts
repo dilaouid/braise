@@ -228,6 +228,7 @@ test('Cream au refuge dit une réplique, puis la boîte se ferme', async ({ page
   await pad.press('DOWN');
   await pad.press('DOWN');
   await pad.press('DOWN');
+  await pad.press('DOWN');
   await expectFocus(page, 'cream');
   await pad.press('A');
 

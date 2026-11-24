@@ -3,7 +3,7 @@ import { damageTaken } from './stats.ts';
 import { addTelegraph, clearEnemy, emit, removeEnemy, removePickup } from './stores.ts';
 import {
   CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_NO_NUMBER, HIT_RESIST, HIT_WEAK,
-  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
   TG_CIRCLE, type Run,
 } from './types.ts';
 
@@ -44,7 +44,7 @@ export function spawnEnemy(run: Run, kind: number, x: number, y: number, hpMult 
   e.x[i] = x; e.y[i] = y; e.px[i] = x; e.py[i] = y;
   e.kind[i] = kind;
   e.uid[i] = e.nextUid++;
-  const hp = Math.max(1, Math.round(def.hp * hpMult));
+  const hp = Math.max(1, Math.round(def.hp * hpMult * (def.rank === 'elite' ? run.mods.eliteHpMult : 1)));
   e.hp[i] = hp; e.maxHp[i] = hp;
   e.timer[i] = run.rngSpawn.float() * 2;
   e.dirX[i] = run.rngSpawn.float() * 6.283;
@@ -83,6 +83,11 @@ function registerDamage(run: Run, i: number, dmg: number, slot: number, flags: n
   if (e.flash[i]! <= -0.12) e.flash[i] = 0.08;
 }
 
+/** Vrai quand Dernière lueur agit : les points de vie sont sous son seuil. */
+export function lowHp(run: Run): boolean {
+  return run.mods.lowHpPower > 0 && run.hero.hp < run.hero.stats.maxHp * run.mods.lowHpShare;
+}
+
 /**
  * Inflige les dégâts d'une arme à un ennemi, selon la formule du document 02 §11.
  * Renvoie les dégâts infligés (0 si l'ennemi est déjà mort).
@@ -101,6 +106,8 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   const dy = e.y[i]! - hero.y;
   if (dx * dx + dy * dy < passive.range * passive.range) power += passive.bonus;
   if (def.rank !== 'normal') power += st.eliteDamage;
+  if (lowHp(run)) power += run.mods.lowHpPower;
+  power += run.mods.eliteKillPower * hero.elites;
   let dmg = base * (1 + power);
   if (scale) dmg *= 1 + run.data.heroTuning.damagePerScalePoint * st.attrs[scale];
   let outFlags = flags;
@@ -266,7 +273,7 @@ export function healHero(run: Run, amount: number): void {
   const hero = run.hero;
   if (hero.hp <= 0) return;
   const before = hero.hp;
-  hero.hp = Math.min(hero.stats.maxHp, hero.hp + amount);
+  hero.hp = Math.min(hero.stats.maxHp, hero.hp + amount * run.mods.healMult);
   if (hero.hp > before) emit(run, EV.heroHeal, hero.x, hero.y, hero.hp - before);
 }
 
@@ -290,7 +297,24 @@ export function hurtHero(run: Run, raw: number, kind = -1): boolean {
 /** Charge la jauge d'ultime. */
 function chargeUltimate(run: Run, amount: number): void {
   const max = run.data.tuning.ultimate.gaugeMax;
-  run.hero.ultGauge = Math.min(max, run.hero.ultGauge + amount);
+  run.hero.ultGauge = Math.min(max, run.hero.ultGauge + amount * run.mods.ultChargeMult);
+}
+
+/**
+ * Fait peut-être tomber une pièce de la Lanterne : une par partie, parmi celles qui restent à trouver.
+ * Celle d'un boss vole d'elle-même vers Moon.
+ */
+function rollPiece(run: Run, x: number, y: number, chance: number, fromBoss: boolean): void {
+  const pool = run.cfg.lantern?.pool ?? [];
+  if (run.piece || pool.length === 0 || chance <= 0 || !run.rngLantern.chance(chance)) return;
+  const id = run.rngLantern.pick(pool);
+  const index = run.data.lantern.pieces.findIndex((p) => p.id === id);
+  if (index < 0) return;
+  run.piece = { index, taken: false, fromBoss };
+  const before = run.pickups.count;
+  addPickup(run, PK_PIECE, x, y, index);
+  if (fromBoss && run.pickups.count > before) run.pickups.attracted[before] = 1;
+  emit(run, EV.pieceDrop, x, y, index);
 }
 
 /**
@@ -351,6 +375,8 @@ export function reapEnemies(run: Run): boolean {
       if (rng.chance(tuning.drops.emberDropFromElite)) addPickup(run, PK_DROP, x + 8, y, 1);
       run.director.breathT = tuning.director.breathSeconds;
       emit(run, EV.eliteDeath, x, y, kind);
+      if (run.mods.eliteKillPower > 0) emit(run, EV.hunt, x, y, run.mods.eliteKillPower * run.hero.elites);
+      rollPiece(run, x, y - 8, run.data.lantern.drops.elite, false);
     } else {
       run.hero.bossKills++;
       bossKilled = true;
@@ -360,6 +386,8 @@ export function reapEnemies(run: Run): boolean {
         const loot = def.loot ?? 1;
         addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss * loot);
         addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss * loot);
+        // Sans aucune pièce, le boss en doit une ; sinon seul un boss qui s'est reformé peut en lâcher.
+        rollPiece(run, x, y - 8, run.cfg.lantern?.guaranteed ? 1 : def.reform ? run.data.lantern.drops.reborn : 0, true);
       }
       emit(run, EV.bossDeath, x, y, kind);
     }

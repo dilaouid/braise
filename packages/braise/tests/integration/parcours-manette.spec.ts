@@ -67,6 +67,8 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   // --- Réglages ----------------------------------------------------------------------------
   await settle(page);
   await pad.press('DOWN');
+  await expectFocus(page, 'lantern');
+  await pad.press('DOWN');
   await expectFocus(page, 'settings');
   await pad.press('A');
   await expect(page.locator('.screen.settings')).toBeVisible();
@@ -83,6 +85,7 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await expectFocus(page, 'settings');
 
   // --- Première expédition -----------------------------------------------------------------
+  await pad.press('UP');
   await pad.press('UP');
   await pad.press('UP');
   await expectFocus(page, 'depart');

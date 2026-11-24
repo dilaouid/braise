@@ -40,7 +40,7 @@ export function Hud(): JSX.Element | null {
         </div>
         <div class="hud-row">
           <span class="flasks">
-            {Array.from({ length: h.maxFlasks }, (_, i) => <Icon key={i} name="pickup-drop" class={i < h.flasks ? '' : 'spent'} />)}
+            {Array.from({ length: h.maxFlasks }, (_, i) => <Icon key={i} name="pickup-drop" class={i < h.flasks && !h.flaskBlocked ? '' : 'spent'} />)}
           </span>
           <span class="lvl">{t('hud.level', { level: h.level })}</span>
         </div>
@@ -395,6 +395,22 @@ export function PauseScreen(): JSX.Element {
               <div class="slots extras" title={t('pause.boons')}>
                 {extras.boons.map((b, i) => <span class="slot boon" key={`b${i}`}><Icon name={data.boons[b]!.icon} /></span>)}
                 {extras.finds.map((f, i) => <span class="slot find" key={`f${i}`}><Icon name={data.finds[f]!.icon} /></span>)}
+              </div>
+            ) : null}
+            {extras.lantern.length > 0 || extras.piece ? (
+              <div class="slots lantern-slots" title={t('lantern.title')}>
+                {extras.lantern.map((p) => {
+                  const piece = data.lantern.pieces.find((x) => x.id === p.id)!;
+                  return (
+                    <span class={`slot lantern-slot${piece.kind === 'rune' && p.level === 0 ? ' off' : ''}`} key={p.id}>
+                      <Icon name={piece.icon} />
+                      {piece.kind === 'rune' ? <Pips value={p.level} max={3} /> : null}
+                    </span>
+                  );
+                })}
+                {extras.piece ? (
+                  <span class="lantern-found"><Icon name="pickup-lantern-piece" /> {t('hud.piece', { name: t(`${extras.piece}.name`) })}</span>
+                ) : null}
               </div>
             ) : null}
             {stats ? (

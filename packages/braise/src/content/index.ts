@@ -9,6 +9,7 @@ import boonsJson from '../../content/boons.json';
 import findsJson from '../../content/finds.json';
 import dialoguesJson from '../../content/dialogues.json';
 import tutorialJson from '../../content/tutorial.json';
+import lanternJson from '../../content/lantern.json';
 import memoriesJson from '../../content/memories.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
 import lameCendreJson from '../../content/classes/lame-cendre.json';
@@ -16,16 +17,18 @@ import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
 import {
   altarBoostSchema, boonSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
-  memoriesSchema, regionSchema, relicSchema, weaponSchema,
+  lanternSchema, memoriesSchema, regionSchema, relicSchema, weaponSchema,
   type AltarBoostRaw, type Attribute, type BoonDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
-  type RegionRaw, type StatBonus, type WeaponParamsRaw,
+  type PieceEffect, type RegionRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
 import { CINEMATICS_RAW } from './cinematic.ts';
 import { SCENES_RAW, compileScenes, type SceneDef } from './scene.ts';
 import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial.ts';
 
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
-export type { Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, FindDef } from './schema.ts';
+export type {
+  Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, FindDef, PieceEffect, RunModsRaw,
+} from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
 export const DAMAGE_TYPES = ['physical', 'fire', 'lightning', 'frost'] as const;
@@ -114,6 +117,28 @@ export interface MemoryDef {
   scene: string;
 }
 
+/** Une pièce de la Lanterne : une rune (un effet à trois niveaux) ou un verre (qui change les niveaux des autres). */
+export interface PieceDef {
+  id: string;
+  index: number;
+  icon: string;
+  kind: 'rune' | 'glass';
+  /** Les effets d'une rune aux niveaux I à III ; aucun pour un verre. */
+  levels: PieceEffect[];
+  malus: PieceEffect;
+  /** Niveaux ajoutés aux runes des faces suivante, précédente et opposée. */
+  shifts: { next: number; previous: number; opposite: number };
+  /** Retire le malus de la pièce d'en face. */
+  clearsOpposite: boolean;
+}
+
+/** La Lanterne : ses pièces, leurs chances de tomber, et ce qui ouvre ses faces. */
+export interface LanternDef {
+  pieces: PieceDef[];
+  drops: { elite: number; reborn: number };
+  winsForThird: number;
+}
+
 /** Toutes les données du jeu, validées et indexées. */
 export interface GameData {
   tuning: ExpeditionTuning;
@@ -136,6 +161,8 @@ export interface GameData {
   memories: MemoryDef[];
   /** Le nombre d'emplacements de souvenirs montrés au refuge. */
   memoriesTotal: number;
+  /** Les pièces de la Lanterne. */
+  lantern: LanternDef;
   /** Les scènes de route, par identifiant. */
   scenes: Record<string, SceneDef>;
 }
@@ -154,6 +181,7 @@ export const RAW = {
   dialogues: dialoguesJson as unknown,
   tutorial: tutorialJson as unknown,
   memories: memoriesJson as unknown,
+  lantern: lanternJson as unknown,
   scenes: SCENES_RAW,
   regions: [boisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
@@ -190,9 +218,10 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   const boons = check(z.array(boonSchema), raw.boons, 'boons.json', errors);
   const finds = check(z.array(findSchema), raw.finds, 'finds.json', errors);
   const memoriesRaw = check(memoriesSchema, raw.memories, 'memories.json', errors);
+  const lanternRaw = check(lanternSchema, raw.lantern, 'lantern.json', errors);
   const regionsRaw = raw.regions.map((r, i) => check(regionSchema, r, `regions[${i}]`, errors));
   const classesRaw = raw.classes.map((c, i) => check(classSchema, c, `classes[${i}]`, errors));
-  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw
+  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw || !lanternRaw
     || regionsRaw.includes(null) || classesRaw.includes(null)) {
     return { data: null, errors };
   }
@@ -373,6 +402,27 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${m.id}.name`);
   }
 
+  const pieces: PieceDef[] = [
+    ...lanternRaw.runes.map((r) => ({ ...r, kind: 'rune' as const, shifts: { next: 0, previous: 0, opposite: 0 }, clearsOpposite: false })),
+    ...lanternRaw.glasses.map((g) => ({ ...g, kind: 'glass' as const, levels: [] })),
+  ].map((p, index) => ({ ...p, index }));
+  const isEmpty = (e: PieceEffect): boolean => Object.keys(e.stats).length === 0 && Object.keys(e.mods).length === 0;
+  unique(pieces.map((p) => p.id), 'lantern.json');
+  for (const p of pieces) {
+    needText(`${p.id}.name`);
+    needText(`${p.id}.malus`);
+    if (p.kind === 'rune') {
+      p.levels.forEach((l, i) => {
+        if (isEmpty(l)) errors.push(`${p.id}: niveau ${i + 1} sans effet`);
+        needText(`${p.id}.bonus.${i + 1}`);
+      });
+      if (isEmpty(p.malus)) errors.push(`${p.id}: aucun malus`);
+    } else {
+      needText(`${p.id}.bonus`);
+      if (!p.clearsOpposite && Math.max(p.shifts.next, p.shifts.previous, p.shifts.opposite) <= 0) errors.push(`${p.id}: aucun effet`);
+    }
+  }
+
   const tuto = compileTutorial(raw.dialogues, raw.tutorial, {
     tile: tuning.tileSize, fr, enemyIndex, findIds: finds.map((f) => f.id), smithPrice: tuning.events.smith.basePrice,
   }, errors);
@@ -382,7 +432,8 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
 
   if (errors.length > 0 || !tuto) return { data: null, errors };
   return {
-    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes },
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes,
+      lantern: { pieces, drops: lanternRaw.drops, winsForThird: lanternRaw.winsForThird } },
     errors,
   };
 }
