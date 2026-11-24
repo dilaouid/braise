@@ -100,6 +100,8 @@ async function boot(): Promise<void> {
   let pendFlask = false;
   let banner: string | null = null;
   let bannerUntil = 0;
+  /** Un bandeau qui attend la fin de celui affiché. */
+  let bannerNext: { text: string; ms: number } | null = null;
   let saveTimer = 0;
   let frames = 0;
   let fps = 0;
@@ -284,6 +286,12 @@ async function boot(): Promise<void> {
     bannerUntil = performance.now() + ms;
   }
 
+  /** Affiche ce texte une fois le bandeau en cours fini : il n'efface pas une consigne. */
+  function sayAfter(text: string, ms: number): void {
+    if (banner !== null && performance.now() < bannerUntil) bannerNext = { text, ms };
+    else say(text, ms);
+  }
+
   function syncLevelUp(): void {
     if (!run) return;
     levelUp.value = { level: run.hero.level - run.pendingLevels + 1, cards: run.cards.slice(), rerolls: run.hero.rerolls, banishes: run.hero.banishes, skipHold: 0 };
@@ -408,6 +416,7 @@ async function boot(): Promise<void> {
     acc = 0;
     deadAt = 0;
     banner = null;
+    bannerNext = null;
     ending.value = null;
     tutoHud.value = { banner: null, glyph: null, bark: null };
     audio.playMusic(run.region.music.calm);
@@ -569,6 +578,7 @@ async function boot(): Promise<void> {
     acc = 0;
     deadAt = 0;
     banner = null;
+    bannerNext = null;
     ending.value = null;
     audio.play('ui-confirm');
     audio.playMusic(run.region.music.calm);
@@ -948,7 +958,7 @@ async function boot(): Promise<void> {
           else if (a === PK_GOLD) audio.play('coin', 0.5, 1, 60);
           else if (a === PK_PIECE) {
             audio.play('chest', 0.8);
-            say(t('hud.piece', { name: t(`${r.data.lantern.pieces[b]!.id}.name`) }), 4500);
+            sayAfter(t('hud.piece', { name: t(`${r.data.lantern.pieces[b]!.id}.name`) }), 4500);
           } else if (a !== PK_CHEST) audio.play('coin', 0.5, 0.8, 60);
           break;
         case EV.levelUp: audio.play('levelup', 0.8); break;
@@ -1023,6 +1033,11 @@ async function boot(): Promise<void> {
   function buildHud(r: Run, now: number): HudState {
     const h = r.hero;
     const tuning = r.data.tuning;
+    if (bannerNext && now >= bannerUntil) {
+      const next = bannerNext;
+      bannerNext = null;
+      say(next.text, next.ms);
+    }
     let boss: HudState['boss'] = null;
     // Le boss du tutoriel n'a pas d'arène (`bossSpawned` reste faux) : seul son identifiant est posé.
     if ((r.director.bossSpawned || (r.tutorial !== null && r.director.bossUid !== 0)) && !r.director.bossDead) {

@@ -229,6 +229,7 @@ test('première victoire : la gemme, la scène, le carton 1 / 5, le bilan avec s
   await pad.press('DOWN');
   await pad.press('DOWN');
   await pad.press('DOWN');
+  await pad.press('DOWN');
   await expectFocus(page, 'memories');
   await capture(page, info, SHOTS, '04b-camp');
   await pad.press('A');
