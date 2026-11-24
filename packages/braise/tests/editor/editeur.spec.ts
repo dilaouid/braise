@@ -166,6 +166,8 @@ test('nouveau dialogue, onglet Phrases et captures', async ({ page }) => {
   await page.getByLabel('Texte, message 1', { exact: true }).click();
   const evidence = process.env.BRAISE_EVIDENCE === '1';
   if (evidence) mkdirSync(EVIDENCE, { recursive: true });
+  // Le bandeau de la copie de test montre un chemin de la machine : il ne va pas dans une capture versionnée.
+  await page.addStyleTag({ content: '.ed-override { display: none !important; }' });
   await page.screenshot({ path: evidence ? join(EVIDENCE, '01-dialogues.png') : test.info().outputPath('01-dialogues.png') });
 
   await page.getByRole('tab', { name: 'Phrases' }).click();
