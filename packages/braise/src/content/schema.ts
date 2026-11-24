@@ -359,8 +359,8 @@ export const expeditionTuningSchema = z
           })
           .strict(),
         treasure: z.object({ count: z.number().int(), radius: z.number() }).strict(),
-        /** Distance dont Moon doit s'écarter d'un Souvenir tombé sous ses pieds avant de pouvoir le prendre, en pixels. */
-    memoryArmRadius: z.number().positive(),
+        /** Délai avant qu'un Souvenir laissé par un boss puisse être pris, en secondes. */
+    memoryArmSeconds: z.number().nonnegative(),
     bossWarningMinute: z.number(),
       })
       .strict(),

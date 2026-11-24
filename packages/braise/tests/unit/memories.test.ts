@@ -53,6 +53,10 @@ function settle(run: Run): void {
 
 function touch(run: Run, kind: string): void {
   settle(run);
+  for (let i = 0; i < 60 * 2; i++) {
+    stepRun(run, idleInput());
+    settle(run);
+  }
   const poi = run.map.pois.find((p) => p.kind === kind)!;
   run.hero.x = poi.x;
   run.hero.y = poi.y;
@@ -152,20 +156,41 @@ describe('le Souvenir dans l\'arène', () => {
     expect(run.phase).toBe('victory');
   });
 
-  it('un Souvenir tombé sous les pieds de Moon attend que Moon recule', () => {
+  it('un Souvenir tombé sous les pieds de Moon se prend après un court instant, sans bouger', () => {
     const run = makeMemoryRun(MEETING);
     makeImmortal(run);
     killBoss(run, 0);
-    for (let i = 0; i < 30; i++) stepRun(run, idleInput());
+    settle(run);
+    // Juste après la mort du boss, il n'est pas encore prenable : Moon a le temps de le voir.
+    for (let i = 0; i < 20; i++) {
+      stepRun(run, idleInput());
+      settle(run);
+    }
     expect(run.phase).toBe('playing');
-    const poi = run.map.pois.find((p) => p.kind === 'memory')!;
-    settle(run);
-    run.hero.x = poi.x + 60;
-    stepRun(run, idleInput());
-    touch(run, 'memory');
-    settle(run);
-    if (run.phase === 'playing') touch(run, 'memory');
+    for (let i = 0; i < 60 * 3 && run.phase !== 'victory'; i++) {
+      stepRun(run, idleInput());
+      settle(run);
+    }
     expect(run.phase).toBe('victory');
+    expect(run.memoryTaken).toBe(true);
+  });
+
+  it('le robot prend un Souvenir tombé sous ses pieds', () => {
+    const run = makeMemoryRun(MEETING);
+    makeImmortal(run);
+    killBoss(run, 0);
+    simulate(run, { bot: explorerBot, maxSteps: 60 * 20 });
+    expect(run.phase).toBe('victory');
+  });
+
+  it('le boss du tutoriel ne laisse ni Souvenir ni portail', () => {
+    const run = makeTutorial(1);
+    const watcher = data.enemies.findIndex((e) => e.id === 'boss.watcher');
+    const i = spawnEnemy(run, watcher, run.hero.x + 60, run.hero.y, 1);
+    run.enemies.hp[i] = 0;
+    stepRun(run, idleInput());
+    expect(run.map.pois).toEqual([]);
+    expect(run.memoryTaken).toBe(false);
   });
 
   it('abandonner avec le Souvenir au sol : pas de souvenir', () => {

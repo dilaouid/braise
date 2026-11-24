@@ -77,7 +77,7 @@
       }
     },
     "treasure": { "count": 4, "radius": 20 },
-    "memoryArmRadius": 40,
+    "memoryArmSeconds": 1.2,
     "bossWarningMinute": 14
   },
   "damageNumberInterval": 0.25

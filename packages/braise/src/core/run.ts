@@ -362,10 +362,9 @@ function onBossDeath(run: Run): void {
   run.telegraphs.count = 0;
   // Un boss qui garde encore un souvenir le laisse à la place du portail : c'est lui qui ramène au refuge.
   const memory = Boolean(run.cfg.memory);
-  const near = Math.hypot(run.hero.x - d.arenaX, run.hero.y - d.arenaY) < run.data.tuning.events.memoryArmRadius;
   run.map.pois.push({
     kind: memory ? 'memory' : 'portal', x: d.arenaX, y: d.arenaY, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null,
-    armed: !(memory && near),
+    armed: !memory,
   });
 }
 

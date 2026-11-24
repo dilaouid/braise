@@ -75,9 +75,10 @@ export function updatePois(run: Run, dt: number): void {
         break;
       case 'portal':
       case 'memory':
-        // Un Souvenir tombé sous les pieds de Moon attend qu'il s'écarte : il doit le voir avant de le prendre.
+        // Un Souvenir ne se prend pas à l'instant où il tombe : Moon a le temps de le voir, même s'il est dessus.
         if (!poi.armed) {
-          if (dist >= ev.memoryArmRadius) poi.armed = true;
+          poi.progress += dt;
+          if (poi.progress >= ev.memoryArmSeconds) poi.armed = true;
           break;
         }
         if (dist < 20) {
