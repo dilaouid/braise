@@ -35,31 +35,36 @@
   "dialogues": {
     "tuto.opening": [
       {"who":"moon","face":"think","text":"dialog.tuto.opening.1","poses":{"moon":"think"}},
+      {"who":"moon","face":"think","text":"dialog.tuto.opening.19","emotes":{"moon":"question"}},
       {"who":"cream","face":"neutral","text":"dialog.tuto.opening.2"},
       {"who":"moon","face":"neutral","text":"dialog.tuto.opening.3"},
-      {"seconds":1.2,"emotes":{"moon":"dots"}},
+      {"seconds":1.2,"emotes":{"moon":"dots","cream":"dots"}},
       {"who":"moon","face":"shocked","text":"dialog.tuto.opening.4","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"},"sfx":"sfx-surprise"},
       {"who":"cream","face":"smug","text":"dialog.tuto.opening.5","poses":{"cream":"groom"}},
+      {"who":"cream","face":"closed","text":"dialog.tuto.opening.20"},
       {"who":"moon","face":"shocked","text":"dialog.tuto.opening.6"},
       {"who":"cream","face":"neutral","text":"dialog.tuto.opening.7"},
       {"who":"moon","face":"awkward","text":"dialog.tuto.opening.8","emotes":{"moon":"drop"}},
       {"who":"cream","face":"closed","text":"dialog.tuto.opening.9","poses":{"cream":"laugh"},"emotes":{"cream":"note"}},
-      {"who":"moon","face":"think","text":"dialog.tuto.opening.10","poses":{"moon":"think"},"emotes":{"moon":"question"}},
+      {"who":"moon","face":"think","text":"dialog.tuto.opening.10","poses":{"moon":"think","cream":"groom"},"emotes":{"moon":"drop"}},
       {"who":"cream","face":"serious","text":"dialog.tuto.opening.11"},
       {"who":"cream","face":"serious","text":"dialog.tuto.opening.12"},
-      {"who":"cream","face":"serious","text":"dialog.tuto.opening.13"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.13"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.21"},
       {"who":"moon","face":"sad","text":"dialog.tuto.opening.14"},
-      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.15"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.opening.22"},
+      {"who":"moon","face":"neutral","text":"dialog.tuto.opening.15"},
       {"who":"moon","face":"resolute","text":"dialog.tuto.opening.16"},
       {"who":"cream","face":"smug","text":"dialog.tuto.opening.17"},
-      {"who":"cream","face":"serious","text":"dialog.tuto.opening.18","poses":{"cream":"rise"},"emotes":{"cream":"exclaim"}}
+      {"who":"cream","face":"serious","text":"dialog.tuto.opening.18","poses":{"cream":"rise"},"emotes":{"moon":"exclaim","cream":"exclaim"}}
     ],
     "tuto.room1.a": [
       {"who":"cream","face":"neutral","text":"dialog.tuto.room1.a.1"}
     ],
     "tuto.room1.b": [
       {"who":"moon","face":"surprised","text":"dialog.tuto.room1.b.1","emotes":{"moon":"question"}},
-      {"who":"cream","face":"smug","text":"dialog.tuto.room1.b.2"}
+      {"who":"cream","face":"smug","text":"dialog.tuto.room1.b.2"},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room1.b.3"}
     ],
     "tuto.room2.a": [
       {"who":"cream","face":"neutral","text":"dialog.tuto.room2.a.1"}
@@ -70,13 +75,19 @@
     ],
     "tuto.room3": [
       {"who":"cream","face":"serious","text":"dialog.tuto.room3.1"},
-      {"who":"moon","face":"shocked","text":"dialog.tuto.room3.2","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"}}
+      {"who":"moon","face":"think","text":"dialog.tuto.room3.2","poses":{"moon":"startle"}},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room3.3"},
+      {"who":"moon","face":"neutral","text":"dialog.tuto.room3.4"},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room3.5"}
     ],
     "tuto.room4.a": [
-      {"who":"cream","face":"serious","text":"dialog.tuto.room4.a.1"}
+      {"who":"cream","face":"serious","text":"dialog.tuto.room4.a.1"},
+      {"who":"moon","face":"neutral","text":"dialog.tuto.room4.a.2"},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room4.a.3"}
     ],
     "tuto.room4.b": [
-      {"who":"cream","face":"neutral","text":"dialog.tuto.room4.b.1"}
+      {"who":"cream","face":"neutral","text":"dialog.tuto.room4.b.1"},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room4.b.2"}
     ],
     "tuto.room5.a": [
       {"who":"moon","face":"think","text":"dialog.tuto.room5.a.1","poses":{"moon":"think"}},
@@ -90,7 +101,10 @@
       {"who":"cream","face":"serious","text":"dialog.tuto.room6.1"}
     ],
     "tuto.room7.a": [
-      {"who":"cream","face":"serious","text":"dialog.tuto.room7.a.1"}
+      {"who":"cream","face":"serious","text":"dialog.tuto.room7.a.1"},
+      {"who":"moon","face":"neutral","text":"dialog.tuto.room7.a.2","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"serious","text":"dialog.tuto.room7.a.3"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.room7.a.4"}
     ],
     "tuto.room7.b": [
       {"who":"moon","face":"laugh","text":"dialog.tuto.room7.b.1","poses":{"moon":"laugh"},"emotes":{"moon":"note"}},
@@ -98,8 +112,14 @@
     ],
     "tuto.room8": [
       {"who":"cream","face":"neutral","text":"dialog.tuto.room8.1"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.room8.4"},
+      {"who":"cream","face":"closed","text":"dialog.tuto.room8.5"},
       {"who":"moon","face":"resolute","text":"dialog.tuto.room8.2"},
-      {"who":"cream","face":"closed","text":"dialog.tuto.room8.3"}
+      {"who":"moon","face":"think","text":"dialog.tuto.room8.6","poses":{"moon":"think"},"emotes":{"moon":"dots"}},
+      {"who":"cream","face":"serious","text":"dialog.tuto.room8.3","poses":{"cream":"scratch"},"emotes":{"cream":"drop"}},
+      {"seconds":1,"poses":{"cream":"rise"},"sfx":"sfx-hurt"},
+      {"who":"moon","face":"shocked","text":"dialog.tuto.room8.7","poses":{"moon":"startle","cream":"scratch"},"emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"serious","text":"dialog.tuto.room8.8"}
     ]
   }
 }
