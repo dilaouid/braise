@@ -7,7 +7,7 @@ import { InputManager } from '@owl/kit/input';
 import { createSaveStore } from '@owl/kit/save';
 import { render } from 'preact';
 import { AudioManager } from '../audio/audio.ts';
-import { introCinematic } from '../content/cinematic.ts';
+import { cinematicById, introCinematic } from '../content/cinematic.ts';
 import { FR, loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
@@ -19,7 +19,7 @@ import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
-import { applyRunResult, buildSheet, unlockedContent } from '../meta/hero.ts';
+import { applyRunResult, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
 import { GameRenderer } from '../render/renderer.ts';
@@ -27,7 +27,7 @@ import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
   INTRO_SEEN, TUTORIAL_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
-  holdProgress, hud, knowsCream, lastSeed, levelUp, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
+  holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
@@ -96,9 +96,12 @@ async function boot(): Promise<void> {
   let fps = 0;
   let fpsAt = 0;
   const stepInput = idleInput();
-  /** La cinématique en cours, où aller après, et le maintien de B pour la passer. */
+  /** La cinématique en cours, ce qui la suit, et le maintien de B pour la passer. */
   let cine: CinematicPlayer | null = null;
-  let cineAfter: 'camp' | 'title' | 'tutorial' = 'camp';
+  let cineAfter: () => void = () => undefined;
+  let cineHold = introCinematic().skipHoldMs;
+  /** Change à chaque cinématique lancée ou finie : un chargement arrivé trop tard est jeté. */
+  let cineToken = 0;
   /** Le tutoriel rejoué depuis le titre ne touche pas à la sauvegarde et y revient. */
   let tutoReplay = false;
   /** La ligne de dialogue à l'écran (dialogue et indice), ses lettres écrites, le maintien de B. */
@@ -288,12 +291,12 @@ async function boot(): Promise<void> {
     if (!run) return;
     if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
     const result = computeResult(run);
+    // Le souvenir et les gains sont inscrits et sauvegardés ici : rien ne dépend de la fin de la scène.
     const summary = applyRunResult(current, data, result);
     ending.value = { result, summary, stats: run.hero.stats };
     lastSeed.value = run.cfg.seed;
     changed();
     persist();
-    audio.playMusic('music-camp');
     run = null;
     hud.value = null;
     levelUp.value = null;
@@ -302,6 +305,23 @@ async function boot(): Promise<void> {
     shopState.value = null;
     findState.value = null;
     paused = false;
+    const memory = summary.memory === null ? undefined : data.memories.find((m) => m.id === summary.memory);
+    if (!memory) {
+      showEnd();
+      return;
+    }
+    // Un Souvenir vient d'être pris : sa scène, son carton, puis le bilan. Sans images, le bilan tout de suite.
+    audio.play('memory', 0.9);
+    playCinematic(memory.cinematic, () => {
+      memoryCard.value = { id: memory.id, have: memoryCount(data, current), total: data.memoriesTotal };
+      guard();
+    }, showEnd);
+  }
+
+  /** L'écran de bilan, après une partie (et après la scène d'un souvenir). */
+  function showEnd(): void {
+    memoryCard.value = null;
+    audio.playMusic('music-camp');
     setScreen('end');
   }
 
@@ -385,16 +405,36 @@ async function boot(): Promise<void> {
     enterCamp();
   }
 
-  /** Lance une cinématique. Pendant le chargement, l'écran reste noir. */
-  function playIntro(after: 'camp' | 'title' | 'tutorial'): void {
+  /**
+   * Lance une cinématique par son identifiant. Pendant le chargement, l'écran reste noir. `after` est
+   * appelé quand elle finit ou qu'elle est passée ; `failed` si elle ne charge pas (par défaut, `after`).
+   */
+  function playCinematic(id: string, after: () => void, failed: () => void = after): void {
+    const token = ++cineToken;
     cineAfter = after;
     cineHoldMs = 0;
     cineSkip.value = 0;
     cineCard.value = null;
     cineCaption.value = null;
+    memoryCard.value = null;
     audio.stopMusic();
     setScreen('cinematic');
-    void CinematicPlayer.load(introCinematic(), import.meta.env.BASE_URL, {
+    // Une cinématique qui ne charge pas ne bloque pas le jeu.
+    const fail = (err: unknown): void => {
+      console.error('Cinématique impossible', err);
+      if (token !== cineToken) return;
+      cineAfter = failed;
+      endCinematic();
+    };
+    let def;
+    try {
+      def = cinematicById(id);
+    } catch (err) {
+      fail(err);
+      return;
+    }
+    cineHold = def.skipHoldMs;
+    void CinematicPlayer.load(def, import.meta.env.BASE_URL, {
       sfx: (name, volume) => audio.play(name, volume),
       music: (name) => audio.playMusic(name, false),
       stopMusic: () => audio.stopMusic(),
@@ -403,31 +443,40 @@ async function boot(): Promise<void> {
       caption: (key) => (cineCaption.value = key),
     })
       .then((player) => {
-        if (screen.value === 'cinematic') cine = player;
+        // Passée ou quittée pendant le chargement : ce lecteur ne sert plus.
+        if (token === cineToken && screen.value === 'cinematic') cine = player;
         else player.destroy();
       })
-      .catch((err) => {
-        // Une cinématique qui ne charge pas ne bloque pas le jeu.
-        console.error('Cinématique impossible', err);
-        endIntro();
-      });
+      .catch(fail);
   }
 
-  function endIntro(): void {
+  /** La cinématique est finie, passée, ou n'a pas chargé : on rend la main à ce qui la suit. */
+  function endCinematic(): void {
+    cineToken++;
     cine?.destroy();
     cine = null;
     cineCard.value = null;
     cineCaption.value = null;
     cineSkip.value = 0;
+    cineHoldMs = 0;
     audio.stopMusic();
-    if (!current.account.unlocks.includes(INTRO_SEEN)) {
-      current.account.unlocks.push(INTRO_SEEN);
-      changed();
-      persist();
-    }
-    if (cineAfter === 'tutorial') startTutorial(false);
-    else if (cineAfter === 'camp') enterCamp();
-    else setScreen('title');
+    const after = cineAfter;
+    cineAfter = () => undefined;
+    after();
+  }
+
+  /** Le prologue : il est noté comme vu, puis le jeu continue là où on l'attendait. */
+  function playIntro(after: 'camp' | 'title' | 'tutorial'): void {
+    playCinematic(introCinematic().id, () => {
+      if (!current.account.unlocks.includes(INTRO_SEEN)) {
+        current.account.unlocks.push(INTRO_SEEN);
+        changed();
+        persist();
+      }
+      if (after === 'tutorial') startTutorial(false);
+      else if (after === 'camp') enterCamp();
+      else setScreen('title');
+    });
   }
 
   const actions: Actions = {
@@ -503,6 +552,21 @@ async function boot(): Promise<void> {
       audio.play('intro-miaou', 0.35);
       guard(250);
     },
+    replayMemory(id) {
+      const memory = data.memories.find((m) => m.id === id);
+      if (screen.value !== 'memories' || !memory || !hasMemory(current, id)) return;
+      audio.play('ui-confirm');
+      // Revue depuis le refuge : pas de carton, et on revient à la liste.
+      playCinematic(memory.cinematic, () => {
+        audio.playMusic('music-camp');
+        setScreen('memories');
+      });
+    },
+    closeMemoryCard() {
+      if (!memoryCard.value || performance.now() < guardUntil) return;
+      audio.play('ui-confirm', 0.7);
+      showEnd();
+    },
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
       if (next === 'camp') ending.value = null;
@@ -516,6 +580,8 @@ async function boot(): Promise<void> {
       run = createRun(data, {
         seed: chosen, regionId: REGION, classId: CLASS, vigil: 1, sheet,
         unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: current.settings.autoSkills,
+        // Le souvenir que le boss de la région garde encore, s'il y en a un.
+        memory: pendingMemory(data, current, REGION),
       });
       renderer.beginRun(run);
       paused = false;
@@ -745,7 +811,7 @@ async function boot(): Promise<void> {
           audio.play('victory', 1);
           audio.playMusic(r.region.music.calm);
           // Pas de portail en tutoriel : la dernière barrière tombe.
-          if (!r.tutorial) say(t('hud.portal'), 6000);
+          if (!r.tutorial) say(t(r.map.pois.some((p) => p.kind === 'memory') ? 'hud.memory' : 'hud.portal'), 6000);
           break;
         case EV.gateOpen: audio.play('gate', 0.7, 1, 150); break;
         case EV.bark: audio.play('talk-cream', 0.35); break;
@@ -911,8 +977,14 @@ async function boot(): Promise<void> {
     const playing = screen.value === 'run' && run !== null;
 
     if (screen.value === 'cinematic') {
+      if (memoryCard.value) {
+        // Le carton d'un souvenir : il n'y a plus rien à passer, A ou B mène au bilan.
+        if (f.pressed.confirm || f.pressed.back) actions.closeMemoryCard();
+        requestAnimationFrame(frame);
+        return;
+      }
       // Passer tout : B maintenu (un appui court ne fait rien). A passe à l'image suivante.
-      const hold = introCinematic().skipHoldMs;
+      const hold = cineHold;
       if (f.held.back && now >= guardUntil) cineHoldMs += dt;
       else cineHoldMs = 0;
       const k = Math.min(1, cineHoldMs / hold);
@@ -920,7 +992,8 @@ async function boot(): Promise<void> {
       if (cine && !cinePaused && f.pressed.confirm && now >= guardUntil) cine.next();
       if (cine && !cinePaused) cine.update(dt);
       if (cine) renderer.app.renderer.render(cine.root);
-      if (cineHoldMs >= hold || cine?.finished) endIntro();
+      else renderer.drawBlank();
+      if (cineHoldMs >= hold || cine?.finished) endCinematic();
       requestAnimationFrame(frame);
       return;
     }
@@ -1120,6 +1193,23 @@ async function boot(): Promise<void> {
     /** Arrête la simulation (vrai) ou la relance (faux) ; l'image continue d'être dessinée. */
     hold(on: boolean): void {
       held = on;
+    },
+    /**
+     * Amène le boss tout de suite : l'horloge de la partie saute à la fin, le directeur referme l'arène
+     * et fait apparaître le boss au pas suivant, comme en jeu. Le boss est mis à 1 PV. Rend vrai s'il est là.
+     */
+    bossNow(): boolean {
+      if (!run || run.tutorial || run.phase !== 'playing' || run.director.bossSpawned) return false;
+      run.time = Math.max(run.time, run.data.tuning.durationMin * 60);
+      stepRun(run, idleInput());
+      processEvents(run);
+      const e = run.enemies;
+      for (let i = 0; i < e.count; i++) {
+        if (e.uid[i] !== run.director.bossUid) continue;
+        e.hp[i] = 1;
+        return true;
+      }
+      return false;
     },
   };
 }
