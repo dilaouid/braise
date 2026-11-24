@@ -21,6 +21,7 @@ import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
+import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece } from '../meta/lantern.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
@@ -29,7 +30,7 @@ import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
   INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
-  holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
+  focusedId, holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
 
@@ -78,6 +79,9 @@ async function boot(): Promise<void> {
     // Le focus se pose après le rendu de l'écran, quand ses éléments existent.
     focus.setScope(el, key);
     requestAnimationFrame(() => focus.ensure());
+  };
+  focus.onChange = (id) => {
+    focusedId.value = id;
   };
   const audio = new AudioManager();
   void audio.load(base);
@@ -538,8 +542,11 @@ async function boot(): Promise<void> {
     }
   }
 
-  /** L'expédition au Bois commence. `reborn` : le boss de la région est déjà battu, son boss reformé l'attend. */
-  function startExpedition(seed: number, reborn: boolean): void {
+  /**
+   * L'expédition au Bois commence. `reborn` : le boss de la région est déjà battu, son boss reformé l'attend.
+   * `replay` : la graine est rejouée, aucune pièce de Lanterne n'y tombe.
+   */
+  function startExpedition(seed: number, reborn: boolean, replay: boolean): void {
     const { sheet } = buildSheet(data, current, CLASS);
     const unlocked = unlockedContent(data, current);
     run = createRun(data, {
@@ -548,6 +555,7 @@ async function boot(): Promise<void> {
       // Le souvenir que le boss de la région garde encore, s'il y en a un.
       memory: pendingMemory(data, current, REGION),
       reborn,
+      ...lanternRun(data, current, replay),
     });
     renderer.beginRun(run);
     paused = false;
@@ -680,6 +688,11 @@ async function boot(): Promise<void> {
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
       if (next === 'camp') ending.value = null;
+      if (next === 'lantern') {
+        markLanternSeen(current.account.lantern);
+        changed();
+        persistSoon();
+      }
       setScreen(next);
     },
     depart(seed) {
@@ -687,10 +700,11 @@ async function boot(): Promise<void> {
       // La graine est tirée avant la cinématique : « rejouer la même carte » reste la même carte.
       const chosen = seed ?? ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
       const reborn = bossBeaten(current, REGION);
+      const replay = seed !== undefined;
       const cinematics = data.regions[REGION]?.cinematics;
       const id = cinematics ? (reborn ? cinematics.reborn : cinematics.first) : null;
       if (!id) {
-        startExpedition(chosen, reborn);
+        startExpedition(chosen, reborn, replay);
         return;
       }
       audio.play('ui-confirm');
@@ -703,8 +717,8 @@ async function boot(): Promise<void> {
           changed();
           persist();
         }
-        startExpedition(chosen, reborn);
-      }, () => startExpedition(chosen, reborn), seen ? 1 : undefined);
+        startExpedition(chosen, reborn, replay);
+      }, () => startExpedition(chosen, reborn, replay), seen ? 1 : undefined);
     },
     buyAltar(id) {
       const res = buyAltarRank(current, data, id);
@@ -731,6 +745,25 @@ async function boot(): Promise<void> {
       audio.play('ui-confirm', 0.7);
       changed();
       persistSoon();
+    },
+    lanternPlace(face, id) {
+      const ok = placePiece(data, current.account.lantern, face, id);
+      audio.play(ok ? 'ui-confirm' : 'refuse');
+      if (!ok) return;
+      changed();
+      persist();
+    },
+    lanternClear(face) {
+      clearFace(current.account.lantern, face);
+      audio.play('ui-back', 0.7);
+      changed();
+      persist();
+    },
+    lanternClearAll() {
+      clearLantern(current.account.lantern);
+      audio.play('ui-back', 0.7);
+      changed();
+      persist();
     },
     takeCard(index) {
       if (!run || performance.now() < guardUntil) return;

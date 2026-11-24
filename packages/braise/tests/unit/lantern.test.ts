@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { NEUTRAL_MODS, mergeMods } from '../../src/core/mods.ts';
 import { buildSheet } from '../../src/meta/hero.ts';
 import {
-  clearFace, clearLantern, lanternNews, markLanternSeen, missingPieces, pieceById, placePiece, resolveLantern, type LanternView,
+  clearFace, clearLantern, lanternNews, markLanternSeen, missingPieces, pieceById, placePiece, previewLantern, resolveLantern, type LanternView,
 } from '../../src/meta/lantern.ts';
 import { MIGRATIONS, newSave, validateSave, type LanternSave } from '../../src/meta/save.ts';
 import { CLASS, data, makeSave } from './helpers.ts';
@@ -183,6 +183,22 @@ describe('poser et retirer', () => {
   it('pieceById', () => {
     expect(pieceById(data, 'glass.tilted')!.kind).toBe('glass');
     expect(pieceById(data, 'rune.ghost')).toBeNull();
+  });
+});
+
+describe('aperçu', () => {
+  it('montre les niveaux qu\'une pose donnerait, sans rien changer', () => {
+    const lantern = put('rune.hunger');
+    const before = JSON.stringify(lantern);
+    const v = previewLantern(data, lantern, 1, 'glass.polished');
+    expect(levels(v)).toEqual([2, 0, null, null]);
+    expect(JSON.stringify(lantern)).toBe(before);
+  });
+
+  it('montre un échange, et une face vidée', () => {
+    const lantern = put('rune.hunger', 'rune.call');
+    expect(previewLantern(data, lantern, 0, 'rune.call').faces.map((f) => f?.id)).toEqual(['rune.call', 'rune.hunger', undefined, undefined]);
+    expect(levels(previewLantern(data, lantern, 0, null))).toEqual([null, 1, null, null]);
   });
 });
 

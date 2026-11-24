@@ -103,6 +103,14 @@ export function clearLantern(lantern: LanternSave): void {
   lantern.faces.fill(null);
 }
 
+/** La Lanterne telle qu'elle serait avec cette pièce sur cette face (null : la face vidée). La sauvegarde ne change pas. */
+export function previewLantern(data: GameData, lantern: LanternSave, face: number, id: string | null): LanternView {
+  const copy: LanternSave = { ...lantern, faces: lantern.faces.slice() };
+  if (id === null) clearFace(copy, face);
+  else placePiece(data, copy, face, id);
+  return resolveLantern(data, copy);
+}
+
 /** Les pièces possédées que le jeu connaît, dans l'ordre du contenu. */
 export function ownedPieces(data: GameData, lantern: LanternSave): PieceDef[] {
   return data.lantern.pieces.filter((p) => lantern.owned.includes(p.id));

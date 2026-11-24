@@ -161,6 +161,54 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .seed { color: var(--ash-3); }
 
 /* Autel */
+/* Lanterne : l'anneau des quatre faces, la liste des pièces, le détail. */
+.camp-entry { position: relative; }
+.camp-menu .badge-lantern { right: 5px; top: 4px; }
+.lantern-panel { position: absolute; left: 14px; right: 14px; top: 8px; bottom: 24px; display: flex; flex-direction: column; gap: 4px; }
+.lantern-panel header { display: flex; justify-content: space-between; align-items: baseline; }
+.lantern-panel h1 { color: var(--ember-1); }
+.lantern-cols { display: flex; gap: 8px; flex: 1; min-height: 0; }
+.lantern-left { width: 318px; display: flex; flex-direction: column; gap: 4px; flex: none; }
+.lantern-right { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 0; }
+.lantern-ring { position: relative; height: 186px; flex: none; }
+.lantern-body { position: absolute; left: 111px; top: 45px; width: 96px; height: 96px; }
+.lantern-face {
+  position: absolute; width: 106px; height: 42px; padding: 3px; display: flex; align-items: center; gap: 5px;
+  background: var(--night-2); border: 1px solid var(--ember-3);
+}
+.lantern-face.face-1 { left: 106px; top: 0; }
+.lantern-face.face-2 { right: 0; top: 72px; }
+.lantern-face.face-3 { left: 106px; bottom: 0; }
+.lantern-face.face-4 { left: 0; top: 72px; }
+.lantern-face.is-focused, .lantern-face.chosen { background: var(--night-3); }
+.lantern-face.chosen { border-color: var(--ember-0); }
+.lantern-face.closed { border-style: dashed; border-color: var(--ash-1); color: var(--ash-3); }
+.lantern-face.off { color: var(--ash-3); border-color: var(--ash-2); }
+.lantern-face.off .icon { opacity: 0.4; }
+.face-hole { width: 24px; height: 24px; flex: none; border: 1px dashed var(--ash-2); }
+.face-label { line-height: 11px; }
+.lantern-summary { display: flex; flex-direction: column; gap: 2px; min-height: 0; line-height: 11px; }
+.lantern-summary h2 { margin-top: 0; }
+.lantern-summary b { font-weight: normal; color: var(--ember-1); }
+.piece-malus, .piece-malus b { color: var(--danger-0); }
+.piece-malus.gone span { text-decoration: line-through; color: var(--ash-3); }
+.piece-malus em { font-style: normal; color: var(--green-2); }
+.lantern-right h2 { margin-top: 0; }
+.lantern-list { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 27px; align-content: start; gap: 3px; height: 214px; padding: 2px; overflow: hidden; }
+.piece-row { display: flex; align-items: center; gap: 4px; padding: 0 3px; background: var(--night-2); border: 1px solid var(--ash-1); min-width: 0; }
+.piece-row.is-focused { background: var(--night-3); }
+.piece-row.here { border-color: var(--ember-2); }
+.piece-row.remove { justify-content: center; border-style: dashed; }
+.piece-row-name { flex: 1; min-width: 0; }
+.piece-row.remove .piece-row-name { flex: none; }
+.lantern-empty { grid-column: 1 / -1; padding: 6px; }
+.lantern-detail { flex: 1; min-height: 0; padding: 3px 5px; overflow: hidden; background: var(--night-0); border: 1px solid var(--ash-1); line-height: 11px; }
+.piece-text { display: flex; flex-direction: column; gap: 2px; }
+.piece-text b { font-weight: normal; color: var(--ember-1); }
+.piece-text .piece-malus b { color: var(--danger-0); }
+.piece-text.off .piece-bonus, .piece-text.off .piece-malus { opacity: 0.45; }
+.piece-name { display: flex; align-items: center; gap: 4px; color: var(--ember-1); }
+
 /* Souvenirs : un emplacement par souvenir du jeu. */
 .memories-panel { position: absolute; left: 170px; right: 170px; top: 14px; bottom: 26px; display: flex; flex-direction: column; gap: 6px; }
 .memories-panel header { display: flex; justify-content: space-between; align-items: baseline; }

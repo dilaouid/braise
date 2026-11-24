@@ -57,6 +57,8 @@ export class FocusManager {
   private scopeKey = '';
   /** Appelé quand le focus se déplace (son d'interface). */
   onMove: (() => void) | null = null;
+  /** Appelé à chaque changement d'élément au focus, avec son identifiant `data-focus` (null : plus aucun). */
+  onChange: ((id: string | null) => void) | null = null;
   /**
    * Un rendu déclaratif (Preact, React) réécrit l'attribut `class` d'un élément qu'il redessine,
    * et efface la marque du focus avec. Ce gardien la repose aussitôt.
@@ -107,6 +109,7 @@ export class FocusManager {
       if (id && this.scopeKey) this.memory.set(this.scopeKey, id);
       if (scroll) el.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
+    this.onChange?.(el?.getAttribute('data-focus') ?? null);
   }
 
   /**

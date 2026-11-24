@@ -7,7 +7,7 @@ import type { Card, ChestResult, ShopItem } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
-export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'settings' | 'run' | 'end';
+export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'lantern' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'forge' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
@@ -102,6 +102,10 @@ export interface Actions {
   buyAltar(id: string): void;
   refundAltar(): void;
   toggleAltar(id: string): void;
+  /** Pose une pièce sur une face de la Lanterne (0 à 3), vide une face, ou les vide toutes. */
+  lanternPlace(face: number, id: string): void;
+  lanternClear(face: number): void;
+  lanternClearAll(): void;
   takeCard(index: number): void;
   reroll(): void;
   banish(index: number): void;
@@ -157,6 +161,8 @@ export const pauseReason = signal<string | null>(null);
 export const pauseStats = signal<HeroStats | null>(null);
 export const notice = signal<string | null>(null);
 export const holdProgress = signal(0);
+/** L'identifiant `data-focus` de l'élément au focus. */
+export const focusedId = signal<string | null>(null);
 export const lastSeed = signal<number | null>(null);
 export const replaySeed = signal(false);
 /** La cinématique : le carton affiché (clé de fr.json) et la progression du maintien pour passer, de 0 à 1. */

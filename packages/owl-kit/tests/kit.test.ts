@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickInDirection, type Rect } from '../src/focus/index.ts';
+import { FocusManager, pickInDirection, type Rect } from '../src/focus/index.ts';
 import { createMemoryHost, type Host } from '../src/host/index.ts';
 import { InputManager, PAD } from '../src/input/index.ts';
 import { createFixedLoop } from '../src/loop/index.ts';
@@ -186,6 +186,73 @@ describe('navigation spatiale au focus', () => {
 
   it('ne renvoie rien quand il n\'y a personne dans cette direction', () => {
     expect(pickInDirection(r(100, 100), [r(20, 100)], 1, 0)).toBe(-1);
+  });
+});
+
+/** Un élément focalisable factice : juste ce que lit le gestionnaire de focus. */
+function fakeItem(id: string, x: number): any {
+  const classes = new Set<string>();
+  return {
+    isConnected: true,
+    offsetParent: {},
+    classList: { add: (c: string) => classes.add(c), remove: (c: string) => classes.delete(c), contains: (c: string) => classes.has(c) },
+    getAttribute: (name: string) => (name === 'data-focus' ? id : null),
+    hasAttribute: () => false,
+    getBoundingClientRect: () => ({ left: x, top: 0, width: 40, height: 20 }),
+    getClientRects: () => [{}],
+    closest() {
+      return this;
+    },
+  };
+}
+
+function fakeRoot(items: any[]): any {
+  const listeners: Record<string, (e: any) => void> = {};
+  return {
+    addEventListener: (type: string, fn: (e: any) => void) => {
+      listeners[type] = fn;
+    },
+    contains: (el: any) => items.includes(el),
+    querySelectorAll: () => items.filter((el) => el.isConnected),
+    emit: (type: string, e: any) => listeners[type]!(e),
+  };
+}
+
+describe('changement de focus', () => {
+  function setup(): { items: any[]; root: any; focus: FocusManager; seen: Array<string | null> } {
+    const items = [fakeItem('a', 0), fakeItem('b', 60), fakeItem('c', 120)];
+    const root = fakeRoot(items);
+    const focus = new FocusManager(root);
+    const seen: Array<string | null> = [];
+    focus.onChange = (id) => seen.push(id);
+    return { items, root, focus, seen };
+  }
+
+  it('est annoncé à la navigation, une seule fois par changement', () => {
+    const { focus, seen } = setup();
+    focus.ensure();
+    focus.ensure();
+    focus.move(1, 0);
+    focus.move(1, 0);
+    focus.move(1, 0);
+    expect(seen).toEqual(['a', 'b', 'c']);
+  });
+
+  it('est annoncé au survol de la souris', () => {
+    const { focus, seen, root, items } = setup();
+    focus.ensure();
+    root.emit('mouseover', { target: items[2] });
+    expect(seen).toEqual(['a', 'c']);
+  });
+
+  it('est annoncé quand l\'élément disparaît et quand la portée change', () => {
+    const { focus, seen, items } = setup();
+    focus.ensure();
+    items[0].isConnected = false;
+    focus.ensure();
+    expect(seen).toEqual(['a', 'b']);
+    focus.setScope(null);
+    expect(seen).toEqual(['a', 'b', null, 'b']);
   });
 });
 
