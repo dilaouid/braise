@@ -1,5 +1,6 @@
 import type { Rng } from '@owl/kit/rng';
 import type { ClassDef, GameData, RegionDef, TutorialDef } from '../content/index.ts';
+import type { RunMods } from './mods.ts';
 import type { HeroStats, StatSheet } from './stats.ts';
 
 /** Pas de simulation, en secondes. */
@@ -72,6 +73,8 @@ export const EV = {
   brazierNone: 45,
   /** Le boss retombe en poussière avant de se relever (x, y). */
   bossReform: 46,
+  /** Chasse : un élite battu de plus (a : le bonus de Puissance atteint). */
+  hunt: 47,
 } as const;
 
 export interface EnemyStore {
@@ -343,6 +346,8 @@ export interface RunConfig {
   memory?: string | null;
   /** Le boss de la région est déjà battu : c'est son boss reformé qui l'attend. */
   reborn?: boolean;
+  /** Ce que la Lanterne change aux règles. Absent : rien. */
+  mods?: RunMods;
 }
 
 /** Tuiles pleines propres au tutoriel. */
@@ -420,6 +425,12 @@ export interface Run {
   map: GameMap;
   hero: Hero;
   sheet: StatSheet;
+  /** Les règles changées par la Lanterne ; neutres sans elle. */
+  mods: Readonly<RunMods>;
+  /** Gemmes ramassées depuis le dernier point de vie rendu par Faim. */
+  gemsHeld: number;
+  /** Résurrections déjà utilisées. */
+  revived: number;
   weapons: WeaponInstance[];
   relics: RelicInstance[];
   acquired: number;

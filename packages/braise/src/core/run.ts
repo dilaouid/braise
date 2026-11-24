@@ -1,12 +1,13 @@
 import { Rng, deriveSeed } from '@owl/kit/rng';
 import type { GameData, RegionDef } from '../content/index.ts';
 import { DAMAGE_TYPES } from '../content/index.ts';
-import { healHero, hurtEnemy, knockEnemy, reapEnemies } from './combat.ts';
+import { applyBurn, healHero, hurtEnemy, knockEnemy, reapEnemies } from './combat.ts';
 import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
 import { closeChest, gainXp, resumeRun } from './levelup.ts';
+import { NEUTRAL_MODS } from './mods.ts';
 import { generateMap, isSolidForHero } from './map.ts';
 import { updatePois } from './poi.ts';
 import { cloneSheet, enemyDamageScale, resolveStats, runXpForNext, type HeroStats } from './stats.ts';
@@ -81,6 +82,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     rngMap, rngSpawn, rngDraw, rngCombat,
     tick: 0, time: 0, phase: 'playing',
     map, hero, sheet,
+    mods: cfg.mods ?? NEUTRAL_MODS, gemsHeld: 0, revived: 0,
     weapons: [], relics: [], acquired: 0,
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
     zones: createZoneStore(), telegraphs: createTelegraphStore(), pickups: createPickupStore(),
@@ -122,6 +124,16 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
   };
   addWeapon(run, cls.startWeaponIndex);
   return run;
+}
+
+/** La recharge de la ruée, Lanterne comprise. */
+export function dashCooldown(run: Run): number {
+  return run.data.tuning.dash.cooldown * run.mods.dashCooldownMult;
+}
+
+/** La recharge de la compétence, Lanterne comprise. */
+export function skillCooldown(run: Run): number {
+  return run.cls.skill.cooldown * run.mods.skillCooldownMult;
 }
 
 /** Déplace le héros d'un vecteur, en glissant le long des obstacles. */
@@ -198,7 +210,7 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
   if (hero.dashCd > 0) hero.dashCd -= dt;
   if (hero.skillCd > 0) hero.skillCd -= dt;
   if (hero.buffT > 0) hero.buffT -= dt;
-  if (hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * dt);
+  if (hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * run.mods.healMult * dt);
 
   let mx = input.moveX;
   let my = input.moveY;
@@ -226,7 +238,7 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
 
   if (input.dash && hero.dashT <= 0 && hero.dashCd <= 0) {
     hero.dashT = tuning.dash.duration;
-    hero.dashCd = tuning.dash.cooldown;
+    hero.dashCd = dashCooldown(run);
     hero.dashX = hero.faceX;
     hero.dashY = hero.faceY;
     emit(run, EV.heroDash, hero.x, hero.y, Math.atan2(hero.dashY, hero.dashX));
@@ -262,11 +274,17 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
   const cls = run.cls;
   const auto = run.cfg.autoSkills;
 
-  if (input.flask && hero.flasks > 0 && hero.hp < hero.stats.maxHp) {
+  if (input.flask && !run.mods.noFlask && hero.flasks > 0 && hero.hp < hero.stats.maxHp) {
     hero.flasks--;
     healHero(run, hero.stats.maxHp * tuning.flask.healShare);
     emit(run, EV.flask, hero.x, hero.y);
     tutorialNote(run, 'flask');
+  }
+
+  // Ruée ardente : la Brûlure se rafraîchit sans se cumuler, la reposer à chaque pas ne change rien.
+  if (run.mods.dashBurn > 0 && hero.dashT > 0) {
+    const n = queryCircle(run, hero.x, hero.y, run.mods.dashBurnRadius);
+    for (let k = 0; k < n; k++) applyBurn(run, run.query[k]!, run.mods.dashBurn);
   }
 
   const skill = cls.skill;
@@ -278,7 +296,7 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
     if (hero.ultGauge >= tuning.ultimate.gaugeMax && queryCircle(run, hero.x, hero.y, cls.ultimate.autoRange) >= 8) wantUlt = true;
   }
   if (wantSkill && hero.skillCd <= 0) {
-    hero.skillCd = skill.cooldown;
+    hero.skillCd = skillCooldown(run);
     hero.buffT = skill.duration;
     const n = queryCircle(run, hero.x, hero.y, skill.radius);
     for (let k = 0; k < n; k++) knockEnemy(run, run.query[k]!, hero.x, hero.y, skill.knockback);
@@ -336,6 +354,10 @@ function updatePickups(run: Run, dt: number): void {
       case PK_RED_GEM:
         hero.gems++;
         gainXp(run, value);
+        if (run.mods.gemsPerHeal > 0 && ++run.gemsHeld >= run.mods.gemsPerHeal) {
+          run.gemsHeld = 0;
+          healHero(run, 1);
+        }
         break;
       case PK_GOLD: hero.gold += value; break;
       case PK_ASH: hero.ashDrops += value; break;
@@ -417,7 +439,9 @@ export function stepRun(run: Run, input: StepInput): void {
       hero.hp = 1;
     } else if (hero.revives > 0) {
       hero.revives--;
-      hero.hp = Math.round(hero.stats.maxHp * tuning.hero.reviveHpShare);
+      const share = run.revived === 0 && run.mods.firstReviveShare > 0 ? run.mods.firstReviveShare : tuning.hero.reviveHpShare;
+      run.revived++;
+      hero.hp = Math.round(hero.stats.maxHp * share);
       hero.invuln = 2;
       const n = queryCircle(run, hero.x, hero.y, tuning.hero.reviveRadius);
       for (let k = 0; k < n; k++) {

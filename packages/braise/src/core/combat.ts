@@ -44,7 +44,7 @@ export function spawnEnemy(run: Run, kind: number, x: number, y: number, hpMult 
   e.x[i] = x; e.y[i] = y; e.px[i] = x; e.py[i] = y;
   e.kind[i] = kind;
   e.uid[i] = e.nextUid++;
-  const hp = Math.max(1, Math.round(def.hp * hpMult));
+  const hp = Math.max(1, Math.round(def.hp * hpMult * (def.rank === 'elite' ? run.mods.eliteHpMult : 1)));
   e.hp[i] = hp; e.maxHp[i] = hp;
   e.timer[i] = run.rngSpawn.float() * 2;
   e.dirX[i] = run.rngSpawn.float() * 6.283;
@@ -83,6 +83,11 @@ function registerDamage(run: Run, i: number, dmg: number, slot: number, flags: n
   if (e.flash[i]! <= -0.12) e.flash[i] = 0.08;
 }
 
+/** Vrai quand Dernière lueur agit : les points de vie sont sous son seuil. */
+export function lowHp(run: Run): boolean {
+  return run.mods.lowHpPower > 0 && run.hero.hp < run.hero.stats.maxHp * run.mods.lowHpShare;
+}
+
 /**
  * Inflige les dégâts d'une arme à un ennemi, selon la formule du document 02 §11.
  * Renvoie les dégâts infligés (0 si l'ennemi est déjà mort).
@@ -101,6 +106,8 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   const dy = e.y[i]! - hero.y;
   if (dx * dx + dy * dy < passive.range * passive.range) power += passive.bonus;
   if (def.rank !== 'normal') power += st.eliteDamage;
+  if (lowHp(run)) power += run.mods.lowHpPower;
+  power += run.mods.eliteKillPower * hero.elites;
   let dmg = base * (1 + power);
   if (scale) dmg *= 1 + run.data.heroTuning.damagePerScalePoint * st.attrs[scale];
   let outFlags = flags;
@@ -266,7 +273,7 @@ export function healHero(run: Run, amount: number): void {
   const hero = run.hero;
   if (hero.hp <= 0) return;
   const before = hero.hp;
-  hero.hp = Math.min(hero.stats.maxHp, hero.hp + amount);
+  hero.hp = Math.min(hero.stats.maxHp, hero.hp + amount * run.mods.healMult);
   if (hero.hp > before) emit(run, EV.heroHeal, hero.x, hero.y, hero.hp - before);
 }
 
@@ -290,7 +297,7 @@ export function hurtHero(run: Run, raw: number, kind = -1): boolean {
 /** Charge la jauge d'ultime. */
 function chargeUltimate(run: Run, amount: number): void {
   const max = run.data.tuning.ultimate.gaugeMax;
-  run.hero.ultGauge = Math.min(max, run.hero.ultGauge + amount);
+  run.hero.ultGauge = Math.min(max, run.hero.ultGauge + amount * run.mods.ultChargeMult);
 }
 
 /**
@@ -351,6 +358,7 @@ export function reapEnemies(run: Run): boolean {
       if (rng.chance(tuning.drops.emberDropFromElite)) addPickup(run, PK_DROP, x + 8, y, 1);
       run.director.breathT = tuning.director.breathSeconds;
       emit(run, EV.eliteDeath, x, y, kind);
+      if (run.mods.eliteKillPower > 0) emit(run, EV.hunt, x, y, run.mods.eliteKillPower * run.hero.elites);
     } else {
       run.hero.bossKills++;
       bossKilled = true;
