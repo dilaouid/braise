@@ -1198,6 +1198,104 @@
   prompt: "a single large faceted crystal gem standing upright, filling the whole frame, tall hexagonal cut, glowing sky blue with deep navy blue shaded facets and a pale white-blue shining core, pure blue colours only, no green, no teal, a precious memory stone, game item prop, 16-bit pixel art, 1px dark outline, three-tone shading, transparent background"
   settings: {"width":40,"height":40,"no_background":true,"outline":"single color black outline","view":"low top-down"}
   edits: "palette réduite ; couleurs remplacées (#4fe0c8 → #dff6ff, #b8fff0 → #eef2f6, #1f9e96 → #7fd4ff)"
+- file: sprites/icon-rune-hunger.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: c1f9ef8e-833f-4aee-8e47-71a2ca905eba
+  prompt: "a glowing orange ember stone with an engraved open hungry mouth with teeth, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-burning-dash.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 29d072a8-7219-4b82-85dd-2bb36ae9920a
+  prompt: "a glowing orange ember stone shaped like a burning footprint with a flame trail behind it, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-last-glow.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: ade248a2-48f5-433f-b194-a062bda93365
+  prompt: "a dark cracked coal stone with one single small bright flame burning in its center, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-call.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 4089fe1c-9dfd-4b9c-9b50-fc6525c719fa
+  prompt: "a curved golden war horn with glowing orange sound waves, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-live-ember.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 333a284f-139f-406a-a768-d075963d6f7f
+  prompt: "a round ember stone bursting with a bright yellow star-shaped explosion of sparks, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-black-night.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 78e5d30d-f8eb-416c-b46c-311a12a207ea
+  prompt: "a black round stone with a glowing thin orange crescent moon engraved on it, dark night, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-hunt.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 0cebbae5-5d52-4f58-a4fd-3210f41ed8ec
+  prompt: "a glowing orange ember stone engraved with a beast skull with two horns, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-rune-reprieve.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 3da3eed1-8fad-4c7e-afe9-25ed1b394adf
+  prompt: "a small hourglass with a glowing orange ember inside instead of sand, brass frame, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-glass-polished.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: de7128a6-7d9e-41b8-87bd-a28bc6e6d1eb
+  prompt: "a polished clear pale blue square glass pane with bright white diagonal shine, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-glass-cracked.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 11eb09fa-09b3-4fdf-b24d-6adfc6362673
+  prompt: "a pale blue square glass pane with a big dark crack across it and a missing shard, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-glass-smoked.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: a1faf2e2-08ae-4e74-89cd-4e50fe8ec694
+  prompt: "a dark smoky grey square glass pane with swirling smoke inside, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-glass-tilted.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 1fbb4609-d69f-4591-b903-6077124327a2
+  prompt: "a pale blue glass pane tilted diagonally like a leaning diamond with a bright white edge, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/lantern-face-closed.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: a7cb1ecb-a33f-4333-aef1-eb6744035e1a
+  prompt: "a closed dark iron shutter panel with a small keyhole, rusty grey metal, big simple shapes filling the frame, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/lantern-frame.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 1c09add8-f2ad-47b5-a64a-981a966362f4
+  prompt: "a small old brass hand lantern with four glass panes, dented and covered in ash, a warm orange flame burning inside, front view, centered, 16-bit pixel art, 1px dark outline"
+  settings: {"width":96,"height":96,"no_background":true}
+  edits: "palette réduite"
 - file: sprites/pickup-gem-small.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-gem-medium.png
@@ -1211,6 +1309,8 @@
 - file: sprites/pickup-ash.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-drop.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/pickup-lantern-piece.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-call.png
   tool: dessiné à la main (tools/process-assets.mjs)

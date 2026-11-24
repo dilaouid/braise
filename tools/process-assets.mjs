@@ -348,6 +348,20 @@ hand('pickup-drop', [
   '..koOrrk..',
   '...kkkk...',
 ]);
+hand('pickup-lantern-piece', [
+  '.....kk.....',
+  '....kYYk....',
+  '...kYYyyk...',
+  '..kYYyyook..',
+  '.kYYyyoooOk.',
+  '.kYyyoooOOk.',
+  '.kyyoooOOrk.',
+  '..kooooOrk..',
+  '...kooOrk...',
+  '....kOrk....',
+  '.....kk.....',
+  '............',
+]);
 hand('pickup-call', [
   '.....kk.....',
   '....kTTk....',
