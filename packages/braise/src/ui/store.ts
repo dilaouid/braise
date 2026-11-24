@@ -8,7 +8,7 @@ import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
 export type Screen = 'boot' | 'title' | 'cinematic' | 'camp' | 'memories' | 'altar' | 'settings' | 'run' | 'end';
-export type Overlay = 'none' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
+export type Overlay = 'none' | 'levelup' | 'chest' | 'forge' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
 /** Ce que le HUD affiche. Recopié de la simulation une dizaine de fois par seconde. */
@@ -108,6 +108,8 @@ export interface Actions {
   skip(): void;
   closeChest(): void;
   takeBoon(index: number): void;
+  takeEvolution(index: number): void;
+  closeForge(): void;
   buy(index: number): void;
   closeShop(): void;
   closeFind(): void;
@@ -142,6 +144,8 @@ export const levelUp = signal<LevelUpState | null>(null);
 export const chest = signal<ChestResult | null>(null);
 /** Les buffs proposés par le totem chargé (indices dans `data.boons`). */
 export const totemState = signal<number[] | null>(null);
+/** Les armes qu'un braséro allumé propose de faire évoluer : indices dans `data.weapons`, avant et après. */
+export const forgeState = signal<Array<{ from: number; to: number }> | null>(null);
 export const shopState = signal<ShopState | null>(null);
 /** La trouvaille affichée : son indice (-2 : de l'or à la place) et cet or. */
 export const findState = signal<{ find: number; gold: number } | null>(null);

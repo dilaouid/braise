@@ -5,7 +5,7 @@ import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFoc
 import { SettingsScreen } from './screens.tsx';
 import { Portrait } from './dialogue.tsx';
 import {
-  actions, chest, findState, fmt, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
+  actions, chest, findState, fmt, forgeState, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
   totemState, tutoHud,
 } from './store.ts';
 
@@ -225,6 +225,40 @@ export function ChestScreen(): JSX.Element | null {
         <p><Icon name="icon-gold" /> {t('chest.gold', { gold: c.gold })}</p>
         <MenuButton id="ok" label={t('ui.continue')} onPress={() => actions().closeChest()} default />
       </Panel>
+    </div>
+  );
+}
+
+/** Un braséro allumé : une arme prête à choisir, qui évolue et consomme le braséro. B le laisse pour plus tard. */
+export function ForgeScreen(): JSX.Element | null {
+  const ref = useFocusScope('forge');
+  const choices = forgeState.value;
+  useHandlers({ back: () => actions().closeForge() });
+  if (!choices) return null;
+  const data = gameData();
+  return (
+    <div class="backdrop levelup forge" ref={ref}>
+      <h1 class="gold">{t('forge.title')}</h1>
+      <p class="dim">{t('forge.hint')}</p>
+      <div class="cards">
+        {choices.map((c, i) => {
+          const from = data.weapons[c.from]!;
+          const to = data.weapons[c.to]!;
+          return (
+            <button
+              type="button" key={`${from.id}-${i}`} class="card card-weapon" data-focus={`evo${i}`} data-index={i}
+              data-focus-default={i === 0 ? '' : undefined} onClick={() => actions().takeEvolution(i)}
+            >
+              <span class="card-icon"><Icon name={to.icon} /></span>
+              <span class="card-name">{t(`${to.id}.name`)}</span>
+              <span class="card-tag">{t('forge.from', { from: t(`${from.id}.name`) })}</span>
+              <span class="card-text">{t(`${to.id}.desc`)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <MenuButton id="later" label={t('forge.later')} onPress={() => actions().closeForge()} />
+      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('forge.take')], ['back', t('forge.later')]]} />
     </div>
   );
 }

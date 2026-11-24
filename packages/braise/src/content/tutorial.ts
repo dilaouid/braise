@@ -45,6 +45,7 @@ export type TutorialStep =
   | { do: 'gem'; x: number; y: number }
   | { do: 'place'; kind: PlaceKind; x: number; y: number }
   | { do: 'checkpoint'; x: number; y: number }
+  | { do: 'ready' }
   | { do: 'end' };
 
 export interface TutorialDef {
@@ -210,6 +211,8 @@ export function compileTutorial(
       case 'checkpoint':
         if (firstCheckpoint < 0) firstCheckpoint = i;
         return { do: 'checkpoint', ...at(s.at, i) };
+      case 'ready':
+        return { do: 'ready' };
       case 'end':
         return { do: 'end' };
     }

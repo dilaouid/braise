@@ -1,7 +1,7 @@
 import { addPickup, healHero, spawnEnemy } from './combat.ts';
-import { convergingWave, updatePlace } from './places.ts';
+import { convergingWave, offerEvolution, updatePlace } from './places.ts';
 import { emit } from './stores.ts';
-import { EV, PK_ASH, PK_CHEST, PK_GOLD, type Run } from './types.ts';
+import { EV, PK_ASH, PK_GOLD, type Run } from './types.ts';
 
 function guardAlive(run: Run, uid: number): boolean {
   const e = run.enemies;
@@ -28,20 +28,27 @@ export function updatePois(run: Run, dt: number): void {
         if (poi.state === 0) {
           if (inside) {
             poi.state = 1;
-            convergingWave(run, poi, ev.brazier.waveCount, ev.brazier.waveEnemy);
+            // Dans le tutoriel, la vague vient du script : la vague habituelle naîtrait dans les murs.
+            if (!run.tutorial) convergingWave(run, poi, ev.brazier.waveCount, ev.brazier.waveEnemy);
             emit(run, EV.poiStart, poi.x, poi.y, 0);
           }
-        } else {
+        } else if (poi.state === 1) {
           // Rester dans le cercle le rallume ; en sortir fait retomber la flamme.
           if (inside) poi.progress += dt;
           else poi.progress = Math.max(0, poi.progress - dt * 0.5);
           if (poi.progress >= ev.brazier.seconds) {
-            poi.state = 2;
+            poi.state = 3;
+            poi.armed = true;
             run.braziersLit++;
-            addPickup(run, PK_CHEST, poi.x, poi.y + 26, 1);
             addPickup(run, PK_ASH, poi.x - 14, poi.y + 22, run.data.tuning.ashes.brazier);
             emit(run, EV.poiDone, poi.x, poi.y, 0);
+            if (inside) offerEvolution(run, poi, index);
           }
+        } else if (!inside) {
+          // Allumé : il propose une évolution à chaque fois que le héros revient dans le cercle.
+          poi.armed = true;
+        } else if (poi.armed) {
+          offerEvolution(run, poi, index);
         }
         break;
       }
