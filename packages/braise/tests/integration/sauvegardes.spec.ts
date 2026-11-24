@@ -102,7 +102,10 @@ test('une sauvegarde plus récente que le jeu est refusée, et rien n\'est écra
   await expect(page.locator('.screen.camp')).toBeVisible();
   // Le camp vient de s'ouvrir : sa garde ignore les touches pendant 350 ms.
   await settle(page);
+  // Un cran à la fois, en vérifiant : deux appuis trop rapprochés peuvent n'en faire qu'un.
   await page.keyboard.press('ArrowDown', { delay: 60 });
+  await expectFocus(page, 'altar');
+  await page.waitForTimeout(150);
   await page.keyboard.press('ArrowDown', { delay: 60 });
   await expectFocus(page, 'settings');
   await settle(page);
