@@ -11,7 +11,7 @@ import { cinematicById, introCinematic } from '../content/cinematic.ts';
 import { FR, loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
-import { buyItem, canBuy, closeShop, shopItems, takeBoon } from '../core/places.ts';
+import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
 import { abandonRun, clearEvents, createRun, idleInput, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
@@ -26,7 +26,7 @@ import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, TUTORIAL_SEEN, chest, cineCaption, cineCard, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  INTRO_SEEN, TUTORIAL_SEEN, chest, forgeState, cineCaption, cineCard, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
   holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
@@ -302,6 +302,7 @@ async function boot(): Promise<void> {
     levelUp.value = null;
     chest.value = null;
     totemState.value = null;
+    forgeState.value = null;
     shopState.value = null;
     findState.value = null;
     paused = false;
@@ -353,6 +354,7 @@ async function boot(): Promise<void> {
     levelUp.value = null;
     chest.value = null;
     totemState.value = null;
+    forgeState.value = null;
     shopState.value = null;
     findState.value = null;
     pauseReason.value = null;
@@ -668,6 +670,15 @@ async function boot(): Promise<void> {
       if (!run || performance.now() < guardUntil) return;
       if (takeBoon(run, index)) audio.play('ui-confirm');
     },
+    takeEvolution(index) {
+      if (!run || performance.now() < guardUntil) return;
+      if (takeEvolution(run, index)) audio.play('ui-confirm');
+    },
+    closeForge() {
+      if (!run || performance.now() < guardUntil) return;
+      closeForge(run);
+      audio.play('ui-back');
+    },
     buy(index) {
       if (!run || performance.now() < guardUntil) return;
       if (buyItem(run, index)) {
@@ -834,6 +845,7 @@ async function boot(): Promise<void> {
           audio.play('buy', 0.8);
           say(a === 0 ? t('hud.brazierLit') : a === 1 ? t('hud.spring') : a === 3 ? t('hud.treasure') : t('hud.cache'));
           break;
+        case EV.brazierNone: say(t('hud.brazierNone'), 3600); break;
         case EV.totemDone: audio.play('totem', 0.9); break;
         case EV.shopOpen: audio.play('shop-open', 0.8); break;
         case EV.shopBuy: audio.play('shop-buy', 0.9); break;
@@ -1052,6 +1064,7 @@ async function boot(): Promise<void> {
           levelUp.value = null;
           chest.value = null;
           totemState.value = null;
+          forgeState.value = null;
           shopState.value = null;
           findState.value = null;
           pendSkill = false;
@@ -1066,6 +1079,14 @@ async function boot(): Promise<void> {
       } else if (r.phase === 'chest' && overlay.value !== 'chest') {
         chest.value = r.chest;
         overlay.value = 'chest';
+        audio.play('chest', 0.9);
+        guard(350);
+      } else if (r.phase === 'forge' && overlay.value !== 'forge') {
+        forgeState.value = r.forgeChoices.map((i) => {
+          const from = r.weapons[i]!.def;
+          return { from, to: r.data.weapons[from]!.evolution };
+        });
+        overlay.value = 'forge';
         audio.play('chest', 0.9);
         guard(350);
       } else if (r.phase === 'totem' && overlay.value !== 'totem') {
@@ -1086,6 +1107,7 @@ async function boot(): Promise<void> {
         levelUp.value = null;
         chest.value = null;
         totemState.value = null;
+        forgeState.value = null;
         shopState.value = null;
         findState.value = null;
         guard(150);
@@ -1166,6 +1188,7 @@ async function boot(): Promise<void> {
           if (stopOnChoice) break;
           if (run.phase === 'levelup') takeCard(run, 0);
           else if (run.phase === 'chest') closeChest(run);
+          else if (run.phase === 'forge') takeEvolution(run, 0);
           else if (run.phase === 'totem') takeBoon(run, 0);
           else if (run.phase === 'shop') {
             // En tutoriel, le robot achète la première carte qu'il peut payer : c'est la leçon.

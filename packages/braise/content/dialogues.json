@@ -110,6 +110,19 @@
       {"who":"moon","face":"laugh","text":"dialog.tuto.room7.b.1","poses":{"moon":"laugh"},"emotes":{"moon":"note"}},
       {"who":"cream","face":"smug","text":"dialog.tuto.room7.b.2","poses":{"cream":"groom"}}
     ],
+    "tuto.brazier.a": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.brazier.a.1"},
+      {"who":"cream","face":"serious","text":"dialog.tuto.brazier.a.2"}
+    ],
+    "tuto.brazier.b": [
+      {"who":"cream","face":"neutral","text":"dialog.tuto.brazier.b.1"},
+      {"who":"moon","face":"think","text":"dialog.tuto.brazier.b.2","poses":{"moon":"think"}},
+      {"who":"cream","face":"smug","text":"dialog.tuto.brazier.b.3"}
+    ],
+    "tuto.brazier.c": [
+      {"who":"moon","face":"laugh","text":"dialog.tuto.brazier.c.1","emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"neutral","text":"dialog.tuto.brazier.c.2"}
+    ],
     "tuto.room8": [
       {"who":"cream","face":"neutral","text":"dialog.tuto.room8.1"},
       {"who":"cream","face":"serious","text":"dialog.tuto.room8.4"},

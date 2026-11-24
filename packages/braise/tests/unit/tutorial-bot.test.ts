@@ -18,6 +18,10 @@ describe('robot de tutoriel', () => {
       expect(n.buy).toBe(1);
       expect(n.boon).toBe(1);
       expect(n.boss).toBe(1);
+      // Le braséro a été rallumé, puis consommé pour faire évoluer l'arme de départ.
+      expect(run.braziersLit).toBe(1);
+      expect(run.evolutions).toBe(1);
+      expect(run.map.pois.find((p) => p.kind === 'brazier')!.state).toBe(2);
       expect(run.finds).toEqual([data.tutorial.find]);
     }
   }, 120_000);

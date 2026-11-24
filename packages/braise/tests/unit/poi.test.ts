@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { addPickup } from '../../src/core/combat.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
-import { PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, type Poi, type Run } from '../../src/core/types.ts';
+import { closeForge, takeEvolution } from '../../src/core/places.ts';
+import { EV, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, type Poi, type Run } from '../../src/core/types.ts';
 import { data, makeImmortal, makeRun } from './helpers.ts';
 
 function at(run: Run, kind: Poi['kind']): Poi {
@@ -21,8 +22,16 @@ function steps(run: Run, n: number): void {
   }
 }
 
+/** Un pas de simulation ; renvoie les types d'événements émis. */
+function stepEvents(run: Run): number[] {
+  stepRun(run, idleInput());
+  const out = Array.from(run.evType.subarray(0, run.evCount));
+  run.evCount = 0;
+  return out;
+}
+
 describe('événements de la carte (document 02 §7)', () => {
-  it('braséro : rester 8 s dans le cercle pendant qu\'une vague converge donne un coffre de braise', () => {
+  it('braséro : rester 8 s dans le cercle pendant qu\'une vague converge le rallume, sans coffre', () => {
     const run = makeRun(31);
     makeImmortal(run);
     const poi = at(run, 'brazier');
@@ -31,14 +40,52 @@ describe('événements de la carte (document 02 §7)', () => {
     expect(run.enemies.count).toBeGreaterThanOrEqual(10);
     steps(run, 7 * 60);
     expect(poi.state).toBe(1);
-    // Le coffre tombe à côté du braséro : on vérifie qu'il est posé avant d'être ramassé.
-    let lit = false;
-    for (let i = 0; i < 90 && !lit; i++) {
-      steps(run, 1);
-      lit = poi.state === 2;
-    }
-    expect(lit).toBe(true);
+    let none = false;
+    for (let i = 0; i < 90 && poi.state === 1; i++) none = stepEvents(run).includes(EV.brazierNone) || none;
+    // Allumé, il reste en place : aucune arme n'est prête, il le dit et ne donne rien.
+    expect(poi.state).toBe(3);
+    expect(none).toBe(true);
     expect(run.braziersLit).toBe(1);
+    expect(run.phase).toBe('playing');
+    const p = run.pickups;
+    for (let i = 0; i < p.count; i++) expect(p.kind[i]).not.toBe(PK_CHEST);
+    // Rester dans le cercle ne le répète pas ; ressortir puis revenir, si.
+    expect(stepEvents(run)).not.toContain(EV.brazierNone);
+    run.hero.x += 200;
+    stepEvents(run);
+    run.hero.x -= 200;
+    expect(stepEvents(run)).toContain(EV.brazierNone);
+  });
+
+  it('braséro allumé : propose les armes prêtes, en fait évoluer une et s\'éteint', () => {
+    const run = makeRun(31);
+    makeImmortal(run);
+    const poi = at(run, 'brazier');
+    poi.state = 3;
+    poi.armed = true;
+    const scythe = run.weapons[0]!;
+    const def = data.weapons[scythe.def]!;
+    scythe.level = def.levels.length;
+    run.relics.push({ def: def.relic, level: 1 });
+    steps(run, 1);
+    expect(run.phase).toBe('forge');
+    expect(run.forgeChoices).toEqual([0]);
+    // Plus tard : le braséro reste allumé et attend que le héros ressorte du cercle.
+    closeForge(run);
+    expect(run.phase).toBe('playing');
+    steps(run, 5);
+    expect(run.phase).toBe('playing');
+    expect(poi.state).toBe(3);
+    run.hero.x += 200;
+    steps(run, 1);
+    run.hero.x -= 200;
+    steps(run, 1);
+    expect(run.phase).toBe('forge');
+    expect(takeEvolution(run, 0)).toBe(true);
+    expect(scythe.def).toBe(def.evolution);
+    expect(run.evolutions).toBe(1);
+    expect(poi.state).toBe(2);
+    expect(run.phase).toBe('playing');
   });
 
   it('braséro : sortir du cercle fait retomber la flamme', () => {

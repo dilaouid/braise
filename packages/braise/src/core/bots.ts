@@ -1,6 +1,6 @@
 import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
-import { buyItem, canBuy, closeShop, shopItems, takeBoon } from './places.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeBoon, takeEvolution } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { PK_GEM, PK_RED_GEM, SERVICES, type Poi, type Run, type StepInput } from './types.ts';
 
@@ -359,6 +359,10 @@ export function simulate(run: Run, options: SimOptions): Run {
     }
     if (run.phase === 'chest') {
       closeChest(run);
+      continue;
+    }
+    if (run.phase === 'forge') {
+      takeEvolution(run, 0);
       continue;
     }
     if (run.phase === 'totem') {

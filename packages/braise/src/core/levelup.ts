@@ -240,16 +240,34 @@ export function gainXp(run: Run, amount: number): void {
   }
 }
 
+/** Vrai si l'arme peut évoluer : niveau maximum et relique liée possédée. */
+function canEvolve(run: Run, w: WeaponInstance): boolean {
+  const def = run.data.weapons[w.def]!;
+  if (def.evolved || def.evolution < 0 || w.level < def.levels.length) return false;
+  return run.relics.some((r) => r.def === def.relic);
+}
+
+/** Les armes prêtes à évoluer, de la plus ancienne à la plus récente. */
+export function evolvableWeapons(run: Run): WeaponInstance[] {
+  return run.weapons.filter((w) => canEvolve(run, w)).sort((a, b) => a.order - b.order);
+}
+
 /** L'arme prête à évoluer la plus ancienne : niveau maximum et relique liée possédée. */
 export function readyEvolution(run: Run): WeaponInstance | null {
-  let best: WeaponInstance | null = null;
-  for (const w of run.weapons) {
-    const def = run.data.weapons[w.def]!;
-    if (def.evolved || def.evolution < 0 || w.level < def.levels.length) continue;
-    if (!run.relics.some((r) => r.def === def.relic)) continue;
-    if (!best || w.order < best.order) best = w;
-  }
-  return best;
+  return evolvableWeapons(run)[0] ?? null;
+}
+
+/** Fait évoluer l'arme : elle devient sa forme évoluée, au niveau 1. */
+export function evolveWeapon(run: Run, w: WeaponInstance): void {
+  const def = run.data.weapons[w.def]!;
+  w.def = def.evolution;
+  w.level = 1;
+  w.cd = 0.3;
+  w.timer = 0;
+  w.pending = 0;
+  w.burst = 0;
+  run.evolutions++;
+  emit(run, EV.evolution, run.hero.x, run.hero.y, w.def);
 }
 
 /**
@@ -264,17 +282,9 @@ export function openChest(run: Run): void {
   let evolvedFrom = -1;
   const ready = readyEvolution(run);
   if (ready) {
-    const def = run.data.weapons[ready.def]!;
     evolvedFrom = ready.def;
-    evolvedTo = def.evolution;
-    ready.def = def.evolution;
-    ready.level = 1;
-    ready.cd = 0.3;
-    ready.timer = 0;
-    ready.pending = 0;
-    ready.burst = 0;
-    run.evolutions++;
-    emit(run, EV.evolution, run.hero.x, run.hero.y, evolvedTo);
+    evolveWeapon(run, ready);
+    evolvedTo = ready.def;
   }
   // Sans évolution, le coffre donne un niveau d'arme ou de relique : un choix de plus, sans
   // changer le niveau de partie. closeChest l'enchaîne avec les niveaux qui attendent.

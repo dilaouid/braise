@@ -9,6 +9,9 @@ const EVIDENCE = resolve(PACKAGE, '../../production/qa/evidence');
 
 /** Les textes du jeu : un parcours lit les mêmes clés que l'interface. */
 export const FR: Record<string, string> = JSON.parse(readFileSync(resolve(PACKAGE, 'content/i18n/fr.json'), 'utf8'));
+/** Les dialogues livrés : `dialogues[id]` est la liste de leurs lignes. */
+export const DIALOGUES: Record<string, Array<{ who?: string; text?: string }>> =
+  JSON.parse(readFileSync(resolve(PACKAGE, 'content/dialogues.json'), 'utf8')).dialogues;
 
 /** Le texte brut d'une sauvegarde d'exemple de `tests/fixtures/saves/`. */
 export function fixtureSave(name: string): string {

@@ -66,6 +66,8 @@ export const EV = {
   totemDone: 36, shopOpen: 37, shopBuy: 38, findGot: 39, bossWarning: 40,
   /** Tutoriel : ligne de dialogue (a : 0 Moon, 1 Cream, -1 muette), barrière ouverte (a : son numéro), reprise, réplique courte. */
   dialogueLine: 41, gateOpen: 42, tutoRespawn: 43, bark: 44,
+  /** Un braséro allumé n'a aucune arme à faire évoluer. */
+  brazierNone: 45,
 } as const;
 
 export interface EnemyStore {
@@ -154,7 +156,7 @@ export interface Poi {
   kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'memory' | 'totem' | 'smith' | 'herbalist' | 'treasure';
   x: number;
   y: number;
-  /** 0 : intact · 1 : en cours · 2 : terminé. */
+  /** 0 : intact · 1 : en cours · 2 : terminé (un braséro : consommé) · 3 : braséro allumé, qui attend une arme à faire évoluer. */
   state: number;
   progress: number;
   discovered: boolean;
@@ -238,7 +240,7 @@ export interface ChestResult {
   freeLevel: boolean;
 }
 
-export type RunPhase = 'playing' | 'levelup' | 'chest' | 'totem' | 'shop' | 'find' | 'dialogue' | 'victory' | 'dead';
+export type RunPhase = 'playing' | 'levelup' | 'chest' | 'forge' | 'totem' | 'shop' | 'find' | 'dialogue' | 'victory' | 'dead';
 
 /** Les services de l'Herboriste, dans l'ordre de l'écran. */
 export const SERVICES = ['flask', 'balm', 'reroll', 'banish'] as const;
@@ -429,6 +431,10 @@ export interface Run {
   pendingChests: number;
   chest: ChestResult | null;
   evolutions: number;
+  /** Les armes qu'un braséro allumé propose de faire évoluer (phase `forge`) : indices dans `weapons`. */
+  forgeChoices: number[];
+  /** Indice du braséro ouvert, ou -1. */
+  forgePoi: number;
   // Carte vivante : buffs de totem, trouvailles, boutiques
   /** Indices dans `data.boons` ; un buff pris deux fois y est deux fois. */
   boons: number[];

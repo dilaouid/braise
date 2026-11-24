@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipTutorial, storageKey, watch,
+  DIALOGUES, FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipTutorial, storageKey, watch,
 } from './harness.ts';
 
 const SHOTS = 'tutoriel-cream';
 const CLASS = 'class.ash-blade';
-const LINE = (n: number): string => FR[`dialog.tuto.opening.${n}`]!;
+/** La n-ième réplique de l'ouverture (à partir de 1), dans l'ordre où elle se joue ; les silences ne comptent pas. */
+const SPOKEN = DIALOGUES['tuto.opening']!.filter((l) => l.who !== undefined);
+const LINE = (n: number): string => FR[SPOKEN[n - 1]!.text!]!;
 
 const text = (page: Page) => page.locator('.dialogue-text');
 
@@ -90,14 +92,20 @@ test('sauvegarde neuve : intro passée, première réplique, passer le tutoriel,
   await expect(page.locator('.hud .clock')).toHaveCount(0);
   await expect(page.locator('#minimap')).toHaveCount(0);
 
-  // A finit la ligne en cours, puis passe à la suivante : c'est Cream, à droite.
+  // A passe à la ligne suivante : Moon parle encore.
+  await expect(page.locator('.dialogue-next.ready')).toBeVisible();
+  await settle(page);
+  await pad.press('A');
+  await expect(text(page)).toHaveText(LINE(2));
+  await expect(page.locator('.dialogue.dialogue-moon')).toBeVisible();
+
   // A passe à la ligne suivante : c'est Cream, à droite. L'écriture est tenue, pour voir que le
   // A suivant finit la ligne au lieu de la passer.
   await expect(page.locator('.dialogue-next.ready')).toBeVisible();
   await settle(page);
   await hold(page, true);
   await pad.press('A');
-  await expect(text(page)).toHaveText(LINE(2));
+  await expect(text(page)).toHaveText(LINE(3));
   await expect(page.locator('.dialogue.dialogue-cream')).toBeVisible();
   await expect(page.locator('.dialogue-name')).toHaveText(FR['dialog.name.cream']!);
   await expect(page.locator('.dialogue-next.ready')).toHaveCount(0);
@@ -105,15 +113,16 @@ test('sauvegarde neuve : intro passée, première réplique, passer le tutoriel,
   await pad.press('A');
   await expect(page.locator('.dialogue-next.ready')).toBeVisible();
   await expect(page.locator('.dialogue-rest')).toHaveText('');
-  expect((await tutoView(page))!.line).toBe(1);
+  expect((await tutoView(page))!.line).toBe(2);
   await hold(page, false);
 
   // Jusqu'à « TU PARLES ?! » : la ligne muette (le silence) passe seule, sans boîte.
   await pad.press('A');
-  await expect(text(page)).toHaveText(LINE(3));
+  await expect(text(page)).toHaveText(LINE(4));
   await expect(page.locator('.dialogue-next.ready')).toBeVisible();
   await pad.press('A');
-  await expect(text(page)).toHaveText(LINE(4));
+  await expect(text(page)).toHaveText(LINE(5));
+  await expect(text(page)).toHaveText('TU PARLES ?!');
   await expect(page.locator('.dialogue.dialogue-moon')).toBeVisible();
   await expect(page.locator('.dialogue-next.ready')).toBeVisible();
   // Le temps que la caméra finisse de glisser et que la bulle retombe.

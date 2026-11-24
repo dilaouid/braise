@@ -93,7 +93,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     pendingLevels: 0, cards: [], banned: new Set(), pityCount: 0,
     weaponPool: data.weapons.filter((w) => !w.evolved && (unlockedWeapons.has(w.id) || w.index === cls.startWeaponIndex)).map((w) => w.index),
     relicPool: data.relics.filter((r) => unlockedRelics.has(r.id)).map((r) => r.index),
-    pendingChests: 0, chest: null, evolutions: 0,
+    pendingChests: 0, chest: null, evolutions: 0, forgeChoices: [], forgePoi: -1,
     boons: [], finds: [], findPool: rngDraw.shuffle(data.finds.map((_, i) => i)),
     pendingFinds: 0, find: -1, findGold: 0, totemChoices: [], shopPoi: -1,
     smithBuys: 0, serviceBuys: SERVICES.map(() => 0), extraFlasks: 0, bossWarned: false,

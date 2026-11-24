@@ -1,7 +1,7 @@
 import type { DialogueLine, GameData, Point, RegionDef, TutorialDef, TutorialStep } from '../content/index.ts';
 import { MAP_THICKET, MAP_WALL } from '../content/tutorial.ts';
 import { addPickup, spawnEnemy } from './combat.ts';
-import { resumeRun } from './levelup.ts';
+import { recomputeStats, resumeRun } from './levelup.ts';
 import { findPath, isSolidAt } from './map.ts';
 import { emit, facingFromVector } from './stores.ts';
 import {
@@ -246,6 +246,26 @@ function smithPrice(run: Run): number {
   return ev.basePrice + ev.priceStep * run.smithBuys;
 }
 
+/** L'état du braséro du tutoriel, ou 0 s'il n'est pas encore posé. */
+function brazierState(run: Run): number {
+  return run.map.pois.find((p) => p.kind === 'brazier')?.state ?? 0;
+}
+
+/** Met l'arme de départ au niveau maximum et donne sa relique liée, pour que le braséro puisse la faire évoluer. */
+function readyStartWeapon(run: Run): void {
+  const weapon = run.weapons[0];
+  if (!weapon) return;
+  const def = run.data.weapons[weapon.def]!;
+  if (def.evolved || def.evolution < 0) return;
+  weapon.level = def.levels.length;
+  if (!run.relics.some((r) => r.def === def.relic)) {
+    run.relics.push({ def: def.relic, level: 1 });
+    recomputeStats(run);
+  }
+  // Le héros est peut-être déjà dans le cercle : le braséro propose sans attendre qu'il en sorte.
+  for (const poi of run.map.pois) if (poi.kind === 'brazier' && poi.state === 3) poi.armed = true;
+}
+
 function waitDone(run: Run, tu: TutorialState, step: Extract<TutorialStep, { do: 'wait' }>): boolean {
   const hero = run.hero;
   const n = tu.notes;
@@ -268,6 +288,11 @@ function waitDone(run: Run, tu: TutorialState, step: Extract<TutorialStep, { do:
     case 'buy': return n.buy > 0 || (n.shopClosed > b.shopClosed && hero.gold < smithPrice(run));
     case 'boon': return n.boon > b.boon;
     case 'totem': return n.totem > b.totem;
+    // Le braséro du tutoriel : commencé, allumé (ou déjà consommé), consommé. Lu sur le lieu lui-même,
+    // pour qu'une salle qui recommence ne redemande pas ce qui est fait.
+    case 'kindle': return brazierState(run) !== 0;
+    case 'lit': return brazierState(run) >= 2;
+    case 'evolve': return brazierState(run) === 2;
     case 'boss': return n.boss > b.boss;
     case 'time': return tu.waitT >= step.seconds;
   }
@@ -366,6 +391,11 @@ function runStep(run: Run, tu: TutorialState, step: TutorialStep, dt: number): b
       if (tu.played[tu.step]) return true;
       tu.played[tu.step] = 1;
       run.map.pois.push({ kind: step.kind, x: step.x, y: step.y, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
+      return true;
+    case 'ready':
+      if (tu.played[tu.step]) return true;
+      tu.played[tu.step] = 1;
+      readyStartWeapon(run);
       return true;
     case 'checkpoint':
       tu.checkpointStep = tu.step;

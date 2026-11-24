@@ -34,7 +34,7 @@ export interface EditLine {
   /** Un identifiant propre à ce message dans la page, qui le suit quand il bouge ou change (jamais écrit). */
   uid?: string;
   /** La réplique qu'un silence a remplacée : elle revient si le message reparle avant l'enregistrement (jamais écrite). */
-  kept?: { key: string; text: string; face: string };
+  kept?: { key: string; text: string; face: string; after: string | null };
 }
 
 let uidSeq = 0;
@@ -405,7 +405,10 @@ export function setWho(model: EditorModel, dialogueId: string, index: number, wh
   const lines = [...d.lines];
   if (who === null) {
     // La réplique est gardée de côté (hors des fichiers) : repasser à Moon ou Cream la rend telle quelle.
-    const kept = line.key ? { key: line.key, text: line.text, face: line.face } : line.kept;
+    // La clé qui la précède dans fr : elle y reprendra sa place.
+    const at = line.key ? model.fr.findIndex(([k]) => k === line.key) : -1;
+    const after = at > 0 ? model.fr[at - 1]![0] : null;
+    const kept = line.key ? { key: line.key, text: line.text, face: line.face, after } : line.kept;
     lines[index] = { ...line, who: null, key: null, face: '', text: '', seconds: line.seconds > 0 ? line.seconds : 1, kept };
     return dropKeyIfUnused(withLines(model, dialogueId, lines), line.key);
   }
@@ -417,7 +420,8 @@ export function setWho(model: EditorModel, dialogueId: string, index: number, wh
   const { kept, ...rest } = line;
   if (kept && !isCited(model, kept.key)) {
     const has = model.fr.some(([k]) => k === kept.key);
-    const m = has ? model : insertFr(model, kept.key, kept.text, lastKeyOf(model, dialogueId));
+    const back = kept.after !== null && model.fr.some(([k]) => k === kept.after) ? kept.after : lastKeyOf(model, dialogueId);
+    const m = has ? model : insertFr(model, kept.key, kept.text, back);
     const text = m.fr.find(([k]) => k === kept.key)?.[1] ?? kept.text;
     lines[index] = { ...rest, who, face: pick(kept.face), key: kept.key, text, seconds: 0 };
     return withLines(m, dialogueId, lines);

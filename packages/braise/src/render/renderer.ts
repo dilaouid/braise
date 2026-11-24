@@ -672,12 +672,18 @@ export class GameRenderer {
         this.light(lightX(poi.x), lightY(poi.y - 6), 76 + Math.round(pulse * 5));
       } else if (poi.kind === 'brazier') {
         s.texture = this.atlas.get('poi-brasero');
-        if (poi.state === 2) {
+        if (poi.state === 3) {
+          // Allumé : la flamme attend une arme à faire évoluer, le cercle invite à revenir.
           f.visible = true;
           f.texture = this.flameFrames[Math.floor(time * 10 + k) % this.flameFrames.length]!;
           f.position.set(poi.x, poi.y - 8);
           f.zIndex = poi.y + 5;
           this.light(lightX(poi.x), lightY(poi.y - 8), 96 + Math.round(Math.sin(time * 3 + k) * 2), 0.14);
+          g.circle(poi.x, poi.y, ev.brazier.radius).stroke({ width: 1, color: C.emberPale, alpha: 0.25 + Math.sin(time * 2) * 0.08 });
+        } else if (poi.state === 2) {
+          // Consommé : sa flamme est passée dans l'arme.
+          s.tint = 0x6b7285;
+          this.light(lightX(poi.x), lightY(poi.y - 6), 20);
         } else {
           g.circle(poi.x, poi.y, ev.brazier.radius).stroke({ width: 1, color: C.ember, alpha: 0.35 + Math.sin(time * 4) * 0.1 });
           if (poi.state === 1) {

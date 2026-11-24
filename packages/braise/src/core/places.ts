@@ -1,5 +1,5 @@
 import { healHero, spawnEnemy } from './combat.ts';
-import { applyCard, cardCandidates, recomputeStats, resumeRun } from './levelup.ts';
+import { applyCard, cardCandidates, evolvableWeapons, evolveWeapon, recomputeStats, resumeRun } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { emit, tutorialNote } from './stores.ts';
 import { EV, SERVICES, type Card, type Poi, type Run, type ShopItem } from './types.ts';
@@ -127,6 +127,44 @@ export function updatePlace(run: Run, poi: Poi, index: number, dist: number, dt:
     default:
       break;
   }
+}
+
+/**
+ * Un braséro allumé propose ses évolutions : l'écran de choix s'ouvre, ou le héros apprend qu'aucune
+ * arme n'est prête. Il faudra ressortir du cercle pour qu'il propose à nouveau.
+ */
+export function offerEvolution(run: Run, poi: Poi, index: number): void {
+  poi.armed = false;
+  const ready = evolvableWeapons(run);
+  if (ready.length === 0) {
+    emit(run, EV.brazierNone, poi.x, poi.y);
+    return;
+  }
+  run.forgeChoices = ready.map((w) => run.weapons.indexOf(w));
+  run.forgePoi = index;
+  run.phase = 'forge';
+}
+
+/** Fait évoluer l'arme d'indice donné parmi celles que le braséro propose : le braséro est consommé. */
+export function takeEvolution(run: Run, index: number): boolean {
+  if (run.phase !== 'forge') return false;
+  const weapon = run.weapons[run.forgeChoices[index] ?? -1];
+  const poi = run.map.pois[run.forgePoi];
+  if (!weapon || !poi) return false;
+  evolveWeapon(run, weapon);
+  poi.state = 2;
+  run.forgeChoices = [];
+  run.forgePoi = -1;
+  resumeRun(run);
+  return true;
+}
+
+/** Referme le braséro sans rien faire évoluer : il reste allumé pour plus tard. */
+export function closeForge(run: Run): void {
+  if (run.phase !== 'forge') return;
+  run.forgeChoices = [];
+  run.forgePoi = -1;
+  resumeRun(run);
 }
 
 /** Prend le buff d'indice donné parmi ceux que le totem propose. */

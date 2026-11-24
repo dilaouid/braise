@@ -421,8 +421,10 @@ export const dialoguesSchema = z
   })
   .strict();
 
-export const WAIT_CONDITIONS = ['reach', 'clear', 'gems', 'card', 'healed', 'full', 'find', 'buy', 'boon', 'totem', 'boss', 'time'] as const;
-export const PLACE_KINDS = ['spring', 'treasure', 'smith', 'totem'] as const;
+export const WAIT_CONDITIONS = [
+  'reach', 'clear', 'gems', 'card', 'healed', 'full', 'find', 'buy', 'boon', 'totem', 'kindle', 'lit', 'evolve', 'boss', 'time',
+] as const;
+export const PLACE_KINDS = ['spring', 'treasure', 'smith', 'totem', 'brazier'] as const;
 export const BANNER_GLYPHS = ['move', 'dash', 'flask', 'skill', 'confirm'] as const;
 
 /** Une étape du script du tutoriel. Les repères sont cités par leur nom. */
@@ -439,6 +441,8 @@ export const tutorialStepSchema = z.discriminatedUnion('do', [
   z.object({ do: z.literal('gem'), at: z.string() }).strict(),
   z.object({ do: z.literal('place'), kind: z.enum(PLACE_KINDS), at: z.string() }).strict(),
   z.object({ do: z.literal('checkpoint'), at: z.string() }).strict(),
+  /** L'arme de départ passe au niveau maximum avec sa relique liée : prête à évoluer. */
+  z.object({ do: z.literal('ready') }).strict(),
   z.object({ do: z.literal('end') }).strict(),
 ]);
 

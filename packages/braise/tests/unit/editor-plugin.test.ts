@@ -56,7 +56,7 @@ describe('greffon de l\'éditeur : écriture sans demi-mesure', () => {
     const res = await failing.save({
       files: {
         dialogues: c.files.dialogues.replace('{"seconds":1.2,', '{"seconds":2,'),
-        fr: c.files.fr.replace('"Encore."', '"Encore !"'),
+        fr: c.files.fr.replace('"Recommence encore !"', '"Encore !"'),
       },
       hashes: c.hashes,
     });
@@ -64,7 +64,7 @@ describe('greffon de l\'éditeur : écriture sans demi-mesure', () => {
     expect((res.body as { message: string }).message).toContain('disque plein');
     expect(snapshot(dir)).toEqual(before);
     // Les empreintes de départ restent bonnes : l'enregistrement suivant passe.
-    const again = await api.save({ files: { ...c.files, fr: c.files.fr.replace('"Encore."', '"Encore !"') }, hashes: c.hashes });
+    const again = await api.save({ files: { ...c.files, fr: c.files.fr.replace('"Recommence encore !"', '"Encore !"') }, hashes: c.hashes });
     expect(again.status).toBe(200);
   });
 });
@@ -105,7 +105,7 @@ describe('greffon de l\'éditeur : enregistrement', () => {
   it('un enregistrement valide écrit les deux fichiers et rien d\'autre', async () => {
     const before = snapshot(dir);
     const c = await api.readContent();
-    const fr = c.files.fr.replace('"dialog.tuto.room3.2": "À travers ?!"', '"dialog.tuto.room3.2": "À travers ?! Vraiment ?"');
+    const fr = c.files.fr.replace('"dialog.tuto.room3.2": "On est coincé ici ?"', '"dialog.tuto.room3.2": "On est coincé ici ? Vraiment ?"');
     const dialogues = c.files.dialogues.replace('{"seconds":1.2,', '{"seconds":2,');
     const res = await api.save({ files: { dialogues, fr }, hashes: c.hashes });
     expect(res.status).toBe(200);
@@ -124,10 +124,10 @@ describe('greffon de l\'éditeur : enregistrement', () => {
   it('une empreinte périmée est refusée (409) sans rien écrire', async () => {
     const c = await api.readContent();
     // Changé à la main entre le chargement et l'enregistrement.
-    const hand = c.files.fr.replace('"Debout."', '"Debout !"');
+    const hand = c.files.fr.replace('"Vraiment ? Tu t\'es endormi ?"', '"Debout !"');
     writeFileSync(join(dir, 'i18n/fr.json'), hand);
     const before = snapshot(dir);
-    const res = await api.save({ files: { dialogues: c.files.dialogues, fr: c.files.fr.replace('"Encore."', '"Encore !"') }, hashes: c.hashes });
+    const res = await api.save({ files: { dialogues: c.files.dialogues, fr: c.files.fr.replace('"Recommence encore !"', '"Encore !"') }, hashes: c.hashes });
     expect(res.status).toBe(409);
     expect(snapshot(dir)).toEqual(before);
     expect(await api.wasWrittenByEditor(join(dir, 'i18n/fr.json'))).toBe(false);
@@ -135,8 +135,8 @@ describe('greffon de l\'éditeur : enregistrement', () => {
 
   it('deux enregistrements rapides avec les mêmes empreintes : le second est refusé', async () => {
     const c = await api.readContent();
-    const a = c.files.fr.replace('"Encore."', '"Encore une fois."');
-    const b = c.files.fr.replace('"Encore."', '"Et encore."');
+    const a = c.files.fr.replace('"Recommence encore !"', '"Encore une fois."');
+    const b = c.files.fr.replace('"Recommence encore !"', '"Et encore."');
     const [ra, rb] = await Promise.all([
       api.save({ files: { dialogues: c.files.dialogues, fr: a }, hashes: c.hashes }),
       api.save({ files: { dialogues: c.files.dialogues, fr: b }, hashes: c.hashes }),
@@ -148,7 +148,7 @@ describe('greffon de l\'éditeur : enregistrement', () => {
   it('un contenu invalide est refusé (422) avec ses erreurs, sans rien écrire', async () => {
     const c = await api.readContent();
     const before = snapshot(dir);
-    const long = c.files.fr.replace('"Debout."', JSON.stringify('a'.repeat(161)));
+    const long = c.files.fr.replace('"Vraiment ? Tu t\'es endormi ?"', JSON.stringify('a'.repeat(161)));
     const res = await api.save({ files: { dialogues: c.files.dialogues, fr: long }, hashes: c.hashes });
     expect(res.status).toBe(422);
     expect((res.body as { errors: string[] }).errors.join('\n')).toContain('tuto.death.1');
@@ -212,7 +212,7 @@ describe('greffon de l\'éditeur : adresses', () => {
     expect((await call('GET', '/index.html')).nexted).toBe(true);
     const c = (await call('GET', '/__editor/content')).json as Awaited<ReturnType<EditorApi['readContent']>>;
     const before = snapshot(dir);
-    const foreign = await call('POST', '/__editor/save', { files: { ...c.files, fr: c.files.fr.replace('"Encore."', '"Non."') }, hashes: c.hashes }, { origin: 'http://ailleurs.example' });
+    const foreign = await call('POST', '/__editor/save', { files: { ...c.files, fr: c.files.fr.replace('"Recommence encore !"', '"Non."') }, hashes: c.hashes }, { origin: 'http://ailleurs.example' });
     expect(foreign.status).toBe(403);
     expect(snapshot(dir)).toEqual(before);
   });
