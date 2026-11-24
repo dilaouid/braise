@@ -17,7 +17,7 @@ import {
 } from './stores.ts';
 import { tutorialBossDead, tutorialRespawn, updateTutorial } from './tutorial.ts';
 import {
-  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, SERVICES, STEP, TILE_THICKET,
+  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SERVICES, STEP, TILE_THICKET,
   type GameMap, type Hero, type Run, type RunConfig, type StepInput,
 } from './types.ts';
 import { addWeapon, updateShots, updateWeapons, updateZones } from './weapons.ts';
@@ -49,6 +49,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
   const rngSpawn = new Rng(deriveSeed(cfg.seed, 1));
   const rngDraw = new Rng(deriveSeed(cfg.seed, 2));
   const rngCombat = new Rng(deriveSeed(cfg.seed, 3));
+  const rngLantern = new Rng(deriveSeed(cfg.seed, 4));
   const map = opts.map ?? generateMap(rngMap, tuning, region);
   const sheet = cloneSheet(cfg.sheet);
   const stats = resolveStats(sheet, tuning, data.heroTuning, {} as HeroStats);
@@ -79,7 +80,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
   const unlockedRelics = new Set(cfg.unlockedRelics);
   const run: Run = {
     data, cfg, region, cls,
-    rngMap, rngSpawn, rngDraw, rngCombat,
+    rngMap, rngSpawn, rngDraw, rngCombat, rngLantern,
     tick: 0, time: 0, phase: 'playing',
     map, hero, sheet,
     mods: cfg.mods ?? NEUTRAL_MODS, gemsHeld: 0, revived: 0,
@@ -118,6 +119,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     killsByKind: new Uint32Array(kinds),
     damageByKind: new Float32Array(kinds),
     braziersLit: 0,
+    piece: null,
     memoryTaken: false,
     tutorial: null,
     outcome: null,
@@ -363,6 +365,7 @@ function updatePickups(run: Run, dt: number): void {
       case PK_ASH: hero.ashDrops += value; break;
       case PK_DROP: hero.flasks = Math.min(hero.stats.flasks, hero.flasks + 1); break;
       case PK_CHEST: run.pendingChests++; break;
+      case PK_PIECE: if (run.piece) run.piece.taken = true; break;
       case PK_CALL:
         // L'Appel de la flamme attire toutes les gemmes de la carte.
         for (let k = 0; k < p.count; k++) if (p.kind[k] === PK_GEM || p.kind[k] === PK_RED_GEM) p.attracted[k] = 1;

@@ -1,6 +1,8 @@
 import type { GameData, PieceDef, PieceEffect, StatBonus } from '../content/index.ts';
 import { NEUTRAL_MODS, mergeMods, type RunMods } from '../core/mods.ts';
-import { LANTERN_FACES, type LanternSave } from './save.ts';
+import type { RunResult } from '../core/rewards.ts';
+import type { RunConfig } from '../core/types.ts';
+import { LANTERN_FACES, type LanternSave, type Save } from './save.ts';
 
 /** Une face occupée, telle qu'elle agit. */
 export interface FaceView {
@@ -127,4 +129,36 @@ export function lanternNews(data: GameData, lantern: LanternSave): boolean {
 /** L'écran de la Lanterne vient de s'ouvrir : tout est vu. */
 export function markLanternSeen(lantern: LanternSave): void {
   lantern.seen = newsKeys(lantern);
+}
+
+/** Ce que la Lanterne donne à une partie qui commence. Une graine rejouée ne rapporte aucune pièce. */
+export function lanternRun(data: GameData, save: Save, replay: boolean): { mods: RunMods; lantern: NonNullable<RunConfig['lantern']> } {
+  const lantern = save.account.lantern;
+  const view = resolveLantern(data, lantern);
+  return {
+    mods: view.mods,
+    lantern: {
+      pool: replay ? [] : missingPieces(data, lantern),
+      guaranteed: !replay && ownedPieces(data, lantern).length === 0,
+      placed: view.placed,
+    },
+  };
+}
+
+/** Verse une partie finie dans la Lanterne : la pièce ramenée, la victoire comptée, la face ouverte (une au plus). */
+export function applyLantern(data: GameData, lantern: LanternSave, result: RunResult): { piece: string | null; face: number | null } {
+  if (result.outcome !== 'victory') return { piece: null, face: null };
+  const { kept, placed, reborn } = result.lantern;
+  let piece: string | null = null;
+  if (kept !== null && !lantern.owned.includes(kept)) {
+    lantern.owned.push(kept);
+    piece = kept;
+  }
+  if (placed >= 1) lantern.wins++;
+  const opens = lantern.opened === 1 ? reborn
+    : lantern.opened === 2 ? lantern.wins >= data.lantern.winsForThird
+      : lantern.opened === 3 ? reborn && placed >= 3 : false;
+  if (!opens) return { piece, face: null };
+  lantern.opened++;
+  return { piece, face: lantern.opened };
 }

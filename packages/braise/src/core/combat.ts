@@ -3,7 +3,7 @@ import { damageTaken } from './stats.ts';
 import { addTelegraph, clearEnemy, emit, removeEnemy, removePickup } from './stores.ts';
 import {
   CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_NO_NUMBER, HIT_RESIST, HIT_WEAK,
-  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
   TG_CIRCLE, type Run,
 } from './types.ts';
 
@@ -301,6 +301,23 @@ function chargeUltimate(run: Run, amount: number): void {
 }
 
 /**
+ * Fait peut-être tomber une pièce de la Lanterne : une par partie, parmi celles qui restent à trouver.
+ * Celle d'un boss vole d'elle-même vers Moon.
+ */
+function rollPiece(run: Run, x: number, y: number, chance: number, fromBoss: boolean): void {
+  const pool = run.cfg.lantern?.pool ?? [];
+  if (run.piece || pool.length === 0 || chance <= 0 || !run.rngLantern.chance(chance)) return;
+  const id = run.rngLantern.pick(pool);
+  const index = run.data.lantern.pieces.findIndex((p) => p.id === id);
+  if (index < 0) return;
+  run.piece = { index, taken: false, fromBoss };
+  const before = run.pickups.count;
+  addPickup(run, PK_PIECE, x, y, index);
+  if (fromBoss && run.pickups.count > before) run.pickups.attracted[before] = 1;
+  emit(run, EV.pieceDrop, x, y, index);
+}
+
+/**
  * Retire les ennemis morts et pose leur butin. Appelé une fois par pas, après les dégâts :
  * les indices restent stables pendant tout le reste du pas.
  */
@@ -356,6 +373,7 @@ export function reapEnemies(run: Run): boolean {
       addPickup(run, PK_CHEST, x, y + 6, 1);
       addPickup(run, PK_ASH, x - 8, y, tuning.ashes.elite);
       if (rng.chance(tuning.drops.emberDropFromElite)) addPickup(run, PK_DROP, x + 8, y, 1);
+      rollPiece(run, x, y - 8, run.data.lantern.drops.elite, false);
       run.director.breathT = tuning.director.breathSeconds;
       emit(run, EV.eliteDeath, x, y, kind);
       if (run.mods.eliteKillPower > 0) emit(run, EV.hunt, x, y, run.mods.eliteKillPower * run.hero.elites);
@@ -368,6 +386,8 @@ export function reapEnemies(run: Run): boolean {
         const loot = def.loot ?? 1;
         addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss * loot);
         addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss * loot);
+        // Sans aucune pièce, le boss en doit une ; sinon seul un boss qui s'est reformé peut en lâcher.
+        rollPiece(run, x, y - 8, run.cfg.lantern?.guaranteed ? 1 : def.reform ? run.data.lantern.drops.reborn : 0, true);
       }
       emit(run, EV.bossDeath, x, y, kind);
     }
