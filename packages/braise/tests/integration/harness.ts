@@ -200,6 +200,38 @@ export async function expectFocus(page: Page, id?: string): Promise<void> {
   if (id !== undefined) await expect(focused).toHaveAttribute('data-focus', id);
 }
 
+/** Au refuge, met cet objet au focus : RB (ou E) passe de l'un à l'autre. */
+export async function toObject(page: Page, pad: SimPad | null, id: string): Promise<void> {
+  await expect(page.locator('.screen.camp')).toBeVisible();
+  await settle(page);
+  for (let k = 0; k < 8 && (await page.locator(`.camp-object.is-focused[data-focus="${id}"]`).count()) === 0; k++) {
+    if (pad) await pad.press('RB');
+    else await page.keyboard.press('KeyE', { delay: 60 });
+    await waitFrames(page, 3);
+  }
+  await expectFocus(page, id);
+}
+
+/** Au refuge, ouvre la porte : le choix du niveau. `confirm` : le bouton qui valide (B si A et B sont inversés). */
+export async function openDoor(page: Page, pad: SimPad | null, confirm: 'A' | 'B' = 'A'): Promise<void> {
+  await toObject(page, pad, 'door');
+  if (pad) await pad.press(confirm);
+  else await page.keyboard.press('Enter', { delay: 60 });
+  await expect(page.locator('.screen.door')).toBeVisible();
+  await expectFocus(page, 'region.ash-woods');
+  await settle(page);
+}
+
+/** Du refuge à la cinématique de départ : la porte, le niveau, A maintenu. */
+export async function departFromCamp(page: Page, pad: SimPad | null): Promise<void> {
+  await openDoor(page, pad);
+  if (pad) await pad.down('A');
+  else await page.keyboard.down('Enter');
+  await expect(page.locator('.screen.cinematic, .hud').first()).toBeVisible();
+  if (pad) await pad.up('A');
+  else await page.keyboard.up('Enter');
+}
+
 /** Ce que la prise de développement `window.__braise` montre à un parcours. */
 export interface RunView {
   phase: string;

@@ -1,0 +1,52 @@
+import type { JSX } from 'preact';
+import { HelpBar, Icon, useFocusScope, useHandlers } from './parts.tsx';
+import { Currencies } from './screens.tsx';
+import { actions, fmtTime, gameData, holdProgress, lastSeed, replaySeed, save, saveRev, t } from './store.ts';
+
+/** La porte : choisir où l'on va. Une carte par région, puis des cartes fermées. */
+export function DoorScreen(): JSX.Element {
+  const ref = useFocusScope('door');
+  saveRev.value;
+  const s = save.value!;
+  const data = gameData();
+  const regions = Object.values(data.regions);
+  const replay = replaySeed.value && lastSeed.value !== null;
+  useHandlers({
+    back: () => actions().goto('camp'),
+    x: () => {
+      if (lastSeed.value !== null) replaySeed.value = !replaySeed.value;
+    },
+  });
+  const stats = s.account.stats;
+  return (
+    <div class="screen door" ref={ref}>
+      <div class="camp-purse"><Currencies /></div>
+      <div class="door-records">
+        <span title={t('door.runs')}><Icon name="icon-find-boots" /> {stats.runs ?? 0}</span>
+        <span title={t('door.wins')}><Icon name="sign-crown" /> {stats.victories ?? 0}</span>
+        <span title={t('door.best')}><Icon name="sign-hourglass" /> {fmtTime(stats.bestSeconds ?? 0)}</span>
+      </div>
+      <div class="door-cards">
+        {regions.map((r, i) => {
+          const lit = s.account.regions[r.id]?.lit === true;
+          return (
+            <button
+              type="button" key={r.id} class="door-card" data-focus={r.id} data-focus-default={i === 0 ? '' : undefined} data-hold=""
+              onClick={() => actions().depart(replay ? lastSeed.value! : undefined, r.id)}
+            >
+              <span class="door-art"><Icon name={r.borderDecor} /></span>
+              <span class="door-name">{t(`${r.id}.name`)}</span>
+              <span class="hold-track"><span class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></span>
+              <span class={`door-fire${lit ? ' lit' : ''}`} title={t(lit ? 'door.lit' : 'door.dark')}><Icon name="sign-flame" /></span>
+            </button>
+          );
+        })}
+        {Array.from({ length: Math.max(0, data.memoriesTotal - regions.length) }, (_, i) => (
+          <span key={i} class="door-card closed"><span class="door-art"><Icon name="lantern-face-closed" /></span></span>
+        ))}
+      </div>
+      {replay ? <p class="seed"><Icon name="lantern-face-closed" /> {t('door.sameMap')} · {t('camp.seed.noPiece')}</p> : null}
+      <HelpBar items={[['confirm', t('camp.holdToLeave')], lastSeed.value !== null && ['x', t('door.sameMap')], ['back', t('ui.back')]]} />
+    </div>
+  );
+}

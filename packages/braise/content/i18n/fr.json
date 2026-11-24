@@ -133,19 +133,6 @@
   "ui.choose": "Choisir",
   "ui.move": "Déplacer",
 
-  "camp.title": "Camp du Foyer",
-  "camp.depart": "Partir en expédition",
-  "camp.depart.desc": "Le Bois des Cendres · Veillée I · 15 minutes, un boss.",
-  "camp.altar": "Autel du Foyer",
-  "camp.altar.desc": "Mère Ysolde échange tes Cendres contre des boosts permanents.",
-  "camp.settings.desc": "Son, manette, aides de jeu.",
-  "camp.hero": "Lame-Cendre · niveau {level}",
-  "camp.heroXp": "Expérience : {xp} / {next}",
-  "camp.records": "Expéditions : {runs} · Victoires : {wins} · Meilleur temps : {best}",
-  "camp.brazierLit": "Le Brasier du Bois est rallumé.",
-  "camp.brazierDark": "Le Brasier du Bois est éteint.",
-  "camp.seed": "Graine",
-  "camp.seed.random": "au hasard",
   "camp.seed.noPiece": "aucune pièce de Lanterne",
   "camp.holdToLeave": "Maintiens pour partir",
 
@@ -440,8 +427,6 @@
   "title.tutorial": "Rejouer le tutoriel",
   "pause.skipTutorial": "Passer le tutoriel",
   "pause.skipTutorial.confirm": "Passer le tutoriel et aller au refuge ?",
-  "camp.cream": "Cream",
-  "camp.cream.desc": "Il dort près de la lanterne. D'un œil.",
   "camp.cream.1": "Tu ronfles trop fort. Je préférais quand tu chantais.",
   "camp.cream.2": "La lanterne tient. Toi aussi. C'est déjà ça.",
   "camp.cream.3": "Ne me regarde pas comme ça. Je garde, t'inquiète pas.",
@@ -529,8 +514,6 @@
   "glass.tilted.bonus": "La face suivante : +2 niveaux.",
   "glass.tilted.malus": "La face précédente : -1 niveau.",
 
-  "camp.lantern": "Lanterne",
-  "camp.lantern.desc": "Ce que Moon emporte dans sa lumière.",
   "lantern.title": "Lanterne",
   "lantern.empty": "Aucune pièce. Le Cerf en garde une.",
   "lantern.face.empty": "vide",
@@ -549,5 +532,17 @@
   "hud.hunt": "Chasse : +{n} % de Puissance",
   "end.piece": "Pièce de Lanterne : {name}",
   "end.pieceLost": "Pièce de Lanterne perdue : {name}",
-  "end.lanternFace": "La face {n} de la Lanterne s'ouvre."
+  "end.lanternFace": "La face {n} de la Lanterne s'ouvre.",
+
+  "camp.object.door": "Porte",
+  "camp.object.altar": "Autel",
+  "camp.object.lantern": "Lanterne",
+  "camp.object.cream": "Cream",
+  "camp.object.memories": "Souvenirs",
+  "door.sameMap": "Même carte",
+  "door.runs": "Expéditions",
+  "door.wins": "Victoires",
+  "door.best": "Meilleur temps",
+  "door.lit": "Brasier rallumé",
+  "door.dark": "Brasier éteint"
 }

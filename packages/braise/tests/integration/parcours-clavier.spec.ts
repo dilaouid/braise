@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { FR, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, watch } from './harness.ts';
+import {
+  FR, departFromCamp, expectFocus, runView, settle, skipDepartCinematic, skipIntro, skipTutorial, toObject, watch,
+} from './harness.ts';
 
 /** Le même jeu au clavier seul : menus, départ maintenu, pause. */
 test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }) => {
@@ -21,12 +23,11 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
   await skipTutorial(page);
 
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
+  await expectFocus(page, 'door');
   // Les invites montrent des touches, pas des boutons de manette.
-  await expect(page.locator('.helpbar .glyph-confirm')).toHaveText('Entrée');
+  await expect(page.locator('.is-focused .glyph-confirm')).toHaveText('Entrée');
 
-  await page.keyboard.press('ArrowDown', { delay: 60 });
-  await expectFocus(page, 'altar');
+  await toObject(page, null, 'altar');
   await settle(page);
   await page.keyboard.press('Enter', { delay: 60 });
   await expect(page.locator('.screen.altar')).toBeVisible();
@@ -35,12 +36,7 @@ test('au clavier : titre, camp, Autel, départ maintenu, pause', async ({ page }
   await expect(page.locator('.screen.camp')).toBeVisible();
   await expectFocus(page, 'altar');
 
-  await page.keyboard.press('ArrowUp', { delay: 60 });
-  await expectFocus(page, 'depart');
-  await settle(page);
-  await page.keyboard.down('Enter');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await page.keyboard.up('Enter');
+  await departFromCamp(page, null);
   await skipDepartCinematic(page);
   await settle(page);
 

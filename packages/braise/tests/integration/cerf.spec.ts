@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, fixtureSave, plantSave, settle, skipDepartCinematic, watch } from './harness.ts';
+import {
+  FR, SimPad, capture, departFromCamp, expectFocus, fixtureSave, plantSave, settle, skipDepartCinematic, watch,
+} from './harness.ts';
 
 const SHOTS = 'cerf';
 
@@ -28,11 +30,8 @@ async function depart(page: Page, pad: SimPad): Promise<void> {
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
-  await settle(page);
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic, .hud').first()).toBeVisible();
-  await pad.up('A');
+  await expectFocus(page, 'door');
+  await departFromCamp(page, pad);
 }
 
 test('Cerf jamais battu : l\'appel du Cerf, puis l\'expédition contre le Cerf vivant', async ({ page }, info) => {

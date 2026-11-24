@@ -1296,6 +1296,36 @@
   prompt: "a small old brass hand lantern with four glass panes, dented and covered in ash, a warm orange flame burning inside, front view, centered, 16-bit pixel art, 1px dark outline"
   settings: {"width":96,"height":96,"no_background":true}
   edits: "palette réduite"
+- file: sprites/camp-altar.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 6ae75635-ce19-4c88-9c16-a2dbc4c6128c
+  prompt: "a rectangular stone altar table, two thick carved legs and a flat slab, a heap of pale grey ash with tiny orange embers on the slab, seen from slightly above, game prop, 16-bit pixel art, 1px dark outline, three-tone shading"
+  settings: {"width":48,"height":48,"no_background":true}
+  edits: "palette réduite"
+- file: sprites/camp-souvenirs.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: a46e6a56-d8c4-44b4-91fc-86654dc65cac
+  prompt: "one blue faceted gem resting on a small round grey stone pedestal, simple clean silhouette, nothing around it, empty background, game prop, 16-bit pixel art, 1px dark outline, three-tone shading"
+  settings: {"width":40,"height":40,"no_background":true}
+  edits: "palette réduite ; couleurs remplacées (#4fe0c8 → #7fd4ff, #b8fff0 → #dff6ff, #1f9e96 → #2c3e5c)"
+- file: sprites/camp-lantern.png
+  tool: create_image_pixen
+  date: 2026-11-24
+  pixellab_id: 8bdeeec9-15d0-4108-822c-8830a05e23dc
+  prompt: "a small old brass hand lantern with a warm orange flame, standing on a flat grey stone, seen from slightly above, game prop, 16-bit pixel art, 1px dark outline, three-tone shading"
+  settings: {"width":32,"height":32,"no_background":true}
+  edits: "palette réduite"
+- file: sprites/camp-door.png
+  tool: create_image_pro
+  date: 2026-11-24
+  pixellab_id: a8ac2365-1c96-40f9-84bb-908455a9f542
+  prompt: "a lone red-painted wooden front door with a brass knocker, standing upright in its frame with no house around it, paint faded and dusted with ash"
+  settings: {"width":64,"height":112,"no_background":true}
+  edits: "palette réduite"
+- file: sprites/camp-door-open.png
+  tool: dérivé de sprites/camp-door.png (tools/process-assets.mjs)
 - file: sprites/pickup-gem-small.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/pickup-gem-medium.png
@@ -1333,6 +1363,8 @@
 - file: sprites/sign-prev.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/sign-opposite.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-crown.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/sign-malus.png
   tool: dessiné à la main (tools/process-assets.mjs)

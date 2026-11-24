@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { FR, SimPad, capture, expectFocus, fixtureSave, plantSave, saveView, settle, skipIntro, skipTutorial, storageKey, watch } from './harness.ts';
+import {
+  FR, SimPad, capture, expectFocus, fixtureSave, openDoor, plantSave, saveView, settle, skipIntro, skipTutorial, storageKey, toObject, watch,
+} from './harness.ts';
 
 const SHOTS = 'sauvegardes';
 const CLASS = 'class.ash-blade';
@@ -20,10 +22,12 @@ test('une sauvegarde du jalon M1 se charge en v2, et son fichier d\'origine est 
   await pad.press('B');
 
   await expect(page.locator('.screen.camp')).toBeVisible();
-  const info1 = page.locator('.camp-info');
-  await expect(info1).toContainText(FR['camp.hero']!.replace('{level}', String(m1.heroes[CLASS].level)));
-  await expect(info1).toContainText(FR['camp.brazierLit']!);
-  await expect(info1).toContainText(String(m1.account.ashes));
+  await expect(page.locator('.camp-hero')).toContainText(FR['hud.level']!.replace('{level}', String(m1.heroes[CLASS].level)));
+  // Le Brasier rallumé se voit à la porte.
+  await openDoor(page, pad, 'B');
+  await expect(page.locator('[data-focus="region.ash-woods"] .door-fire.lit')).toBeVisible();
+  await pad.press('A');
+  await expect(page.locator('.camp-purse')).toContainText(String(m1.account.ashes));
   await capture(page, info, SHOTS, '01-m1-camp');
 
   const loaded = await saveView(page);
@@ -47,9 +51,7 @@ test('une sauvegarde du jalon M1 se charge en v2, et son fichier d\'origine est 
   expect(loaded.createdAt).toBe(m1.createdAt);
 
   // L'Autel montre les rangs achetés, et le boost désactivé.
-  await settle(page);
-  await pad.press('DOWN');
-  await expectFocus(page, 'altar');
+  await toObject(page, pad, 'altar');
   await pad.press('B');
   await expect(page.locator('.screen.altar')).toBeVisible();
   await expect(page.locator('[data-focus="altar.wisdom"]')).toContainText(FR['altar.disabled']!);
@@ -102,17 +104,7 @@ test('une sauvegarde plus récente que le jeu est refusée, et rien n\'est écra
   await expect(page.locator('.screen.camp')).toBeVisible();
   // Le camp vient de s'ouvrir : sa garde ignore les touches pendant 350 ms.
   await settle(page);
-  // Un cran à la fois, en vérifiant : deux appuis trop rapprochés peuvent n'en faire qu'un.
-  await page.keyboard.press('ArrowDown', { delay: 60 });
-  await expectFocus(page, 'altar');
-  await page.waitForTimeout(150);
-  await page.keyboard.press('ArrowDown', { delay: 60 });
-  await expectFocus(page, 'lantern');
-  await page.waitForTimeout(150);
-  await page.keyboard.press('ArrowDown', { delay: 60 });
-  await expectFocus(page, 'settings');
-  await settle(page);
-  await page.keyboard.press('Enter', { delay: 60 });
+  await page.keyboard.press('Escape', { delay: 60 });
   await expect(page.locator('.screen.settings')).toBeVisible();
   await page.keyboard.press('ArrowLeft', { delay: 60 });
   // L'écriture est différée de 400 ms : on lui laisse le temps de (ne pas) se faire.
@@ -129,5 +121,5 @@ test('une sauvegarde illisible n\'empêche pas de jouer', async ({ page }) => {
   await skipIntro(page);
   await skipTutorial(page);
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expect(page.locator('.camp-info')).toContainText(FR['camp.hero']!.replace('{level}', '1'));
+  await expect(page.locator('.camp-hero')).toContainText(FR['hud.level']!.replace('{level}', '1'));
 });

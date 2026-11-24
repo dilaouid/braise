@@ -7,7 +7,7 @@ import type { Card, ChestResult, ShopItem } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
-export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'lantern' | 'settings' | 'run' | 'end';
+export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'lantern' | 'door' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'forge' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
@@ -100,7 +100,10 @@ export interface Actions {
   /** Ferme le carton « Souvenir retrouvé » : le bilan s'affiche. */
   closeMemoryCard(): void;
   goto(screen: Screen): void;
-  depart(seed?: number): void;
+  /** Part en expédition. `seed` : la graine à rejouer ; `regionId` : la région choisie à la porte. */
+  depart(seed?: number, regionId?: string): void;
+  /** Au refuge, passe à l'objet suivant ou précédent, et Moon y marche. */
+  campJump(step: number): void;
   buyAltar(id: string): void;
   refundAltar(): void;
   toggleAltar(id: string): void;
@@ -195,6 +198,14 @@ export const TUTORIAL_SEEN = 'seen.tutorial';
 /** Cream est au refuge, et le tutoriel se rejoue, dès qu'un héros existe ou que le tutoriel a été vu. */
 export function knowsCream(s: Save): boolean {
   return Object.keys(s.heroes).length > 0 || s.account.unlocks.includes(TUTORIAL_SEEN);
+}
+
+/** Les objets du refuge présents dans cette sauvegarde. */
+export function campVisible(data: GameData, s: Save): Set<string> {
+  const out = new Set(['door', 'altar', 'lantern', 'fire']);
+  if (knowsCream(s)) out.add('cream');
+  if (data.memories.some((m) => s.account.unlocks.includes(m.id))) out.add('memories');
+  return out;
 }
 
 /** Références partagées, posées par `app` au démarrage. */

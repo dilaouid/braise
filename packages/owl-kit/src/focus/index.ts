@@ -55,6 +55,8 @@ export class FocusManager {
   private lastRect: Rect | null = null;
   private memory = new Map<string, string>();
   private scopeKey = '';
+  /** L'écran accepte de n'avoir rien au focus. */
+  private optional = false;
   /** Appelé quand le focus se déplace (son d'interface). */
   onMove: (() => void) | null = null;
   /** Appelé à chaque changement d'élément au focus, avec son identifiant `data-focus` (null : plus aucun). */
@@ -114,9 +116,11 @@ export class FocusManager {
 
   /**
    * Restreint le focus à un écran. `key` sert à retrouver le focus au retour sur cet écran.
+   * `optional` : rien n'est choisi d'office, et valider sans focus ne fait rien.
    */
-  setScope(scope: HTMLElement | null, key = ''): void {
+  setScope(scope: HTMLElement | null, key = '', options: { optional?: boolean } = {}): void {
     this.scope = scope;
+    this.optional = options.optional === true;
     this.scopeKey = key;
     this.set(null, false);
     this.lastRect = null;
@@ -129,6 +133,10 @@ export class FocusManager {
    */
   ensure(): void {
     if (this.focused && this.inScope(this.focused) && !this.focused.hasAttribute('disabled')) return;
+    if (this.optional) {
+      this.set(null, false);
+      return;
+    }
     const items = this.items();
     if (items.length === 0) {
       this.set(null, false);
@@ -176,6 +184,11 @@ export class FocusManager {
     if (!cur) return false;
     cur.click();
     return true;
+  }
+
+  /** Retire le focus. Un écran ordinaire en choisit un autre aussitôt qu'il en a besoin. */
+  clear(): void {
+    this.set(null, false);
   }
 
   /** Donne le focus à l'élément portant cet identifiant `data-focus`. */

@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, RenderTexture, Sprite, Texture, TextureSource } from 'pixi.js';
-import type { GameData } from '../content/index.ts';
+import type { CampDef, GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
@@ -7,6 +7,7 @@ import {
   type Run,
 } from '../core/types.ts';
 import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
+import type { CampState } from '../core/camp.ts';
 import { lowHp } from '../core/combat.ts';
 import type { SceneState } from '../core/scene.ts';
 import { tutorialTarget } from '../core/tutorial.ts';
@@ -18,11 +19,30 @@ import { lightDisc } from './light.ts';
 export const VIEW_W = 640;
 export const VIEW_H = 360;
 
+/** L'image de chaque objet du refuge, son décalage au sol, et sa lueur (décalage, rayon, force, teinte). */
+const CAMP_LOOKS: Record<string, { sprite: string; down: number; up: number; radius: number; warm: number; tint: number }> = {
+  door: { sprite: 'camp-door', down: 4, up: 36, radius: 66, warm: 0.12, tint: 0xd9480f },
+  altar: { sprite: 'camp-altar', down: 8, up: 18, radius: 40, warm: 0.08, tint: 0xfb7a0c },
+  memories: { sprite: 'camp-souvenirs', down: 6, up: 16, radius: 34, warm: 0.1, tint: 0x7fd4ff },
+  lantern: { sprite: 'camp-lantern', down: 6, up: 12, radius: 32, warm: 0.1, tint: 0xfb7a0c },
+};
+
 const C = {
   night: 0x0b0f1a, ember: 0xffb020, emberHot: 0xfb7a0c, emberPale: 0xffd166, emberWhite: 0xfff1c2, emberDark: 0xd9480f,
   danger: 0xff3d81, dangerDark: 0xc2185b, teal: 0x4fe0c8, tealPale: 0xb8fff0, white: 0xeef2f6, grey: 0x6b7285,
   pale: 0xc9d1dc, frost: 0x7fd4ff, spark: 0xf6f08a,
 };
+
+/** Ce que le refuge montre à cette image. */
+export interface CampView {
+  dt: number;
+  /** Moon, ou null : il attend devant la porte (écran titre). */
+  moon: CampState | null;
+  visible: ReadonlySet<string>;
+  /** L'objet au focus : il s'éclaire un peu. */
+  near: string | null;
+  doorOpen: boolean;
+}
 
 interface Fx {
   type: number;
@@ -183,6 +203,12 @@ export class GameRenderer {
   private campHero!: Sprite;
   private campCream!: Sprite;
   private campFlame!: Sprite;
+  /** Le refuge décrit par le contenu : les images et les lueurs suivent ses positions. Posé par `app` au démarrage. */
+  campDef: CampDef = { speed: 0, bounds: { x: 0, y: 0, rx: 1, ry: 1 }, objects: [] };
+  /** La porte, l'Autel, les Souvenirs et la lanterne seule, par identifiant d'objet. */
+  private readonly campObjects = new Map<string, Sprite>();
+  /** Leur apparition, de 0 (cachés, en scène) à 1. */
+  private campFade = 1;
   private campBuilt = false;
   /** Cream pendant une scène de route (Moon reprend `campHero`), leurs bulles, et la flamme qui prend. */
   private sceneCream!: Sprite;
@@ -1306,6 +1332,11 @@ export class GameRenderer {
   }
 
   /** Le décor du refuge, construit une fois : sol, arbres, braséro, flamme, et les personnages. */
+  /** Où le contenu place cet objet du refuge. */
+  private campPlace(id: string): { x: number; y: number } {
+    return this.campDef.objects.find((o) => o.id === id) ?? { x: 320, y: 200 };
+  }
+
   private buildCamp(): void {
     if (this.campBuilt) return;
     this.campBuilt = true;
@@ -1332,11 +1363,21 @@ export class GameRenderer {
     prop('decor-arbre', 60, 120); prop('decor-arbre', 130, 70); prop('decor-arbre', 560, 110); prop('decor-arbre', 600, 230);
     prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
     prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
-    prop('poi-brasero', 320, 196);
+    const fire = this.campPlace('fire');
+    prop('poi-brasero', fire.x, fire.y);
+    for (const [id, look] of Object.entries(CAMP_LOOKS)) {
+      const at = this.campPlace(id);
+      const s = new Sprite(a.get(look.sprite));
+      s.anchor.set(0.5, 1);
+      s.position.set(at.x, at.y + look.down);
+      s.zIndex = at.y;
+      this.camp.addChild(s);
+      this.campObjects.set(id, s);
+    }
     this.campFlame = new Sprite(this.flameFrames[0]!);
     this.campFlame.anchor.set(0.5, 1);
-    this.campFlame.position.set(320, 176);
-    this.campFlame.zIndex = 197;
+    this.campFlame.position.set(fire.x, fire.y - 20);
+    this.campFlame.zIndex = fire.y + 1;
     this.camp.addChild(this.campFlame);
     this.campHero = new Sprite(Texture.EMPTY);
     this.campHero.anchor.set(0.5, 0.8);
@@ -1377,24 +1418,52 @@ export class GameRenderer {
     this.darkness.alpha = (lit ? 0.4 : 0.52) + (1 - fire) * 0.12;
     this.lightCount = 0;
     this.warmCount = 0;
-    if (fire > 0) this.light(320, 176, Math.round(((lit ? 150 : 104) + Math.sin(t * 3) * 2) * fire), 0.13);
+    if (fire > 0) {
+      // Le feu est sur le côté, mais c'est toute la clairière qu'il éclaire.
+      const b = this.campDef.bounds;
+      this.light(b.x + 20, b.y - 24, Math.round(((lit ? 150 : 104) + Math.sin(t * 3) * 2) * fire), 0.1);
+      const at = this.campPlace('fire');
+      this.light(at.x, at.y - 20, Math.round((lit ? 60 : 44) * fire), 0.12);
+    }
   }
 
   /** Le camp : le fond des menus, entre deux expéditions. */
-  drawCamp(timeMs: number, lit: boolean, heroSprite: string, cream = false): void {
+  drawCamp(timeMs: number, lit: boolean, heroSprite: string, cream: boolean, view: CampView): void {
     const t = timeMs / 1000;
     this.campBase(t, lit, 1);
+    this.campFade = Math.min(1, this.campFade + view.dt);
+    for (const [id, s] of this.campObjects) {
+      // La lanterne est dans l'image de Cream couché : seule, elle ne se montre que sans lui.
+      s.visible = view.visible.has(id) && !(id === 'lantern' && cream);
+      s.alpha = this.campFade;
+    }
+    this.campObjects.get('door')!.texture = this.atlas.get(view.doorOpen ? 'camp-door-open' : 'camp-door');
     this.sceneFire = 1;
     this.sceneCream.visible = false;
     for (const em of this.sceneEmotes) em.sprite.visible = false;
     this.campCream.visible = cream;
     this.campHero.visible = true;
-    this.campHero.position.set(CAMP_MOON.x, CAMP_MOON.y);
-    this.campHero.zIndex = CAMP_MOON.y;
+    const moon = view.moon ?? { ...CAMP_MOON, facing: 1, moving: false };
+    this.campHero.position.set(Math.round(moon.x), Math.round(moon.y));
+    this.campHero.zIndex = moon.y;
     this.campHero.scale.x = 1;
-    const idle = this.atlas.anim(`${heroSprite}-idle-1`);
-    this.campHero.texture = idle[Math.floor(t * 5) % idle.length]!;
-    this.light(366, 204, 40);
+    const walk = moon.moving ? this.atlas.anim(`${heroSprite}-walk-${moon.facing}`) : this.atlas.anim(`${heroSprite}-idle-${moon.facing}`);
+    const frames = walk[0] === Texture.EMPTY ? [this.atlas.get(`${heroSprite}-rot-${moon.facing}`)] : walk;
+    this.campHero.texture = frames[Math.floor(t * (moon.moving ? 12 : 5)) % frames.length]!;
+    this.light(moon.x, moon.y - 10, 56 + Math.round(Math.sin(t * 2.7)), 0.1);
+    if (this.campFade > 0.05) {
+      const glow = this.campFade;
+      for (const [id, look] of Object.entries(CAMP_LOOKS)) {
+        if (!view.visible.has(id)) continue;
+        const at = this.campPlace(id);
+        const near = view.near === id;
+        this.light(at.x, at.y - look.up, Math.round((look.radius + (near ? 10 : 0)) * glow), (look.warm + (near ? 0.14 : 0)) * glow, look.tint);
+      }
+      if (view.near === 'cream') {
+        const at = this.campPlace('cream');
+        this.light(at.x, at.y - 10, 34, 0.14);
+      }
+    }
     if (cream) this.light(272, 204, 30 + Math.round(Math.sin(t * 2.3)), 0.1);
     this.renderLight();
     this.app.renderer.render(this.app.stage);
@@ -1410,6 +1479,8 @@ export class GameRenderer {
     this.sceneFire = s.fire ? Math.min(1, this.sceneFire + dt * 2) : 0;
     this.campBase(t, lit, this.sceneFire);
     this.campCream.visible = false;
+    this.campFade = 0;
+    for (const o of this.campObjects.values()) o.visible = false;
     const a = this.atlas;
     const moon = s.moon;
     const hero = this.campHero;

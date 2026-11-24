@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  FR, SimPad, capture, expectFocus, fastForward, runView, saveView, settle, skipDepartCinematic, skipIntro, skipTutorial, storageKey, waitFrames, watch,
+  FR, SimPad, capture, departFromCamp, expectFocus, fastForward, openDoor, runView, saveView, settle, skipDepartCinematic, skipIntro, skipTutorial, storageKey, toObject, waitFrames, watch,
 } from './harness.ts';
 
 const SHOTS = 'parcours-manette';
@@ -35,21 +35,22 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
 
   // --- Camp --------------------------------------------------------------------------------
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'depart');
+  await expectFocus(page, 'door');
   // Les invites suivent le dernier périphérique utilisé : ici la manette.
-  await expect(page.locator('.helpbar .glyph-confirm')).toHaveText('A');
-  await expect(page.locator('.camp-info')).toContainText(FR['camp.hero']!.replace('{level}', '1'));
+  await expect(page.locator('.is-focused .glyph-confirm')).toHaveText('A');
+  await expect(page.locator('.camp-hero')).toContainText(FR['hud.level']!.replace('{level}', '1'));
   await capture(page, info, SHOTS, '02-camp');
 
-  // Un appui bref ne fait pas partir : « Partir » se maintient une demi-seconde.
-  await settle(page);
+  // À la porte, un appui bref ne fait pas partir : A se maintient une demi-seconde.
+  await openDoor(page, pad);
+  await capture(page, info, SHOTS, '02b-porte');
   await pad.press('A');
-  await expect(page.locator('.screen.camp')).toBeVisible();
+  await expect(page.locator('.screen.door')).toBeVisible();
   expect(await runView(page)).toBeNull();
+  await pad.press('B');
 
   // --- Autel, sans Cendres -----------------------------------------------------------------
-  await pad.press('DOWN');
-  await expectFocus(page, 'altar');
+  await toObject(page, pad, 'altar');
   await pad.press('A');
   await expect(page.locator('.screen.altar')).toBeVisible();
   await expectFocus(page, 'altar.ardor');
@@ -66,11 +67,7 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
 
   // --- Réglages ----------------------------------------------------------------------------
   await settle(page);
-  await pad.press('DOWN');
-  await expectFocus(page, 'lantern');
-  await pad.press('DOWN');
-  await expectFocus(page, 'settings');
-  await pad.press('A');
+  await pad.press('START');
   await expect(page.locator('.screen.settings')).toBeVisible();
   await expectFocus(page, 'volumeMaster');
   await capture(page, info, SHOTS, '04-reglages');
@@ -82,17 +79,11 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await settle(page);
   await pad.press('B');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await expectFocus(page, 'settings');
+  // Moon est resté à côté de l'Autel.
+  await expectFocus(page, 'altar');
 
   // --- Première expédition -----------------------------------------------------------------
-  await pad.press('UP');
-  await pad.press('UP');
-  await pad.press('UP');
-  await expectFocus(page, 'depart');
-  await settle(page);
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await pad.up('A');
+  await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await settle(page);
 
@@ -173,11 +164,9 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   // --- Acheter un boost --------------------------------------------------------------------
   await expect(page.locator('.screen.camp')).toBeVisible();
   // La pastille de l'Autel signale un achat possible.
-  await expect(page.locator('.camp-menu .badge')).toBeVisible();
+  await expect(page.locator('[data-focus="altar"] .badge')).toBeVisible();
   await capture(page, info, SHOTS, '10-camp-apres-defaite');
-  await settle(page);
-  await pad.press('DOWN');
-  await expectFocus(page, 'altar');
+  await toObject(page, pad, 'altar');
   await pad.press('A');
   await expect(page.locator('.screen.altar')).toBeVisible();
   // L'Autel se souvient du boost quitté à la première visite.
@@ -205,12 +194,7 @@ test('de l\'écran titre à l\'écran de fin, puis une seconde expédition avec 
   await expect(page.locator('.screen.camp')).toBeVisible();
 
   // --- Seconde expédition, avec le boost ---------------------------------------------------
-  await settle(page);
-  await pad.press('UP');
-  await expectFocus(page, 'depart');
-  await pad.down('A');
-  await expect(page.locator('.screen.cinematic')).toBeVisible();
-  await pad.up('A');
+  await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await settle(page);
   // Ardeur, rang 1 : +3 % de Puissance, visible dans la partie et sur la fiche de la pause.

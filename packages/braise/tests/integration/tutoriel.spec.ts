@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  DIALOGUES, FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipScene, skipTutorial, storageKey, watch,
+  DIALOGUES, FR, SimPad, capture, expectFocus, fixtureSave, plantSave, runView, saveView, settle, skipIntro, skipScene, skipTutorial, storageKey, toObject, watch,
 } from './harness.ts';
 
 const SHOTS = 'tutoriel-cream';
@@ -134,7 +134,7 @@ test('sauvegarde neuve : intro passée, première réplique, passer le tutoriel,
   await expect(page.locator('.screen.end')).toHaveCount(0);
   expect(await runView(page)).toBeNull();
   await expect(page.locator('[data-focus="cream"]')).toBeVisible();
-  await expect(page.locator('[data-focus="cream"]')).toContainText(FR['camp.cream']!);
+  await expect(page.locator('[data-focus="cream"]')).toContainText(FR['camp.object.cream']!);
   const save = await saveView(page);
   expect(save.account.unlocks).toContain('seen.tutorial');
   expect(save.account.gold).toBe(0);
@@ -224,12 +224,7 @@ test('Cream au refuge dit une réplique, puis la boîte se ferme', async ({ page
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.screen.camp')).toBeVisible();
-  await settle(page);
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await pad.press('DOWN');
-  await expectFocus(page, 'cream');
+  await toObject(page, pad, 'cream');
   await pad.press('A');
 
   const lines = [1, 2, 3, 4, 5, 6].map((n) => FR[`camp.cream.${n}`]!);
@@ -254,9 +249,8 @@ test('Cream au refuge dit une réplique, puis la boîte se ferme', async ({ page
   await settle(page);
   await pad.press('B');
   await expect(page.locator('.dialogue')).toHaveCount(0);
-  // Le menu du refuge répond toujours.
-  await pad.press('UP');
-  await expectFocus(page, 'settings');
+  // Le refuge répond toujours.
+  await toObject(page, pad, 'door');
 
   expect(seen.errors).toEqual([]);
   expect(seen.foreign).toEqual([]);

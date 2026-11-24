@@ -151,19 +151,39 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .notice { position: absolute; bottom: 8px; color: var(--ember-1); background: rgba(11, 15, 26, 0.85); padding: 3px 6px; }
 .boot { display: flex; align-items: center; justify-content: center; color: var(--ash-3); }
 
-/* Camp */
-.camp-menu { position: absolute; left: 12px; top: 12px; width: 204px; display: flex; flex-direction: column; gap: 5px; }
-.camp-menu h1 { margin-bottom: 2px; color: var(--ember-1); }
-.camp-menu .badge { position: absolute; right: 12px; top: 92px; width: 5px; height: 5px; background: var(--ember-2); box-shadow: 0 0 0 1px var(--night-0); }
-.camp-info { position: absolute; right: 12px; bottom: 26px; width: 190px; display: flex; flex-direction: column; gap: 4px; }
+/* Camp : des boutons transparents posés sur le décor. */
+.camp-object { position: absolute; }
+.camp-object.is-focused { outline: none; animation: none; }
+.camp-tag { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); display: none; align-items: center; gap: 3px; padding: 3px 5px; white-space: nowrap; background: rgba(11, 15, 26, 0.9); border: 1px solid var(--ember-2); }
+.camp-object.is-focused .camp-tag { display: inline-flex; }
+.camp.talking .camp-tag, .camp.talking .camp-settings { visibility: hidden; }
+.badge { position: absolute; right: 0; top: 0; width: 5px; height: 5px; background: var(--ember-2); box-shadow: 0 0 0 1px var(--night-0); }
+.camp-hero { position: absolute; left: 10px; top: 8px; display: flex; align-items: center; gap: 6px; color: var(--ember-1); }
+.camp-hero .bar { width: 70px; height: 4px; }
+.camp-purse { position: absolute; right: 10px; top: 6px; }
+.camp-settings { position: absolute; right: 10px; bottom: 8px; color: var(--ash-4); }
 .hold-track { height: 2px; background: var(--night-0); margin-top: -4px; }
 .hold-fill { height: 100%; background: var(--ember-1); }
 .seed { color: var(--ash-3); }
 
+/* La porte : une carte par région. */
+.screen.door { background: linear-gradient(rgba(11, 15, 26, 0.3) 40%, rgba(11, 15, 26, 0.85) 62%); }
+.door-records { position: absolute; left: 0; right: 0; top: 8px; display: flex; justify-content: center; gap: 16px; color: var(--ash-4); }
+.door-records span { display: inline-flex; align-items: center; gap: 4px; }
+.door-cards { position: absolute; left: 0; right: 0; top: 232px; display: flex; justify-content: center; gap: 9px; }
+.door-card { position: relative; width: 84px; height: 92px; padding-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--night-2); border: 1px solid var(--ash-1); }
+.door-card.is-focused { background: var(--night-3); border-color: var(--ember-1); }
+.door-card.closed { background: rgba(19, 28, 46, 0.75); border-style: dashed; }
+.door-art { height: 40px; display: flex; align-items: center; overflow: hidden; }
+.door-name { font-family: var(--font-title); font-size: 15px; line-height: 14px; text-align: center; color: var(--ember-0); }
+.door-fire { position: absolute; right: 4px; top: 4px; filter: grayscale(1) brightness(0.5); }
+.door-fire.lit { filter: none; }
+.door-card .hold-track { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 4px; margin: 0; }
+.door-card .hold-fill { display: block; }
+.screen.door .seed { position: absolute; left: 0; right: 0; top: 216px; text-align: center; color: var(--ember-1); }
+
 /* Autel */
 /* Lanterne : l'anneau des quatre faces, la grille des pièces, le détail. Des images et des nombres. */
-.camp-entry { position: relative; }
-.camp-menu .badge-lantern { right: 5px; top: 4px; }
 .screen.lantern { background: rgba(11, 15, 26, 0.78); }
 .lantern-ring { position: absolute; left: 24px; top: 8px; width: 300px; height: 246px; }
 .lantern-body { position: absolute; left: 102px; top: 74px; width: 96px; height: 96px; }
@@ -321,8 +341,7 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .dialogue { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 68px; display: flex; gap: 6px; align-items: stretch; }
 .dialogue-cream { flex-direction: row-reverse; }
 /* La boîte prend le bas de l'image : ce qu'elle couvrirait à moitié s'efface le temps du dialogue. */
-.hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner,
-.camp.talking .camp-info, .camp.talking .helpbar { visibility: hidden; }
+.hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner { visibility: hidden; }
 .dialogue-face {
   flex: none; width: 68px; height: 68px; padding: 1px; background: var(--night-0); border: 1px solid var(--ember-2);
   animation: face-in 0.18s steps(3) both;
