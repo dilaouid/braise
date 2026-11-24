@@ -955,6 +955,60 @@
    },
    "prompt": "a small old brass hand lantern with four glass panes, dented and covered in ash, a warm orange flame burning inside, front view, centered, 16-bit pixel art, 1px dark outline",
    "date": "2026-11-24"
+  },
+  {
+   "name": "camp-altar",
+   "id": "6ae75635-ce19-4c88-9c16-a2dbc4c6128c",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 48,
+    "height": 48,
+    "no_background": true
+   },
+   "prompt": "a rectangular stone altar table, two thick carved legs and a flat slab, a heap of pale grey ash with tiny orange embers on the slab, seen from slightly above, game prop, 16-bit pixel art, 1px dark outline, three-tone shading",
+   "date": "2026-11-24"
+  },
+  {
+   "name": "camp-souvenirs",
+   "id": "a46e6a56-d8c4-44b4-91fc-86654dc65cac",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 40,
+    "height": 40,
+    "no_background": true
+   },
+   "prompt": "one blue faceted gem resting on a small round grey stone pedestal, simple clean silhouette, nothing around it, empty background, game prop, 16-bit pixel art, 1px dark outline, three-tone shading",
+   "date": "2026-11-24",
+   "remap": {
+    "#4fe0c8": "#7fd4ff",
+    "#b8fff0": "#dff6ff",
+    "#1f9e96": "#2c3e5c"
+   }
+  },
+  {
+   "name": "camp-lantern",
+   "id": "8bdeeec9-15d0-4108-822c-8830a05e23dc",
+   "tool": "create_image_pixen",
+   "settings": {
+    "width": 32,
+    "height": 32,
+    "no_background": true
+   },
+   "prompt": "a small old brass hand lantern with a warm orange flame, standing on a flat grey stone, seen from slightly above, game prop, 16-bit pixel art, 1px dark outline, three-tone shading",
+   "date": "2026-11-24"
+  },
+  {
+   "name": "camp-door",
+   "id": "a8ac2365-1c96-40f9-84bb-908455a9f542",
+   "tool": "create_image_pro",
+   "settings": {
+    "width": 64,
+    "height": 112,
+    "no_background": true
+   },
+   "prompt": "a lone red-painted wooden front door with a brass knocker, standing upright in its frame with no house around it, paint faded and dusted with ash",
+   "date": "2026-11-24",
+   "note": "recadrée depuis source/cinematique-intro/porte2-1.png (2e proposition) : ne pas retélécharger"
   }
  ],
  "sounds": [

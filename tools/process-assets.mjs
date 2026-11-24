@@ -228,6 +228,41 @@ for (const img of manifest.images) {
   }
 }
 
+/** La porte du refuge, ouverte : le battant est rabattu à gauche, et derrière il fait nuit. */
+{
+  const shut = PNG.sync.read(readFileSync(join(out, 'camp-door.png')));
+  const REDS = new Set(['#8f1d0a', '#d9480f', '#fb7a0c', '#7a1048', '#c2185b']);
+  const hexAt = (x, y) => {
+    const i = (y * shut.width + x) * 4;
+    return shut.data[i + 3] ? `#${[0, 1, 2].map((c) => shut.data[i + c].toString(16).padStart(2, '0')).join('')}` : '';
+  };
+  let x0 = shut.width, x1 = 0, y0 = shut.height, y1 = 0;
+  for (let y = 0; y < shut.height; y++) {
+    for (let x = 0; x < shut.width; x++) {
+      if (!REDS.has(hexAt(x, y))) continue;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+  }
+  const open = PNG.sync.read(PNG.sync.write(shut));
+  const leaf = Math.max(6, Math.round((x1 - x0) * 0.28));
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const to = (y * open.width + x) * 4;
+      if (x - x0 < leaf) {
+        // Le battant, vu de biais : ses colonnes sont resserrées.
+        const from = (y * shut.width + x0 + Math.round(((x - x0) / leaf) * (x1 - x0))) * 4;
+        shut.data.copy(open.data, to, from, from + 4);
+      } else {
+        const night = x - x0 === leaf ? '#0b0f1a' : y > y1 - 10 ? '#1d2b44' : '#131c2e';
+        for (let c = 0; c < 3; c++) open.data[to + c] = parseInt(night.slice(1 + c * 2, 3 + c * 2), 16);
+        open.data[to + 3] = 255;
+      }
+    }
+  }
+  write('camp-door-open', open);
+  record('sprites/camp-door-open.png', 'dérivé de sprites/camp-door.png (tools/process-assets.mjs)', null, null, null, 'battant rabattu, intérieur en nuit', '2026-11-24');
+}
+
 // ───────────── Les sprites dessinés à la main ─────────────
 const INK = {
   '.': null,
