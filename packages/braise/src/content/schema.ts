@@ -127,6 +127,63 @@ export const statBonusSchema = z
 export const boonSchema = z.object({ id: z.string().regex(/^boon\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
 export const findSchema = z.object({ id: z.string().regex(/^find\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
 
+/** Ce qu'une pièce de la Lanterne change aux règles d'une partie. Une clé absente ne change rien. */
+export const runModsSchema = z
+  .object({
+    /** Un point de vie rendu toutes les N gemmes (0 : jamais). */
+    gemsPerHeal: z.number().int().positive().optional(),
+    /** La fiole ne sert plus. */
+    noFlask: z.boolean().optional(),
+    /** Dégâts du coup qui donne sa Brûlure à la ruée, et son rayon. */
+    dashBurn: z.number().positive().optional(),
+    dashBurnRadius: z.number().positive().optional(),
+    dashCooldownMult: z.number().positive().optional(),
+    /** Puissance en plus sous cette part des points de vie. */
+    lowHpPower: z.number().positive().optional(),
+    lowHpShare: z.number().positive().max(1).optional(),
+    healMult: z.number().nonnegative().optional(),
+    threatMult: z.number().positive().optional(),
+    ultChargeMult: z.number().positive().optional(),
+    skillCooldownMult: z.number().positive().optional(),
+    /** Puissance gagnée par élite battu. */
+    eliteKillPower: z.number().positive().optional(),
+    eliteHpMult: z.number().positive().optional(),
+    /** Part des points de vie rendue par la première résurrection (0 : la part habituelle). */
+    firstReviveShare: z.number().positive().max(1).optional(),
+  })
+  .strict();
+
+const pieceEffectSchema = z.object({ stats: statBonusSchema.default({}), mods: runModsSchema.default({}) }).strict();
+
+const runeSchema = z
+  .object({ id: z.string().regex(/^rune\.[a-z-]+$/), icon: z.string(), levels: z.array(pieceEffectSchema).length(3), malus: pieceEffectSchema })
+  .strict();
+
+const glassSchema = z
+  .object({
+    id: z.string().regex(/^glass\.[a-z-]+$/),
+    icon: z.string(),
+    /** Niveaux ajoutés aux runes des faces suivante, précédente et opposée. */
+    shifts: z
+      .object({ next: z.number().int().default(0), previous: z.number().int().default(0), opposite: z.number().int().default(0) })
+      .strict()
+      .default({ next: 0, previous: 0, opposite: 0 }),
+    /** Retire le malus de la pièce d'en face. */
+    clearsOpposite: z.boolean().default(false),
+    malus: pieceEffectSchema.default({ stats: {}, mods: {} }),
+  })
+  .strict();
+
+export const lanternSchema = z
+  .object({
+    drops: z.object({ elite: z.number().min(0).max(1), reborn: z.number().min(0).max(1) }).strict(),
+    /** Victoires avec une pièce posée qui ouvrent la troisième face. */
+    winsForThird: z.number().int().positive(),
+    runes: z.array(runeSchema),
+    glasses: z.array(glassSchema),
+  })
+  .strict();
+
 /** Un prix qui monte à chaque achat. */
 const priceSchema = z.object({ base: z.number().int().nonnegative(), step: z.number().int().nonnegative() }).strict();
 
@@ -548,6 +605,9 @@ export type WeaponRaw = z.infer<typeof weaponSchema>;
 export type EvolutionRaw = z.infer<typeof evolutionSchema>;
 export type RelicRaw = z.infer<typeof relicSchema>;
 export type StatBonus = z.infer<typeof statBonusSchema>;
+export type RunModsRaw = z.infer<typeof runModsSchema>;
+export type PieceEffect = z.infer<typeof pieceEffectSchema>;
+export type LanternRaw = z.infer<typeof lanternSchema>;
 export type BoonDef = z.infer<typeof boonSchema>;
 export type FindDef = z.infer<typeof findSchema>;
 export type EnemyRaw = z.infer<typeof enemySchema>;
