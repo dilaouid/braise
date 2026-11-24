@@ -535,6 +535,16 @@ hand('sign-opposite', [
   '...kGk...',
   '....k....',
 ]);
+hand('sign-crown', [
+  'kk...k...kk',
+  'kyk.kyk.kyk',
+  'kyykyyykyyk',
+  'kyyyyyyyyyk',
+  'kyYyyYyyYyk',
+  'koooooooook',
+  'kOOOOOOOOOk',
+  'kkkkkkkkkkk',
+]);
 hand('sign-malus', [
   '..kkkkkk..',
   '.kMMMMMMk.',

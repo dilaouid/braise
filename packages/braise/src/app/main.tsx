@@ -10,7 +10,7 @@ import { AudioManager } from '../audio/audio.ts';
 import { cinematicById, introCinematic } from '../content/cinematic.ts';
 import { FR, loadGameData } from '../content/index.ts';
 import { activeBot } from '../core/bots.ts';
-import { nearestObject, newCamp, stepCamp, walkTo } from '../core/camp.ts';
+import { nearestObject, newCamp, stepCamp, stopCamp, walkTo } from '../core/camp.ts';
 import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
@@ -71,6 +71,7 @@ async function boot(): Promise<void> {
   const gameRoot = document.getElementById('game') as HTMLElement;
   const uiRoot = document.getElementById('ui') as HTMLElement;
   const renderer = await GameRenderer.create(gameRoot, base);
+  renderer.campDef = data.camp;
   refs.atlas = renderer.atlas;
   refs.atlasUrl = `${base}atlas/atlas.png`;
 
@@ -96,7 +97,7 @@ async function boot(): Promise<void> {
 
   let run: Run | null = null;
   /** Moon au refuge, et l'objet où la croix ou la souris l'a envoyé (il l'emporte sur l'objet proche). */
-  let camp = newCamp(data.camp);
+  let camp = newCamp();
   let campPinned = false;
   let paused = false;
   let acc = 0;
@@ -387,7 +388,7 @@ async function boot(): Promise<void> {
 
   /** Moon arrive au refuge : devant la porte. */
   function arriveAtCamp(): void {
-    camp = newCamp(data.camp);
+    camp = newCamp();
     campPinned = false;
   }
 
@@ -412,8 +413,8 @@ async function boot(): Promise<void> {
     }
     // La croix saute d'un objet à l'autre : elle ne fait pas marcher.
     const walk = free && !f.dpadHeld;
-    stepCamp(camp, data.camp, visible, walk ? f.moveX : 0, walk ? f.moveY : 0, free ? Math.min(0.05, dt / 1000) : 0);
     if (!free) return;
+    stepCamp(camp, data.camp, visible, walk ? f.moveX : 0, walk ? f.moveY : 0, Math.min(0.05, dt / 1000));
     if ((walk && (f.moveX !== 0 || f.moveY !== 0)) || focusedId.value === null) campPinned = false;
     if (campPinned) return;
     const near = nearestObject(camp, data.camp, visible);
@@ -722,6 +723,7 @@ async function boot(): Promise<void> {
       audio.play('ui-back', 0.6);
     },
     creamTalk() {
+      stopCamp(camp, 'cream');
       if (screen.value !== 'camp' || campTalk || !knowsCream(current)) return;
       // Une réplique au hasard, jamais deux fois la même de suite.
       let count = 0;
@@ -753,10 +755,8 @@ async function boot(): Promise<void> {
     },
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
-      if (screen.value === 'camp' && camp.goal) {
-        // Un objet ouvert de loin : au retour, Moon est déjà à côté.
-        camp = { ...camp, x: camp.goal.x, y: camp.goal.y, moving: false, goal: null };
-      }
+      // Moon s'arrête ; à côté de l'objet ouvert, s'il y allait.
+      if (screen.value === 'camp') stopCamp(camp, next);
       if (next === 'camp') {
         // Du bilan, on arrive devant la porte ; d'un écran du refuge, Moon est là où il était.
         if (ending.value) arriveAtCamp();
@@ -776,7 +776,8 @@ async function boot(): Promise<void> {
     },
     depart(seed, regionId = REGION) {
       audio.unlock();
-      audio.play('intro-porte-grince', 0.7);
+      // La porte ne grince que si on la passe : « Repartir », au bilan, n'y revient pas.
+      if (screen.value === 'door') audio.play('intro-porte-grince', 0.7);
       // La graine est tirée avant la cinématique : « rejouer la même carte » reste la même carte.
       const chosen = seed ?? ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
       const reborn = bossBeaten(current, regionId);

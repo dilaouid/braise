@@ -23,7 +23,7 @@ export function DoorScreen(): JSX.Element {
       <div class="camp-purse"><Currencies /></div>
       <div class="door-records">
         <span title={t('door.runs')}><Icon name="icon-find-boots" /> {stats.runs ?? 0}</span>
-        <span title={t('door.wins')}><Icon name="sign-crit" /> {stats.victories ?? 0}</span>
+        <span title={t('door.wins')}><Icon name="sign-crown" /> {stats.victories ?? 0}</span>
         <span title={t('door.best')}><Icon name="sign-hourglass" /> {fmtTime(stats.bestSeconds ?? 0)}</span>
       </div>
       <div class="door-cards">
@@ -36,6 +36,7 @@ export function DoorScreen(): JSX.Element {
             >
               <span class="door-art"><Icon name={r.borderDecor} /></span>
               <span class="door-name">{t(`${r.id}.name`)}</span>
+              <span class="hold-track"><span class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></span>
               <span class={`door-fire${lit ? ' lit' : ''}`} title={t(lit ? 'door.lit' : 'door.dark')}><Icon name="sign-flame" /></span>
             </button>
           );
@@ -44,8 +45,7 @@ export function DoorScreen(): JSX.Element {
           <span key={i} class="door-card closed"><span class="door-art"><Icon name="lantern-face-closed" /></span></span>
         ))}
       </div>
-      <div class="hold-track door-hold"><div class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></div>
-      {replay ? <p class="seed">{t('door.sameMap')} · {t('camp.seed.noPiece')}</p> : null}
+      {replay ? <p class="seed"><Icon name="lantern-face-closed" /> {t('door.sameMap')} · {t('camp.seed.noPiece')}</p> : null}
       <HelpBar items={[['confirm', t('camp.holdToLeave')], lastSeed.value !== null && ['x', t('door.sameMap')], ['back', t('ui.back')]]} />
     </div>
   );

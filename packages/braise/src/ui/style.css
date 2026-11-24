@@ -171,14 +171,15 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .door-records { position: absolute; left: 0; right: 0; top: 8px; display: flex; justify-content: center; gap: 16px; color: var(--ash-4); }
 .door-records span { display: inline-flex; align-items: center; gap: 4px; }
 .door-cards { position: absolute; left: 0; right: 0; top: 232px; display: flex; justify-content: center; gap: 9px; }
-.door-card { position: relative; width: 84px; height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--night-2); border: 1px solid var(--ash-1); }
+.door-card { position: relative; width: 84px; height: 92px; padding-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--night-2); border: 1px solid var(--ash-1); }
 .door-card.is-focused { background: var(--night-3); border-color: var(--ember-1); }
 .door-card.closed { background: rgba(19, 28, 46, 0.75); border-style: dashed; }
-.door-art { height: 46px; display: flex; align-items: center; overflow: hidden; }
+.door-art { height: 40px; display: flex; align-items: center; overflow: hidden; }
 .door-name { font-family: var(--font-title); font-size: 15px; line-height: 14px; text-align: center; color: var(--ember-0); }
 .door-fire { position: absolute; right: 4px; top: 4px; filter: grayscale(1) brightness(0.5); }
 .door-fire.lit { filter: none; }
-.door-hold { position: absolute; left: 236px; width: 168px; top: 330px; margin: 0; }
+.door-card .hold-track { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 4px; margin: 0; }
+.door-card .hold-fill { display: block; }
 .screen.door .seed { position: absolute; left: 0; right: 0; top: 216px; text-align: center; color: var(--ember-1); }
 
 /* Autel */
@@ -340,8 +341,7 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .dialogue { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 68px; display: flex; gap: 6px; align-items: stretch; }
 .dialogue-cream { flex-direction: row-reverse; }
 /* La boîte prend le bas de l'image : ce qu'elle couvrirait à moitié s'efface le temps du dialogue. */
-.hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner,
-.camp.talking .helpbar { visibility: hidden; }
+.hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner { visibility: hidden; }
 .dialogue-face {
   flex: none; width: 68px; height: 68px; padding: 1px; background: var(--night-0); border: 1px solid var(--ember-2);
   animation: face-in 0.18s steps(3) both;

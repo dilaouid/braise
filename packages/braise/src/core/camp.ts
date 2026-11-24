@@ -9,7 +9,7 @@ export interface CampState {
   facing: number;
   moving: boolean;
   /** Le point où il marche de lui-même, et depuis combien de temps. */
-  goal: { x: number; y: number; t: number } | null;
+  goal: { id: string; x: number; y: number; t: number } | null;
 }
 
 /** Au-delà, une marche qui n'aboutit pas s'arrête. */
@@ -17,7 +17,7 @@ const GOAL_SECONDS = 3;
 const GOAL_NEAR = 3;
 
 /** Moon vient d'arriver au refuge : là où finissent les scènes de route. */
-export function newCamp(_def: CampDef): CampState {
+export function newCamp(): CampState {
   return { x: CAMP_MOON.x, y: CAMP_MOON.y, facing: 0, moving: false, goal: null };
 }
 
@@ -112,5 +112,18 @@ export function nearestObject(s: CampState, def: CampDef, visible: ReadonlySet<s
 /** Moon part vers un objet, jusqu'à son point d'arrêt. */
 export function walkTo(s: CampState, def: CampDef, id: string): void {
   const o = def.objects.find((x) => x.id === id);
-  if (o) s.goal = { x: o.stand[0], y: o.stand[1], t: 0 };
+  if (o) s.goal = { id: o.id, x: o.stand[0], y: o.stand[1], t: 0 };
+}
+
+/**
+ * Un écran ou une réplique s'ouvre : Moon s'arrête. S'il allait à l'objet qui s'ouvre (`opened`), il est déjà à côté
+ * quand on revient ; sinon il reste où il est.
+ */
+export function stopCamp(s: CampState, opened: string | null): void {
+  if (s.goal && s.goal.id === opened) {
+    s.x = s.goal.x;
+    s.y = s.goal.y;
+  }
+  s.goal = null;
+  s.moving = false;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RAW, compileContent } from '../../src/content/index.ts';
 import { CAMP_MOON } from '../../src/content/scene.ts';
-import { nearestObject, newCamp, stepCamp, walkTo, type CampState } from '../../src/core/camp.ts';
+import { nearestObject, newCamp, stepCamp, stopCamp, walkTo, type CampState } from '../../src/core/camp.ts';
 import { data } from './helpers.ts';
 
 const def = data.camp;
@@ -15,7 +15,7 @@ function walk(s: CampState, mx: number, my: number, seconds: number, visible: Re
 
 /** Moon posé quelque part, loin de tout. */
 function placed(x: number, y: number): CampState {
-  return { ...newCamp(def), x, y };
+  return { ...newCamp(), x, y };
 }
 
 /** Le bord d'un obstacle : 1 sur le bord, moins à l'intérieur. */
@@ -58,7 +58,7 @@ describe('contenu du refuge', () => {
 
 describe('marcher', () => {
   it('Moon arrive là où finissent les scènes, devant la porte', () => {
-    const s = newCamp(def);
+    const s = newCamp();
     expect([s.x, s.y]).toEqual([CAMP_MOON.x, CAMP_MOON.y]);
     expect(nearestObject(s, def, ALL)).toBe('door');
   });
@@ -87,7 +87,7 @@ describe('marcher', () => {
 
   it('il ne sort pas de la clairière', () => {
     for (const [mx, my] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7]] as const) {
-      const s = newCamp(def);
+      const s = newCamp();
       walk(s, mx, my, 6);
       const b = def.bounds;
       expect(Math.hypot((s.x - b.x) / b.rx, (s.y - b.y) / b.ry)).toBeLessThanOrEqual(1.0001);
@@ -133,7 +133,7 @@ describe('aller à un objet', () => {
   });
 
   it('le stick reprend la main', () => {
-    const s = newCamp(def);
+    const s = newCamp();
     walkTo(s, def, 'altar');
     walk(s, 0, 0, 0.2);
     expect(s.goal).not.toBeNull();
@@ -142,9 +142,40 @@ describe('aller à un objet', () => {
   });
 
   it('un objet inconnu ne fait rien', () => {
-    const s = newCamp(def);
+    const s = newCamp();
     walkTo(s, def, 'personne');
     expect(s.goal).toBeNull();
+  });
+});
+
+describe('ouvrir un objet', () => {
+  it('celui où Moon allait : il est à côté, et s\'arrête', () => {
+    const s = newCamp();
+    walkTo(s, def, 'altar');
+    walk(s, 0, 0, 0.1);
+    stopCamp(s, 'altar');
+    expect([s.x, s.y]).toEqual(at('altar').stand);
+    expect(s).toMatchObject({ moving: false, goal: null });
+  });
+
+  it('un autre, ou un écran : Moon s\'arrête où il est', () => {
+    for (const id of ['door', null]) {
+      const s = newCamp();
+      walkTo(s, def, 'altar');
+      walk(s, 0, 0, 0.1);
+      const here = [s.x, s.y];
+      stopCamp(s, id);
+      expect([s.x, s.y]).toEqual(here);
+      expect(s).toMatchObject({ moving: false, goal: null });
+    }
+  });
+
+  it('en marchant au stick, il s\'arrête aussi', () => {
+    const s = newCamp();
+    walk(s, 0, 1, 0.1);
+    expect(s.moving).toBe(true);
+    stopCamp(s, 'door');
+    expect(s.moving).toBe(false);
   });
 });
 

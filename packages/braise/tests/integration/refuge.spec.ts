@@ -23,7 +23,7 @@ async function toCamp(page: Page, pad: SimPad | null): Promise<void> {
   await settle(page);
 }
 
-const moon = (page: Page): Promise<{ x: number; y: number; goal: unknown }> =>
+const moon = (page: Page): Promise<{ x: number; y: number; goal: unknown; moving: boolean }> =>
   page.evaluate(() => JSON.parse(JSON.stringify((window as any).__braise.camp)));
 
 test('Moon marche au stick, et A n\'ouvre que ce qui est près de lui', async ({ page }, info) => {
@@ -131,6 +131,52 @@ test('pendant une réplique, Moon ne bouge pas', async ({ page }) => {
   expect((await moon(page)).x).toBe(here.x);
 });
 
+test('ouvrir Cream en chemin : Moon s\'arrête, et ne repart pas', async ({ page }) => {
+  const pad = await SimPad.install(page);
+  await plantSave(page, played());
+  await toCamp(page, pad);
+  // Sans attendre qu'il arrive.
+  for (let k = 0; k < 4 && (await page.locator('.camp-object.is-focused[data-focus="cream"]').count()) === 0; k++) await pad.press('RB', 2);
+  expect((await moon(page)).goal).not.toBeNull();
+  await pad.press('A', 2);
+  await expect(page.locator('.dialogue')).toBeVisible();
+  const here = await moon(page);
+  expect(here).toMatchObject({ goal: null, moving: false });
+  await settle(page);
+  await pad.press('B');
+  await expect(page.locator('.dialogue')).toHaveCount(0);
+  await page.waitForTimeout(400);
+  expect(await moon(page)).toEqual(here);
+});
+
+test('ouvrir la porte en marchant : Moon ne court pas derrière l\'écran', async ({ page }) => {
+  const pad = await SimPad.install(page);
+  await plantSave(page, played());
+  await toCamp(page, pad);
+  await pad.stick(-0.5, 0);
+  await waitFrames(page, 6);
+  await pad.press('A', 3);
+  await expect(page.locator('.screen.door')).toBeVisible();
+  expect(await moon(page)).toMatchObject({ goal: null, moving: false });
+  await pad.stick(0, 0);
+});
+
+test('les réglages ouverts en chemin laissent Moon où il est', async ({ page }) => {
+  const pad = await SimPad.install(page);
+  await plantSave(page, played());
+  await toCamp(page, pad);
+  await pad.press('RB', 2);
+  await pad.press('START', 2);
+  await expect(page.locator('.screen.settings')).toBeVisible();
+  const here = await moon(page);
+  expect(here.x).toBeGreaterThan(260);
+  await settle(page);
+  await pad.press('B');
+  await expect(page.locator('.screen.camp')).toBeVisible();
+  await page.waitForTimeout(400);
+  expect((await moon(page)).x).toBe(here.x);
+});
+
 test('sauvegarde neuve, au clavier : porte, Autel, Lanterne, Cream ; pas de Souvenirs', async ({ page }, info) => {
   await page.goto('./');
   await expect(page.locator('.screen.title')).toBeVisible();
@@ -171,6 +217,11 @@ test('à la souris : un objet, la porte, les réglages', async ({ page }) => {
   await expect(page.locator('.screen.camp')).toBeVisible();
   await page.locator('.camp-settings').click();
   await expect(page.locator('.screen.settings')).toBeVisible();
+  await settle(page);
+  await page.keyboard.press('Escape', { delay: 60 });
+  await expect(page.locator('.screen.camp')).toBeVisible();
+  await page.locator('[data-focus="door"]').click();
+  await expect(page.locator('.screen.door')).toBeVisible();
 });
 
 test('la porte : une région, quatre cartes fermées, les records', async ({ page }, info) => {
@@ -182,6 +233,8 @@ test('la porte : une région, quatre cartes fermées, les records', async ({ pag
   await expect(page.locator('.door-card.closed')).toHaveCount(4);
   await expect(page.locator('[data-focus="region.ash-woods"]')).toContainText(FR['region.ash-woods.name']!);
   await expect(page.locator('.door-records')).toContainText('24');
+  // La jauge du départ est sur la carte qu'on regarde.
+  await expect(page.locator('[data-focus="region.ash-woods"] .hold-fill')).toHaveCount(1);
   // Les cartes fermées ne prennent pas le focus.
   await pad.press('RIGHT');
   await expectFocus(page, 'region.ash-woods');

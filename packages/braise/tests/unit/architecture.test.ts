@@ -48,6 +48,13 @@ describe('le lecteur d\'imports des règles', () => {
 
 /** Les règles de dépendance du document 08 §3, vérifiées ici plutôt que par une règle de lint. */
 describe('règles de dépendance', () => {
+  it('le rendu du refuge ne répète pas les positions du contenu', () => {
+    const text = readFileSync(join(src, 'render', 'renderer.ts'), 'utf8');
+    const camp = JSON.parse(readFileSync(join(src, '..', 'content', 'camp.json'), 'utf8')) as { objects: Array<{ id: string; x: number; y: number }> };
+    for (const o of camp.objects) expect(text.includes(`${o.x}, ${o.y}`), o.id).toBe(false);
+    expect(text).not.toContain('const FIRE');
+  });
+
   it('core n\'importe que core, content et le générateur du kit', () => {
     for (const file of files('core')) {
       for (const spec of imports(file)) {

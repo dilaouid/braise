@@ -1,12 +1,10 @@
 import type { JSX } from 'preact';
 import { altarCost, altarRank, altarSpent, canBuyAltarRank } from '../meta/altar.ts';
 import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
-import { lanternNews } from '../meta/lantern.ts';
 import { newHero, type Settings } from '../meta/save.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
 import {
-  actions, cineCaption, cineCard, cineQuick, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, holdProgress, knowsCream, lastSeed, memoryCard, notice, overlay,
-  replaySeed, roman, save, saveRev, t,
+  actions, cineCaption, cineCard, cineQuick, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, knowsCream, memoryCard, notice,   roman, save, saveRev, t,
 } from './store.ts';
 
 const CLASS = 'class.ash-blade';

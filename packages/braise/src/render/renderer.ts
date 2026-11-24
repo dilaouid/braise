@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, RenderTexture, Sprite, Texture, TextureSource } from 'pixi.js';
-import type { GameData } from '../content/index.ts';
+import type { CampDef, GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
@@ -19,8 +19,13 @@ import { lightDisc } from './light.ts';
 export const VIEW_W = 640;
 export const VIEW_H = 360;
 
-/** Le petit feu du refuge. */
-const FIRE = { x: 414, y: 208 } as const;
+/** L'image de chaque objet du refuge, son décalage au sol, et sa lueur (décalage, rayon, force, teinte). */
+const CAMP_LOOKS: Record<string, { sprite: string; down: number; up: number; radius: number; warm: number; tint: number }> = {
+  door: { sprite: 'camp-door', down: 4, up: 36, radius: 66, warm: 0.12, tint: 0xd9480f },
+  altar: { sprite: 'camp-altar', down: 8, up: 18, radius: 40, warm: 0.08, tint: 0xfb7a0c },
+  memories: { sprite: 'camp-souvenirs', down: 6, up: 16, radius: 34, warm: 0.1, tint: 0x7fd4ff },
+  lantern: { sprite: 'camp-lantern', down: 6, up: 12, radius: 32, warm: 0.1, tint: 0xfb7a0c },
+};
 
 const C = {
   night: 0x0b0f1a, ember: 0xffb020, emberHot: 0xfb7a0c, emberPale: 0xffd166, emberWhite: 0xfff1c2, emberDark: 0xd9480f,
@@ -198,6 +203,8 @@ export class GameRenderer {
   private campHero!: Sprite;
   private campCream!: Sprite;
   private campFlame!: Sprite;
+  /** Le refuge décrit par le contenu : les images et les lueurs suivent ses positions. Posé par `app` au démarrage. */
+  campDef: CampDef = { speed: 0, bounds: { x: 0, y: 0, rx: 1, ry: 1 }, objects: [] };
   /** La porte, l'Autel, les Souvenirs et la lanterne seule, par identifiant d'objet. */
   private readonly campObjects = new Map<string, Sprite>();
   /** Leur apparition, de 0 (cachés, en scène) à 1. */
@@ -1325,6 +1332,11 @@ export class GameRenderer {
   }
 
   /** Le décor du refuge, construit une fois : sol, arbres, braséro, flamme, et les personnages. */
+  /** Où le contenu place cet objet du refuge. */
+  private campPlace(id: string): { x: number; y: number } {
+    return this.campDef.objects.find((o) => o.id === id) ?? { x: 320, y: 200 };
+  }
+
   private buildCamp(): void {
     if (this.campBuilt) return;
     this.campBuilt = true;
@@ -1351,23 +1363,21 @@ export class GameRenderer {
     prop('decor-arbre', 60, 120); prop('decor-arbre', 130, 70); prop('decor-arbre', 560, 110); prop('decor-arbre', 600, 230);
     prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
     prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
-    prop('poi-brasero', FIRE.x, FIRE.y);
-    const object = (id: string, name: string, x: number, y: number): void => {
-      const s = new Sprite(a.get(name));
+    const fire = this.campPlace('fire');
+    prop('poi-brasero', fire.x, fire.y);
+    for (const [id, look] of Object.entries(CAMP_LOOKS)) {
+      const at = this.campPlace(id);
+      const s = new Sprite(a.get(look.sprite));
       s.anchor.set(0.5, 1);
-      s.position.set(x, y);
-      s.zIndex = y - 4;
+      s.position.set(at.x, at.y + look.down);
+      s.zIndex = at.y;
       this.camp.addChild(s);
       this.campObjects.set(id, s);
-    };
-    object('door', 'camp-door', 320, 208);
-    object('altar', 'camp-altar', 196, 214);
-    object('memories', 'camp-souvenirs', 236, 154);
-    object('lantern', 'camp-lantern', 262, 226);
+    }
     this.campFlame = new Sprite(this.flameFrames[0]!);
     this.campFlame.anchor.set(0.5, 1);
-    this.campFlame.position.set(FIRE.x, FIRE.y - 20);
-    this.campFlame.zIndex = FIRE.y + 1;
+    this.campFlame.position.set(fire.x, fire.y - 20);
+    this.campFlame.zIndex = fire.y + 1;
     this.camp.addChild(this.campFlame);
     this.campHero = new Sprite(Texture.EMPTY);
     this.campHero.anchor.set(0.5, 0.8);
@@ -1410,8 +1420,10 @@ export class GameRenderer {
     this.warmCount = 0;
     if (fire > 0) {
       // Le feu est sur le côté, mais c'est toute la clairière qu'il éclaire.
-      this.light(340, 190, Math.round(((lit ? 150 : 104) + Math.sin(t * 3) * 2) * fire), 0.1);
-      this.light(FIRE.x, FIRE.y - 20, Math.round((lit ? 60 : 44) * fire), 0.12);
+      const b = this.campDef.bounds;
+      this.light(b.x + 20, b.y - 24, Math.round(((lit ? 150 : 104) + Math.sin(t * 3) * 2) * fire), 0.1);
+      const at = this.campPlace('fire');
+      this.light(at.x, at.y - 20, Math.round((lit ? 60 : 44) * fire), 0.12);
     }
   }
 
@@ -1441,16 +1453,16 @@ export class GameRenderer {
     this.light(moon.x, moon.y - 10, 56 + Math.round(Math.sin(t * 2.7)), 0.1);
     if (this.campFade > 0.05) {
       const glow = this.campFade;
-      const lamp = (id: string, x: number, y: number, r: number, warm: number, tint: number): void => {
-        if (!view.visible.has(id)) return;
+      for (const [id, look] of Object.entries(CAMP_LOOKS)) {
+        if (!view.visible.has(id)) continue;
+        const at = this.campPlace(id);
         const near = view.near === id;
-        this.light(x, y, Math.round((r + (near ? 10 : 0)) * glow), (warm + (near ? 0.14 : 0)) * glow, tint);
-      };
-      lamp('door', 320, 168, 66, 0.12, C.emberDark);
-      lamp('altar', 196, 188, 40, 0.08, C.emberHot);
-      lamp('memories', 236, 132, 34, 0.1, C.frost);
-      lamp('lantern', 262, 208, 32, 0.1, C.emberHot);
-      if (view.near === 'cream') lamp('cream', 288, 210, 24, 0, C.emberHot);
+        this.light(at.x, at.y - look.up, Math.round((look.radius + (near ? 10 : 0)) * glow), (look.warm + (near ? 0.14 : 0)) * glow, look.tint);
+      }
+      if (view.near === 'cream') {
+        const at = this.campPlace('cream');
+        this.light(at.x, at.y - 10, 34, 0.14);
+      }
     }
     if (cream) this.light(272, 204, 30 + Math.round(Math.sin(t * 2.3)), 0.1);
     this.renderLight();
