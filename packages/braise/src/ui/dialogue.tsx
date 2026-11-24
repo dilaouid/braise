@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { DialogueView } from './dialogue-view.tsx';
 import { Btn } from './parts.tsx';
 import { actions, cineSkip, dialogueShown, dialogueState, refs, t } from './store.ts';
 
@@ -29,26 +30,22 @@ export function Portrait({ name, size }: { name: string; size: number }): JSX.El
 export function DialogueBox(): JSX.Element | null {
   const d = dialogueState.value;
   if (!d) return null;
-  const shown = dialogueShown.value;
-  const hold = cineSkip.value;
-  const done = shown >= d.text.length;
   return (
-    <div class={`dialogue dialogue-${d.who}`}>
-      <span class="dialogue-face" key={`${d.who}-${d.face}`}><Portrait name={`face-${d.who}-${d.face}`} size={64} /></span>
-      <button type="button" class="dialogue-box" onClick={() => actions().dialogueNext()}>
-        <span class="dialogue-name">{t(`dialog.name.${d.who}`)}</span>
-        <span class="dialogue-text">
-          {d.text.slice(0, shown)}
-          <span class="dialogue-rest">{d.text.slice(shown)}</span>
-        </span>
-        <span class={`dialogue-next${done ? ' ready' : ''}`}><Btn g="confirm" /> {t(d.single ? 'ui.close' : 'dialog.next')}</span>
-      </button>
-      {d.single ? null : (
-        <button type="button" class={`dialogue-skip${hold > 0 ? ' active' : ''}`} onClick={() => actions().dialogueSkip()}>
-          <span class="cine-ring" style={{ '--hold': String(hold) }} />
-          <Btn g="back" /> {t('dialog.skip')}
-        </button>
-      )}
-    </div>
+    <DialogueView
+      who={d.who}
+      face={d.face}
+      portrait={<Portrait name={`face-${d.who}-${d.face}`} size={64} />}
+      name={t(`dialog.name.${d.who}`)}
+      text={d.text}
+      shown={dialogueShown.value}
+      single={d.single}
+      hold={cineSkip.value}
+      nextGlyph={<Btn g="confirm" />}
+      skipGlyph={<Btn g="back" />}
+      nextLabel={t(d.single ? 'ui.close' : 'dialog.next')}
+      skipLabel={t('dialog.skip')}
+      onNext={() => actions().dialogueNext()}
+      onSkip={() => actions().dialogueSkip()}
+    />
   );
 }

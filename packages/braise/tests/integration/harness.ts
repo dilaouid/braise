@@ -118,8 +118,12 @@ export async function skipTutorial(page: Page, pad?: SimPad): Promise<void> {
   // On ne perd pas le tutoriel : « Abandonner » n'y est pas.
   await expect(page.locator('[data-focus="abandon"]')).toHaveCount(0);
   await settle(page);
-  await press('DOWN');
-  await press('DOWN');
+  // Deux crans vers le bas, un à la fois : deux appuis trop rapprochés peuvent n'en faire qu'un.
+  const focused = page.locator('#ui .is-focused');
+  for (let i = 0; i < 4 && (await focused.getAttribute('data-focus')) !== 'skip-tutorial'; i++) {
+    await press('DOWN');
+    await page.waitForTimeout(150);
+  }
   await expectFocus(page, 'skip-tutorial');
   await press('A');
   await expect(page.locator('.dialog')).toContainText(FR['pause.skipTutorial.confirm']!);
