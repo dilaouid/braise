@@ -9,6 +9,7 @@ import {
 import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
 import type { CampState } from '../core/camp.ts';
 import { lowHp } from '../core/combat.ts';
+import { dashReady } from '../core/run.ts';
 import type { SceneState } from '../core/scene.ts';
 import { tutorialTarget } from '../core/tutorial.ts';
 import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
@@ -1000,9 +1001,8 @@ export class GameRenderer {
       this.drawEmote(this.emotes[1]!, tuto.emoteCream, gx, gy - EMOTE_UP_CREAM, dt);
     }
     // Anneau de rechargement de la ruée, sous le héros.
-    const dash = run.data.tuning.dash;
-    if (hero.dashCd > 0) {
-      const frac = 1 - hero.dashCd / dash.cooldown;
+    const frac = dashReady(run);
+    if (frac < 1) {
       g.moveTo(hx + 9, hy + 1).arc(hx, hy + 1, 9, 0, frac * Math.PI * 2).stroke({ width: 1, color: C.emberPale, alpha: 0.7 });
     } else {
       g.circle(hx, hy + 1, 9).stroke({ width: 1, color: C.ember, alpha: 0.35 });
@@ -1076,8 +1076,8 @@ export class GameRenderer {
     this.drawFx(run, dt, paused, top2, g, hx, hy, camX, camY);
     this.drawOverlay(run, time, camX, camY);
 
-    // La lueur : un disque chaud autour de la lanterne ; son rayon est la statistique Lueur plus 24 px.
-    let glow = hero.stats.glow + 24 + Math.round(Math.sin(time * 1.6) * 2);
+    // La lueur : un disque chaud autour de la lanterne ; son rayon est le rayon éclairé (la Lueur plus sa marge).
+    let glow = hero.stats.glow + run.data.tuning.hero.lightMargin + Math.round(Math.sin(time * 1.6) * 2);
     if (run.phase === 'dead') {
       this.deathFade = Math.min(1.2, this.deathFade + dt * 0.8);
       glow *= Math.max(0, 1 - this.deathFade);

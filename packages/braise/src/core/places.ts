@@ -1,4 +1,5 @@
 import { healHero, spawnEnemy } from './combat.ts';
+import { drawFlames } from './flames.ts';
 import { applyCard, cardCandidates, evolvableWeapons, evolveWeapon, recomputeStats, resumeRun } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { emit, tutorialNote } from './stores.ts';
@@ -19,20 +20,6 @@ export function convergingWave(run: Run, poi: Poi, count: number, enemyId: strin
     const y = poi.y + Math.sin(a) * 300;
     if (!isSolidAt(run.map, x, y)) spawnEnemy(run, kind, x, y, run.hpScaleNow);
   }
-}
-
-/** Tire des buffs différents pour un totem. */
-function drawBoons(run: Run): number[] {
-  const weights = run.data.boons.map(() => 1);
-  const out: number[] = [];
-  const wanted = Math.min(run.data.tuning.events.totem.choices, weights.length);
-  while (out.length < wanted) {
-    const pick = run.rngDraw.weighted(weights);
-    if (pick < 0) break;
-    out.push(pick);
-    weights[pick] = 0;
-  }
-  return out;
 }
 
 /** Les cartes qu'un Ferrailleur peut vendre maintenant : armes et reliques seulement. */
@@ -98,9 +85,15 @@ export function updatePlace(run: Run, poi: Poi, index: number, dist: number, dt:
         else poi.progress = Math.max(0, poi.progress - dt * 0.5);
         if (poi.progress >= ev.totem.seconds) {
           poi.state = 2;
-          run.totemChoices = drawBoons(run);
+          run.totemOffers = drawFlames(run);
           emit(run, EV.totemDone, poi.x, poi.y);
-          if (run.totemChoices.length > 0) run.phase = 'totem';
+          if (run.totemOffers.length > 0) {
+            run.phase = 'totem';
+          } else {
+            // Toutes les lignées sont prises : le totem donne l'or d'un coffre.
+            const range = run.data.tuning.gold.chest;
+            run.hero.gold += run.rngDraw.intRange(range[0], range[1]);
+          }
         }
       }
       break;
@@ -165,19 +158,6 @@ export function closeForge(run: Run): void {
   run.forgeChoices = [];
   run.forgePoi = -1;
   resumeRun(run);
-}
-
-/** Prend le buff d'indice donné parmi ceux que le totem propose. */
-export function takeBoon(run: Run, index: number): boolean {
-  if (run.phase !== 'totem') return false;
-  const boon = run.totemChoices[index];
-  if (boon === undefined) return false;
-  run.boons.push(boon);
-  run.totemChoices = [];
-  tutorialNote(run, 'boon');
-  recomputeStats(run);
-  resumeRun(run);
-  return true;
 }
 
 function servicePrice(run: Run, service: number): number {

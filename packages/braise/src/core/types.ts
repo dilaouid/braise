@@ -54,6 +54,8 @@ export const SHOT_LOB = 2;
 /** Sortes de zones au sol. */
 export const ZONE_PUDDLE = 0;
 export const ZONE_BURST = 1;
+/** Les braises que laisse la ruée : du feu, sans arme. */
+export const ZONE_TRAIL = 2;
 
 /** Formes d'annonce d'attaque. */
 export const TG_LINE = 0;
@@ -79,6 +81,8 @@ export const EV = {
   hunt: 47,
   /** Une pièce de la Lanterne tombe (a : son indice). */
   pieceDrop: 48,
+  /** De la Lueur est brûlée pour une Flamme (a : les points). */
+  flameFeed: 49,
 } as const;
 
 export interface EnemyStore {
@@ -230,6 +234,18 @@ export interface RelicInstance {
   level: number;
 }
 
+/** Une Flamme proposée par un totem. */
+export interface FlameOffer {
+  /** Indice dans `data.flames.lines`. */
+  line: number;
+  /** La rareté à laquelle la carte est arrivée : on ne redescend pas dessous. */
+  base: number;
+  /** La rareté affichée, celle qui serait prise. */
+  rarity: number;
+  /** Vrai si la Chance a offert un cran : il n'est pas payé. */
+  gift: boolean;
+}
+
 /** Une carte de montée de niveau. */
 export interface Card {
   kind: 'weapon' | 'relic' | 'gold' | 'heal';
@@ -289,6 +305,8 @@ export interface Hero {
   hp: number;
   invuln: number;
   dashT: number; dashCd: number; dashX: number; dashY: number;
+  /** Ruées prêtes. Tant qu'il en manque, `dashCd` décompte la prochaine. */
+  dashCharges: number;
   flasks: number;
   skillCd: number;
   buffT: number;
@@ -352,6 +370,8 @@ export interface RunConfig {
   reborn?: boolean;
   /** Ce que la Lanterne change aux règles. Absent : rien. */
   mods?: RunMods;
+  /** La rareté de Flamme la plus haute ouverte à l'Autel (0 Commune … 4 Mythique). Absente : Rare. */
+  flameRarity?: number;
   /**
    * Les pièces qui peuvent tomber (identifiants), si le boss en doit une, et combien étaient posées au départ.
    * Absent : aucune pièce ne tombe.
@@ -436,8 +456,12 @@ export interface Run {
   map: GameMap;
   hero: Hero;
   sheet: StatSheet;
-  /** Les règles changées par la Lanterne ; neutres sans elle. */
+  /** Les règles changées par la Lanterne et par les Flammes ; neutres sans elles. */
   mods: Readonly<RunMods>;
+  /** Minuteries du Rappel et du Halo, et distance de ruée avant la prochaine braise de la Traînée. */
+  recallT: number;
+  haloT: number;
+  trailLeft: number;
   /** Gemmes ramassées depuis le dernier point de vie rendu par Faim. */
   gemsHeld: number;
   /** Résurrections déjà utilisées. */
@@ -470,9 +494,11 @@ export interface Run {
   forgeChoices: number[];
   /** Indice du braséro ouvert, ou -1. */
   forgePoi: number;
-  // Carte vivante : buffs de totem, trouvailles, boutiques
-  /** Indices dans `data.boons` ; un buff pris deux fois y est deux fois. */
-  boons: number[];
+  // Carte vivante : Flammes des totems, trouvailles, boutiques
+  /** Les Flammes prises, une par lignée : indice dans `data.flames.lines`, et rareté. */
+  flames: Array<{ line: number; rarity: number }>;
+  /** Points de Lueur brûlés pour nourrir des Flammes (les braséros en remboursent une part). */
+  glowBurned: number;
   /** Indices dans `data.finds`, dans l'ordre d'obtention. */
   finds: number[];
   /** Les trouvailles pas encore obtenues, mélangées au départ. */
@@ -481,8 +507,8 @@ export interface Run {
   /** La trouvaille affichée (phase `find`) : -1 aucune, -2 réserve vide (de l'or à la place). */
   find: number;
   findGold: number;
-  /** Les buffs proposés par le totem chargé (phase `totem`). */
-  totemChoices: number[];
+  /** Les Flammes proposées par le totem chargé (phase `totem`). */
+  totemOffers: FlameOffer[];
   /** Indice du lieu dont la boutique est ouverte, ou -1. */
   shopPoi: number;
   smithBuys: number;

@@ -4,9 +4,12 @@
  * Tutoriel : pnpm sim -- --tutorial --runs 10 (le robot de tutoriel joue le script livré).
  * Une pièce de Lanterne seule : pnpm sim -- --piece rune.call --plevel 3 (son effet à ce niveau, et son malus).
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
+ * Trait : --trait 0.15,-0.05 essaie d'autres valeurs (dans la lumière, hors de la lumière).
+ * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
-import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate } from '../packages/braise/src/core/bots.ts';
+import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate, type FeedPolicy } from '../packages/braise/src/core/bots.ts';
+import { glowShareNow } from '../packages/braise/src/core/flames.ts';
 import { NEUTRAL_MODS, mergeMods } from '../packages/braise/src/core/mods.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
 import { createRun } from '../packages/braise/src/core/run.ts';
@@ -29,6 +32,9 @@ const classId = `class.${arg('class', 'ash-blade')}`;
 const seed0 = Number(arg('seed', '1000'));
 const ardor = Number(arg('altar', '0'));
 const verbose = process.argv.includes('--verbose');
+const flameRarity = Number(arg('rarity', '1'));
+const feed = arg('feed', 'never') as FeedPolicy;
+if (!['never', 'smart', 'max'].includes(feed)) throw new Error(`Politique de mise inconnue : ${feed}`);
 
 BOT_TUNE.calm = Number(arg('calm', String(BOT_TUNE.calm)));
 BOT_TUNE.hurt = Number(arg('hurt', String(BOT_TUNE.hurt)));
@@ -37,6 +43,14 @@ BOT_TUNE.fleeReach = Number(arg('reach', String(BOT_TUNE.fleeReach)));
 BOT_TUNE.touch = Number(arg('touch', String(BOT_TUNE.touch)));
 BOT_TUNE.lead = Number(arg('lead', String(BOT_TUNE.lead)));
 const data = loadGameData();
+// --trait <dedans>,<dehors> : essaie d'autres valeurs pour le trait du personnage, sans toucher au contenu.
+const traitArg = arg('trait', '');
+if (traitArg !== '') {
+  const [inside, outside] = traitArg.split(',').map(Number);
+  const cls = data.classes[classId];
+  if (!cls || inside === undefined || outside === undefined || Number.isNaN(inside) || Number.isNaN(outside)) throw new Error(`Trait illisible : ${traitArg}`);
+  cls.trait = { kind: 'lit', inside, outside };
+}
 const noPlaces = process.argv.includes('--no-places');
 if (noPlaces) {
   const ev = data.tuning.events;
@@ -107,6 +121,9 @@ const weaponDamage = new Map<string, number>();
 const weaponPicked = new Map<string, number>();
 const deaths: number[] = [];
 let totalBoons = 0;
+const flamesByRarity = [0, 0, 0, 0, 0];
+let totalGlow = 0;
+let totalBurned = 0;
 let totalFinds = 0;
 let totalBuys = 0;
 let totalSpent = 0;
@@ -117,12 +134,13 @@ const hurtBy = new Float64Array(data.enemies.length);
 for (let r = 0; r < runs; r++) {
   const run = createRun(data, {
     seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
-    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods,
+    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity,
   });
   let maxEnemies = 0;
   simulate(run, {
     bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorerBot : activeBot,
     pickCard: botName === 'explorer' ? plannedPick : undefined,
+    feed,
     maxSteps: minutes * 3600,
     onStep: (x) => {
       if (x.enemies.count > maxEnemies) maxEnemies = x.enemies.count;
@@ -138,7 +156,10 @@ for (let r = 0; r < runs; r++) {
   totalAshes += res.ashesKept;
   totalXp += res.heroXp;
   totalKills += run.hero.kills;
-  totalBoons += run.boons.length;
+  totalBoons += run.flames.length;
+  for (const f of run.flames) flamesByRarity[f.rarity]!++;
+  totalGlow += glowShareNow(run);
+  totalBurned += run.glowBurned;
   totalFinds += run.finds.length;
   totalBuys += run.smithBuys + run.serviceBuys.reduce((a, b) => a + b, 0);
   totalSpent += run.hero.goldSpent;
@@ -166,6 +187,10 @@ console.log(
   `lieux${noPlaces ? ' (retirés)' : ''} : totems ${(totalBoons / runs).toFixed(1)} · trouvailles ${(totalFinds / runs).toFixed(1)} · achats ${(totalBuys / runs).toFixed(1)}`
   + ` · or ramassé ${Math.round(totalGold / runs)} · or dépensé ${Math.round(totalSpent / runs)}`
   + (victories ? ` · boss battu en ${fmt(bossSeconds / victories)}` : ''),
+);
+console.log(
+  `Flammes (rareté ouverte ${flameRarity}, mise « ${feed} ») : ${flamesByRarity.map((n) => (n / runs).toFixed(2)).join(' / ')} par partie (C / R / É / L / M)`
+  + ` · Lueur brûlée ${(totalBurned / runs).toFixed(1)} points · Lueur finale ${Math.round((100 * totalGlow) / runs)} %`,
 );
 console.log(`Cendres moyennes : ${Math.round(totalAshes / runs)}   expérience de héros moyenne : ${Math.round(totalXp / runs)}`);
 if (deaths.length) {

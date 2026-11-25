@@ -1324,6 +1324,69 @@
   prompt: "a lone red-painted wooden front door with a brass knocker, standing upright in its frame with no house around it, paint faded and dusted with ash"
   settings: {"width":64,"height":112,"no_background":true}
   edits: "palette réduite"
+- file: sprites/icon-flame-kindling.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 5b9403e2-7005-46ed-b0a0-1d7ae34e5b3f
+  prompt: "three small glowing orange embers with sparks rising from a tiny pile of dark kindling twigs, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-bait.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 2668451c-ba67-4761-a028-873d9d7dc055
+  prompt: "a steel fishing hook with a small bright orange flame burning on it as bait, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-surge.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: c9888216-2a72-4d52-acf4-020826c3f63c
+  prompt: "a bright orange comet dashing diagonally with a long fiery tail, speed, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-shadow.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 0fc56803-55e4-4304-9845-5ae2dbab7d15
+  prompt: "a dark round moon eclipsing a small orange flame, thin bright rim of light around the dark disc, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-swarm.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: e6765906-eb4f-43eb-ad9d-4e583d1c5e00
+  prompt: "three bright orange fireballs in a row, each a simple round ball with a short flame tail, flying to the right, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-recall.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 7a6822b9-5367-4032-81f4-be78574bc12e
+  prompt: "a teal glowing crystal gem in the center with two curved arrows spiraling inward toward it, pulling, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-epic.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 24ba6ab0-b9a9-4148-a8fe-d59d44abd389
+  prompt: "a single tall bright magenta pink flame with a light blue core, burning in a small grey stone altar bowl, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-legendary.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: f94dac05-ffc3-482d-8058-f62769af3a34
+  prompt: "a single tall golden yellow flame burning in a small grey stone altar bowl, short light rays around it, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-mythic.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 78b215e3-b987-45f6-8c59-f8f349bd2da9
+  prompt: "a single tall white-hot pale flame with a small crown of sparks above it, burning in a small grey stone altar bowl, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
 - file: sprites/camp-door-open.png
   tool: dérivé de sprites/camp-door.png (tools/process-assets.mjs)
 - file: sprites/pickup-gem-small.png
@@ -1621,6 +1684,12 @@
   date: 2026-11-24
   pixellab_id: d5320858-2d63-4a12-bc14-d08f2e62119d
   prompt: "a young woman's short light sincere laugh, a soft warm giggle, close and natural, no music"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-flame-feed.ogg
+  tool: create_sound_effect
+  date: 2026-11-25
+  pixellab_id: ca226adf-cef6-455a-902a-7be8ce49a351
+  prompt: "a soft breath blowing on embers, then a small flame flaring up warmly with a low whoosh and settling, short and quiet"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music

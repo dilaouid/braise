@@ -1,4 +1,5 @@
 import { addPickup, healHero, spawnEnemy } from './combat.ts';
+import { recomputeStats } from './levelup.ts';
 import { convergingWave, offerEvolution, updatePlace } from './places.ts';
 import { emit } from './stores.ts';
 import { EV, PK_ASH, PK_GOLD, type Run } from './types.ts';
@@ -40,6 +41,8 @@ export function updatePois(run: Run, dt: number): void {
             poi.state = 3;
             poi.armed = true;
             run.braziersLit++;
+            // Le braséro rembourse de la Lueur brûlée : la lanterne regrandit tout de suite.
+            recomputeStats(run);
             addPickup(run, PK_ASH, poi.x - 14, poi.y + 22, run.data.tuning.ashes.brazier);
             emit(run, EV.poiDone, poi.x, poi.y, 0);
             if (inside) offerEvolution(run, poi, index);

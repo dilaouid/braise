@@ -21,10 +21,10 @@ function goTo(page: Page, kind: Kind, n = 0): Promise<void> {
 }
 
 /** Ce que la carte vivante ajoute à l'état d'une expédition. */
-function placesView(page: Page): Promise<{ boons: number; finds: number; gold: number; spent: number; flasks: number }> {
+function placesView(page: Page): Promise<{ flames: number; finds: number; gold: number; spent: number; flasks: number }> {
   return page.evaluate(() => {
     const run = (window as unknown as { __braise: { run: any } }).__braise.run;
-    return { boons: run.boons.length, finds: run.finds.length, gold: run.hero.gold, spent: run.hero.goldSpent, flasks: run.hero.stats.flasks };
+    return { flames: run.flames.length, finds: run.finds.length, gold: run.hero.gold, spent: run.hero.goldSpent, flasks: run.hero.stats.flasks };
   });
 }
 
@@ -65,7 +65,7 @@ test('totem, Ferrailleur, Herboriste et trésor à la manette seule', async ({ p
   await skipDepartCinematic(page, pad);
   await settle(page);
 
-  // --- Totem : rester dans le cercle, puis choisir un buff ---------------------------------
+  // --- Totem : rester dans le cercle, puis choisir une Flamme ---------------------------------
   await goTo(page, 'totem');
   await page.waitForTimeout(600);
   await capture(page, info, SHOTS, '01-totem-en-charge');
@@ -73,17 +73,17 @@ test('totem, Ferrailleur, Herboriste et trésor à la manette seule', async ({ p
   await expect(page.locator('.backdrop.totem')).toBeVisible();
   await expect(page.locator('.backdrop.totem h1')).toHaveText(FR['totem.title']!);
   await expect(page.locator('.backdrop.totem .card')).toHaveCount(3);
-  await expectFocus(page, 'boon0');
+  await expectFocus(page, 'flame0');
   await capture(page, info, SHOTS, '02-totem-choix');
   await pad.press('RIGHT');
-  await expectFocus(page, 'boon1');
+  await expectFocus(page, 'flame1');
   // B ne ferme pas : le choix est obligatoire.
   await settle(page);
   await pad.press('B');
   await expect(page.locator('.backdrop.totem')).toBeVisible();
   await pad.press('A');
   await expect(page.locator('.backdrop.totem')).toBeHidden();
-  expect((await placesView(page)).boons).toBe(1);
+  expect((await placesView(page)).flames).toBe(1);
 
   // --- Ferrailleur : sans or, tout est grisé et B ferme -------------------------------------
   await page.evaluate(() => {

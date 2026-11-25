@@ -28,6 +28,15 @@ export function makeImmortal(run: Run): void {
   run.hero.hp = run.hero.stats.maxHp;
 }
 
+/**
+ * Retire le trait du personnage (ni bonus dans sa lumière, ni malus dehors), pour les tests qui mesurent
+ * une autre règle de dégâts.
+ */
+export function noTrait(run: Run): Run {
+  run.cls = { ...run.cls, trait: { kind: 'lit', inside: 0, outside: 0 } };
+  return run;
+}
+
 /** Une expédition de test. */
 export function makeRun(seed = 1234, save: Save = makeSave(), autoSkills = false): Run {
   const { sheet } = buildSheet(data, save, CLASS);

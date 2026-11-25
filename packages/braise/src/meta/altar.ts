@@ -20,7 +20,7 @@ export function altarSpent(save: Save, data: GameData): number {
   return total;
 }
 
-export type AltarError = 'unknown' | 'max' | 'ashes' | 'shards';
+export type AltarError = 'unknown' | 'max' | 'requires' | 'ashes' | 'shards';
 
 /** Le rang courant d'un boost. */
 export function altarRank(save: Save, id: string): number {
@@ -33,6 +33,7 @@ export function canBuyAltarRank(save: Save, data: GameData, id: string): AltarEr
   if (!boost) return 'unknown';
   const rank = altarRank(save, id);
   if (boost.ranks > 0 && rank >= boost.ranks) return 'max';
+  if (boost.requires !== undefined && altarRank(save, boost.requires) <= 0) return 'requires';
   if (save.account.ashes < altarCost(boost, rank + 1)) return 'ashes';
   if (rank === 0 && save.account.shards < boost.shards) return 'shards';
   return null;
@@ -60,6 +61,23 @@ export function refundAltar(save: Save, data: GameData): number {
   save.account.ashes += refund;
   save.account.shards += shards;
   return refund;
+}
+
+/** Les raretés que l'Autel ouvre, dans l'ordre : Épique est la rareté 2. */
+const UNLOCKS = ['epic', 'legendary', 'mythic'] as const;
+
+/**
+ * La rareté de Flamme la plus haute ouverte : Rare (1) au départ, puis une de plus par déblocage acheté
+ * et actif. La chaîne s'arrête au premier qui manque ou qui est désactivé.
+ */
+export function flameRarity(save: Save, data: GameData): number {
+  let rarity = 1;
+  for (const name of UNLOCKS) {
+    const boost = data.altar.find((b) => b.unlock === name);
+    if (!boost || altarRank(save, boost.id) <= 0 || save.account.altarDisabled.includes(boost.id)) break;
+    rarity++;
+  }
+  return rarity;
 }
 
 /** Active ou désactive un boost, sans le rembourser. */

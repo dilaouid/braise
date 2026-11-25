@@ -61,6 +61,7 @@ describe('assets (documents 10 et 11)', () => {
     for (const r of data.relics) need.push(r.icon);
     for (const e of data.enemies) need.push(e.sprite);
     for (const a of data.altar) need.push(a.icon);
+    for (const l of data.flames.lines) need.push(l.icon);
     for (const p of data.lantern.pieces) need.push(p.icon);
     need.push('camp-door', 'camp-door-open', 'camp-altar', 'camp-souvenirs', 'camp-lantern');
     need.push('pickup-lantern-piece', 'lantern-frame', 'lantern-face-closed');
@@ -76,7 +77,7 @@ describe('assets (documents 10 et 11)', () => {
     need.push('pickup-gem-small', 'pickup-gem-medium', 'pickup-gem-large', 'pickup-gem-red', 'pickup-gold', 'pickup-ash', 'pickup-drop',
       'pickup-coffre', 'pickup-call', 'shot-spark', 'shot-arrow', 'shot-brand', 'shot-enemy', 'fx-flame', 'fx-puff', 'fx-firefly',
       'font-digits', 'ui-arrow', 'poi-brasero', 'poi-source', 'poi-cache', 'poi-portail', 'icon-gold', 'icon-ashes', 'icon-flask', 'icon-dash');
-    // La carte vivante : lieux, buffs de totem, trouvailles, services de l'Herboriste.
+    // La carte vivante : lieux, Flammes des totems, trouvailles, services de l'Herboriste.
     need.push('poi-totem', 'poi-ferrailleur', 'poi-herboriste', 'poi-tresor',
       'icon-boon-wisdom', 'icon-boon-stride', 'icon-boon-glow', 'icon-boon-edge', 'icon-boon-breath', 'icon-boon-vein',
       'icon-find-boots', 'icon-find-lantern-glass', 'icon-find-holed-coin', 'icon-find-purse', 'icon-find-notebook', 'icon-find-scarf',

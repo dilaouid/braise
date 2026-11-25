@@ -1,9 +1,9 @@
-import type { WeaponDef, WeaponParams } from '../content/index.ts';
+import { DMG_FIRE, type WeaponDef, type WeaponParams } from '../content/index.ts';
 import { hurtEnemy, knockEnemy, stunEnemy, healHero } from './combat.ts';
 import { effectiveCooldown } from './stats.ts';
 import { SHOT_HIT_MEMORY, emit, nearestEnemy, queryCircle, removeShot, removeZone } from './stores.ts';
 import {
-  CAP_SHOTS, CAP_ZONES, EV, HIT_BLEED, HIT_BURN, MAX_WEAPON_SLOTS, SHOT_HOMING, SHOT_LOB, SHOT_STRAIGHT, ZONE_PUDDLE,
+  CAP_SHOTS, CAP_ZONES, EV, HIT_BLEED, HIT_BURN, MAX_WEAPON_SLOTS, SHOT_HOMING, SHOT_LOB, SHOT_STRAIGHT, ZONE_PUDDLE, ZONE_TRAIL,
   type Run, type WeaponInstance,
 } from './types.ts';
 
@@ -489,6 +489,12 @@ export function updateZones(run: Run, dt: number): void {
     z.tick[i]! -= dt;
     if (z.tick[i]! > 0) continue;
     z.tick[i]! += z.interval[i]!;
+    if (z.kind[i] === ZONE_TRAIL) {
+      // Les braises de la ruée : du feu, avec la Puissance du héros, sans arme créditée.
+      const hits = queryCircle(run, z.x[i]!, z.y[i]!, z.radius[i]!);
+      for (let k = 0; k < hits; k++) hurtEnemy(run, run.query[k]!, z.damage[i]!, DMG_FIRE, null, -1, 0);
+      continue;
+    }
     const slot = z.slot[i]!;
     const w = run.weapons[slot];
     if (!w) continue;

@@ -6,6 +6,7 @@ import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
+import { litRadius } from './flames.ts';
 import { closeChest, gainXp, resumeRun } from './levelup.ts';
 import { NEUTRAL_MODS } from './mods.ts';
 import { generateMap, isSolidForHero } from './map.ts';
@@ -17,7 +18,7 @@ import {
 } from './stores.ts';
 import { tutorialBossDead, tutorialRespawn, updateTutorial } from './tutorial.ts';
 import {
-  BH, CAP_ENEMIES, CAP_EVENTS, EV, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SERVICES, STEP, TILE_THICKET,
+  BH, CAP_ENEMIES, CAP_EVENTS, CAP_ZONES, EV, ZONE_TRAIL, HIT_NO_NUMBER, PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SERVICES, STEP, TILE_THICKET,
   type GameMap, type Hero, type Run, type RunConfig, type StepInput,
 } from './types.ts';
 import { addWeapon, updateShots, updateWeapons, updateZones } from './weapons.ts';
@@ -60,7 +61,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     x: startX, y: startY, px: startX, py: startY,
     faceX: 0, faceY: 1, aimX: 0, aimY: 1, facing: 0, moving: false,
     hp: stats.maxHp, invuln: 0,
-    dashT: 0, dashCd: 0, dashX: 0, dashY: 1,
+    dashT: 0, dashCd: 0, dashX: 0, dashY: 1, dashCharges: 1 + (cfg.mods?.dashCharges ?? 0),
     flasks: stats.flasks, skillCd: 0, buffT: 0, ultGauge: 0, ultT: 0, ultTick: 0,
     revives: stats.revives,
     level: 1, xp: 0, xpNext: runXpForNext(1, tuning.xp),
@@ -83,7 +84,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     rngMap, rngSpawn, rngDraw, rngCombat, rngLantern,
     tick: 0, time: 0, phase: 'playing',
     map, hero, sheet,
-    mods: cfg.mods ?? NEUTRAL_MODS, gemsHeld: 0, revived: 0,
+    mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, trailLeft: 0, gemsHeld: 0, revived: 0,
     weapons: [], relics: [], acquired: 0,
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
     zones: createZoneStore(), telegraphs: createTelegraphStore(), pickups: createPickupStore(),
@@ -100,8 +101,8 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     weaponPool: data.weapons.filter((w) => !w.evolved && (unlockedWeapons.has(w.id) || w.index === cls.startWeaponIndex)).map((w) => w.index),
     relicPool: data.relics.filter((r) => unlockedRelics.has(r.id)).map((r) => r.index),
     pendingChests: 0, chest: null, evolutions: 0, forgeChoices: [], forgePoi: -1,
-    boons: [], finds: [], findPool: rngDraw.shuffle(data.finds.map((_, i) => i)),
-    pendingFinds: 0, find: -1, findGold: 0, totemChoices: [], shopPoi: -1,
+    flames: [], glowBurned: 0, finds: [], findPool: rngDraw.shuffle(data.finds.map((_, i) => i)),
+    pendingFinds: 0, find: -1, findGold: 0, totemOffers: [], shopPoi: -1,
     smithBuys: 0, serviceBuys: SERVICES.map(() => 0), extraFlasks: 0, bossWarned: false,
     gridStart: new Int32Array(gridCols * gridCols + 1),
     gridItems: new Int32Array(CAP_ENEMIES),
@@ -131,6 +132,31 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
 /** La recharge de la ruée, Lanterne comprise. */
 export function dashCooldown(run: Run): number {
   return run.data.tuning.dash.cooldown * run.mods.dashCooldownMult;
+}
+
+/** L'anneau de la ruée : plein (1) tant qu'une charge est prête, sinon la part déjà revenue de la prochaine. */
+export function dashReady(run: Run): number {
+  const hero = run.hero;
+  return hero.dashCharges > 0 ? 1 : 1 - Math.max(0, hero.dashCd) / dashCooldown(run);
+}
+
+/** Le nombre de ruées que le héros peut garder en réserve. */
+export function dashChargesMax(run: Run): number {
+  return 1 + run.mods.dashCharges;
+}
+
+/** Pose une braise de la Traînée : une petite zone de feu, sans arme. */
+function dropEmber(run: Run, x: number, y: number): void {
+  const z = run.zones;
+  if (z.count >= CAP_ZONES) return;
+  const trail = run.data.flames.trail;
+  const i = z.count++;
+  z.x[i] = x; z.y[i] = y;
+  z.radius[i] = trail.radius;
+  z.life[i] = trail.duration; z.maxLife[i] = trail.duration;
+  z.interval[i] = trail.tick; z.tick[i] = trail.tick;
+  z.damage[i] = run.mods.dashTrail; z.grow[i] = 0;
+  z.slot[i] = 255; z.kind[i] = ZONE_TRAIL; z.flags[i] = 0;
 }
 
 /** La recharge de la compétence, Lanterne comprise. */
@@ -209,7 +235,17 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
   hero.px = hero.x;
   hero.py = hero.y;
   if (hero.invuln > 0) hero.invuln -= dt;
-  if (hero.dashCd > 0) hero.dashCd -= dt;
+  // Les ruées reviennent une à une : `dashCd` décompte celle qui manque.
+  const charges = dashChargesMax(run);
+  if (hero.dashCharges < charges) {
+    hero.dashCd -= dt;
+    if (hero.dashCd <= 0) {
+      hero.dashCharges++;
+      hero.dashCd = hero.dashCharges < charges ? dashCooldown(run) : 0;
+    }
+  } else {
+    hero.dashCd = 0;
+  }
   if (hero.skillCd > 0) hero.skillCd -= dt;
   if (hero.buffT > 0) hero.buffT -= dt;
   if (hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * run.mods.healMult * dt);
@@ -238,9 +274,11 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
     hero.aimY = hero.faceY;
   }
 
-  if (input.dash && hero.dashT <= 0 && hero.dashCd <= 0) {
+  if (input.dash && hero.dashT <= 0 && hero.dashCharges > 0) {
+    hero.dashCharges--;
     hero.dashT = tuning.dash.duration;
-    hero.dashCd = dashCooldown(run);
+    if (hero.dashCd <= 0) hero.dashCd = dashCooldown(run);
+    run.trailLeft = 0;
     hero.dashX = hero.faceX;
     hero.dashY = hero.faceY;
     emit(run, EV.heroDash, hero.x, hero.y, Math.atan2(hero.dashY, hero.dashX));
@@ -250,7 +288,18 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
     // La ruée traverse les ennemis, pas les obstacles. Découpée pour ne pas sauter une tuile.
     const dist = (tuning.dash.distance / tuning.dash.duration) * Math.min(dt, hero.dashT);
     const parts = Math.max(1, Math.ceil(dist / 5));
-    for (let k = 0; k < parts; k++) moveHeroBy(run, (hero.dashX * dist) / parts, (hero.dashY * dist) / parts, true);
+    for (let k = 0; k < parts; k++) {
+      const bx = hero.x;
+      const by = hero.y;
+      moveHeroBy(run, (hero.dashX * dist) / parts, (hero.dashY * dist) / parts, true);
+      if (run.mods.dashTrail <= 0) continue;
+      // Traînée : une braise tous les quelques pixels réellement parcourus.
+      run.trailLeft -= Math.hypot(hero.x - bx, hero.y - by);
+      if (run.trailLeft <= 0) {
+        dropEmber(run, hero.x, hero.y);
+        run.trailLeft += run.data.flames.trail.spacing;
+      }
+    }
     hero.dashT -= dt;
   } else if (run.tutorial && inThicket(run)) {
     // Une ruée finie dans la rangée d'Éteints : l'élan l'emporte jusqu'à en sortir, et s'il bute, il revient.
@@ -321,6 +370,30 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
       const n = queryCircle(run, hero.x, hero.y, ult.radius);
       for (let k = 0; k < n; k++) hurtEnemy(run, run.query[k]!, ult.damage, type, ult.scale, -1, 0);
       emit(run, EV.ultTick, hero.x, hero.y, ult.radius);
+    }
+  }
+}
+
+/** Les règles des Flammes qui agissent à chaque pas : le Halo et le Rappel. Appelé après la reconstruction de la grille. */
+function flameRules(run: Run, dt: number): void {
+  const mods = run.mods;
+  if (mods.haloBurn > 0) {
+    run.haloT -= dt;
+    if (run.haloT <= 0) {
+      run.haloT += run.data.flames.halo.tick;
+      // Le tic de Brûlure vaut `haloBurn` : on donne le coup dont elle dérive.
+      const hit = mods.haloBurn / run.data.tuning.statuses.burn.damageShare;
+      const n = queryCircle(run, run.hero.x, run.hero.y, litRadius(run));
+      for (let k = 0; k < n; k++) if (!isDust(run, run.query[k]!)) applyBurn(run, run.query[k]!, hit);
+    }
+  }
+  if (mods.recallEvery > 0) {
+    run.recallT += dt;
+    if (run.recallT >= mods.recallEvery) {
+      run.recallT -= mods.recallEvery;
+      const p = run.pickups;
+      for (let k = 0; k < p.count; k++) if (p.kind[k] === PK_GEM || p.kind[k] === PK_RED_GEM) p.attracted[k] = 1;
+      emit(run, EV.flameCall, run.hero.x, run.hero.y);
     }
   }
 }
@@ -416,6 +489,7 @@ export function stepRun(run: Run, input: StepInput): void {
   buildGrid(run);
   separateEnemies(run);
   heroAbilities(run, input, dt);
+  flameRules(run, dt);
   updateWeapons(run, dt);
   updateShots(run, dt);
   updateZones(run, dt);

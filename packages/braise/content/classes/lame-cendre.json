@@ -6,7 +6,7 @@
   "growth": { "every": "str", "even": "vig", "odd": "agi" },
   "freeProfile": ["str", "vig", "str", "agi"],
   "startWeapon": "weapon.scythe",
-  "passive": { "kind": "closeDamage", "range": 60, "bonus": 0.1 },
+  "trait": { "kind": "lit", "inside": 0.1, "outside": -0.1 },
   "skill": { "id": "skill.ember-cry", "icon": "icon-skill-ember-cry", "kind": "emberCry", "cooldown": 12, "radius": 80, "knockback": 220, "damageBonus": 0.25, "duration": 5, "autoRange": 70 },
   "ultimate": { "id": "ultimate.ardent-whirl", "icon": "icon-ultimate-ardent-whirl", "kind": "whirl", "duration": 4, "radius": 70, "ticksPerSecond": 4, "damage": 14, "damageType": "fire", "scale": "str", "autoRange": 70 }
 }

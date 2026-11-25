@@ -101,10 +101,12 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   const tuning = run.data.tuning;
   let power = st.power;
   if (hero.buffT > 0) power += run.cls.skill.damageBonus;
-  const passive = run.cls.passive;
+  // Le trait : la cible est-elle dans le disque de lumière du héros (sa Lueur plus la marge dessinée) ?
+  const trait = run.cls.trait;
   const dx = e.x[i]! - hero.x;
   const dy = e.y[i]! - hero.y;
-  if (dx * dx + dy * dy < passive.range * passive.range) power += passive.bonus;
+  const lit = st.glow + tuning.hero.lightMargin;
+  power += dx * dx + dy * dy < lit * lit ? trait.inside : trait.outside;
   if (def.rank !== 'normal') power += st.eliteDamage;
   if (lowHp(run)) power += run.mods.lowHpPower;
   power += run.mods.eliteKillPower * hero.elites;

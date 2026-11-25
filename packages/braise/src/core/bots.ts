@@ -1,7 +1,8 @@
 import { insideTelegraph } from './enemies.ts';
 import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
-import { buyItem, canBuy, closeShop, shopItems, takeBoon, takeEvolution } from './places.ts';
+import { feedOffer, feedTarget, glowShareNow, offerCost, takeFlame } from './flames.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeEvolution } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { PK_GEM, PK_RED_GEM, SERVICES, type Poi, type Run, type StepInput } from './types.ts';
 
@@ -307,12 +308,43 @@ export function plannedPick(run: Run): number {
   return best;
 }
 
+/** Comment un robot mise sa Lueur aux totems. */
+export type FeedPolicy = 'never' | 'smart' | 'max';
+
+/** La Lueur que la politique « smart » veut garder après une mise, en part de la Lueur de base. */
+const SMART_GLOW = 0.7;
+
+/**
+ * Nourrit les offres du totem selon la politique, puis renvoie l'indice de celle à prendre.
+ * `never` : la première carte gratuite (sinon la moins chère), sans rien nourrir.
+ * `max` : chaque carte est nourrie jusqu'au blocage, la plus rare est prise.
+ * `smart` : pareil, mais un cran n'est monté que si la Lueur reste à 70 % ou plus.
+ */
+export function feedAndPick(run: Run, policy: FeedPolicy): number {
+  const offers = run.totemOffers;
+  if (policy === 'never') {
+    let best = 0;
+    for (let i = 1; i < offers.length; i++) if (offerCost(run, offers[i]!) < offerCost(run, offers[best]!)) best = i;
+    return best;
+  }
+  for (let i = 0; i < offers.length; i++) {
+    for (let target = feedTarget(run, i); target >= 0; target = feedTarget(run, i)) {
+      const next = offerCost(run, { ...offers[i]!, rarity: target });
+      if (policy === 'smart' && glowShareNow(run, next) < SMART_GLOW - 1e-9) break;
+      if (!feedOffer(run, i)) break;
+    }
+  }
+  let best = 0;
+  for (let i = 1; i < offers.length; i++) if (offers[i]!.rarity > offers[best]!.rarity) best = i;
+  return best;
+}
+
 export interface SimOptions {
   bot: Bot;
   /** Carte choisie à chaque montée de niveau (0 : toujours la première). */
   pickCard?: (run: Run) => number;
-  /** Buff choisi à chaque totem (0 : toujours le premier). */
-  pickBoon?: (run: Run) => number;
+  /** Comment le robot mise sa Lueur aux totems (par défaut : jamais). */
+  feed?: FeedPolicy;
   /** Nombre maximum de pas (par défaut : 20 minutes). */
   maxSteps?: number;
   /** Appelé à chaque pas, après la simulation. */
@@ -342,7 +374,7 @@ export function simulate(run: Run, options: SimOptions): Run {
       continue;
     }
     if (run.phase === 'totem') {
-      takeBoon(run, options.pickBoon ? options.pickBoon(run) : 0);
+      if (!takeFlame(run, feedAndPick(run, options.feed ?? 'never'))) takeFlame(run, 0);
       continue;
     }
     if (run.phase === 'find') {
@@ -404,7 +436,11 @@ export function hashRun(run: Run): number {
   for (const w of run.weapons) {
     mix(w.def); mix(w.level); mix(w.damageDone);
   }
-  for (const b of run.boons) mix(b);
+  for (const f of run.flames) {
+    mix(f.line); mix(f.rarity);
+  }
+  // Sans mise, l'empreinte reste celle d'une partie d'avant les Flammes.
+  if (run.glowBurned > 0) mix(run.glowBurned);
   for (const f of run.finds) mix(f);
   mix(hero.goldSpent); mix(run.smithBuys); mix(run.extraFlasks); mix(run.pendingFinds);
   for (const n of run.serviceBuys) mix(n);

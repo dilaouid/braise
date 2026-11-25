@@ -6,7 +6,7 @@ import { updateDirector } from '../../src/core/director.ts';
 import { NEUTRAL_MODS } from '../../src/core/mods.ts';
 import { dashCooldown, idleInput, skillCooldown, stepRun } from '../../src/core/run.ts';
 import { EV, PK_GEM, PK_RED_GEM, ST_BURN, STEP, type Run } from '../../src/core/types.ts';
-import { data, makeModRun, makeRun, makeSave, makeTutorial } from './helpers.ts';
+import { data, makeModRun, makeRun, makeSave, makeTutorial, noTrait } from './helpers.ts';
 
 const idx = (id: string): number => data.enemies.findIndex((e) => e.id === id);
 const CRAWLER = idx('enemy.crawler');
@@ -15,7 +15,7 @@ const BOSS = idx('boss.lightless-stag');
 
 /** Une run calme : pas d'ennemi, pas de régénération, pas de critique. */
 function calm(mods: RunModsRaw): Run {
-  const run = makeModRun(mods);
+  const run = noTrait(makeModRun(mods));
   run.enemies.count = 0;
   run.hero.stats.regen = 0;
   run.hero.stats.critChance = 0;
@@ -262,12 +262,14 @@ describe('Sursis', () => {
 describe('sans Lanterne', () => {
   const played = (run: Run): number => hashRun(simulate(run, { bot: activeBot, maxSteps: 5 * 60 * 60 }));
 
+  // Empreintes refaites le 2026-11-25 : le trait de Moon (chantier des Flammes) change les dégâts hors de sa
+  // lumière. Avant lui, avec les Flammes mais sans mise, elles étaient encore celles d'avant la Lanterne.
   it('la partie est celle d\'avant le chantier', () => {
-    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([2407973403, 1708471973, 3692207033]);
+    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([3569636979, 1143162089, 2923126463]);
   }, 60_000);
 
   it('des modificateurs neutres ne changent rien', () => {
-    expect(played(makeModRun({}, 1))).toBe(2407973403);
+    expect(played(makeModRun({}, 1))).toBe(3569636979);
   }, 60_000);
 
   it('le tutoriel est toujours neutre', () => {

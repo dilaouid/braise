@@ -76,6 +76,8 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     const rank = save.account.altar[boost.id] ?? 0;
     // Un boost désactivé n'a aucun effet.
     if (rank <= 0 || save.account.altarDisabled.includes(boost.id)) continue;
+    // Un déblocage n'a pas de bonus chiffré : il n'est pas une source de la fiche.
+    if (Object.keys(boost.perRank).length === 0) continue;
     addBonus(sheet, boost.perRank, rank);
     sources.push({ label: boost.id, bonus: boost.perRank, times: rank });
   }

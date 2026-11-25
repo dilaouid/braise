@@ -1,12 +1,13 @@
 import type { RunModsRaw } from '../content/index.ts';
 
-/** Ce que la Lanterne change aux règles d'une partie, tous champs renseignés. */
+/** Ce que la Lanterne et les Flammes changent aux règles d'une partie, tous champs renseignés. */
 export type RunMods = Required<RunModsRaw>;
 
 /** Aucun changement : la partie se joue comme sans Lanterne. */
 export const NEUTRAL_MODS: Readonly<RunMods> = Object.freeze({
   gemsPerHeal: 0, noFlask: false, dashBurn: 0, dashBurnRadius: 0, dashCooldownMult: 1, lowHpPower: 0, lowHpShare: 0,
   healMult: 1, threatMult: 1, ultChargeMult: 1, skillCooldownMult: 1, eliteKillPower: 0, eliteHpMult: 1, firstReviveShare: 0,
+  dashCharges: 0, dashTrail: 0, haloBurn: 0, shadowCrit: 0, recallEvery: 0,
 });
 
 /** Les champs qui multiplient une valeur du jeu : deux sources se multiplient. */

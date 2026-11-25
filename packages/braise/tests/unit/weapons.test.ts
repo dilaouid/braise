@@ -3,7 +3,7 @@ import { applyBleed, applyBurn, applyFreeze, applyShock, hurtEnemy, spawnEnemy }
 import { recomputeStats } from '../../src/core/levelup.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW, type Run } from '../../src/core/types.ts';
-import { data, makeImmortal, makeRun } from './helpers.ts';
+import { data, makeImmortal, makeRun, noTrait } from './helpers.ts';
 
 const crawler = data.enemies.findIndex((e) => e.id === 'enemy.crawler');
 const stump = data.enemies.findIndex((e) => e.id === 'enemy.dead-stump');
@@ -87,9 +87,9 @@ describe('armes : chaque comportement inflige des dégâts', () => {
 
 describe('formule de dégâts et états (document 02 §6 et §11)', () => {
   function target(kind: number): { run: Run; i: number } {
-    const run = makeRun(5);
+    const run = noTrait(makeRun(5));
     const i = spawnEnemy(run, kind, run.hero.x + 200, run.hero.y, 1000);
-    // Pas de critique : le test porte sur les multiplicateurs.
+    // Ni critique ni trait : le test porte sur les multiplicateurs.
     run.hero.stats.critChance = 0;
     run.hero.stats.power = 0;
     return { run, i };
@@ -116,13 +116,13 @@ describe('formule de dégâts et états (document 02 §6 et §11)', () => {
     expect(hurtEnemy(run, i, 100, 3, 'str', -1)).toBe(Math.round(100 * 1.75 * 1.5));
   });
 
-  it('le passif de la Lame-Cendre ajoute 10 % contre les ennemis à moins de 60 px', () => {
+  it('le trait de Moon : +10 % dans sa lumière (64 px), −10 % dehors', () => {
     const run = makeRun(5);
     run.hero.stats.critChance = 0;
     const near = spawnEnemy(run, crawler, run.hero.x + 30, run.hero.y, 1000);
     const far = spawnEnemy(run, crawler, run.hero.x + 100, run.hero.y, 1000);
     expect(hurtEnemy(run, near, 100, 3, null, -1)).toBe(110);
-    expect(hurtEnemy(run, far, 100, 3, null, -1)).toBe(100);
+    expect(hurtEnemy(run, far, 100, 3, null, -1)).toBe(90);
   });
 
   it('le Choc fait subir 15 % de dégâts en plus', () => {
