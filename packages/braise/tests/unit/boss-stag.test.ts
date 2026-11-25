@@ -248,13 +248,21 @@ describe('les dégâts du Cerf et le temps', () => {
     expect(run.telegraphs.damage[0]).toBeCloseTo(data.enemies[run.region.bossIdx]!.stomp!.damage * data.tuning.scale.dmgVigil, 4);
   });
 
-  it('la horde et le Cerf de Cendre suivent toujours le temps', () => {
-    for (const id of ['enemy.crawler', 'boss.ash-stag']) {
-      const { run } = lateStag();
-      run.hero.stats.armor = 0;
-      run.enemies.count = 0;
-      const i = spawnEnemy(run, kindOf(id), run.hero.x, run.hero.y, 1);
-      expect(contactWith(run, i), id).toBe(Math.round(data.enemies[kindOf(id)]!.damage * TIMED));
+  /** Les dégâts au contact d'un ennemi seul, à la quinzième minute. */
+  function lateContact(id: string): number {
+    const { run } = lateStag();
+    run.hero.stats.armor = 0;
+    run.enemies.count = 0;
+    return contactWith(run, spawnEnemy(run, kindOf(id), run.hero.x, run.hero.y, 1));
+  }
+
+  it('le Cerf de Cendre frappe lui aussi comme au début de la partie', () => {
+    expect(lateContact('boss.ash-stag')).toBe(data.enemies[kindOf('boss.ash-stag')]!.damage);
+  });
+
+  it('la horde et les élites suivent toujours le temps', () => {
+    for (const id of ['enemy.crawler', 'elite.dim-hunter']) {
+      expect(lateContact(id), id).toBe(Math.round(data.enemies[kindOf(id)]!.damage * TIMED));
     }
   });
 
