@@ -431,6 +431,10 @@ export const altarBoostSchema = z
     growth: z.number().positive(),
     shards: z.number().int().min(0),
     perRank: statBonusSchema,
+    /** La rareté de Flamme que ce boost ouvre, au lieu d'un bonus chiffré. */
+    unlock: z.enum(['epic', 'legendary', 'mythic']).optional(),
+    /** Le boost qu'il faut posséder avant d'acheter celui-ci. */
+    requires: id('altar').optional(),
   })
   .strict();
 

@@ -107,6 +107,12 @@
   "altar.glow.desc": "+8 % de rayon de collecte par rang.",
   "altar.wisdom.name": "Sagesse",
   "altar.wisdom.desc": "+4 % d'expérience par rang.",
+  "altar.flames-epic.name": "Flammes épiques",
+  "altar.flames-epic.desc": "Les totems laissent nourrir une Flamme jusqu'à Épique.",
+  "altar.flames-legendary.name": "Flammes légendaires",
+  "altar.flames-legendary.desc": "Les totems laissent nourrir une Flamme jusqu'à Légendaire.",
+  "altar.flames-mythic.name": "Flammes mythiques",
+  "altar.flames-mythic.desc": "Les totems laissent nourrir une Flamme jusqu'à Mythique.",
 
   "ui.press": "Appuie sur",
   "ui.toStart": "pour commencer",

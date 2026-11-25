@@ -22,7 +22,7 @@ import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneSt
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
-import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
+import { buyAltarRank, flameRarity, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
@@ -642,6 +642,7 @@ async function boot(): Promise<void> {
       // Le souvenir que le boss de la région garde encore, s'il y en a un.
       memory: pendingMemory(data, current, regionId),
       reborn,
+      flameRarity: flameRarity(current, data),
       ...lanternRun(data, current, replay),
     });
     renderer.beginRun(run);
@@ -914,7 +915,7 @@ async function boot(): Promise<void> {
     takeFlame(index) {
       if (!run || performance.now() < guardUntil) return;
       const paid = run.totemOffers[index] ? offerCost(run, run.totemOffers[index]!) : 0;
-      if (takeFlame(run, index)) audio.play(paid > 0 ? 'buy' : 'ui-confirm');
+      if (takeFlame(run, index)) audio.play(paid > 0 ? 'flame-feed' : 'ui-confirm');
       else audio.play('refuse');
     },
     feedFlame(index) {

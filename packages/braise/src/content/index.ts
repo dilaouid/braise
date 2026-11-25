@@ -268,6 +268,13 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   unique(relicsRaw.map((r) => r.id), 'relics.json');
   unique(enemiesRaw.map((e) => e.id), 'enemies.json');
   unique(altar.map((a) => a.id), 'altar.json');
+  for (const a of altar) {
+    if (a.requires !== undefined && !altar.some((b) => b.id === a.requires)) errors.push(`${a.id}: référence inconnue « ${a.requires} »`);
+    if (a.unlock === undefined && Object.keys(a.perRank).length === 0) errors.push(`${a.id}: aucun effet`);
+  }
+  for (const rarity of ['epic', 'legendary', 'mythic'] as const) {
+    if (altar.filter((a) => a.unlock === rarity).length !== 1) errors.push(`altar.json: il faut un seul boost pour ouvrir « ${rarity} »`);
+  }
   unique(flamesRaw.lines.map((l) => l.id), 'flames.json');
   unique(finds.map((f) => f.id), 'finds.json');
   for (const d of finds) if (Object.keys(d.bonus).length === 0) errors.push(`${d.id}: aucun effet`);
