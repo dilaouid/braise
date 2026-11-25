@@ -121,7 +121,10 @@ test('à la manette : ouvrir Épique à l\'Autel, nourrir une Flamme au totem, l
   await pad.press('X');
   await page.waitForTimeout(150);
   await expect(first).toHaveAttribute('data-rarity', 'epic');
-  await expect(first).toContainText(FR['totem.block.locked']!);
+  // Une lignée qui monte plus haut dit pourquoi elle s'arrête là ; une lignée qui finit à Épique n'a rien à dire.
+  const goesHigher = await run(page, (r) => r.data.flames.lines[r.totemOffers[0].line].last > 2);
+  if (goesHigher) await expect(first).toContainText(FR['totem.block.locked']!);
+  else await expect(first.locator('.card-block')).toHaveCount(0);
   // Y reprend un cran, X le remet.
   await pad.press('Y');
   await expect(first).toHaveAttribute('data-rarity', 'rare');
