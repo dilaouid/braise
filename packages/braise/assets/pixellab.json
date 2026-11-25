@@ -1009,6 +1009,60 @@
    "prompt": "a lone red-painted wooden front door with a brass knocker, standing upright in its frame with no house around it, paint faded and dusted with ash",
    "date": "2026-11-24",
    "note": "recadrée depuis source/cinematique-intro/porte2-1.png (2e proposition) : ne pas retélécharger"
+  },
+  {
+   "name": "icon-flame-kindling",
+   "id": "5b9403e2-7005-46ed-b0a0-1d7ae34e5b3f",
+   "prompt": "three small glowing orange embers with sparks rising from a tiny pile of dark kindling twigs, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-flame-bait",
+   "id": "2668451c-ba67-4761-a028-873d9d7dc055",
+   "prompt": "a steel fishing hook with a small bright orange flame burning on it as bait, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-flame-surge",
+   "id": "c9888216-2a72-4d52-acf4-020826c3f63c",
+   "prompt": "a bright orange comet dashing diagonally with a long fiery tail, speed, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-flame-shadow",
+   "id": "0fc56803-55e4-4304-9845-5ae2dbab7d15",
+   "prompt": "a dark round moon eclipsing a small orange flame, thin bright rim of light around the dark disc, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-flame-swarm",
+   "id": "e6765906-eb4f-43eb-ad9d-4e583d1c5e00",
+   "prompt": "three bright orange fireballs in a row, each a simple round ball with a short flame tail, flying to the right, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-flame-recall",
+   "id": "7a6822b9-5367-4032-81f4-be78574bc12e",
+   "prompt": "a teal glowing crystal gem in the center with two curved arrows spiraling inward toward it, pulling, filling the frame, big simple shapes, game buff icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-altar-flames-epic",
+   "id": "24ba6ab0-b9a9-4148-a8fe-d59d44abd389",
+   "prompt": "a single tall bright magenta pink flame with a light blue core, burning in a small grey stone altar bowl, game upgrade icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-altar-flames-legendary",
+   "id": "f94dac05-ffc3-482d-8058-f62769af3a34",
+   "prompt": "a single tall golden yellow flame burning in a small grey stone altar bowl, short light rays around it, game upgrade icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-altar-flames-mythic",
+   "id": "78b215e3-b987-45f6-8c59-f8f349bd2da9",
+   "prompt": "a single tall white-hot pale flame with a small crown of sparks above it, burning in a small grey stone altar bowl, game upgrade icon",
+   "date": "2026-11-25"
   }
  ],
  "sounds": [
@@ -1229,6 +1283,13 @@
    "prompt": "a young woman's short light sincere laugh, a soft warm giggle, close and natural, no music",
    "seconds": 1.6,
    "date": "2026-11-24"
+  },
+  {
+   "name": "sfx-flame-feed",
+   "id": "ca226adf-cef6-455a-902a-7be8ce49a351",
+   "prompt": "a soft breath blowing on embers, then a small flame flaring up warmly with a low whoosh and settling, short and quiet",
+   "seconds": 1.2,
+   "date": "2026-11-25"
   }
  ],
  "music": [
