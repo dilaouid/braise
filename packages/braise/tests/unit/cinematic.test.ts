@@ -162,6 +162,26 @@ describe('les cinématiques du Cerf', () => {
     });
   }
 
+  it('la horde appelée au plan 3 est encore là au plan 4, seul le Cerf a disparu', () => {
+    const read = (name: string) => PNG.sync.read(readFileSync(join(publicDir, 'cinematics', 'stag-call', `${name}.png`)));
+    const before = read('ill-03');
+    const after = read('ill-04');
+    // Les bois et les lanternes, puis le corps (x0, y0, x1, y1).
+    const stag = [[228, 62, 414, 182], [264, 120, 366, 272]] as const;
+    let outside = 0;
+    let erased = 0;
+    for (let y = 0; y < before.height; y++) {
+      for (let x = 0; x < before.width; x++) {
+        const i = (y * before.width + x) * 4;
+        if (before.data.readUInt32BE(i) === after.data.readUInt32BE(i)) continue;
+        if (stag.some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1)) erased++;
+        else outside++;
+      }
+    }
+    expect(outside).toBe(0);
+    expect(erased).toBeGreaterThan(5000);
+  });
+
   it('chaque région nomme des cinématiques qui existent', () => {
     for (const region of Object.values(RAW.regions as Array<{ cinematics?: { first: string; reborn: string } }>)) {
       if (!region.cinematics) continue;
