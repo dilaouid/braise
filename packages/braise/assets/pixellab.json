@@ -1191,6 +1191,54 @@
    "skip": 1,
    "prompt": "the stag throws its head high with its mouth wide open, bellowing a deafening roar, neck stretched up, chest swelling",
    "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-charge",
+   "id": "f7023852-ad57-4d10-98e0-0b585d87ebae",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag lowers its head further until its antlers point forward like a lance, crouched and tense, one front hoof scraping the ground, ready to charge",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-roots",
+   "id": "a0ca449a-baa0-4352-adc4-72d97208d58c",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag bows its head down until its antlers stab into the ground, magenta energy running along the antlers into the earth, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-stomp",
+   "id": "385d09c1-ce4d-4903-9855-c72f26eda64f",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag rears up on its hind legs, front legs lifted high off the ground, body leaning back, about to slam down",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-stalk",
+   "id": "3a505106-ea0d-4373-97dc-0167a7914995",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag snaps its head up, both eyes blazing bright magenta as it locks onto its prey, body frozen still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-volley",
+   "id": "d1e28ef3-8017-49ac-87fc-efcc122f4846",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag throws its head back, the antlers tilting back and glowing magenta, chest puffed out",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-roar",
+   "id": "2a521932-7209-4d0b-9f43-658f61792fac",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag throws its head high with its mouth wide open, bellowing a deafening roar, neck stretched up, chest swelling",
+   "date": "2026-11-25"
   }
  ],
  "clipsNote": "Clips d'annonce du Cerf (animate_image, image de départ et d'arrivée composées par tools/keypose-cerf.py). `skip` : images de tête ignorées (l'image de départ brute) ; `drop` : images écartées après coup (numérotées après `skip`) ; `despeckle` : taille en pixels sous laquelle une forme isolée est effacée (16 par défaut).",
