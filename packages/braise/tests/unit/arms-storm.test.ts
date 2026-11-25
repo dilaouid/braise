@@ -135,6 +135,15 @@ describe('Guet d\'orage', () => {
     expect(lost(run, b)).toBe(15);
   });
 
+  it('le second éclair ne vise pas un mort : il cherche une autre cible', () => {
+    const run = armed('weapon.storm-watch', 6);
+    at(run, 100, 0, 1);
+    at(run, 160, 0, 1);
+    const alive = at(run, -175);
+    hold(run, 1);
+    expect(lost(run, alive)).toBe(15);
+  });
+
   it('avec une seule cible, deux éclairs n\'en frappent qu\'un', () => {
     const run = armed('weapon.storm-watch', 6);
     const a = at(run, 100);

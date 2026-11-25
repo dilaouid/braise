@@ -6,8 +6,9 @@
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
  * Trait : --trait 0.15,-0.05 essaie d'autres valeurs (dans la lumière, hors de la lumière).
  * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
- * Armes de l'Autel : --unlock <all|wake,verge,storm-watch,nightlights> les ouvre, --give weapon.wake donne une arme de plus au départ
+ * Armes de l'Autel : --unlock <all|aucune|wake,verge,storm-watch,nightlights> les ouvre, --give weapon.wake donne une arme de plus au départ
  * (--glevel <1-6> son niveau).
+ * --set "weapon.storm-watch:range=120,jumpRange=60;weapon.verge:damage*0.8" essaie d'autres valeurs à tous les niveaux d'une arme.
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
 import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate, type FeedPolicy } from '../packages/braise/src/core/bots.ts';
@@ -54,6 +55,18 @@ if (traitArg !== '') {
   if (!cls || inside === undefined || outside === undefined || Number.isNaN(inside) || Number.isNaN(outside)) throw new Error(`Trait illisible : ${traitArg}`);
   cls.trait = { kind: 'lit', inside, outside };
 }
+// --set : d'autres valeurs d'arme (remplacées par =, multipliées par *), sans toucher au contenu.
+for (const part of arg('set', '').split(';').filter((p) => p !== '')) {
+  const [id, list] = part.split(':');
+  const weapon = data.weapons.find((w) => w.id === id);
+  if (!weapon || !list) throw new Error(`Réglage illisible : ${part}`);
+  for (const item of list.split(',')) {
+    const m = /^([a-zA-Z]+)([=*])(-?[0-9.]+)$/.exec(item);
+    const key = m?.[1] as keyof (typeof weapon.levels)[number];
+    if (!m || !(key in weapon.levels[0]!)) throw new Error(`Réglage illisible : ${item}`);
+    for (const level of weapon.levels) (level as unknown as Record<string, number>)[key] = m[2] === '=' ? Number(m[3]) : (level[key] as number) * Number(m[3]);
+  }
+}
 const noPlaces = process.argv.includes('--no-places');
 if (noPlaces) {
   const ev = data.tuning.events;
@@ -73,7 +86,7 @@ if (ardor > 0) {
 }
 // --unlock : les armes achetées à l'Autel.
 const unlockArg = arg('unlock', '');
-const wanted = unlockArg === '' ? [] : unlockArg.split(',');
+const wanted = unlockArg === '' || unlockArg === 'aucune' ? [] : unlockArg.split(',');
 for (const b of data.altar) if (b.weapon !== undefined && (unlockArg === 'all' || wanted.includes(b.weapon.replace('weapon.', '')))) save.account.altar[b.id] = 1;
 for (const name of wanted) if (name !== 'all' && !data.altar.some((b) => b.weapon === `weapon.${name}`)) throw new Error(`Arme inconnue à l'Autel : ${name}`);
 // --give : une arme de plus au départ, pour la mesurer.

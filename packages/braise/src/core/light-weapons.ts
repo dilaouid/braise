@@ -107,17 +107,10 @@ export function updateChain(run: Run, slot: number, w: WeaponInstance, def: Weap
   const flags = p.shock ? HIT_SHOCK : 0;
   const firsts: number[] = [];
   for (let b = 0; b < p.count; b++) {
+    // Choisie éclair par éclair : celui d'avant a pu tuer la cible suivante.
     const first = strikable(run, hero.x, hero.y, p.range, firsts, true);
     if (first < 0) break;
     firsts.push(first);
-  }
-  if (firsts.length === 0) {
-    // Rien dans le noir : l'arme reste prête.
-    w.cd = 0.1;
-    return;
-  }
-  w.cd += effectiveCooldown(p.cooldown, hero.stats.cadence);
-  for (const first of firsts) {
     const seen: number[] = [];
     let target = first;
     for (let k = 0; target >= 0; k++) {
@@ -132,6 +125,9 @@ export function updateChain(run: Run, slot: number, w: WeaponInstance, def: Weap
       target = strikable(run, x, y, p.jumpRange, seen, !p.jumpsIntoLight);
     }
   }
+  // Rien dans le noir : l'arme reste prête.
+  if (firsts.length > 0) w.cd += effectiveCooldown(p.cooldown, hero.stats.cadence);
+  else w.cd = 0;
 }
 
 // ───────────────────────────── lumières posées (Veilleuses) ─────────────────────────────
@@ -204,7 +200,10 @@ export function layThreads(run: Run, x1: number, y1: number, x2: number, y2: num
   }
 }
 
-/** Le point où deux fils se croisent, ou null. */
+/** Marge aux bouts d'un fil : une ruée partie du bout de la précédente la touche sans la croiser. */
+const END_MARGIN = 1e-3;
+
+/** Le point où deux fils se croisent, hors de leurs bouts, ou null. */
 function crossing(a: Thread, b: Thread): { x: number; y: number } | null {
   const ax = a.x2 - a.x1;
   const ay = a.y2 - a.y1;
@@ -216,7 +215,7 @@ function crossing(a: Thread, b: Thread): { x: number; y: number } | null {
   const oy = b.y1 - a.y1;
   const t = (ox * by - oy * bx) / det;
   const u = (ox * ay - oy * ax) / det;
-  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  if (t < END_MARGIN || t > 1 - END_MARGIN || u < END_MARGIN || u > 1 - END_MARGIN) return null;
   return { x: a.x1 + ax * t, y: a.y1 + ay * t };
 }
 

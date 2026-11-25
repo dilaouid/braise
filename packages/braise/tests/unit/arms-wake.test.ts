@@ -183,6 +183,26 @@ describe('Toile', () => {
     expect(lost(run, near)).toBe(45);
   });
 
+  it('une ruée qui part d\'où la précédente s\'est arrêtée ne croise rien', () => {
+    const run = armed('weapon.web');
+    const near = at(run, 200, 40);
+    lay(run, 100, 0, 200, 0);
+    lay(run, 200, 0, 260, -60);
+    // Et un retour sur ses pas.
+    lay(run, 260, -60, 200, 0);
+    hold(run, 1);
+    expect(lost(run, near)).toBe(0);
+  });
+
+  it('un fil qui traverse le milieu d\'un autre éclate, même près d\'un bout', () => {
+    const run = armed('weapon.web');
+    const near = at(run, 190, 40);
+    lay(run, 100, 0, 200, 0);
+    lay(run, 190, -50, 190, 10);
+    hold(run, 1);
+    expect(lost(run, near)).toBeGreaterThanOrEqual(45);
+  });
+
   it('deux fils qui ne se croisent pas n\'éclatent pas', () => {
     const run = armed('weapon.web');
     const near = at(run, 150, 40);

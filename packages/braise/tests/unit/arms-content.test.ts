@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FR, RAW, compileContent } from '../../src/content/index.ts';
 import { altarCost, buyAltarRank, refundAltar, setAltarBoostEnabled } from '../../src/meta/altar.ts';
+import { cardCandidates } from '../../src/core/levelup.ts';
 import { unlockedContent } from '../../src/meta/hero.ts';
 import type { Save } from '../../src/meta/save.ts';
 import { data, makeRun, makeSave } from './helpers.ts';
@@ -121,6 +122,15 @@ describe('l\'Autel ouvre les armes', () => {
     expect(unlockedContent(data, save).weapons).toContain('weapon.wake');
   });
 
+  it('désactivée, rendue puis rachetée, une arme est bien dans le tirage', () => {
+    const save = rich();
+    buyAltarRank(save, data, 'altar.weapon-wake');
+    setAltarBoostEnabled(save, 'altar.weapon-wake', false);
+    refundAltar(save, data);
+    buyAltarRank(save, data, 'altar.weapon-wake');
+    expect(unlockedContent(data, save).weapons).toContain('weapon.wake');
+  });
+
   it('rendre les Cendres referme les armes, et une partie lancée ne change pas', () => {
     const save = rich();
     for (const [, , , altar] of ARMS) buyAltarRank(save, data, altar);
@@ -131,11 +141,55 @@ describe('l\'Autel ouvre les armes', () => {
     expect(run.weaponPool).toHaveLength(10);
   });
 
+  it('le contenu refuse une Lisière sans bande, une Veilleuse sans rayon, un fil sans nombre', () => {
+    for (const [id, key] of [['weapon.verge', 'band'], ['weapon.nightlights', 'radiusShare'], ['weapon.nightlights', 'max'], ['weapon.wake', 'life'], ['weapon.storm-watch', 'range']] as const) {
+      const raw = structuredClone(RAW);
+      delete (raw.weapons as Array<{ id: string; levels: Array<Record<string, unknown>> }>).find((w) => w.id === id)!.levels[2]![key];
+      expect(compileContent(raw).errors.join('\n'), `${id} ${key}`).toContain(key);
+    }
+    const raw = structuredClone(RAW);
+    delete (raw.evolutions as Array<{ id: string; params: Record<string, unknown> }>).find((w) => w.id === 'weapon.web')!.params.max;
+    expect(compileContent(raw).errors.join('\n')).toContain('max');
+  });
+
   it('le contenu refuse un boost qui ouvre une arme inconnue, déjà là au départ ou évoluée', () => {
     for (const bad of ['weapon.nope', 'weapon.scythe', 'weapon.web']) {
       const raw = structuredClone(RAW);
       (raw.altar as Array<{ id: string; weapon?: string }>).find((b) => b.id === 'altar.weapon-wake')!.weapon = bad;
       expect(compileContent(raw).errors.join('\n'), bad).toContain(bad);
     }
+  });
+});
+
+describe('un tirage plus large ne noie pas les évolutions', () => {
+  /** Le poids total des cartes d'armes nouvelles, puis celui des reliques nouvelles sans lien. */
+  function newWeight(save: Save): { weapons: number; relics: number; linked: number } {
+    const run = makeRun(3, save);
+    let weapons = 0;
+    let relics = 0;
+    let linked = 0;
+    for (const { card, weight } of cardCandidates(run)) {
+      if (card.level !== 1) continue;
+      if (card.kind === 'weapon') weapons += weight;
+      else if (card.evolves) linked += weight;
+      else relics += weight;
+    }
+    return { weapons, relics, linked };
+  }
+
+  it('sans achat, les poids sont ceux d\'avant', () => {
+    const w = newWeight(makeSave());
+    expect(w.weapons).toBe(5);
+    expect(w.relics).toBe(5);
+  });
+
+  it('quatre armes achetées : le poids total du nouveau ne change pas, la relique liée garde le sien', () => {
+    const save = rich();
+    for (const [, , , altar] of ARMS) buyAltarRank(save, data, altar);
+    const before = newWeight(makeSave());
+    const after = newWeight(save);
+    expect(after.weapons).toBeCloseTo(9 * 6 / 10);
+    expect(after.relics).toBeCloseTo(9 * 6 / 10);
+    expect(after.linked).toBe(before.linked);
   });
 });

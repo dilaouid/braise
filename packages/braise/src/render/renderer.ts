@@ -539,13 +539,17 @@ export class GameRenderer {
   }
 
   /** Perce la couche sombre d'un disque de lumière. `warm` ajoute une teinte chaude (lanterne, feux). */
-  private light(x: number, y: number, radius: number, warm = 0, tint: number = C.emberHot): void {
-    if (this.lightCount >= MAX_LIGHTS || radius < 3) return;
+  private light(x: number, y: number, radius: number, warm = 0, tint: number = C.emberHot, moon = false): void {
+    // La dernière lumière et le dernier halo sont gardés pour Moon, dessinée en dernier.
+    const kept = moon ? 0 : 1;
+    if (this.lightCount >= MAX_LIGHTS - kept || radius < 3) return;
+    // Une lumière hors de l'écran n'éclaire rien.
+    if (x < -radius || y < -radius || x > VIEW_W + radius || y > VIEW_H + radius) return;
     const s = this.lights[this.lightCount++]!;
     s.texture = lightDisc(radius);
     s.position.set(Math.round(x), Math.round(y));
     s.visible = true;
-    if (warm > 0 && this.warmCount < this.warms.length) {
+    if (warm > 0 && this.warmCount < this.warms.length - kept) {
       const w = this.warms[this.warmCount++]!;
       w.texture = s.texture;
       w.position.copyFrom(s.position);
@@ -1095,7 +1099,7 @@ export class GameRenderer {
     // Dernière lueur : le disque rougit sous son seuil, plus ou moins selon le réglage des flashs.
     const last = lowHp(run) && this.settings.flashes > 0;
     const warmth = last ? 0.1 + 0.18 * this.settings.flashes : 0.1;
-    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : warmth, last ? C.emberDark : C.emberHot);
+    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : warmth, last ? C.emberDark : C.emberHot, true);
     // Retour à l'entrée de la salle après une chute : un fondu court depuis le noir.
     if (this.respawnFade > 0) {
       this.screenFx.rect(0, 0, VIEW_W, VIEW_H).fill({ color: 0x000000, alpha: Math.min(1, this.respawnFade) });
@@ -1160,13 +1164,15 @@ export class GameRenderer {
       const band = p.band * (1 + run.hero.stats.zone);
       for (let r = 1; r <= p.rings; r++) {
         const radius = (litRadius(run) * r) / p.rings;
-        g.circle(hx, hy, radius).stroke({ width: band, color: C.frost, alpha: 0.12 });
-        g.circle(hx, hy, radius).stroke({ width: 1, color: C.frost, alpha: 0.6 });
+        // Centré comme le disque de lumière : à hauteur des corps, pas des pieds.
+        const cy = hy - 8;
+        g.circle(hx, cy, radius).stroke({ width: band, color: C.frost, alpha: 0.12 });
+        g.circle(hx, cy, radius).stroke({ width: 1, color: C.frost, alpha: 0.6 });
         // Des éclats de givre qui courent sur le bord.
         for (let k = 0; k < 10; k++) {
           const a = k * 0.6283 + time * 0.25 * (r % 2 === 0 ? -1 : 1);
           const spike = 2 + 2 * Math.sin(time * 5 + k * 2.1);
-          g.moveTo(hx + Math.cos(a) * radius, hy + Math.sin(a) * radius).lineTo(hx + Math.cos(a) * (radius + spike), hy + Math.sin(a) * (radius + spike))
+          g.moveTo(hx + Math.cos(a) * radius, cy + Math.sin(a) * radius).lineTo(hx + Math.cos(a) * (radius + spike), cy + Math.sin(a) * (radius + spike))
             .stroke({ width: 1, color: C.white, alpha: 0.7 });
         }
       }
@@ -1305,7 +1311,7 @@ export class GameRenderer {
           };
           draw(f.c > 0 ? 4 : 3, C.spark, 0.45 * fade);
           draw(1, C.white, 0.9 * fade);
-          if (f.t < 0.12) this.light(f.x - camX, f.y - camY, Math.round(22 * (1 - f.t / 0.12)), 0.1, C.spark);
+          if (f.t < 0.12) this.light(f.x - camX, f.y - camY, Math.round(22 * (1 - f.t / 0.12)));
           break;
         }
         case FX_FROST:

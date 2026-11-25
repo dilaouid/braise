@@ -256,10 +256,13 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .memory-slot.empty .memory-rank { color: var(--ash-2); }
 .memory-slot .memory-name { font-family: var(--font-title); font-size: 15px; line-height: 15px; color: var(--ash-5); }
 .memory-slot.empty .memory-name { color: var(--ash-2); }
-.altar-panel { position: absolute; left: 60px; right: 60px; top: 18px; bottom: 28px; display: flex; flex-direction: column; gap: 6px; }
+.altar-panel { position: absolute; left: 60px; right: 60px; top: 6px; bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
 .altar-panel header { display: flex; justify-content: space-between; align-items: center; }
 .quote { color: var(--ash-3); }
-.altar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; }
+.altar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; flex: 1; }
+/* Le prix d'un boost se lit à droite de son nom : les quatre armes tiennent sous les Flammes. */
+.altar-grid .boost { padding: 4px 7px; }
+.altar-grid .boost-cost { position: absolute; top: 4px; right: 7px; }
 .boost { display: flex; gap: 7px; padding: 7px; background: var(--night-2); border: 1px solid var(--ash-1); align-items: flex-start; }
 .boost.is-focused { background: var(--night-3); }
 .boost.off { opacity: 0.55; }
@@ -271,16 +274,16 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost-cost { display: inline-flex; align-items: center; gap: 3px; color: var(--ember-0); }
 .boost-cost.bad { color: var(--danger-0); }
 .boost.cannot .boost-icon { border-color: var(--ash-1); }
-.altar-row { margin: 0; }
+.altar-row { margin: 0; line-height: 10px; }
 /* Deux colonnes, alignées sur celles des boosts : à la croix, « droite » depuis Lueur va à Sagesse, pas à la rangée du dessous. */
 .altar-unlocks { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
-.boost.unlock { padding: 1px 5px; align-items: center; }
-.boost.unlock .boost-icon { width: 24px; height: 24px; border: 0; background: none; }
-.boost.unlock .boost-body { gap: 1px; }
+.boost.unlock { padding: 0 5px; align-items: center; }
+.boost.unlock .boost-icon { width: 24px; height: 22px; border: 0; background: none; }
+.boost.unlock .boost-body { flex: 1; flex-direction: row; gap: 6px; align-items: center; }
+.boost.unlock .boost-cost, .boost.unlock .boost-line.gold { margin-left: auto; }
 .boost.unlock .boost-icon { border-color: var(--rarity); }
 .boost.unlock .boost-name { color: var(--rarity); }
 .boost.unlock.weapon { --rarity: var(--ember-1); }
-.boost.unlock.weapon .boost-body { flex-direction: row; gap: 6px; align-items: center; }
 .rarity-epic { --rarity: #ff3d81; }
 .rarity-legendary { --rarity: #ffb020; }
 .rarity-mythic { --rarity: #fff1c2; }

@@ -69,6 +69,9 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
   const data = run.data;
   const luck = 1 + run.hero.stats.luck;
   const limits = slotLimits(run);
+  // Une arme achetée à l'Autel élargit le choix sans noyer le reste : le poids total du nouveau reste celui du tirage de départ.
+  const weaponShare = Math.min(1, data.weapons.filter((w) => w.starting).length / Math.max(1, run.weaponPool.length));
+  const relicShare = Math.min(1, data.relics.filter((x) => x.starting).length / Math.max(1, run.relicPool.length));
   for (const w of run.weapons) {
     const def = data.weapons[w.def]!;
     if (def.evolved || w.level >= def.levels.length) continue;
@@ -85,7 +88,7 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
     for (const idx of run.weaponPool) {
       const def = data.weapons[idx]!;
       if (ownsWeaponLine(run, idx) || run.banned.has(def.id)) continue;
-      out.push({ card: { kind: 'weapon', def: idx, level: 1, evolves: false }, weight: 1 });
+      out.push({ card: { kind: 'weapon', def: idx, level: 1, evolves: false }, weight: weaponShare });
     }
   }
   if (run.relics.length < limits.relics) {
@@ -96,7 +99,7 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
       const line = ownsWeaponLine(run, def.weapon);
       // La relique liée à une arme possédée pèse une fois et demie plus, et sert son évolution.
       const evolves = linked !== undefined;
-      out.push({ card: { kind: 'relic', def: idx, level: 1, evolves }, weight: (line ? 1.5 : 1) * (evolves ? luck : 1) });
+      out.push({ card: { kind: 'relic', def: idx, level: 1, evolves }, weight: (line ? 1.5 : relicShare) * (evolves ? luck : 1) });
     }
   }
   return out;

@@ -131,9 +131,15 @@ test('chaque arme se voit en partie', async ({ page }, info) => {
     await page.waitForTimeout(350);
     await page.evaluate(() => { const h = (window as any).__braise.run.hero; h.dashCharges = 1; h.hp = 1e6; });
     await pad.press('A');
-    await page.waitForTimeout(250);
-    const done = await page.evaluate(() => (window as any).__braise.run.weapons[0].damageDone);
-    expect(done, id).toBeGreaterThan(0);
+    await page.waitForTimeout(220);
+    const seenInRun = await page.evaluate(() => {
+      const r = (window as any).__braise.run;
+      // L'éclair ne dure qu'un instant : il repart juste avant la capture.
+      r.weapons[0].cd = 0;
+      return { done: r.weapons[0].damageDone, threads: r.threads.length };
+    });
+    if (id === 'wake' || id === 'web') expect(seenInRun.threads, id).toBeGreaterThan(0);
+    else expect(seenInRun.done, id).toBeGreaterThan(0);
     await capture(page, info, SHOTS, `arme-${id}`);
   }
   expect(seen).toEqual({ errors: [], foreign: [] });

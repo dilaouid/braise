@@ -58,6 +58,8 @@ export function refundAltar(save: Save, data: GameData): number {
   let shards = 0;
   for (const boost of data.altar) if ((save.account.altar[boost.id] ?? 0) > 0) shards += boost.shards;
   save.account.altar = {};
+  // Un boost racheté repart actif.
+  save.account.altarDisabled = [];
   save.account.ashes += refund;
   save.account.shards += shards;
   return refund;

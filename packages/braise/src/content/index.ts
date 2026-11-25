@@ -233,6 +233,14 @@ function check<T>(schema: z.ZodType<T>, value: unknown, file: string, errors: st
 /** Les comportements sans rechargement : une arme permanente, ou déclenchée par la ruée. */
 const NO_COOLDOWN: string[] = ['orbit', 'verge', 'wake'];
 
+/** Ce qu'un comportement ne peut pas laisser à zéro. */
+const REQUIRED_PARAMS: Record<string, Array<keyof WeaponParamsRaw>> = {
+  verge: ['band', 'hitInterval'],
+  chain: ['range', 'jumpRange'],
+  lamp: ['radiusShare', 'life', 'max', 'hitInterval'],
+  wake: ['width', 'life', 'max', 'hitInterval'],
+};
+
 function fill(p: WeaponParamsRaw): WeaponParams {
   return { ...PARAM_DEFAULTS, ...p } as WeaponParams;
 }
@@ -344,6 +352,11 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       if (base && base.relic !== e.relic) errors.push(`${e.id}: relique différente de celle de « ${base.id} »`);
     }
   }
+  for (const raw of [...weaponsRaw.map((w) => ({ id: w.id, behavior: w.behavior, levels: w.levels })), ...evolutionsRaw.map((w) => ({ id: w.id, behavior: w.behavior, levels: [w.params] }))]) {
+    raw.levels.forEach((level, l) => {
+      for (const key of REQUIRED_PARAMS[raw.behavior] ?? []) if (level[key] === undefined) errors.push(`${raw.id}: niveau ${l + 1} sans « ${key} »`);
+    });
+  }
   for (const w of weapons) {
     if (!w.evolved && w.evolution >= 0 && !weapons[w.evolution]!.evolved) errors.push(`${w.id}: son évolution n'est pas dans evolutions.json`);
   }
@@ -417,6 +430,8 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   for (const b of altar) {
     if (b.weapon === undefined) continue;
     const opened = weapons[ref(weaponIndex, b.weapon, b.id)];
+    if (b.unlock !== undefined) errors.push(`${b.id}: ouvre une rareté et une arme à la fois`);
+    if (altar.some((o) => o !== b && o.weapon === b.weapon)) errors.push(`${b.id}: « ${b.weapon} » s'achète deux fois`);
     if (opened && (opened.starting || opened.evolved)) errors.push(`${b.id}: « ${b.weapon} » ne s'achète pas (arme de départ ou évolution)`);
   }
 
