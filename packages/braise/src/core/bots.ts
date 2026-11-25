@@ -1,5 +1,5 @@
 import { insideTelegraph } from './enemies.ts';
-import { closeChest, closeFind, takeCard } from './levelup.ts';
+import { closeChest, closeFind, evolvableWeapons, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
 import { feedOffer, feedTarget, glowShareNow, offerCost, takeFlame } from './flames.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeEvolution } from './places.ts';
@@ -207,9 +207,12 @@ function nextPlace(run: Run): Poi | null {
   const hero = run.hero;
   const ev = run.data.tuning.events;
   let found: Poi | null = null;
+  const ready = evolvableWeapons(run).length > 0;
   let foundD = Infinity;
   for (const poi of run.map.pois) {
     if (poi.state === 2 || poi.kind === 'portal' || poi.kind === 'memory') continue;
+    // Un braséro déjà allumé n'a rien à donner tant qu'aucune arme n'est prête à évoluer.
+    if (poi.state === 3 && !ready) continue;
     if (poi.kind === 'spring' && hero.hp > hero.stats.maxHp * 0.6) continue;
     if (poi.kind === 'smith') {
       if (hero.gold < ev.smith.basePrice + ev.smith.priceStep * run.smithBuys) continue;

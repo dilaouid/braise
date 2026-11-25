@@ -385,6 +385,34 @@ describe('le boss et la carte', () => {
 });
 
 describe('robot explorateur', () => {
+  /** Le héros dans un braséro allumé, un totem à charger à 200 px à l'ouest. */
+  function besideLitBrazier(): { run: Run; brazier: Poi } {
+    const run = makeRun(8);
+    const brazier: Poi = { ...nth(run, 'brazier'), x: run.hero.x + 40, y: run.hero.y, state: 3, armed: false };
+    const totem: Poi = { ...nth(run, 'totem'), x: run.hero.x - 200, y: run.hero.y, state: 0 };
+    run.map.pois.length = 0;
+    run.map.pois.push(brazier, totem);
+    return { run, brazier };
+  }
+
+  it('il quitte un braséro allumé quand aucune arme n\'est prête à évoluer', () => {
+    const { run } = besideLitBrazier();
+    const input = idleInput();
+    explorerBot(run, input);
+    expect(input.moveX).toBeLessThan(-0.5);
+  });
+
+  it('il revient au braséro allumé quand une arme est prête', () => {
+    const { run } = besideLitBrazier();
+    const w = run.weapons[0]!;
+    const def = data.weapons[w.def]!;
+    w.level = def.levels.length;
+    run.relics.push({ def: def.relic, level: 1 });
+    const input = idleInput();
+    explorerBot(run, input);
+    expect(input.moveX).toBeGreaterThan(0.5);
+  });
+
   it('il va de lieu en lieu, charge des totems et achète, sans jamais bloquer la partie', () => {
     let flames = 0;
     let spent = 0;
