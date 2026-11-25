@@ -96,7 +96,7 @@ function spawnWave(run: Run, shape: 'circle' | 'line' | 'corners' | 'side', kind
   }
 }
 
-function spawnElite(run: Run, kind: number): void {
+function spawnElite(run: Run, kind: number): boolean {
   const def = run.data.enemies[kind]!;
   const radius = def.speed === 0 ? 230 : 330;
   ringPoint(run, spawnAngle(run), radius, false);
@@ -105,6 +105,18 @@ function spawnElite(run: Run, kind: number): void {
     run.enemies.timer2[i] = 1.5;
     emit(run, EV.eliteSpawn, point.x, point.y, kind);
   }
+  return i >= 0;
+}
+
+/**
+ * Fait surgir des élites de la région, annoncés comme ceux du directeur (l'Appât). Rien pendant le boss
+ * ni dans le tutoriel. Renvoie le nombre d'élites apparus.
+ */
+export function summonElites(run: Run, count: number): number {
+  if (run.tutorial || run.director.bossSpawned || run.region.eliteIdx.length === 0) return 0;
+  let spawned = 0;
+  for (let k = 0; k < count; k++) if (spawnElite(run, run.rngSpawn.pick(run.region.eliteIdx))) spawned++;
+  return spawned;
 }
 
 /** Fait apparaître le boss et referme la carte en une arène. */

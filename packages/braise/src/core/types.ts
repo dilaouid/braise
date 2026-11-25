@@ -54,6 +54,8 @@ export const SHOT_LOB = 2;
 /** Sortes de zones au sol. */
 export const ZONE_PUDDLE = 0;
 export const ZONE_BURST = 1;
+/** Les braises que laisse la ruée : du feu, sans arme. */
+export const ZONE_TRAIL = 2;
 
 /** Formes d'annonce d'attaque. */
 export const TG_LINE = 0;
@@ -79,6 +81,8 @@ export const EV = {
   hunt: 47,
   /** Une pièce de la Lanterne tombe (a : son indice). */
   pieceDrop: 48,
+  /** De la Lueur est brûlée pour une Flamme (a : les points). */
+  flameFeed: 49,
 } as const;
 
 export interface EnemyStore {
@@ -301,6 +305,8 @@ export interface Hero {
   hp: number;
   invuln: number;
   dashT: number; dashCd: number; dashX: number; dashY: number;
+  /** Ruées prêtes. Tant qu'il en manque, `dashCd` décompte la prochaine. */
+  dashCharges: number;
   flasks: number;
   skillCd: number;
   buffT: number;
@@ -452,6 +458,10 @@ export interface Run {
   sheet: StatSheet;
   /** Les règles changées par la Lanterne et par les Flammes ; neutres sans elles. */
   mods: Readonly<RunMods>;
+  /** Minuteries du Rappel et du Halo, et distance de ruée avant la prochaine braise de la Traînée. */
+  recallT: number;
+  haloT: number;
+  trailLeft: number;
   /** Gemmes ramassées depuis le dernier point de vie rendu par Faim. */
   gemsHeld: number;
   /** Résurrections déjà utilisées. */

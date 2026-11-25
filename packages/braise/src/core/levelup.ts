@@ -22,14 +22,23 @@ export function recomputeStats(run: Run): void {
   // La Lueur brûlée pour nourrir des Flammes, moins ce que les braséros ont remboursé.
   sheet.glowShare -= glowLoss(run) / 100;
   run.sheet = sheet;
-  run.mods = flameMods(run);
   const hero = run.hero;
+  const chargesBefore = run.mods.dashCharges;
+  run.mods = flameMods(run);
+  // Une charge de ruée de plus arrive prête à servir.
+  if (run.mods.dashCharges > chargesBefore) hero.dashCharges += run.mods.dashCharges - chargesBefore;
   const before = hero.stats.maxHp;
   const flasksBefore = hero.stats.flasks;
   const revivesBefore = hero.stats.revives;
   const rerollsBefore = hero.stats.rerolls;
   const banishesBefore = hero.stats.banishes;
   resolveStats(sheet, run.data.tuning, run.data.heroTuning, hero.stats);
+  // Ombre : du critique pour chaque point de Lueur sous la Lueur de base.
+  if (run.mods.shadowCrit > 0) {
+    const tuning = run.data.tuning.hero;
+    const missing = Math.max(0, 100 - (100 * hero.stats.glow) / tuning.glow);
+    hero.stats.critChance = Math.min(tuning.critCap, hero.stats.critChance + run.mods.shadowCrit * missing);
+  }
   // Une fiole ou une résurrection de plus arrive prête à servir.
   if (hero.stats.flasks > flasksBefore) hero.flasks += hero.stats.flasks - flasksBefore;
   if (hero.stats.revives > revivesBefore) hero.revives += hero.stats.revives - revivesBefore;

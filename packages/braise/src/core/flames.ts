@@ -1,8 +1,9 @@
 import type { FlameLine } from '../content/index.ts';
+import { summonElites } from './director.ts';
 import { recomputeStats, resumeRun } from './levelup.ts';
 import { NEUTRAL_MODS, mergeMods, type RunMods } from './mods.ts';
-import { tutorialNote } from './stores.ts';
-import type { FlameOffer, Run } from './types.ts';
+import { emit, tutorialNote } from './stores.ts';
+import { EV, type FlameOffer, type Run } from './types.ts';
 
 /** Ce qui empêche de nourrir une offre d'un cran de plus. */
 export type FeedBlock = 'top' | 'locked' | 'cap' | 'floor';
@@ -132,10 +133,18 @@ export function takeFlame(run: Run, index: number): boolean {
   run.glowBurned += cost;
   run.flames.push({ line: offer.line, rarity: offer.rarity });
   run.totemOffers = [];
+  if (cost > 0) emit(run, EV.flameFeed, run.hero.x, run.hero.y, cost);
+  const tier = run.data.flames.lines[offer.line]!.tiers[offer.rarity];
+  if (tier && tier.elites > 0) summonElites(run, tier.elites);
   tutorialNote(run, 'boon');
   recomputeStats(run);
   resumeRun(run);
   return true;
+}
+
+/** Le rayon éclairé : la Lueur plus la marge du disque de lumière dessiné à l'écran. */
+export function litRadius(run: Run): number {
+  return run.hero.stats.glow + run.data.tuning.hero.lightMargin;
 }
 
 /** Les règles de la partie : celles de la Lanterne, puis celles de chaque Flamme. */

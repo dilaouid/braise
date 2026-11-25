@@ -444,7 +444,10 @@ export const expeditionTuningSchema = z
     eliteMinutes: z.array(z.number()),
     hero: z
       .object({
-        speed: z.number(), radius: z.number(), glow: z.number(), invulnAfterHit: z.number(),
+        speed: z.number(), radius: z.number(), glow: z.number(),
+        /** Ce que le disque de lumière dessiné ajoute à la Lueur, en pixels : Lueur + marge = rayon éclairé. */
+        lightMargin: z.number().min(0),
+        invulnAfterHit: z.number(),
         critChance: z.number(), critMult: z.number(), critCap: z.number(), armorCap: z.number(), speedCap: z.number(),
         reviveHpShare: z.number(), reviveKnockback: z.number(), reviveRadius: z.number(),
       })
