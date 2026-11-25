@@ -8,6 +8,7 @@
  * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
  * Armes de l'Autel : --unlock <all|aucune|wake,verge,storm-watch,nightlights> les ouvre, --give weapon.wake donne une arme de plus au départ
  * (--glevel <1-6> son niveau).
+ * --reborn : le Cerf de Cendre remplace le Cerf.
  * --set "weapon.storm-watch:range=120,jumpRange=60;weapon.verge:damage*0.8" essaie d'autres valeurs à tous les niveaux d'une arme.
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
@@ -161,7 +162,7 @@ const hurtBy = new Float64Array(data.enemies.length);
 for (let r = 0; r < runs; r++) {
   const run = createRun(data, {
     seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
-    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity,
+    unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity, reborn: process.argv.includes('--reborn'),
   });
   if (giveDef >= 0) addWeapon(run, giveDef).level = giveLevel;
   let maxEnemies = 0;
