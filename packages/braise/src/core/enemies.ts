@@ -174,6 +174,18 @@ const ST_WAIT = 3;
 const ST_STALK = 4;
 const ST_VOLLEY = 5;
 
+/** Combien de temps avant son coup le Cerf prend la pose de l'attaque (moins si son souffle est plus court). */
+export const STAG_TELL = 0.5;
+/** Combien de temps, depuis le début de l'annonce, il tient la pose de chaque attaque : jusqu'au coup, ou presque. */
+export const STAG_POSE = [1.3, 1.4, 1.35, 1.25, 1.2, 1.8];
+
+/** Le tirage de la prochaine attaque : une de la phase, jamais deux fois la même d'affilée. */
+function stagPick(run: Run, phase: number): number {
+  const pool = STAG_POOLS[phase - 1]!;
+  const attack = pool[Math.floor(run.rngSpawn.float() * pool.length)]!;
+  return attack === run.director.bossLast ? pool[(pool.indexOf(attack) + 1) % pool.length]! : attack;
+}
+
 function stagTele(run: Run, base: number, haste: number): number {
   return Math.max(run.data.tuning.boss.minTelegraph, base * haste);
 }
@@ -184,6 +196,7 @@ function stagRecover(run: Run, i: number, def: EnemyDef, attack: number, extra =
   const dir = run.director;
   const phase = dir.bossPhase;
   e.state[i] = ST_IDLE;
+  dir.bossTellT = -1;
   if (dir.bossNext === A_ROAR) {
     e.timer2[i] = 0.2;
     return;
@@ -287,6 +300,8 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
   if (dir.bossReformT > 0) {
     // En poussière : il ne bouge ni ne frappe. Il se relève d'un coup, prêt à attaquer.
     dir.bossReformT = Math.max(0, dir.bossReformT - dt);
+    dir.bossTell = -1;
+    dir.bossTellT = -1;
     e.state[i] = ST_IDLE;
     e.timer2[i] = 0.6;
     return;
@@ -329,18 +344,25 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
     }
   }
   const state = e.state[i]!;
+  if (dir.bossTellT >= 0) {
+    dir.bossTellT += dt;
+    if (dir.bossTellT > (STAG_POSE[dir.bossTell >= 0 ? dir.bossTell : dir.bossLast] ?? 1.3)) dir.bossTellT = -1;
+  }
   if (state === ST_IDLE) {
     approach(run, i, dx, dy, speed * (phase === 3 ? 1.2 : 1), false, 12, dt);
     e.timer2[i]! -= dt;
-    if (e.timer2[i]! <= 0) {
-      let attack = dir.bossNext;
-      if (attack >= 0) {
-        if (attack !== A_ROAR) dir.bossNext = -1;
-      } else {
-        const pool = STAG_POOLS[phase - 1]!;
-        attack = pool[Math.floor(run.rngSpawn.float() * pool.length)]!;
-        if (attack === dir.bossLast) attack = pool[(pool.indexOf(attack) + 1) % pool.length]!;
+    if (e.timer2[i]! <= STAG_TELL) {
+      // Il prend la pose de son attaque avant de la lancer ; un rugissement imposé remplace l'annonce en cours.
+      const want = dir.bossNext >= 0 ? dir.bossNext : dir.bossTell >= 0 ? dir.bossTell : stagPick(run, phase);
+      if (want !== dir.bossTell) {
+        dir.bossTell = want;
+        dir.bossTellT = 0;
       }
+    }
+    if (e.timer2[i]! <= 0) {
+      const attack = dir.bossTell;
+      dir.bossTell = -1;
+      if (attack !== A_ROAR) dir.bossNext = -1;
       stagStart(run, i, def, attack, dx, dy, haste);
     }
   } else if (state === ST_AIM) {
@@ -356,6 +378,7 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
       e.timer[i]! -= dt;
       if (e.timer[i]! <= 0) {
         e.state[i] = ST_RUN;
+        dir.bossTellT = -1;
         e.timer[i] = ch.distance;
         emit(run, EV.charge, e.x[i]!, e.y[i]!);
       }

@@ -1137,6 +1137,117 @@
    "date": "2026-11-25"
   }
  ],
+ "clips": [
+  {
+   "name": "boss-cerf-tell-charge",
+   "id": "b4e19493-cae5-49ca-9460-b5b638580e91",
+   "pose": "2737d6a1-54ef-4110-84e0-7faafc480376",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-roots",
+   "id": "d4f3802a-3e49-4af4-bd0d-a6900f7191d4",
+   "pose": "aedfba4d-9702-4f46-a3c4-9e2df521763d",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-stomp",
+   "id": "14218f28-4b4c-4706-81bd-da18d24704c1",
+   "pose": "b9b46de8-a3f0-4db6-98e9-642c0223f232",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly rears up on its hind legs, front hooves raised",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-stalk",
+   "id": "c94facfe-932c-42d7-a286-dca363468a57",
+   "pose": "1d0003fb-ac96-4a2d-b08e-597c0010c43f",
+   "frames": 7,
+   "skip": 5,
+   "prompt": "the stag quickly turns its head to stare at the viewer, eyes lighting up magenta, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-volley",
+   "id": "37022d57-d2f3-4398-b210-432c3c45b5b9",
+   "pose": "61f379e5-29c6-44a4-af89-883398c27ee1",
+   "frames": 7,
+   "skip": 4,
+   "prompt": "the stag quickly throws its head back, antlers turning magenta, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-roar",
+   "id": "00245737-83b2-4032-8084-202315b8276a",
+   "pose": "1538f3b8-d9dc-4bc4-81e2-45bcd2a73082",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly raises its muzzle and opens its jaws wide to roar, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-charge",
+   "id": "fb8cd78c-6946-45f6-8ed9-6946e34ceb1f",
+   "pose": "d9b3a36a-bd3e-4416-a20f-71931bc78cd5",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-roots",
+   "id": "409b9de3-c7eb-4e1e-9085-bf78708ec2e8",
+   "pose": "6c110147-5a45-40a0-9142-e297b84efeb5",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-stomp",
+   "id": "e2caa200-75f1-4c49-b644-eb389bfe6d78",
+   "pose": "cf7d5ec4-b3ca-4034-81e7-e7260d7edb24",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag quickly rears up on its hind legs, front hooves raised",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-stalk",
+   "id": "c650cdd4-2914-4c1c-a8dc-e8717291bb23",
+   "pose": "62682143-1e08-4d81-8b91-a2ef719cd7d7",
+   "frames": 7,
+   "skip": 4,
+   "prompt": "a fanged mouth slit opens in the stag's neck mane, its eye lights up magenta, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-volley",
+   "id": "490cd3d3-56cc-4268-a3e0-d95225b4817e",
+   "pose": "2647d4b4-eaac-49f3-9811-9a6318d99a82",
+   "frames": 7,
+   "skip": 4,
+   "prompt": "the stag throws its head back, its neck mane splits open into a huge fanged maw, antlers turning magenta, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-cendre-tell-roar",
+   "id": "64e69495-307c-4b63-aa96-c963e0bde580",
+   "pose": "5f213ade-c8c2-43db-a5bb-c706709b8c13",
+   "frames": 7,
+   "skip": 3,
+   "prompt": "the stag raises its head roaring, its neck mane splits open into a huge fanged maw, body still",
+   "date": "2026-11-25"
+  }
+ ],
+ "clipsNote": "Clips d'annonce du Cerf : animate_image, de l'image 0 de la marche à une pose entière dessinée par edit_image_pro_flash (`pose` : son identifiant). `skip` : images de tête ignorées (encore au repos : le geste doit se lire d’emblée) ; `drop` : images écartées après coup (numérotées après `skip`) ; `despeckle` : taille en pixels sous laquelle une forme isolée est effacée (16 par défaut).",
  "sounds": [
   {
    "name": "sfx-scythe",

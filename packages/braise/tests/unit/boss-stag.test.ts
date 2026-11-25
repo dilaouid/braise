@@ -172,6 +172,99 @@ describe('le Cerf sans lumière', () => {
   });
 });
 
+describe('les annonces du Cerf', () => {
+  const STEPS = (s: number): number => Math.round(s / DT);
+
+  it('annonce son attaque une demi-seconde avant de la lancer, sans retarder le coup', () => {
+    const { run, i } = makeStag();
+    run.enemies.timer2[i] = 1.1;
+    expect(run.director.bossTell).toBe(-1);
+    let announced = -1;
+    let started = -1;
+    let told = -1;
+    for (let k = 1; k <= STEPS(2); k++) {
+      updateEnemies(run, DT);
+      if (announced < 0 && run.director.bossTell >= 0) {
+        announced = k * DT;
+        told = run.director.bossTell;
+      }
+      if (run.director.bossLast >= 0) {
+        started = k * DT;
+        break;
+      }
+    }
+    expect(announced).toBeGreaterThan(0.55);
+    expect(announced).toBeLessThan(0.65);
+    expect(started).toBeGreaterThan(1.05);
+    expect(started).toBeLessThan(1.15);
+    expect(run.director.bossLast).toBe(told);
+    expect(run.director.bossTell).toBe(-1);
+  });
+
+  it('une pause plus courte que l\'annonce l\'annonce dès le premier pas', () => {
+    const { run, i } = makeStag();
+    run.enemies.timer2[i] = 0.25;
+    updateEnemies(run, DT);
+    expect(run.director.bossTell).toBeGreaterThanOrEqual(0);
+    expect(run.director.bossLast).toBe(-1);
+  });
+
+  it('en phase 3, l\'attaque enchaînée est annoncée dans le souffle qui suit', () => {
+    const { run, i } = makeStag();
+    run.director.bossPhase = 3;
+    run.enemies.hp[i] = run.enemies.maxHp[i]! * 0.2;
+    run.director.bossSummonT = 999;
+    attackNow(run, i, ROOTS);
+    for (let k = 0; k < STEPS(4) && run.director.bossTell < 0; k++) updateEnemies(run, DT);
+    expect(run.director.bossTell).toBe(STALK);
+    expect(run.director.bossLast).toBe(ROOTS);
+  });
+
+  it('un changement de phase pendant l\'annonce la remplace par le rugissement', () => {
+    const { run, i } = makeStag();
+    run.enemies.timer2[i] = 1;
+    for (let k = 0; k < STEPS(1) && run.director.bossTell < 0; k++) updateEnemies(run, DT);
+    expect(run.director.bossTell).toBeGreaterThanOrEqual(0);
+    run.enemies.hp[i] = run.enemies.maxHp[i]! * 0.5;
+    updateEnemies(run, DT);
+    updateEnemies(run, DT);
+    expect(run.director.bossTell).toBe(ROAR);
+    for (let t = 0; t < 0.4; t += DT) updateEnemies(run, DT);
+    expect(run.director.bossLast).toBe(ROAR);
+  });
+
+  it('le temps de pose court pendant le marqueur et s\'arrête quand la charge part', () => {
+    const { run, i } = makeStag();
+    attackNow(run, i, CHARGE);
+    expect(run.director.bossTellT).toBeGreaterThanOrEqual(0);
+    let before = run.director.bossTellT;
+    for (let k = 0; k < 10; k++) updateEnemies(run, DT);
+    expect(run.director.bossTellT).toBeGreaterThan(before);
+    for (let k = 0; k < STEPS(2) && run.enemies.state[i] !== 2; k++) updateEnemies(run, DT);
+    expect(run.enemies.state[i]).toBe(2);
+    expect(run.director.bossTellT).toBe(-1);
+  });
+
+  it('il relâche sa pose vers le moment du coup, bien avant la fin de l\'onde', () => {
+    const { run, i } = makeStag();
+    attackNow(run, i, STOMP);
+    for (let k = 0; k < STEPS(1.2); k++) updateEnemies(run, DT);
+    expect(run.director.bossTellT).toBeGreaterThanOrEqual(0);
+    for (let k = 0; k < STEPS(0.3); k++) updateEnemies(run, DT);
+    expect(run.enemies.state[i]).toBe(3);
+    expect(run.director.bossTellT).toBe(-1);
+  });
+
+  it('le temps de pose retombe quand l\'attaque est finie', () => {
+    const { run, i } = makeStag();
+    attackNow(run, i, STOMP);
+    expect(run.director.bossTellT).toBeGreaterThanOrEqual(0);
+    for (let k = 0; k < STEPS(5) && run.enemies.state[i] !== 0; k++) updateEnemies(run, DT);
+    expect(run.enemies.state[i]).toBe(0);
+    expect(run.director.bossTellT).toBe(-1);
+  });
+});
+
 describe('les dégâts du Cerf et le temps', () => {
   const TIMED = 1 + data.tuning.scale.dmgLin * data.tuning.durationMin;
 

@@ -498,6 +498,90 @@
   prompt: "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   settings: {"width":48,"height":48,"view":"low top-down"}
   edits: "palette réduite"
+- file: sprites/boss-cerf-tell-charge@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: b4e19493-cae5-49ca-9460-b5b638580e91
+  prompt: "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-tell-roots@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: d4f3802a-3e49-4af4-bd0d-a6900f7191d4
+  prompt: "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-tell-stomp@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 14218f28-4b4c-4706-81bd-da18d24704c1
+  prompt: "the stag quickly rears up on its hind legs, front hooves raised"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-tell-stalk@2.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: c94facfe-932c-42d7-a286-dca363468a57
+  prompt: "the stag quickly turns its head to stare at the viewer, eyes lighting up magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":5,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-tell-volley@3.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 37022d57-d2f3-4398-b210-432c3c45b5b9
+  prompt: "the stag quickly throws its head back, antlers turning magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-tell-roar@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 00245737-83b2-4032-8084-202315b8276a
+  prompt: "the stag quickly raises its muzzle and opens its jaws wide to roar, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-charge@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: fb8cd78c-6946-45f6-8ed9-6946e34ceb1f
+  prompt: "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-roots@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 409b9de3-c7eb-4e1e-9085-bf78708ec2e8
+  prompt: "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-stomp@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: e2caa200-75f1-4c49-b644-eb389bfe6d78
+  prompt: "the stag quickly rears up on its hind legs, front hooves raised"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-stalk@3.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: c650cdd4-2914-4c1c-a8dc-e8717291bb23
+  prompt: "a fanged mouth slit opens in the stag's neck mane, its eye lights up magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-volley@3.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 490cd3d3-56cc-4268-a3e0-d95225b4817e
+  prompt: "the stag throws its head back, its neck mane splits open into a huge fanged maw, antlers turning magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-cerf-cendre-tell-roar@4.png
+  tool: animate_image
+  date: 2026-11-25
+  pixellab_id: 64e69495-307c-4b63-aa96-c963e0bde580
+  prompt: "the stag raises its head roaring, its neck mane splits open into a huge fanged maw, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/tile-bois-13.png
   tool: create_topdown_tileset
   date: 2026-11-23
@@ -1644,13 +1728,17 @@
   prompt: "drinking a potion, a quick gulp followed by a soft warm healing shimmer"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-ui-move.ogg
-  tool: assets/source/sons-interface/generer.py
-  date: 2026-11-25
-  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: 577635e5-30e6-4881-8bb1-05d26f4d34c2
+  prompt: "a tiny soft wooden tick, user interface cursor move, very short and quiet"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-ui-confirm.ogg
-  tool: assets/source/sons-interface/generer.py
-  date: 2026-11-25
-  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: efc48473-16be-49db-b2e9-e4b0963e64e5
+  prompt: "a soft warm confirm click with a small bell, user interface select"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-ui-back.ogg
   tool: create_sound_effect
   date: 2026-11-23
@@ -1706,9 +1794,11 @@
   prompt: "a wet sooty spit projectile launched, short dull plop"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-refuse.ogg
-  tool: assets/source/sons-interface/generer.py
-  date: 2026-11-25
-  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
+  tool: create_sound_effect
+  date: 2026-11-23
+  pixellab_id: c3cb9c97-306c-4af1-8c7f-b20c5c9862c9
+  prompt: "a short dull double buzz, user interface action refused"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-totem.ogg
   tool: create_sound_effect
   date: 2026-11-23

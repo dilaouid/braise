@@ -88,6 +88,11 @@ const CREAM_ANCHOR = 33 / 48;
 const CREAM_PALE = 0.5;
 /** L'ancre verticale des sprites dont les pieds ne sont pas là où la règle du rang les attend. */
 const SPRITE_ANCHOR: Record<string, number> = { 'boss-guetteur': 0.84 };
+/** Les ennemis dessinés tournés vers la gauche : tous les autres regardent à droite. */
+const FACES_LEFT = new Set(['boss-cerf']);
+/** Les clips d'annonce du Cerf, dans l'ordre de ses attaques (charge, racines, onde, traque, volée, rugissement). */
+const STAG_TELL_CLIPS = ['charge', 'roots', 'stomp', 'stalk', 'volley', 'roar'];
+const STAG_TELL_FPS = 14;
 /** Hauteur d'une bulle au-dessus de la position de Moon et de Cream. */
 const EMOTE_UP_MOON = 34;
 const EMOTE_UP_CREAM = 24;
@@ -153,6 +158,9 @@ export class GameRenderer {
   private readonly enemySprites: Sprite[] = [];
   private enemyFrames: Texture[][] = [];
   private enemyWhite: Texture[][] = [];
+  /** Par sorte d'ennemi puis par attaque : le clip de la pose d'annonce (vide si le Cerf n'en a pas). */
+  private stagTell: Texture[][][] = [];
+  private stagTellWhite: Texture[][][] = [];
   private enemyAnchor: number[] = [];
   private readonly propSprites: Sprite[] = [];
   private propTextures: Texture[] = [];
@@ -361,6 +369,9 @@ export class GameRenderer {
     this.borderTexture = a.get(run.region.borderDecor);
     this.enemyFrames = data.enemies.map((e) => a.anim(e.sprite));
     this.enemyWhite = data.enemies.map((e) => a.whiteAnim(e.sprite));
+    const isStag = (e: (typeof data.enemies)[number]): boolean => e.behavior === 'boss-stag';
+    this.stagTell = data.enemies.map((e) => (isStag(e) ? STAG_TELL_CLIPS.map((n) => a.anim(`${e.sprite}-tell-${n}`)) : []));
+    this.stagTellWhite = data.enemies.map((e) => (isStag(e) ? STAG_TELL_CLIPS.map((n) => a.whiteAnim(`${e.sprite}-tell-${n}`)) : []));
     this.enemyAnchor = data.enemies.map((e) => SPRITE_ANCHOR[e.sprite] ?? (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
     this.heroSprite = run.cls.sprite;
     // Les murs du donjon sont posés au pied de leur tuile ; les décors du Bois gardent leur ancre.
@@ -930,12 +941,22 @@ export class GameRenderer {
         s.visible = false;
         continue;
       }
-      const frames = e.flash[i]! > 0 ? this.enemyWhite[kind]! : this.enemyFrames[kind]!;
+      const white = e.flash[i]! > 0;
+      let frames = white ? this.enemyWhite[kind]! : this.enemyFrames[kind]!;
       const frozen = (e.status[i]! & ST_FROZEN) !== 0;
-      const frame = frozen ? 0 : Math.floor(time * 10 + (e.uid[i]! % 7)) % frames.length;
+      let frame = frozen ? 0 : Math.floor(time * 10 + (e.uid[i]! % 7)) % frames.length;
+      const tellDir = run.director;
+      if (tellDir.bossTellT >= 0 && e.uid[i] === tellDir.bossUid && !frozen) {
+        // La pose de l'attaque qui vient : jouée une fois, plus vite que la marche pour être finie avant le marqueur, la dernière image tenue.
+        const clip = (white ? this.stagTellWhite : this.stagTell)[kind]?.[tellDir.bossTell >= 0 ? tellDir.bossTell : tellDir.bossLast];
+        if (clip && clip[0] !== Texture.EMPTY) {
+          frames = clip;
+          frame = Math.min(clip.length - 1, Math.floor(tellDir.bossTellT * STAG_TELL_FPS));
+        }
+      }
       s.texture = frames[frame]!;
       s.anchor.set(0.5, this.enemyAnchor[kind]!);
-      s.scale.x = e.facing[i]! < 0 ? -1 : 1;
+      s.scale.x = (e.facing[i]! < 0) !== FACES_LEFT.has(defs[kind]!.sprite) ? -1 : 1;
       s.position.set(Math.round(x), Math.round(y));
       s.zIndex = y;
       const st = e.status[i]!;

@@ -161,6 +161,53 @@ for (const o of manifest.objects) {
   }
 }
 
+// ───────────── Les clips d'annonce : une bande par clip ─────────────
+/** Retire les poussières de moins de `max` pixels, sauf la plus grande forme : le générateur sème parfois des points isolés. */
+function despeckle(png, max) {
+  const { width: w, height: h, data } = png;
+  const seen = new Uint8Array(w * h);
+  const parts = [];
+  for (let start = 0; start < w * h; start++) {
+    if (seen[start] || data[start * 4 + 3] === 0) continue;
+    const cells = [];
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length) {
+      const c = stack.pop();
+      cells.push(c);
+      const x = c % w;
+      const y = (c - x) / w;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const n = ny * w + nx;
+          if (!seen[n] && data[n * 4 + 3] !== 0) {
+            seen[n] = 1;
+            stack.push(n);
+          }
+        }
+      }
+    }
+    parts.push(cells);
+  }
+  const biggest = parts.reduce((a, b) => (b.length > a.length ? b : a), []);
+  for (const cells of parts) {
+    if (cells === biggest || cells.length >= max) continue;
+    for (const c of cells) data[c * 4 + 3] = 0;
+  }
+  return png;
+}
+
+for (const c of manifest.clips ?? []) {
+  const dir = join(source, 'clips', c.name);
+  if (!existsSync(dir)) continue;
+  const frames = framesIn(dir).slice(c.skip ?? 0).filter((_, i) => !(c.drop ?? []).includes(i)).map((f) => despeckle(f, c.despeckle ?? 16));
+  write(`${c.name}@${frames.length}`, strip(frames));
+  record(`sprites/${c.name}@${frames.length}.png`, 'animate_image', c.id, c.prompt, { width: 128, height: 128, frames: c.frames, skipped: c.skip ?? 0, dropped: c.drop ?? [] }, 'palette réduite ; poussières isolées retirées ; images assemblées en bande', c.date);
+}
+
 // ───────────── Le sol : seize tuiles nommées par leurs coins ─────────────
 for (const t of manifest.tilesets) {
   const base = join(source, t.name);

@@ -95,6 +95,20 @@ for (const img of manifest.images) {
   fetched++;
 }
 
+// Les clips d'annonce : une animation d'images, une image par fichier, rangée dans source/clips/<nom>/.
+for (const c of manifest.clips ?? []) {
+  const dir = join(root, 'source', 'clips', c.name);
+  if (existsSync(dir) && !force) {
+    skipped++;
+    continue;
+  }
+  for (let i = 0; i < c.frames; i++) {
+    save(join(dir, `frame_${String(i).padStart(3, '0')}.png`), await download(`${API}/images/${c.id}/download?index=${i}`));
+  }
+  console.log(`${c.name} : clip de ${c.frames} images`);
+  fetched++;
+}
+
 // Les adresses des sons portent l'identifiant du compte PixelLab : elles restent dans un fichier local.
 const audioUrlsFile = join(root, '..', '..', '..', '.pixellab', 'audio-urls.json');
 const audioUrls = existsSync(audioUrlsFile) ? JSON.parse(readFileSync(audioUrlsFile, 'utf8')) : {};
