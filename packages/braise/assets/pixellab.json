@@ -1137,6 +1137,63 @@
    "date": "2026-11-25"
   }
  ],
+ "clips": [
+  {
+   "name": "boss-cerf-tell-charge",
+   "id": "f9d32477-308f-41ed-b507-89197926a299",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag lowers its head further until its antlers point forward like a lance, crouched and tense, one front hoof scraping the ground, ready to charge",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-roots",
+   "id": "2319c735-7cbf-4a44-a321-a318e74f7c16",
+   "frames": 7,
+   "skip": 1,
+   "despeckle": 64,
+   "prompt": "the stag bows its head down until its antlers stab into the ground, magenta energy running along the antlers into the earth, body still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-stomp",
+   "id": "975acb55-f245-4042-a6cc-ad2220a81d96",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag rears up on its hind legs, front legs lifted high off the ground, body leaning back, about to slam down",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-stalk",
+   "id": "b762e204-1a57-4494-8dc8-e88b75046c86",
+   "frames": 7,
+   "skip": 1,
+   "drop": [
+    2,
+    3,
+    4
+   ],
+   "prompt": "the stag snaps its head up, both eyes blazing bright magenta as it locks onto its prey, body frozen still",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-volley",
+   "id": "b7772fbd-13ff-4256-b170-c1a6cdcd2d2f",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag throws its head back, the antlers tilting back and glowing magenta, chest puffed out",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "boss-cerf-tell-roar",
+   "id": "02201dde-e0a1-42ef-b1d0-af6d4cc66593",
+   "frames": 7,
+   "skip": 1,
+   "prompt": "the stag throws its head high with its mouth wide open, bellowing a deafening roar, neck stretched up, chest swelling",
+   "date": "2026-11-25"
+  }
+ ],
+ "clipsNote": "Clips d'annonce du Cerf (animate_image, image de départ et d'arrivée composées par tools/keypose-cerf.py). `skip` : images de tête ignorées (l'image de départ brute) ; `drop` : images écartées après coup (numérotées après `skip`) ; `despeckle` : taille en pixels sous laquelle une forme isolée est effacée (16 par défaut).",
  "sounds": [
   {
    "name": "sfx-scythe",
