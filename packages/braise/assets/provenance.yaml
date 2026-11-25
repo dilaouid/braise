@@ -498,89 +498,89 @@
   prompt: "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   settings: {"width":48,"height":48,"view":"low top-down"}
   edits: "palette réduite"
-- file: sprites/boss-cerf-tell-charge@6.png
+- file: sprites/boss-cerf-tell-charge@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: f9d32477-308f-41ed-b507-89197926a299
-  prompt: "the stag lowers its head further until its antlers point forward like a lance, crouched and tense, one front hoof scraping the ground, ready to charge"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: b4e19493-cae5-49ca-9460-b5b638580e91
+  prompt: "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-roots@6.png
+- file: sprites/boss-cerf-tell-roots@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 2319c735-7cbf-4a44-a321-a318e74f7c16
-  prompt: "the stag bows its head down until its antlers stab into the ground, magenta energy running along the antlers into the earth, body still"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: d4f3802a-3e49-4af4-bd0d-a6900f7191d4
+  prompt: "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-stomp@6.png
+- file: sprites/boss-cerf-tell-stomp@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 975acb55-f245-4042-a6cc-ad2220a81d96
-  prompt: "the stag rears up on its hind legs, front legs lifted high off the ground, body leaning back, about to slam down"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 14218f28-4b4c-4706-81bd-da18d24704c1
+  prompt: "the stag quickly rears up on its hind legs, front hooves raised"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-stalk@3.png
+- file: sprites/boss-cerf-tell-stalk@2.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: b762e204-1a57-4494-8dc8-e88b75046c86
-  prompt: "the stag snaps its head up, both eyes blazing bright magenta as it locks onto its prey, body frozen still"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[2,3,4]}
+  pixellab_id: c94facfe-932c-42d7-a286-dca363468a57
+  prompt: "the stag quickly turns its head to stare at the viewer, eyes lighting up magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":5,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-volley@6.png
+- file: sprites/boss-cerf-tell-volley@3.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: b7772fbd-13ff-4256-b170-c1a6cdcd2d2f
-  prompt: "the stag throws its head back, the antlers tilting back and glowing magenta, chest puffed out"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 37022d57-d2f3-4398-b210-432c3c45b5b9
+  prompt: "the stag quickly throws its head back, antlers turning magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-roar@6.png
+- file: sprites/boss-cerf-tell-roar@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 02201dde-e0a1-42ef-b1d0-af6d4cc66593
-  prompt: "the stag throws its head high with its mouth wide open, bellowing a deafening roar, neck stretched up, chest swelling"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 00245737-83b2-4032-8084-202315b8276a
+  prompt: "the stag quickly raises its muzzle and opens its jaws wide to roar, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-charge@6.png
+- file: sprites/boss-cerf-cendre-tell-charge@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: f7023852-ad57-4d10-98e0-0b585d87ebae
-  prompt: "the stag lowers its head further until its antlers point forward like a lance, crouched and tense, one front hoof scraping the ground, ready to charge"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: fb8cd78c-6946-45f6-8ed9-6946e34ceb1f
+  prompt: "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-roots@6.png
+- file: sprites/boss-cerf-cendre-tell-roots@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: a0ca449a-baa0-4352-adc4-72d97208d58c
-  prompt: "the stag bows its head down until its antlers stab into the ground, magenta energy running along the antlers into the earth, body still"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 409b9de3-c7eb-4e1e-9085-bf78708ec2e8
+  prompt: "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-stomp@6.png
+- file: sprites/boss-cerf-cendre-tell-stomp@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 385d09c1-ce4d-4903-9855-c72f26eda64f
-  prompt: "the stag rears up on its hind legs, front legs lifted high off the ground, body leaning back, about to slam down"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: e2caa200-75f1-4c49-b644-eb389bfe6d78
+  prompt: "the stag quickly rears up on its hind legs, front hooves raised"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-stalk@6.png
+- file: sprites/boss-cerf-cendre-tell-stalk@3.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 3a505106-ea0d-4373-97dc-0167a7914995
-  prompt: "the stag snaps its head up, both eyes blazing bright magenta as it locks onto its prey, body frozen still"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: c650cdd4-2914-4c1c-a8dc-e8717291bb23
+  prompt: "a fanged mouth slit opens in the stag's neck mane, its eye lights up magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-volley@6.png
+- file: sprites/boss-cerf-cendre-tell-volley@3.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: d1e28ef3-8017-49ac-87fc-efcc122f4846
-  prompt: "the stag throws its head back, the antlers tilting back and glowing magenta, chest puffed out"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 490cd3d3-56cc-4268-a3e0-d95225b4817e
+  prompt: "the stag throws its head back, its neck mane splits open into a huge fanged maw, antlers turning magenta, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-cendre-tell-roar@6.png
+- file: sprites/boss-cerf-cendre-tell-roar@4.png
   tool: animate_image
   date: 2026-11-25
-  pixellab_id: 2a521932-7209-4d0b-9f43-658f61792fac
-  prompt: "the stag throws its head high with its mouth wide open, bellowing a deafening roar, neck stretched up, chest swelling"
-  settings: {"width":128,"height":128,"frames":7,"skipped":1,"dropped":[]}
+  pixellab_id: 64e69495-307c-4b63-aa96-c963e0bde580
+  prompt: "the stag raises its head roaring, its neck mane splits open into a huge fanged maw, body still"
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/tile-bois-13.png
   tool: create_topdown_tileset

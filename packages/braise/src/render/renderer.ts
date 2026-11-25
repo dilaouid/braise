@@ -88,6 +88,8 @@ const CREAM_ANCHOR = 33 / 48;
 const CREAM_PALE = 0.5;
 /** L'ancre verticale des sprites dont les pieds ne sont pas là où la règle du rang les attend. */
 const SPRITE_ANCHOR: Record<string, number> = { 'boss-guetteur': 0.84 };
+/** Les ennemis dessinés tournés vers la gauche : tous les autres regardent à droite. */
+const FACES_LEFT = new Set(['boss-cerf']);
 /** Les clips d'annonce du Cerf, dans l'ordre de ses attaques (charge, racines, onde, traque, volée, rugissement). */
 const STAG_TELL_CLIPS = ['charge', 'roots', 'stomp', 'stalk', 'volley', 'roar'];
 const STAG_TELL_FPS = 14;
@@ -954,7 +956,7 @@ export class GameRenderer {
       }
       s.texture = frames[frame]!;
       s.anchor.set(0.5, this.enemyAnchor[kind]!);
-      s.scale.x = e.facing[i]! < 0 ? -1 : 1;
+      s.scale.x = (e.facing[i]! < 0) !== FACES_LEFT.has(defs[kind]!.sprite) ? -1 : 1;
       s.position.set(Math.round(x), Math.round(y));
       s.zIndex = y;
       const st = e.status[i]!;
