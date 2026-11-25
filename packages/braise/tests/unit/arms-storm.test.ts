@@ -156,8 +156,8 @@ describe('Guet d\'orage', () => {
     const dark = at(run, 100);
     const lit = at(run, 60);
     hold(run, 1);
-    expect(lost(run, dark)).toBe(20);
-    expect(lost(run, lit)).toBe(20);
+    expect(lost(run, dark)).toBe(17);
+    expect(lost(run, lit)).toBe(17);
     const alone = armed('weapon.black-storm');
     const only = at(alone, 60);
     hold(alone, 1);

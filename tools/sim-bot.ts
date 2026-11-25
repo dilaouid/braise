@@ -46,6 +46,7 @@ BOT_TUNE.go = Number(arg('go', String(BOT_TUNE.go)));
 BOT_TUNE.fleeReach = Number(arg('reach', String(BOT_TUNE.fleeReach)));
 BOT_TUNE.touch = Number(arg('touch', String(BOT_TUNE.touch)));
 BOT_TUNE.lead = Number(arg('lead', String(BOT_TUNE.lead)));
+BOT_TUNE.gather = Number(arg('gather', String(BOT_TUNE.gather)));
 const data = loadGameData();
 // --trait <dedans>,<dehors> : essaie d'autres valeurs pour le trait du personnage, sans toucher au contenu.
 const traitArg = arg('trait', '');

@@ -39,9 +39,9 @@ describe('les armes de Clair-obscur : le contenu', () => {
   it('Lisière : Givre, les valeurs du design', () => {
     const w = weapon('weapon.verge');
     expect(w).toMatchObject({ damageType: 3, scale: 'spi', aim: 'around', behavior: 'verge' });
-    expect(w.levels[0]).toMatchObject({ damage: 8, band: 10, hitInterval: 1.6, bite: 0.8, rings: 1, freeze: true });
-    expect(w.levels[5]).toMatchObject({ damage: 19, band: 22, hitInterval: 1.2 });
-    expect(weapon('weapon.solstice').levels[0]).toMatchObject({ damage: 22, band: 22, hitInterval: 1, rings: 2, bite: 0.8, freeze: true });
+    expect(w.levels[0]).toMatchObject({ damage: 5, band: 10, hitInterval: 2.2, bite: 0.8, rings: 1, freeze: true });
+    expect(w.levels[5]).toMatchObject({ damage: 12, band: 22, hitInterval: 1.7 });
+    expect(weapon('weapon.solstice').levels[0]).toMatchObject({ damage: 14, band: 22, hitInterval: 1.5, rings: 2, bite: 0.8, freeze: true });
   });
 
   it('Guet d\'orage : Foudre, les valeurs du design', () => {
@@ -51,7 +51,7 @@ describe('les armes de Clair-obscur : le contenu', () => {
     expect(w.levels.map((l) => l.jumps)).toEqual([3, 4, 4, 6, 6, 6]);
     expect(w.levels.map((l) => l.shock)).toEqual([false, false, false, false, true, true]);
     expect(w.levels[5]).toMatchObject({ damage: 15, count: 2 });
-    expect(weapon('weapon.black-storm').levels[0]).toMatchObject({ damage: 20, cooldown: 1.6, range: 180, count: 3, jumps: 6, shock: true, jumpsIntoLight: true });
+    expect(weapon('weapon.black-storm').levels[0]).toMatchObject({ damage: 17, cooldown: 1.6, range: 180, count: 3, jumps: 6, shock: true, jumpsIntoLight: true });
   });
 
   it('Veilleuses : Feu, les valeurs du design', () => {
@@ -60,17 +60,17 @@ describe('les armes de Clair-obscur : le contenu', () => {
     expect(w.levels[0]).toMatchObject({ damage: 3, cooldown: 5, count: 1, radiusShare: 0.5, life: 6, hitInterval: 0.5, max: 8, scatter: 60 });
     expect(w.levels[5]).toMatchObject({ damage: 5, count: 3, radiusShare: 0.6, life: 8 });
     expect(weapon('weapon.garland').levels[0]).toMatchObject({
-      damage: 6, cooldown: 4.5, count: 3, radiusShare: 0.6, life: 9, linkRange: 140, linkDamage: 10, linkWidth: 10, burn: true,
+      damage: 6, cooldown: 4.5, count: 3, radiusShare: 0.6, life: 9, linkRange: 140, linkDamage: 8, linkWidth: 10, burn: true,
     });
   });
 
   it('Sillage : Foudre, les valeurs du design', () => {
     const w = weapon('weapon.wake');
     expect(w).toMatchObject({ damageType: 2, scale: 'agi', aim: 'placed', behavior: 'wake' });
-    expect(w.levels[0]).toMatchObject({ damage: 9, hitInterval: 0.6, width: 10, life: 2, max: 3, minLength: 20, shock: false });
+    expect(w.levels[0]).toMatchObject({ damage: 13, hitInterval: 0.6, width: 14, life: 2.5, max: 3, minLength: 20, shock: false });
     expect(w.levels[3]!.shock).toBe(true);
-    expect(w.levels[5]).toMatchObject({ damage: 18, width: 16, life: 3.2 });
-    expect(weapon('weapon.web').levels[0]).toMatchObject({ damage: 22, hitInterval: 0.5, width: 16, life: 4, max: 3, shock: true, crossRadius: 48, crossDamage: 45 });
+    expect(w.levels[5]).toMatchObject({ damage: 26, width: 22, life: 4 });
+    expect(weapon('weapon.web').levels[0]).toMatchObject({ damage: 30, hitInterval: 0.5, width: 22, life: 5, max: 3, shock: true, crossRadius: 48, crossDamage: 60 });
   });
 
   it('les reliques', () => {

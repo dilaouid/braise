@@ -1312,6 +1312,8 @@ export class GameRenderer {
           draw(f.c > 0 ? 4 : 3, C.spark, 0.45 * fade);
           draw(1, C.white, 0.9 * fade);
           if (f.t < 0.12) this.light(f.x - camX, f.y - camY, Math.round(22 * (1 - f.t / 0.12)));
+          // L'éclair du ciel perce aussi le noir sur son trajet.
+          for (let s = 1; s < 4 && f.c > 0 && f.t < 0.12; s++) this.light(f.a + ((f.x - f.a) * s) / 4 - camX, f.b + ((f.y - f.b) * s) / 4 - camY, Math.round(20 * (1 - f.t / 0.12)));
           break;
         }
         case FX_FROST:

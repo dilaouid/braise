@@ -11,7 +11,7 @@ export type Bot = (run: Run, input: StepInput) => void;
 
 const DIRS = 16;
 /** Seuils de prudence du robot actif (réglés par simulation). */
-export const BOT_TUNE = { calm: 0.0045, hurt: 0.0015, go: 0.006, fleeReach: 50, touch: 22, lead: 0.22 };
+export const BOT_TUNE = { calm: 0.0045, hurt: 0.0015, go: 0.006, fleeReach: 50, touch: 22, lead: 0.22, gather: 320 };
 const best = { x: 0, y: 0, danger: 0 };
 /** Le point autour duquel le robot reste : le centre de la carte, ou le lieu qu'il vise. */
 const anchor = { on: false, x: 0, y: 0 };
@@ -165,7 +165,7 @@ export const activeBot: Bot = (run, input) => {
     if (!has) {
       // Rien à frapper tout de suite : aller chercher ce qui traîne au sol.
       const p = run.pickups;
-      let bestD = 320 * 320;
+      let bestD = BOT_TUNE.gather * BOT_TUNE.gather;
       for (let k = 0; k < p.count; k++) {
         const dx = p.x[k]! - hero.x;
         const dy = p.y[k]! - hero.y;

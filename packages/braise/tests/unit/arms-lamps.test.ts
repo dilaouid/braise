@@ -169,11 +169,11 @@ describe('Guirlande', () => {
     return run;
   }
 
-  it('un fil de feu entre deux Veilleuses à 140 px : 10 dégâts et Brûlure', () => {
+  it('un fil de feu entre deux Veilleuses à 140 px : 8 dégâts et Brûlure', () => {
     const run = pair(140);
     const i = at(run, 370);
     hold(run, 1);
-    expect(lost(run, i)).toBe(13); // 10 de Feu, +25 %.
+    expect(lost(run, i)).toBe(10); // 8 de Feu, +25 %.
     expect(run.enemies.status[i]! & ST_BURN).toBeTruthy();
   });
 
@@ -188,10 +188,10 @@ describe('Guirlande', () => {
     const run = pair(100);
     const i = at(run, 310);
     hold(run, 1);
-    expect(lost(run, i)).toBe(13);
+    expect(lost(run, i)).toBe(10);
     hold(run, 20);
     // La Brûlure compte à part ; pas de second coup de l'arme avant une demi-seconde.
-    expect(run.weapons[0]!.damageDone).toBe(13);
+    expect(run.weapons[0]!.damageDone).toBe(10);
   });
 
   it('un Éteint à côté du fil n\'est pas touché', () => {

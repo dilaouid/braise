@@ -88,30 +88,30 @@ describe('Sillage', () => {
     expect(run.threads[0]!.y1).toBeCloseTo(run.hero.y + 40);
   });
 
-  it('vit 2 s, plus longtemps avec la Durée', () => {
+  it('vit 2,5 s, plus longtemps avec la Durée', () => {
     const run = armed('weapon.wake');
     lay(run, 0, 0, 100, 0);
-    hold(run, 116);
+    hold(run, 146);
     expect(run.threads).toHaveLength(1);
     hold(run, 6);
     expect(run.threads).toHaveLength(0);
     run.hero.stats.duration = 1;
     lay(run, 0, 0, 100, 0);
-    expect(run.threads[0]!.life).toBeCloseTo(4);
+    expect(run.threads[0]!.life).toBeCloseTo(5);
   });
 
-  it('blesse qui le touche : 9, puis rien avant 0,6 s', () => {
+  it('blesse qui le touche : 13, puis rien avant 0,6 s', () => {
     const run = armed('weapon.wake');
     const on = at(run, 150);
-    const off = at(run, 150, 14);
+    const off = at(run, 150, 16);
     lay(run, 100, 0, 200, 0);
     hold(run, 1);
-    expect(lost(run, on)).toBe(9);
+    expect(lost(run, on)).toBe(13);
     expect(lost(run, off)).toBe(0);
     hold(run, 32);
-    expect(lost(run, on)).toBe(9);
+    expect(lost(run, on)).toBe(13);
     hold(run, 6);
-    expect(lost(run, on)).toBe(18);
+    expect(lost(run, on)).toBe(26);
   });
 
   it('au-delà de ses bouts, le fil ne touche rien', () => {
@@ -125,10 +125,10 @@ describe('Sillage', () => {
   it('la Zone l\'élargit', () => {
     const run = armed('weapon.wake');
     run.hero.stats.zone = 1;
-    const i = at(run, 150, 15);
+    const i = at(run, 150, 20);
     lay(run, 100, 0, 200, 0);
     hold(run, 1);
-    expect(lost(run, i)).toBe(9);
+    expect(lost(run, i)).toBe(13);
   });
 
   it('trois fils sur le même Éteint ne font qu\'un coup', () => {
@@ -136,7 +136,7 @@ describe('Sillage', () => {
     const i = at(run, 150);
     for (let k = 0; k < 3; k++) lay(run, 100, 0, 200, 0);
     hold(run, 1);
-    expect(lost(run, i)).toBe(9);
+    expect(lost(run, i)).toBe(13);
   });
 
   it('applique Choc au niveau 4, pas au niveau 3', () => {
@@ -160,7 +160,7 @@ describe('Sillage', () => {
 });
 
 describe('Toile', () => {
-  it('un fil neuf qui en croise un éclate au croisement : 45 dans 48 px', () => {
+  it('un fil neuf qui en croise un éclate au croisement : 60 dans 48 px', () => {
     const run = armed('weapon.web');
     run.hero.stats.projectiles = 0;
     const near = at(run, 180, 40);
@@ -170,7 +170,7 @@ describe('Toile', () => {
     expect(lost(run, near)).toBe(0);
     lay(run, 150, -50, 150, 12);
     hold(run, 1);
-    expect(lost(run, near)).toBe(45);
+    expect(lost(run, near)).toBe(60);
     expect(lost(run, far)).toBe(0);
   });
 
@@ -180,7 +180,7 @@ describe('Toile', () => {
     lay(run, 100, 0, 200, 0);
     lay(run, 150, -50, 150, 12);
     hold(run, 60);
-    expect(lost(run, near)).toBe(45);
+    expect(lost(run, near)).toBe(60);
   });
 
   it('une ruée qui part d\'où la précédente s\'est arrêtée ne croise rien', () => {
@@ -200,7 +200,7 @@ describe('Toile', () => {
     lay(run, 100, 0, 200, 0);
     lay(run, 190, -50, 190, 10);
     hold(run, 1);
-    expect(lost(run, near)).toBeGreaterThanOrEqual(45);
+    expect(lost(run, near)).toBeGreaterThanOrEqual(60);
   });
 
   it('deux fils qui ne se croisent pas n\'éclatent pas', () => {
@@ -219,6 +219,6 @@ describe('Toile', () => {
     const i = at(run, 150);
     hold(run, 1);
     expect(run.threads).toHaveLength(1);
-    expect(lost(run, i)).toBe(22);
+    expect(lost(run, i)).toBe(30);
   });
 });

@@ -75,12 +75,12 @@
     "id": "weapon.verge", "icon": "icon-weapon-verge", "damageType": "frost", "scale": "spi", "aim": "around", "behavior": "verge",
     "relic": "relic.winter-scarf", "evolution": "weapon.solstice", "starting": false,
     "levels": [
-      { "damage": 8, "band": 10, "hitInterval": 1.6, "bite": 0.8, "freeze": true },
-      { "damage": 11, "band": 10, "hitInterval": 1.6, "bite": 0.8, "freeze": true },
-      { "damage": 11, "band": 16, "hitInterval": 1.6, "bite": 0.8, "freeze": true },
-      { "damage": 11, "band": 16, "hitInterval": 1.2, "bite": 0.8, "freeze": true },
-      { "damage": 15, "band": 16, "hitInterval": 1.2, "bite": 0.8, "freeze": true },
-      { "damage": 19, "band": 22, "hitInterval": 1.2, "bite": 0.8, "freeze": true }
+      { "damage": 5, "band": 10, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 10, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 16, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 16, "hitInterval": 1.7, "bite": 0.8, "freeze": true },
+      { "damage": 9, "band": 16, "hitInterval": 1.7, "bite": 0.8, "freeze": true },
+      { "damage": 12, "band": 22, "hitInterval": 1.7, "bite": 0.8, "freeze": true }
     ]
   },
   {
@@ -111,12 +111,12 @@
     "id": "weapon.wake", "icon": "icon-weapon-wake", "damageType": "lightning", "scale": "agi", "aim": "placed", "behavior": "wake",
     "relic": "relic.copper-sole", "evolution": "weapon.web", "starting": false,
     "levels": [
-      { "damage": 9, "hitInterval": 0.6, "width": 10, "life": 2, "max": 3, "minLength": 20 },
-      { "damage": 9, "hitInterval": 0.6, "width": 10, "life": 2.6, "max": 3, "minLength": 20 },
-      { "damage": 13, "hitInterval": 0.6, "width": 10, "life": 2.6, "max": 3, "minLength": 20 },
-      { "damage": 13, "hitInterval": 0.6, "width": 10, "life": 2.6, "max": 3, "minLength": 20, "shock": true },
-      { "damage": 13, "hitInterval": 0.6, "width": 16, "life": 2.6, "max": 3, "minLength": 20, "shock": true },
-      { "damage": 18, "hitInterval": 0.6, "width": 16, "life": 3.2, "max": 3, "minLength": 20, "shock": true }
+      { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 2.5, "max": 3, "minLength": 20 },
+      { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
+      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
+      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
+      { "damage": 19, "hitInterval": 0.6, "width": 22, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
+      { "damage": 26, "hitInterval": 0.6, "width": 22, "life": 4, "max": 3, "minLength": 20, "shock": true }
     ]
   }
 ]
