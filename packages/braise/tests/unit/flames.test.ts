@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { explorerBot, feedAndPick, plannedPick, simulate, type FeedPolicy } from '../../src/core/bots.ts';
 import {
   drawFlames, feedBlock, feedOffer, glowLoss, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer,
 } from '../../src/core/flames.ts';
 import { closeChest, recomputeStats, takeCard } from '../../src/core/levelup.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import type { FlameOffer, Run } from '../../src/core/types.ts';
-import { data, makeImmortal, makeRun } from './helpers.ts';
+import { data, makeImmortal, makeRun, makeSave } from './helpers.ts';
 
 const BASE_GLOW = data.tuning.hero.glow;
 
@@ -342,4 +343,52 @@ describe('totems, cas limites', () => {
     expect(run.phase).toBe('totem');
     expect(run.totemOffers.length).toBe(3);
   });
+});
+
+describe('politiques de mise des robots', () => {
+  const three = (run: Run): void => offer(run, { line: line('flame.edge') }, { line: line('flame.stride') }, { line: line('flame.breath') });
+
+  it('never : la première carte gratuite, sans rien nourrir', () => {
+    const run = fresh();
+    offer(run, { line: line('flame.surge') }, { line: line('flame.edge') }, { line: line('flame.stride') });
+    expect(feedAndPick(run, 'never')).toBe(1);
+    expect(run.totemOffers.map((o) => o.rarity)).toEqual([1, 0, 0]);
+  });
+
+  it('max : nourrit jusqu\'au blocage et prend la plus rare', () => {
+    const run = fresh();
+    three(run);
+    expect(feedAndPick(run, 'max')).toBe(0);
+    expect(run.totemOffers.map((o) => o.rarity)).toEqual([3, 2, 3]);
+    expect(takeFlame(run, 0)).toBe(true);
+    expect(glowShareNow(run)).toBeCloseTo(0.74, 6);
+  });
+
+  it('smart : ne nourrit que si la Lueur reste à 70 % ou plus', () => {
+    const run = fresh();
+    run.cfg.sheet.glowShare = -0.2;
+    recomputeStats(run);
+    three(run);
+    expect(feedAndPick(run, 'smart')).toBe(0);
+    // 80 % − 6 = 74 % : permis ; 80 % − 14 = 66 % : refusé.
+    expect(run.totemOffers.map((o) => o.rarity)).toEqual([1, 1, 1]);
+  });
+
+  it('une partie entière : never ne brûle rien, max respecte plancher et plafonds', () => {
+    const play = (feed: FeedPolicy, seed: number): Run => {
+      const run = makeRun(seed, makeSave(10), true);
+      run.cfg.flameRarity = 4;
+      return simulate(run, { bot: explorerBot, pickCard: plannedPick, feed, maxSteps: 12 * 3600 });
+    };
+    let burned = 0;
+    for (const seed of [301, 302, 303]) {
+      expect(play('never', seed).glowBurned).toBe(0);
+      const run = play('max', seed);
+      burned += run.glowBurned;
+      expect(glowShareNow(run)).toBeGreaterThanOrEqual(data.flames.floor - 1e-9);
+      expect(run.flames.filter((f) => f.rarity === 3).length).toBeLessThanOrEqual(2);
+      expect(run.flames.filter((f) => f.rarity === 4).length).toBeLessThanOrEqual(1);
+    }
+    expect(burned).toBeGreaterThan(0);
+  }, 120_000);
 });
