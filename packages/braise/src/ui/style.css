@@ -271,9 +271,12 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost-cost { display: inline-flex; align-items: center; gap: 3px; color: var(--ember-0); }
 .boost-cost.bad { color: var(--danger-0); }
 .boost.cannot .boost-icon { border-color: var(--ash-1); }
-.altar-row { margin: 2px 0 0; }
-.altar-unlocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.boost.unlock { padding: 5px; align-items: center; }
+.altar-row { margin: 0; }
+/* Deux colonnes, alignées sur celles des boosts : à la croix, « droite » depuis Lueur va à Sagesse, pas à la rangée du dessous. */
+.altar-unlocks { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+.boost.unlock { padding: 1px 5px; align-items: center; }
+.boost.unlock .boost-icon { width: 24px; height: 24px; border: 0; background: none; }
+.boost.unlock .boost-body { gap: 1px; }
 .boost.unlock .boost-icon { border-color: var(--rarity); }
 .boost.unlock .boost-name { color: var(--rarity); }
 .rarity-epic { --rarity: #ff3d81; }

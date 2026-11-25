@@ -202,7 +202,7 @@ function Unlock({ boost }: { boost: AltarBoostRaw }): JSX.Element {
         <span class="boost-name">{t(`${boost.id}.name`)}</span>
         {owned ? <span class="boost-line gold">{t(disabled ? 'altar.disabled' : 'altar.unlock.open')}</span> : null}
         {!owned && err === 'requires' ? <span class="boost-line">{t('altar.unlock.requires', { name: t(`${boost.requires}.name`) })}</span> : null}
-        {owned ? null : (
+        {owned || err === 'requires' ? null : (
           <span class={`boost-cost ${err === 'ashes' ? 'bad' : ''}`}><Icon name="icon-ashes" /> {fmt(altarCost(boost, 1))}</span>
         )}
       </span>

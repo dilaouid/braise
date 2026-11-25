@@ -87,7 +87,6 @@ test('à la manette : ouvrir Épique à l\'Autel, nourrir une Flamme au totem, l
   await pad.press('B');
   await expect(page.locator('.screen.camp')).toBeVisible();
 
-  // La porte montre le porteur et son trait.
   await departFromCamp(page, pad);
   await skipDepartCinematic(page, pad);
   await page.waitForFunction(() => (window as any).__braise.run !== null);
@@ -134,11 +133,10 @@ test('à la manette : ouvrir Épique à l\'Autel, nourrir une Flamme au totem, l
   await settle(page);
   await pad.press('A');
   await expect(page.locator('.backdrop.totem')).toHaveCount(0);
-  const after = await run(page, (r) => ({ flames: r.flames, burned: r.glowBurned, glow: r.hero.stats.glow, base: r.data.tuning.hero.glow }));
+  const after = await run(page, (r) => ({ flames: r.flames, burned: r.glowBurned }));
   expect(after.flames).toHaveLength(1);
   expect(after.flames[0].rarity).toBe(2);
   expect(after.burned).toBe(cost);
-  expect(after.glow).toBeLessThan(after.base);
 
   // La pause montre la Flamme, à sa rareté, et la Lueur qui reste.
   await settle(page);

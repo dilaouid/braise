@@ -4,6 +4,7 @@
  * Tutoriel : pnpm sim -- --tutorial --runs 10 (le robot de tutoriel joue le script livré).
  * Une pièce de Lanterne seule : pnpm sim -- --piece rune.call --plevel 3 (son effet à ce niveau, et son malus).
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
+ * Trait : --trait 0.15,-0.05 essaie d'autres valeurs (dans la lumière, hors de la lumière).
  * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
@@ -42,6 +43,14 @@ BOT_TUNE.fleeReach = Number(arg('reach', String(BOT_TUNE.fleeReach)));
 BOT_TUNE.touch = Number(arg('touch', String(BOT_TUNE.touch)));
 BOT_TUNE.lead = Number(arg('lead', String(BOT_TUNE.lead)));
 const data = loadGameData();
+// --trait <dedans>,<dehors> : essaie d'autres valeurs pour le trait du personnage, sans toucher au contenu.
+const traitArg = arg('trait', '');
+if (traitArg !== '') {
+  const [inside, outside] = traitArg.split(',').map(Number);
+  const cls = data.classes[classId];
+  if (!cls || inside === undefined || outside === undefined || Number.isNaN(inside) || Number.isNaN(outside)) throw new Error(`Trait illisible : ${traitArg}`);
+  cls.trait = { kind: 'lit', inside, outside };
+}
 const noPlaces = process.argv.includes('--no-places');
 if (noPlaces) {
   const ev = data.tuning.events;
