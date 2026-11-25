@@ -13,12 +13,17 @@ import {
 const LESSON_GLYPHS: readonly Glyph[] = ['move', 'dash', 'flask', 'skill', 'confirm'];
 
 /** Un anneau de rechargement, en pixels : il se remplit dans le sens des aiguilles. */
-function Ring({ frac, icon, glyph, active }: { frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean }): JSX.Element {
+function Ring({ frac, icon, glyph, active, count }: {
+  frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean;
+  /** Un nombre de charges, affiché dans le coin (la ruée, quand elle en a plusieurs). */
+  count?: number;
+}): JSX.Element {
   const pct = Math.round(Math.max(0, Math.min(1, frac)) * 100);
   return (
     <span class={`ring ${pct >= 100 ? 'ready' : ''} ${active ? 'active' : ''}`} style={`--pct: ${pct}%`}>
       <Icon name={icon} />
       <Btn g={glyph} />
+      {count === undefined ? null : <b class="ring-count">{count}</b>}
     </span>
   );
 }
@@ -73,7 +78,7 @@ export function Hud(): JSX.Element | null {
         {h.fps > 0 ? <span class="fps">{h.fps} i/s</span> : null}
       </div>
       <div class="hud-bl">
-        <Ring frac={h.dashFrac} icon="icon-dash" glyph="dash" />
+        <Ring frac={h.dashFrac} icon="icon-dash" glyph="dash" count={h.dashMax > 1 ? h.dashCharges : undefined} />
         <Ring frac={h.skillFrac} icon={cls.skill.icon} glyph="skill" />
         <Ring frac={h.ultFrac} icon={cls.ultimate.icon} glyph="ultimate" active={h.ultActive} />
       </div>

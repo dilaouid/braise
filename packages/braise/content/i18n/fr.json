@@ -160,6 +160,10 @@
   "altar.toggle": "Activer / désactiver",
   "altar.disabled": "Désactivé",
   "altar.notEnough": "Pas assez de Cendres",
+  "altar.flames": "Flammes des totems",
+  "altar.unlock.open": "Ouverte",
+  "altar.unlock.requires": "Demande : {name}",
+  "door.carrier.closed": "Personne d'autre ne porte encore la lanterne.",
 
   "hud.level": "Niv. {level}",
   "hud.vigil": "Veillée {vigil}",

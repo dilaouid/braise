@@ -35,6 +35,9 @@ export interface HudState {
   ultFrac: number;
   ultActive: boolean;
   dashFrac: number;
+  /** Ruées prêtes, et combien le héros peut en garder. */
+  dashCharges: number;
+  dashMax: number;
   message: string | null;
   fps: number;
 }

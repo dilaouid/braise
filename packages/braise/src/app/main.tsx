@@ -16,7 +16,7 @@ import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCar
 import { feedBlock, feedOffer, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer } from '../core/flames.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
-import { abandonRun, clearEvents, createRun, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
+import { abandonRun, clearEvents, createRun, dashChargesMax, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
@@ -1167,7 +1167,9 @@ async function boot(): Promise<void> {
       skillFrac: 1 - Math.max(0, h.skillCd) / skillCooldown(r),
       ultFrac: h.ultT > 0 ? h.ultT / r.cls.ultimate.duration : h.ultGauge / tuning.ultimate.gaugeMax,
       ultActive: h.ultT > 0,
-      dashFrac: 1 - Math.max(0, h.dashCd) / dashCooldown(r),
+      // Une ruée prête : l'anneau est plein ; sinon il montre la charge qui revient.
+      dashFrac: h.dashCharges > 0 ? 1 : 1 - Math.max(0, h.dashCd) / dashCooldown(r),
+      dashCharges: h.dashCharges, dashMax: dashChargesMax(r),
       message: now < bannerUntil ? banner : null,
       fps: current.settings.showFps ? fps : 0,
     };
