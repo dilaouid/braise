@@ -368,6 +368,9 @@ export interface Director {
   /** Dernière attaque du boss, pour ne pas la répéter ; la suivante imposée (-1 : libre). */
   bossLast: number;
   bossNext: number;
+  /** L'attaque que le boss annonce par sa pose avant de la lancer (-1 : aucune), et les secondes écoulées depuis le début de la pose (-1 : pas de pose). */
+  bossTell: number;
+  bossTellT: number;
   bossDead: boolean;
   /** Le boss s'est déjà relevé une fois ; secondes de poussière qui restent. */
   bossReformed: boolean;

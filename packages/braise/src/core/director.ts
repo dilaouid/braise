@@ -153,6 +153,8 @@ function spawnBoss(run: Run): void {
     d.bossPhase = 1;
     d.bossLast = -1;
     d.bossNext = -1;
+    d.bossTell = -1;
+    d.bossTellT = -1;
     d.bossSummonT = def.summon?.cooldown ?? 0;
     emit(run, EV.bossSpawn, bx, by, kind);
   }
