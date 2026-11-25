@@ -84,6 +84,14 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .pip { width: 2px; height: 2px; background: var(--ash-1); }
 .pip.on { background: var(--ember-1); }
 
+/* L'infobulle : au-dessus de l'élément qui a le focus, jamais plus large que lui. */
+.tip {
+  display: none; position: absolute; left: -1px; bottom: calc(100% + 3px); max-width: calc(100% + 2px); width: max-content;
+  padding: 3px 6px; line-height: 11px; color: var(--ash-5); background: var(--night-0); border: 1px solid var(--ember-2);
+  pointer-events: none;
+}
+.is-focused > .tip { display: block; }
+
 .row { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
 
 .menu-button { display: flex; gap: 6px; align-items: center; padding: 5px 7px; background: var(--night-2); border: 1px solid var(--ash-1); width: 100%; min-height: 20px; }
@@ -265,12 +273,14 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .altar-grid .boost-cost { position: absolute; top: 4px; right: 7px; }
 .boost { display: flex; gap: 7px; padding: 7px; background: var(--night-2); border: 1px solid var(--ash-1); align-items: flex-start; }
 .boost.is-focused { background: var(--night-3); }
-.boost.off { opacity: 0.55; }
+/* Un boost désactivé pâlit, mais pas son infobulle. */
+.boost.off > :not(.tip) { opacity: 0.55; }
 .boost-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--night-0); border: 1px solid var(--ember-3); flex: none; }
 .boost-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .boost-name { color: var(--ember-1); font-size: 10px; }
 .boost-name em { font-style: normal; color: var(--ash-3); }
 .boost-line { color: var(--ash-4); }
+.boost-line.real { color: var(--teal-0); }
 .boost-cost { display: inline-flex; align-items: center; gap: 3px; color: var(--ember-0); }
 .boost-cost.bad { color: var(--danger-0); }
 .boost.cannot .boost-icon { border-color: var(--ash-1); }

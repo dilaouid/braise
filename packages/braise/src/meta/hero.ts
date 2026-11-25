@@ -1,5 +1,5 @@
 import type { Attribute, ClassDef, GameData, HeroTuning, StatBonus } from '../content/index.ts';
-import { addBonus, emptySheet, type Attributes, type StatSheet } from '../core/stats.ts';
+import { addBonus, emptySheet, resolveStats, type Attributes, type HeroStats, type StatSheet } from '../core/stats.ts';
 import { applyLantern, resolveLantern } from './lantern.ts';
 import { CURRENCY_CAP, newHero, type HeroSave, type Save } from './save.ts';
 import type { RunResult } from '../core/rewards.ts';
@@ -86,6 +86,19 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     sources.push(source);
   }
   return { sheet, sources };
+}
+
+/**
+ * Les statistiques de départ du héros si ce boost d'Autel était à ce rang, et actif : toutes les autres sources
+ * comptent (attributs, autres boosts, Lanterne). Ne change pas la sauvegarde.
+ */
+export function statsAtAltarRank(data: GameData, save: Save, classId: string, boostId: string, rank: number): HeroStats {
+  const account = {
+    ...save.account,
+    altar: { ...save.account.altar, [boostId]: rank },
+    altarDisabled: save.account.altarDisabled.filter((id) => id !== boostId),
+  };
+  return resolveStats(buildSheet(data, { ...save, account }, classId).sheet, data.tuning, data.heroTuning);
 }
 
 /** Les armes et les reliques proposables dans les cartes de niveau. */
