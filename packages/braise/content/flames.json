@@ -1,0 +1,77 @@
+{
+  "costs": [0, 6, 8, 12, 16],
+  "floor": 0.2,
+  "caps": [0, 0, 0, 2, 1],
+  "fed": { "perLuck": 0.5, "max": 0.4 },
+  "brazierRefund": 10,
+  "halo": { "tick": 0.5 },
+  "trail": { "radius": 14, "duration": 2, "tick": 0.5, "spacing": 12 },
+  "lines": [
+    { "id": "flame.stride", "icon": "icon-boon-stride", "tiers": [
+      { "rarity": "common", "stats": { "speedShare": 0.06 } },
+      { "rarity": "rare", "stats": { "speedShare": 0.09 } },
+      { "rarity": "epic", "stats": { "speedShare": 0.12 }, "mods": { "dashCooldownMult": 0.85 } }
+    ] },
+    { "id": "flame.edge", "icon": "icon-boon-edge", "tiers": [
+      { "rarity": "common", "stats": { "power": 0.07 } },
+      { "rarity": "rare", "stats": { "power": 0.11 } },
+      { "rarity": "epic", "stats": { "power": 0.15 } },
+      { "rarity": "legendary", "stats": { "power": 0.2, "eliteDamage": 0.1 } }
+    ] },
+    { "id": "flame.breath", "icon": "icon-boon-breath", "tiers": [
+      { "rarity": "common", "stats": { "maxHpShare": 0.08 } },
+      { "rarity": "rare", "stats": { "maxHpShare": 0.12 } },
+      { "rarity": "epic", "stats": { "maxHpShare": 0.16, "regen": 0.5 } },
+      { "rarity": "legendary", "stats": { "maxHpShare": 0.2, "regen": 0.5, "revives": 1 } }
+    ] },
+    { "id": "flame.wisdom", "icon": "icon-boon-wisdom", "tiers": [
+      { "rarity": "common", "stats": { "wisdom": 0.1 } },
+      { "rarity": "rare", "stats": { "wisdom": 0.15 } },
+      { "rarity": "epic", "stats": { "wisdom": 0.2, "cards": 1 } }
+    ] },
+    { "id": "flame.vein", "icon": "icon-boon-vein", "tiers": [
+      { "rarity": "common", "stats": { "luck": 0.08 } },
+      { "rarity": "rare", "stats": { "luck": 0.14 } },
+      { "rarity": "epic", "stats": { "luck": 0.2, "rerolls": 1 } },
+      { "rarity": "legendary", "stats": { "luck": 0.25, "rerolls": 2, "banishes": 1 } }
+    ] },
+    { "id": "flame.kindling", "icon": "icon-flame-kindling", "tiers": [
+      { "rarity": "common", "stats": { "cadence": 0.05 } },
+      { "rarity": "rare", "stats": { "cadence": 0.08 } },
+      { "rarity": "epic", "stats": { "cadence": 0.11 } }
+    ] },
+    { "id": "flame.glow", "icon": "icon-boon-glow", "tiers": [
+      { "rarity": "common", "stats": { "glowShare": 0.15 } },
+      { "rarity": "rare", "stats": { "glowShare": 0.22 } },
+      { "rarity": "epic", "stats": { "glowShare": 0.3 }, "mods": { "haloBurn": 3 } },
+      { "rarity": "legendary", "stats": { "glowShare": 0.4 }, "mods": { "haloBurn": 6 } }
+    ] },
+    { "id": "flame.bait", "icon": "icon-flame-bait", "tiers": [
+      { "rarity": "common", "stats": { "greed": 0.1 }, "mods": { "threatMult": 1.15 } },
+      { "rarity": "rare", "stats": { "greed": 0.15 }, "mods": { "threatMult": 1.25 } },
+      { "rarity": "epic", "stats": { "greed": 0.2 }, "mods": { "threatMult": 1.35 }, "elites": 1 },
+      { "rarity": "legendary", "stats": { "greed": 0.3 }, "mods": { "threatMult": 1.5 }, "elites": 2 }
+    ] },
+    { "id": "flame.surge", "icon": "icon-flame-surge", "tiers": [
+      { "rarity": "rare", "mods": { "dashCooldownMult": 0.8 } },
+      { "rarity": "epic", "mods": { "dashCharges": 1 } },
+      { "rarity": "legendary", "mods": { "dashCharges": 1, "dashTrail": 6 } },
+      { "rarity": "mythic", "mods": { "dashCharges": 2, "dashTrail": 10, "dashCooldownMult": 0.8 } }
+    ] },
+    { "id": "flame.shadow", "icon": "icon-flame-shadow", "tiers": [
+      { "rarity": "rare", "mods": { "shadowCrit": 0.002 } },
+      { "rarity": "epic", "stats": { "critMult": 0.2 }, "mods": { "shadowCrit": 0.0025 } },
+      { "rarity": "legendary", "stats": { "critMult": 0.4 }, "mods": { "shadowCrit": 0.0033 } },
+      { "rarity": "mythic", "stats": { "critMult": 0.6 }, "mods": { "shadowCrit": 0.005 } }
+    ] },
+    { "id": "flame.swarm", "icon": "icon-flame-swarm", "tiers": [
+      { "rarity": "epic", "stats": { "projectiles": 1 } },
+      { "rarity": "legendary", "stats": { "projectiles": 2 } },
+      { "rarity": "mythic", "stats": { "projectiles": 3, "projectileSpeed": 0.15 } }
+    ] },
+    { "id": "flame.recall", "icon": "icon-flame-recall", "tiers": [
+      { "rarity": "epic", "mods": { "recallEvery": 40 } },
+      { "rarity": "legendary", "mods": { "recallEvery": 25 } }
+    ] }
+  ]
+}

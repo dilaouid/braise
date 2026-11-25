@@ -1,7 +1,8 @@
 import type { Bot } from './bots.ts';
 import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { findPath } from './map.ts';
-import { buyItem, canBuy, closeShop, shopItems, takeBoon, takeEvolution } from './places.ts';
+import { takeFlame } from './flames.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeEvolution } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { advanceDialogue, tutorialTarget } from './tutorial.ts';
 import { PK_GEM, PK_RED_GEM, TILE_THICKET, type Run, type StepInput } from './types.ts';
@@ -202,7 +203,7 @@ export function simulateTutorial(run: Run, maxSeconds: number): TutorialSimResul
       case 'levelup': takeCard(run, 0); continue;
       case 'chest': closeChest(run); continue;
       case 'forge': takeEvolution(run, 0); continue;
-      case 'totem': takeBoon(run, 0); continue;
+      case 'totem': takeFlame(run, 0); continue;
       case 'find': closeFind(run); continue;
       case 'shop': {
         const items = shopItems(run);

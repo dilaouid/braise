@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { activeBot, explorerBot, hashRun, plannedPick, simulate } from '../../src/core/bots.ts';
 import { closeChest, takeCard } from '../../src/core/levelup.ts';
-import { buyItem, closeFind, closeShop, resumeRun, shopItems, takeBoon } from '../../src/core/places.ts';
+import { takeFlame } from '../../src/core/flames.ts';
+import { buyItem, closeFind, closeShop, resumeRun, shopItems } from '../../src/core/places.ts';
 import { computeResult } from '../../src/core/rewards.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { EV, SERVICES, type Poi, type Run } from '../../src/core/types.ts';
@@ -38,8 +39,10 @@ function play(run: Run, n: number): void {
   }
 }
 
-function boon(id: string): number {
-  return data.boons.findIndex((b) => b.id === id);
+function flame(id: string): { line: number; base: number; rarity: number; gift: boolean } {
+  const line = data.flames.lines.findIndex((l) => l.id === id);
+  const first = data.flames.lines[line]!.first;
+  return { line, base: first, rarity: first, gift: false };
 }
 
 function find(id: string): number {
@@ -53,7 +56,7 @@ function fresh(seed: number): Run {
 }
 
 describe('totems', () => {
-  it('entrer dans le cercle lance une vague, y rester 5 s ouvre un choix de 3 buffs', () => {
+  it('entrer dans le cercle lance une vague, y rester 5 s ouvre un choix de 3 Flammes', () => {
     const run = fresh(41);
     const poi = at(run, 'totem');
     play(run, 2);
@@ -64,24 +67,24 @@ describe('totems', () => {
     play(run, 90);
     expect(run.phase).toBe('totem');
     expect(poi.state).toBe(2);
-    expect(run.totemChoices.length).toBe(3);
-    expect(new Set(run.totemChoices).size).toBe(3);
+    expect(run.totemOffers.length).toBe(3);
+    expect(new Set(run.totemOffers.map((o) => o.line)).size).toBe(3);
   });
 
-  it('prendre un buff l\'applique et rend la main', () => {
+  it('prendre une Flamme l\'applique et rend la main', () => {
     const run = fresh(41);
     at(run, 'totem');
     play(run, 6 * 60);
     expect(run.phase).toBe('totem');
-    run.totemChoices = [boon('boon.stride'), boon('boon.edge'), boon('boon.vein')];
+    run.totemOffers = [flame('flame.stride'), flame('flame.edge'), flame('flame.vein')];
     const speed = run.hero.stats.speed;
     const base = data.tuning.hero.speed;
-    expect(takeBoon(run, 0)).toBe(true);
-    expect(run.boons).toEqual([boon('boon.stride')]);
-    expect(run.hero.stats.speed - speed).toBeCloseTo(base * data.boons[boon('boon.stride')]!.bonus.speedShare!, 6);
-    expect(run.totemChoices).toEqual([]);
+    expect(takeFlame(run, 0)).toBe(true);
+    expect(run.flames).toEqual([{ line: flame('flame.stride').line, rarity: 0 }]);
+    expect(run.hero.stats.speed - speed).toBeCloseTo(base * 0.06, 6);
+    expect(run.totemOffers).toEqual([]);
     expect(run.phase === 'playing' || run.phase === 'levelup').toBe(true);
-    expect(takeBoon(run, 0)).toBe(false);
+    expect(takeFlame(run, 0)).toBe(false);
   });
 
   it('sortir du cercle fait redescendre la charge', () => {
@@ -95,15 +98,17 @@ describe('totems', () => {
     expect(poi.progress).toBeLessThan(before);
   });
 
-  it('le même buff pris deux fois s\'applique deux fois', () => {
+  it('deux Flammes de lignées différentes s\'ajoutent', () => {
     const run = fresh(42);
     const power = run.hero.stats.power;
-    for (let k = 0; k < 2; k++) {
+    const hp = run.hero.stats.maxHp;
+    for (const id of ['flame.edge', 'flame.breath']) {
       run.phase = 'totem';
-      run.totemChoices = [boon('boon.edge')];
-      takeBoon(run, 0);
+      run.totemOffers = [flame(id)];
+      takeFlame(run, 0);
     }
-    expect(run.hero.stats.power - power).toBeCloseTo(2 * data.boons[boon('boon.edge')]!.bonus.power!, 6);
+    expect(run.hero.stats.power - power).toBeCloseTo(0.07, 6);
+    expect(run.hero.stats.maxHp).toBeGreaterThan(hp);
   });
 });
 
@@ -381,17 +386,17 @@ describe('le boss et la carte', () => {
 
 describe('robot explorateur', () => {
   it('il va de lieu en lieu, charge des totems et achète, sans jamais bloquer la partie', () => {
-    let boons = 0;
+    let flames = 0;
     let spent = 0;
     let finds = 0;
     for (const seed of [201, 202, 203]) {
       const run = simulate(makeRun(seed, makeSave(10), true), { bot: explorerBot, pickCard: plannedPick, maxSteps: 20 * 3600 });
       expect(run.phase === 'dead' || run.phase === 'victory', `graine ${seed} : ${run.phase} à ${run.time.toFixed(0)} s`).toBe(true);
-      boons += run.boons.length;
+      flames += run.flames.length;
       finds += run.finds.length;
       spent += run.hero.goldSpent;
     }
-    expect(boons).toBeGreaterThanOrEqual(3);
+    expect(flames).toBeGreaterThanOrEqual(3);
     expect(finds).toBeGreaterThanOrEqual(3);
     expect(spent).toBeGreaterThan(0);
   }, 120000);

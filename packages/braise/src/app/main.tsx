@@ -13,7 +13,8 @@ import { activeBot } from '../core/bots.ts';
 import { nearestObject, newCamp, stepCamp, stopCamp, walkTo } from '../core/camp.ts';
 import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
-import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
+import { feedBlock, feedOffer, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer } from '../core/flames.ts';
+import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
 import { abandonRun, clearEvents, createRun, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
@@ -322,6 +323,26 @@ async function boot(): Promise<void> {
     };
   }
 
+  /** Recopie les Flammes du totem pour l'écran : rareté, prix, ce qui bloque, Lueur après la prise. */
+  function syncTotem(): void {
+    if (!run) return;
+    const r = run;
+    totemState.value = {
+      glow: glowShareNow(r),
+      open: openRarity(r),
+      cards: r.totemOffers.map((offer, i) => {
+        const cost = offerCost(r, offer);
+        const costs = r.data.flames.costs;
+        return {
+          line: offer.line, rarity: offer.rarity, cost,
+          block: feedBlock(r, i), feedCost: costs[offer.rarity + 1] ?? 0,
+          canUnfeed: offer.rarity > offer.base, unfeedGain: costs[offer.rarity] ?? 0,
+          glowAfter: glowShareNow(r, cost),
+        };
+      }),
+    };
+  }
+
   function finishRun(): void {
     if (!run) return;
     if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
@@ -375,7 +396,7 @@ async function boot(): Promise<void> {
     if (on) {
       const worn = run.tutorial ? [] : resolveLantern(data, current.account.lantern).faces;
       runExtras.value = {
-        boons: run.boons.slice(), finds: run.finds.slice(),
+        flames: run.flames.map((f) => ({ ...f })), finds: run.finds.slice(), glow: glowShareNow(run),
         lantern: worn.flatMap((f) => (f ? [{ id: f.id, level: f.level }] : [])),
         piece: run.piece?.taken ? data.lantern.pieces[run.piece.index]!.id : null,
       };
@@ -890,9 +911,27 @@ async function boot(): Promise<void> {
         guard(250);
       }
     },
-    takeBoon(index) {
+    takeFlame(index) {
       if (!run || performance.now() < guardUntil) return;
-      if (takeBoon(run, index)) audio.play('ui-confirm');
+      const paid = run.totemOffers[index] ? offerCost(run, run.totemOffers[index]!) : 0;
+      if (takeFlame(run, index)) audio.play(paid > 0 ? 'buy' : 'ui-confirm');
+      else audio.play('refuse');
+    },
+    feedFlame(index) {
+      if (!run) return;
+      if (feedOffer(run, index)) {
+        audio.play('ui-move');
+        syncTotem();
+      } else {
+        audio.play('refuse');
+      }
+    },
+    unfeedFlame(index) {
+      if (!run) return;
+      if (unfeedOffer(run, index)) {
+        audio.play('ui-back');
+        syncTotem();
+      }
     },
     takeEvolution(index) {
       if (!run || performance.now() < guardUntil) return;
@@ -1363,7 +1402,7 @@ async function boot(): Promise<void> {
         audio.play('chest', 0.9);
         guard(350);
       } else if (r.phase === 'totem' && overlay.value !== 'totem') {
-        totemState.value = r.totemChoices.slice();
+        syncTotem();
         overlay.value = 'totem';
         guard(350);
       } else if (r.phase === 'shop' && overlay.value !== 'shop') {
@@ -1491,7 +1530,7 @@ async function boot(): Promise<void> {
           if (run.phase === 'levelup') takeCard(run, 0);
           else if (run.phase === 'chest') closeChest(run);
           else if (run.phase === 'forge') takeEvolution(run, 0);
-          else if (run.phase === 'totem') takeBoon(run, 0);
+          else if (run.phase === 'totem') takeFlame(run, 0);
           else if (run.phase === 'shop') {
             // En tutoriel, le robot achète la première carte qu'il peut payer : c'est la leçon.
             const pick = tuto ? shopItems(run).findIndex((item) => item.card !== null && canBuy(run!, item)) : -1;

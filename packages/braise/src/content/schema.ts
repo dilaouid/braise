@@ -123,8 +123,7 @@ export const statBonusSchema = z
   })
   .strict();
 
-/** Un buff de totem ou une trouvaille : un bonus de statistiques pour la partie. */
-export const boonSchema = z.object({ id: z.string().regex(/^boon\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
+/** Une trouvaille : un bonus de statistiques pour la partie. */
 export const findSchema = z.object({ id: z.string().regex(/^find\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
 
 /** Ce qu'une pièce de la Lanterne change aux règles d'une partie. Une clé absente ne change rien. */
@@ -150,6 +149,48 @@ export const runModsSchema = z
     eliteHpMult: z.number().positive().optional(),
     /** Part des points de vie rendue par la première résurrection (0 : la part habituelle). */
     firstReviveShare: z.number().positive().max(1).optional(),
+    /** Charges de ruée en plus de la première. */
+    dashCharges: z.number().int().positive().optional(),
+    /** Dégâts par tic des braises que la ruée laisse au sol. */
+    dashTrail: z.number().positive().optional(),
+    /** Dégâts par tic de la Brûlure donnée aux Éteints dans le disque de lumière. */
+    haloBurn: z.number().positive().optional(),
+    /** Chance de critique gagnée par point de Lueur sous 100 %. */
+    shadowCrit: z.number().positive().optional(),
+    /** Toutes les N secondes, les gemmes de la carte volent vers le héros. */
+    recallEvery: z.number().positive().optional(),
+  })
+  .strict();
+
+export const RARITY_NAMES = ['common', 'rare', 'epic', 'legendary', 'mythic'] as const;
+export const raritySchema = z.enum(RARITY_NAMES);
+
+const flameTierSchema = z
+  .object({
+    rarity: raritySchema,
+    stats: statBonusSchema.default({}),
+    mods: runModsSchema.default({}),
+    /** Élites qui surgissent quand la Flamme est prise. */
+    elites: z.number().int().min(0).default(0),
+  })
+  .strict();
+
+/** Les Flammes des totems : des lignées, chacune en plusieurs raretés, et le prix en Lueur pour les nourrir. */
+export const flamesSchema = z
+  .object({
+    /** Points de Lueur pour atteindre chaque rareté depuis la précédente ; le premier vaut 0. */
+    costs: z.array(z.number().min(0)).length(RARITY_NAMES.length),
+    /** Part de la Lueur de base sous laquelle on ne peut plus nourrir. */
+    floor: z.number().min(0).max(1),
+    /** Flammes de chaque rareté qu'une partie peut porter ; 0 : sans limite. */
+    caps: z.array(z.number().int().min(0)).length(RARITY_NAMES.length),
+    /** La Chance fait arriver une carte déjà nourrie d'un cran. */
+    fed: z.object({ perLuck: z.number().min(0), max: z.number().min(0).max(1) }).strict(),
+    /** Points de Lueur brûlée que rembourse un braséro rallumé. */
+    brazierRefund: z.number().min(0),
+    halo: z.object({ tick: z.number().positive() }).strict(),
+    trail: z.object({ radius: z.number().positive(), duration: z.number().positive(), tick: z.number().positive(), spacing: z.number().positive() }).strict(),
+    lines: z.array(z.object({ id: z.string().regex(/^flame\.[a-z-]+$/), icon: z.string(), tiers: z.array(flameTierSchema) }).strict()),
   })
   .strict();
 
@@ -639,7 +680,7 @@ export type CampObject = CampDef['objects'][number];
 export type RunModsRaw = z.infer<typeof runModsSchema>;
 export type PieceEffect = z.infer<typeof pieceEffectSchema>;
 export type LanternRaw = z.infer<typeof lanternSchema>;
-export type BoonDef = z.infer<typeof boonSchema>;
+export type FlamesRaw = z.infer<typeof flamesSchema>;
 export type FindDef = z.infer<typeof findSchema>;
 export type EnemyRaw = z.infer<typeof enemySchema>;
 export type RegionRaw = z.infer<typeof regionSchema>;

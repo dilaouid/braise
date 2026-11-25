@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { GameData } from '../content/index.ts';
 import { FR } from '../content/index.ts';
+import type { FeedBlock } from '../core/flames.ts';
 import type { RunResult } from '../core/rewards.ts';
 import type { HeroStats } from '../core/stats.ts';
 import type { Card, ChestResult, ShopItem } from '../core/types.ts';
@@ -54,6 +55,29 @@ export interface ShopState {
   kind: 'smith' | 'herbalist';
   gold: number;
   items: ShopEntry[];
+}
+
+/** Une Flamme proposée par le totem, telle que l'écran l'affiche. */
+export interface FlameCardState {
+  line: number;
+  rarity: number;
+  /** Points de Lueur que coûte la carte à sa rareté affichée. */
+  cost: number;
+  /** Ce qui empêche de la nourrir d'un cran de plus, ou null ; et ce que ce cran coûterait en plus. */
+  block: FeedBlock | null;
+  feedCost: number;
+  canUnfeed: boolean;
+  /** Points rendus en reprenant un cran. */
+  unfeedGain: number;
+  /** La Lueur qui resterait après l'avoir prise, en part de la Lueur de base. */
+  glowAfter: number;
+}
+
+/** L'écran du totem : ses cartes, la Lueur du moment (1 : 100 %), et la rareté la plus haute ouverte. */
+export interface TotemState {
+  cards: FlameCardState[];
+  glow: number;
+  open: number;
 }
 
 export interface ConfirmState {
@@ -116,7 +140,10 @@ export interface Actions {
   banish(index: number): void;
   skip(): void;
   closeChest(): void;
-  takeBoon(index: number): void;
+  /** Prend une Flamme du totem, la nourrit d'un cran, ou reprend un cran. */
+  takeFlame(index: number): void;
+  feedFlame(index: number): void;
+  unfeedFlame(index: number): void;
   takeEvolution(index: number): void;
   closeForge(): void;
   buy(index: number): void;
@@ -151,17 +178,17 @@ export const saveRev = signal(0);
 export const hud = signal<HudState | null>(null);
 export const levelUp = signal<LevelUpState | null>(null);
 export const chest = signal<ChestResult | null>(null);
-/** Les buffs proposés par le totem chargé (indices dans `data.boons`). */
-export const totemState = signal<number[] | null>(null);
+/** Les Flammes proposées par le totem chargé. */
+export const totemState = signal<TotemState | null>(null);
 /** Les armes qu'un braséro allumé propose de faire évoluer : indices dans `data.weapons`, avant et après. */
 export const forgeState = signal<Array<{ from: number; to: number }> | null>(null);
 export const shopState = signal<ShopState | null>(null);
 /** La trouvaille affichée : son indice (-2 : de l'or à la place) et cet or. */
 export const findState = signal<{ find: number; gold: number } | null>(null);
-/** Ce que l'écran de pause montre en plus : buffs, trouvailles, pièces de Lanterne posées, et celle ramassée. */
+/** Ce que l'écran de pause montre en plus : Flammes, trouvailles, pièces de Lanterne posées, celle ramassée, et la Lueur (1 : 100 %). */
 export const runExtras = signal<{
-  boons: number[]; finds: number[]; lantern: Array<{ id: string; level: number }>; piece: string | null;
-}>({ boons: [], finds: [], lantern: [], piece: null });
+  flames: Array<{ line: number; rarity: number }>; finds: number[]; lantern: Array<{ id: string; level: number }>; piece: string | null; glow: number;
+}>({ flames: [], finds: [], lantern: [], piece: null, glow: 1 });
 export const confirm = signal<ConfirmState | null>(null);
 export const ending = signal<{ result: RunResult; summary: RunSummary; stats: HeroStats } | null>(null);
 export const pauseReason = signal<string | null>(null);

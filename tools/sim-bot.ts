@@ -138,7 +138,7 @@ for (let r = 0; r < runs; r++) {
   totalAshes += res.ashesKept;
   totalXp += res.heroXp;
   totalKills += run.hero.kills;
-  totalBoons += run.boons.length;
+  totalBoons += run.flames.length;
   totalFinds += run.finds.length;
   totalBuys += run.smithBuys + run.serviceBuys.reduce((a, b) => a + b, 0);
   totalSpent += run.hero.goldSpent;
