@@ -435,6 +435,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   for (const r of Object.values(regions)) needText(`${r.id}.name`);
   for (const c of Object.values(classes)) {
     needText(`${c.id}.name`);
+    for (const key of ['who', 'trait.name', 'trait.bonus', 'trait.malus']) needText(`${c.id}.${key}`);
     needText(`${c.skill.id}.name`);
     needText(`${c.skill.id}.desc`);
     needText(`${c.ultimate.id}.name`);

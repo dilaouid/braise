@@ -388,7 +388,8 @@ export const classSchema = z
     growth: z.object({ every: attributeSchema, even: attributeSchema, odd: attributeSchema }).strict(),
     freeProfile: z.array(attributeSchema).min(1),
     startWeapon: weaponId,
-    passive: z.object({ kind: z.literal('closeDamage'), range: z.number(), bonus: z.number() }).strict(),
+    /** Le trait du personnage : toujours un bonus et un malus. « lit » : les dégâts changent selon que la cible est dans sa lumière ou non. */
+    trait: z.object({ kind: z.literal('lit'), inside: z.number().positive(), outside: z.number().negative() }).strict(),
     skill: z
       .object({
         id: id('skill'),

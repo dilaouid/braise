@@ -4,7 +4,11 @@
 
   "region.ash-woods.name": "Le Bois des Cendres",
   "class.ash-blade.name": "Lame-Cendre",
-  "class.ash-blade.desc": "Mêlée, au cœur de la horde. +10 % de dégâts contre les ennemis tout proches.",
+  "class.ash-blade.desc": "Mêlée, au cœur de la horde. Plus fort dans sa lumière, plus faible dehors.",
+  "class.ash-blade.who": "Moon",
+  "class.ash-blade.trait.name": "Guidé par la lanterne",
+  "class.ash-blade.trait.bonus": "+10 % de dégâts sur les Éteints dans sa lumière.",
+  "class.ash-blade.trait.malus": "−10 % de dégâts sur les Éteints hors de sa lumière.",
 
   "skill.ember-cry.name": "Cri de braise",
   "skill.ember-cry.desc": "Repousse les ennemis autour de toi et donne +25 % de dégâts pendant 5 s.",

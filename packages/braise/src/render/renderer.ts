@@ -1076,8 +1076,8 @@ export class GameRenderer {
     this.drawFx(run, dt, paused, top2, g, hx, hy, camX, camY);
     this.drawOverlay(run, time, camX, camY);
 
-    // La lueur : un disque chaud autour de la lanterne ; son rayon est la statistique Lueur plus 24 px.
-    let glow = hero.stats.glow + 24 + Math.round(Math.sin(time * 1.6) * 2);
+    // La lueur : un disque chaud autour de la lanterne ; son rayon est le rayon éclairé (la Lueur plus sa marge).
+    let glow = hero.stats.glow + run.data.tuning.hero.lightMargin + Math.round(Math.sin(time * 1.6) * 2);
     if (run.phase === 'dead') {
       this.deathFade = Math.min(1.2, this.deathFade + dt * 0.8);
       glow *= Math.max(0, 1 - this.deathFade);

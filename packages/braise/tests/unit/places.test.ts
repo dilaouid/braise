@@ -389,7 +389,8 @@ describe('robot explorateur', () => {
     let flames = 0;
     let spent = 0;
     let finds = 0;
-    for (const seed of [201, 202, 203]) {
+    // Six graines : sur trois seulement, le robot peut mourir avant d'avoir rien acheté.
+    for (const seed of [201, 202, 203, 204, 205, 206]) {
       const run = simulate(makeRun(seed, makeSave(10), true), { bot: explorerBot, pickCard: plannedPick, maxSteps: 20 * 3600 });
       expect(run.phase === 'dead' || run.phase === 'victory', `graine ${seed} : ${run.phase} à ${run.time.toFixed(0)} s`).toBe(true);
       flames += run.flames.length;

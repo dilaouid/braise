@@ -33,6 +33,7 @@ describe('modificateurs de partie', () => {
     expect(NEUTRAL_MODS).toEqual({
       gemsPerHeal: 0, noFlask: false, dashBurn: 0, dashBurnRadius: 0, dashCooldownMult: 1, lowHpPower: 0, lowHpShare: 0,
       healMult: 1, threatMult: 1, ultChargeMult: 1, skillCooldownMult: 1, eliteKillPower: 0, eliteHpMult: 1, firstReviveShare: 0,
+      dashCharges: 0, dashTrail: 0, haloBurn: 0, shadowCrit: 0, recallEvery: 0,
     });
   });
 
