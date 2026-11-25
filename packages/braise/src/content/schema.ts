@@ -58,11 +58,37 @@ export const weaponParamsSchema = z
     fissureLength: z.number().optional(),
     fissureWidth: z.number().optional(),
     fissureDamage: z.number().optional(),
+    // lumière et ruée (Lisière, Guet d'orage, Veilleuses, Sillage)
+    freeze: z.boolean().optional(),
+    shock: z.boolean().optional(),
+    /** Épaisseur du bord coupant. */
+    band: z.number().positive().optional(),
+    /** Part de dégâts en plus quand toute la Lueur manque. */
+    bite: z.number().nonnegative().optional(),
+    jumps: z.number().int().nonnegative().optional(),
+    jumpRange: z.number().positive().optional(),
+    jumpsIntoLight: z.boolean().optional(),
+    /** Rayon d'une Veilleuse, en part du disque de lumière. */
+    radiusShare: z.number().positive().optional(),
+    /** Durée d'une Veilleuse ou d'un fil. */
+    life: z.number().positive().optional(),
+    /** Combien de Veilleuses ou de fils vivent à la fois. */
+    max: z.number().int().positive().optional(),
+    /** Distance des Veilleuses posées en plus de la première. */
+    scatter: z.number().nonnegative().optional(),
+    linkRange: z.number().positive().optional(),
+    linkDamage: z.number().positive().optional(),
+    linkWidth: z.number().positive().optional(),
+    width: z.number().positive().optional(),
+    /** Une ruée plus courte ne tend pas de fil. */
+    minLength: z.number().nonnegative().optional(),
+    crossRadius: z.number().positive().optional(),
+    crossDamage: z.number().positive().optional(),
   })
   .strict();
 
 const aimSchema = z.enum(['nearest', 'directed', 'around', 'orbit', 'random', 'placed']);
-const behaviorSchema = z.enum(['arc', 'projectile', 'orbit', 'lob', 'nova']);
+const behaviorSchema = z.enum(['arc', 'projectile', 'orbit', 'lob', 'nova', 'verge', 'chain', 'lamp', 'wake']);
 
 export const weaponSchema = z
   .object({
@@ -433,6 +459,8 @@ export const altarBoostSchema = z
     perRank: statBonusSchema,
     /** La rareté de Flamme que ce boost ouvre, au lieu d'un bonus chiffré. */
     unlock: z.enum(['epic', 'legendary', 'mythic']).optional(),
+    /** L'arme que ce boost ouvre, avec sa relique. */
+    weapon: weaponId.optional(),
     /** Le boost qu'il faut posséder avant d'acheter celui-ci. */
     requires: id('altar').optional(),
   })

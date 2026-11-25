@@ -48,6 +48,8 @@ const PARAM_DEFAULTS: WeaponParams = {
   active: 0, pause: 0, hitInterval: 0.5, orbRadius: 6, turnTime: 2, rings: 1, ringGap: 0, sparkEvery: 0, sparkDamage: 0,
   impactRadius: 0, flight: 0.5, puddleRadius: 0, puddleDuration: 0, puddleDamage: 0, puddleTick: 0.5, puddleGrow: 0,
   knockback: 0, stun: 0, waves: 1, fissures: 0, fissureLength: 0, fissureWidth: 0, fissureDamage: 0,
+  freeze: false, shock: false, band: 0, bite: 0, jumps: 0, jumpRange: 0, jumpsIntoLight: false,
+  radiusShare: 0, life: 0, max: 0, scatter: 0, linkRange: 0, linkDamage: 0, linkWidth: 0, width: 0, minLength: 0, crossRadius: 0, crossDamage: 0,
 };
 
 export interface WeaponDef {
@@ -57,7 +59,7 @@ export interface WeaponDef {
   damageType: number;
   scale: Attribute;
   aim: 'nearest' | 'directed' | 'around' | 'orbit' | 'random' | 'placed';
-  behavior: 'arc' | 'projectile' | 'orbit' | 'lob' | 'nova';
+  behavior: 'arc' | 'projectile' | 'orbit' | 'lob' | 'nova' | 'verge' | 'chain' | 'lamp' | 'wake';
   /** Indice de la relique liée. */
   relic: number;
   /** Indice de la forme évoluée, ou -1 pour une arme déjà évoluée. */
@@ -228,6 +230,9 @@ function check<T>(schema: z.ZodType<T>, value: unknown, file: string, errors: st
   return null;
 }
 
+/** Les comportements sans rechargement : une arme permanente, ou déclenchée par la ruée. */
+const NO_COOLDOWN: string[] = ['orbit', 'verge', 'wake'];
+
 function fill(p: WeaponParamsRaw): WeaponParams {
   return { ...PARAM_DEFAULTS, ...p } as WeaponParams;
 }
@@ -270,7 +275,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   unique(altar.map((a) => a.id), 'altar.json');
   for (const a of altar) {
     if (a.requires !== undefined && !altar.some((b) => b.id === a.requires)) errors.push(`${a.id}: référence inconnue « ${a.requires} »`);
-    if (a.unlock === undefined && Object.keys(a.perRank).length === 0) errors.push(`${a.id}: aucun effet`);
+    if (a.unlock === undefined && a.weapon === undefined && Object.keys(a.perRank).length === 0) errors.push(`${a.id}: aucun effet`);
   }
   for (const rarity of ['epic', 'legendary', 'mythic'] as const) {
     if (altar.filter((a) => a.unlock === rarity).length !== 1) errors.push(`altar.json: il faut un seul boost pour ouvrir « ${rarity} »`);
@@ -321,7 +326,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       evolved: false, from: -1, starting: w.starting, levels: w.levels.map(fill),
     });
     for (let l = 0; l < w.levels.length; l++) {
-      if (w.behavior !== 'orbit' && w.levels[l]!.cooldown === undefined) errors.push(`${w.id}: niveau ${l + 1} sans rechargement`);
+      if (!NO_COOLDOWN.includes(w.behavior) && w.levels[l]!.cooldown === undefined) errors.push(`${w.id}: niveau ${l + 1} sans rechargement`);
     }
   }
   for (const e of evolutionsRaw) {
@@ -407,6 +412,12 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     const total = c.attributes.str + c.attributes.agi + c.attributes.spi + c.attributes.vig + c.attributes.luck;
     if (total !== 25) errors.push(`${c.id}: ${total} points d'attribut au niveau 1 au lieu de 25`);
     classes[c.id] = { ...c, startWeaponIndex: ref(weaponIndex, c.startWeapon, c.id) };
+  }
+
+  for (const b of altar) {
+    if (b.weapon === undefined) continue;
+    const opened = weapons[ref(weaponIndex, b.weapon, b.id)];
+    if (opened && (opened.starting || opened.evolved)) errors.push(`${b.id}: « ${b.weapon} » ne s'achète pas (arme de départ ou évolution)`);
   }
 
   // Chaque identifiant a ses textes.

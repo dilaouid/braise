@@ -28,5 +28,25 @@
     "id": "weapon.quake", "icon": "icon-evo-quake", "from": "weapon.hearth-hammer", "relic": "relic.portable-anvil",
     "damageType": "physical", "scale": "str", "aim": "around", "behavior": "nova",
     "params": { "damage": 70, "cooldown": 2.8, "radius": 96, "knockback": 160, "stun": 0.5, "waves": 2, "fissures": 8, "fissureLength": 340, "fissureWidth": 16, "fissureDamage": 45 }
+  },
+  {
+    "id": "weapon.solstice", "icon": "icon-evo-solstice", "from": "weapon.verge", "relic": "relic.winter-scarf",
+    "damageType": "frost", "scale": "spi", "aim": "around", "behavior": "verge",
+    "params": { "damage": 22, "band": 22, "hitInterval": 1, "bite": 0.8, "freeze": true, "rings": 2 }
+  },
+  {
+    "id": "weapon.black-storm", "icon": "icon-evo-black-storm", "from": "weapon.storm-watch", "relic": "relic.copper-coil",
+    "damageType": "lightning", "scale": "spi", "aim": "nearest", "behavior": "chain",
+    "params": { "damage": 20, "cooldown": 1.6, "range": 180, "count": 3, "jumps": 6, "jumpRange": 80, "shock": true, "jumpsIntoLight": true }
+  },
+  {
+    "id": "weapon.garland", "icon": "icon-evo-garland", "from": "weapon.nightlights", "relic": "relic.hollow-lantern",
+    "damageType": "fire", "scale": "spi", "aim": "placed", "behavior": "lamp",
+    "params": { "damage": 6, "cooldown": 4.5, "count": 3, "radiusShare": 0.6, "life": 9, "hitInterval": 0.5, "max": 8, "scatter": 60, "linkRange": 140, "linkDamage": 10, "linkWidth": 10, "burn": true }
+  },
+  {
+    "id": "weapon.web", "icon": "icon-evo-web", "from": "weapon.wake", "relic": "relic.copper-sole",
+    "damageType": "lightning", "scale": "agi", "aim": "placed", "behavior": "wake",
+    "params": { "damage": 22, "hitInterval": 0.5, "width": 16, "life": 4, "max": 3, "minLength": 20, "shock": true, "crossRadius": 48, "crossDamage": 45 }
   }
 ]
