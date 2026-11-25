@@ -342,6 +342,24 @@ export function feedAndPick(run: Run, policy: FeedPolicy): number {
   return best;
 }
 
+/**
+ * Marche vers un point en contournant les obstacles : tout droit si la voie est libre, sinon la première
+ * direction libre en tournant toujours du même côté (le robot longe l'obstacle au lieu d'osciller).
+ */
+function walkAround(run: Run, input: StepInput, tx: number, ty: number): void {
+  const hero = run.hero;
+  const base = Math.atan2(ty - hero.y, tx - hero.x);
+  for (let k = 0; k <= 7; k++) {
+    const a = base + k * 0.45;
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+    if (k < 7 && (isSolidAt(run.map, hero.x + dx * 12, hero.y + dy * 12) || isSolidAt(run.map, hero.x + dx * 26, hero.y + dy * 26))) continue;
+    input.moveX = dx;
+    input.moveY = dy;
+    return;
+  }
+}
+
 export interface SimOptions {
   bot: Bot;
   /** Carte choisie à chaque montée de niveau (0 : toujours la première). */
@@ -403,13 +421,7 @@ export function simulate(run: Run, options: SimOptions): Run {
     options.bot(run, input);
     // Après le boss, le robot rentre par le portail, ou par le Souvenir que le boss a laissé.
     const portal = run.map.pois.find((p) => (p.kind === 'portal' || p.kind === 'memory') && p.state === 0);
-    if (portal) {
-      const dx = portal.x - run.hero.x;
-      const dy = portal.y - run.hero.y;
-      const d = Math.hypot(dx, dy) || 1;
-      input.moveX = dx / d;
-      input.moveY = dy / d;
-    }
+    if (portal) walkAround(run, input, portal.x, portal.y);
     stepRun(run, input);
     run.evCount = 0;
     options.onStep?.(run);
