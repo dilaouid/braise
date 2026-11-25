@@ -90,6 +90,7 @@ const CREAM_PALE = 0.5;
 const SPRITE_ANCHOR: Record<string, number> = { 'boss-guetteur': 0.84 };
 /** Les clips d'annonce du Cerf, dans l'ordre de ses attaques (charge, racines, onde, traque, volée, rugissement). */
 const STAG_TELL_CLIPS = ['charge', 'roots', 'stomp', 'stalk', 'volley', 'roar'];
+const STAG_TELL_FPS = 14;
 /** Hauteur d'une bulle au-dessus de la position de Moon et de Cream. */
 const EMOTE_UP_MOON = 34;
 const EMOTE_UP_CREAM = 24;
@@ -944,11 +945,11 @@ export class GameRenderer {
       let frame = frozen ? 0 : Math.floor(time * 10 + (e.uid[i]! % 7)) % frames.length;
       const tellDir = run.director;
       if (tellDir.bossTellT >= 0 && e.uid[i] === tellDir.bossUid && !frozen) {
-        // La pose de l'attaque qui vient : jouée une fois, la dernière image tenue, au même pas que la marche.
+        // La pose de l'attaque qui vient : jouée une fois, plus vite que la marche pour être finie avant le marqueur, la dernière image tenue.
         const clip = (white ? this.stagTellWhite : this.stagTell)[kind]?.[tellDir.bossTell >= 0 ? tellDir.bossTell : tellDir.bossLast];
         if (clip && clip[0] !== Texture.EMPTY) {
           frames = clip;
-          frame = Math.min(clip.length - 1, Math.floor(tellDir.bossTellT * 10));
+          frame = Math.min(clip.length - 1, Math.floor(tellDir.bossTellT * STAG_TELL_FPS));
         }
       }
       s.texture = frames[frame]!;

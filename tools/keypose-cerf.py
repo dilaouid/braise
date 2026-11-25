@@ -1,18 +1,33 @@
 """Compose les images clés de pose du Cerf à partir de l'image 0 de sa marche.
 
-usage : python keyposes.py <source.png> <sortie_dir>
+usage : python tools/keypose-cerf.py <source.png> <sortie_dir> [flip=1] [pivot=x,y] [cut=y] [eye=x,y] [feet=x,y] [xmax=n] [atop=n]
 La tête (bois compris) tourne autour du garrot ; une pose 'cabre' fait basculer tout le corps autour des sabots arrière.
+Les réglages par défaut sont ceux du Cerf sans lumière (tête à gauche). `flip=1` retourne l'image avant de composer
+et la rend retournée à nouveau : pour un Cerf dont la tête est à droite, donner les repères de l'image retournée.
 """
 import sys, os
 from PIL import Image
 
 src, out = sys.argv[1], sys.argv[2]
+opts = dict(a.split('=', 1) for a in sys.argv[3:])
+
+
+def pair(key, default):
+    return tuple(int(v) for v in opts[key].split(',')) if key in opts else default
+
+
 os.makedirs(out, exist_ok=True)
+FLIP = opts.get('flip') == '1'
 base = Image.open(src).convert('RGBA')
+if FLIP:
+    base = base.transpose(Image.FLIP_LEFT_RIGHT)
 W, H = base.size
-PIVOT = (52, 66)      # le garrot : la tête et les bois tournent autour
-HEAD_CUT = 66         # au-dessus de cette ligne : tête et bois
-FEET = (90, 117)      # les sabots arrière
+PIVOT = pair('pivot', (52, 66))      # le garrot : la tête et les bois tournent autour
+HEAD_CUT = int(opts.get('cut', 66))  # au-dessus de cette ligne : tête et bois
+FEET = pair('feet', (90, 117))       # les sabots arrière
+EYE = pair('eye', (44, 54))          # l'œil
+XMAX = int(opts.get('xmax', 100))    # à droite de cette colonne, sous les bois : le corps
+ATOP = int(opts.get('atop', 0))      # au-dessus de cette ligne, quelle que soit la colonne : les bois
 
 
 def split(img):
@@ -24,7 +39,7 @@ def split(img):
             p = ip[x, y]
             if p[3] == 0:
                 continue
-            if y < HEAD_CUT and x < 100:
+            if (y < HEAD_CUT and x < XMAX) or y < ATOP:
                 hp[x, y] = p
             else:
                 bp[x, y] = p
@@ -62,9 +77,10 @@ def compose(head_angle=0, head_dx=0, head_dy=0, body_angle=0, body_dy=0, glow=No
         tint(head, (0, 0, 128, 47), (255, 61, 129), 0.85 if glow == 'antlers' else 0.5)
     elif glow in ('eyes', 'eyes_small'):
         px = head.load()
-        core = ((43, 54), (44, 54), (45, 54), (44, 53), (44, 55))
-        halo = ((42, 54), (46, 54), (43, 53), (45, 53), (43, 55), (45, 55))
-        wide = ((41, 54), (47, 54), (42, 53), (46, 53), (42, 55), (46, 55), (43, 52), (44, 52), (45, 52), (43, 56), (44, 56), (45, 56))
+        ex, ey = EYE
+        core = tuple((ex + a, ey + b) for a, b in ((-1, 0), (0, 0), (1, 0), (0, -1), (0, 1)))
+        halo = tuple((ex + a, ey + b) for a, b in ((-2, 0), (2, 0), (-1, -1), (1, -1), (-1, 1), (1, 1)))
+        wide = tuple((ex + a, ey + b) for a, b in ((-3, 0), (3, 0), (-2, -1), (2, -1), (-2, 1), (2, 1), (-1, -2), (0, -2), (1, -2), (-1, 2), (0, 2), (1, 2)))
         for (x, y) in (core if glow == 'eyes_small' else core + halo):
             px[x, y] = (255, 61, 129, 255)
         if glow == 'eyes':
@@ -99,6 +115,8 @@ for r, name in enumerate(names):
     end_kw, start_kw = POSES[name]
     for c, (tag, kw) in enumerate((('start', start_kw), ('end', end_kw))):
         img = compose(**kw)
+        if FLIP:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
         img.save(os.path.join(out, f'{name}-{tag}.png'))
         sheet.alpha_composite(img, (c * W, r * H))
 sheet.save(os.path.join(out, 'sheet.png'))

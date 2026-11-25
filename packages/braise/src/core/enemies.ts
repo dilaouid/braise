@@ -176,6 +176,8 @@ const ST_VOLLEY = 5;
 
 /** Combien de temps avant son coup le Cerf prend la pose de l'attaque (moins si son souffle est plus court). */
 export const STAG_TELL = 0.5;
+/** Combien de temps, depuis le début de l'annonce, il tient la pose de chaque attaque : jusqu'au coup, ou presque. */
+export const STAG_POSE = [1.3, 1.4, 1.35, 1.25, 1.2, 1.8];
 
 /** Le tirage de la prochaine attaque : une de la phase, jamais deux fois la même d'affilée. */
 function stagPick(run: Run, phase: number): number {
@@ -342,7 +344,10 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
     }
   }
   const state = e.state[i]!;
-  if (dir.bossTellT >= 0) dir.bossTellT += dt;
+  if (dir.bossTellT >= 0) {
+    dir.bossTellT += dt;
+    if (dir.bossTellT > (STAG_POSE[dir.bossTell >= 0 ? dir.bossTell : dir.bossLast] ?? 1.3)) dir.bossTellT = -1;
+  }
   if (state === ST_IDLE) {
     approach(run, i, dx, dy, speed * (phase === 3 ? 1.2 : 1), false, 12, dt);
     e.timer2[i]! -= dt;

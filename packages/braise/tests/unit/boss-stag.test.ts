@@ -245,6 +245,16 @@ describe('les annonces du Cerf', () => {
     expect(run.director.bossTellT).toBe(-1);
   });
 
+  it('il relâche sa pose vers le moment du coup, bien avant la fin de l\'onde', () => {
+    const { run, i } = makeStag();
+    attackNow(run, i, STOMP);
+    for (let k = 0; k < STEPS(1.2); k++) updateEnemies(run, DT);
+    expect(run.director.bossTellT).toBeGreaterThanOrEqual(0);
+    for (let k = 0; k < STEPS(0.3); k++) updateEnemies(run, DT);
+    expect(run.enemies.state[i]).toBe(3);
+    expect(run.director.bossTellT).toBe(-1);
+  });
+
   it('le temps de pose retombe quand l\'attaque est finie', () => {
     const { run, i } = makeStag();
     attackNow(run, i, STOMP);
