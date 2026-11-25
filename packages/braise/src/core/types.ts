@@ -354,6 +354,8 @@ export interface Hero {
 export interface Director {
   budget: number;
   bank: number;
+  /** La sorte d'ennemi tirée au sort qui attend son prix (-1 : aucune). */
+  nextKind: number;
   breathT: number;
   second: number;
   waveIdx: number;

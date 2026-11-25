@@ -246,13 +246,16 @@ export function updateDirector(run: Run, dt: number): void {
       d.budget = 0;
       break;
     }
-    const kind = rng.weighted(weights);
+    // La sorte tirée attend que le budget la paie : sinon les moins chères passeraient toujours devant.
+    if (d.nextKind < 0 || weights[d.nextKind]! <= 0) d.nextKind = rng.weighted(weights);
+    const kind = d.nextKind;
     if (kind < 0) break;
     const def = enemies[kind]!;
     const pack = def.pack ?? 1;
     const cost = def.cost * pack;
     if (d.budget < cost) break;
     d.budget -= cost;
+    d.nextKind = -1;
     let hpMult = run.hpScaleNow;
     if (d.bank >= cost) {
       d.bank -= cost;
