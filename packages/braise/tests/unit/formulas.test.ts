@@ -8,8 +8,8 @@ const t = data.tuning;
 describe('formules de l\'expédition (document 02 §11)', () => {
   it('expérience de partie par niveau', () => {
     expect(runXpForNext(1, t.xp)).toBe(8);
-    expect(runXpForNext(10, t.xp)).toBe(159);
-    expect(runXpForNext(20, t.xp)).toBe(555);
+    expect(runXpForNext(10, t.xp)).toBe(139);
+    expect(runXpForNext(20, t.xp)).toBe(465);
   });
 
   it('expérience cumulée : repères du document 12 §1', () => {
@@ -18,10 +18,10 @@ describe('formules de l\'expédition (document 02 §11)', () => {
       for (let l = 1; l < level; l++) total += runXpForNext(l, t.xp);
       return total;
     };
-    expect(cumulative(5)).toBe(85);
-    expect(cumulative(10)).toBe(533);
-    expect(cumulative(20)).toBe(3709);
-    expect(cumulative(30)).toBe(11925);
+    expect(cumulative(5)).toBe(82);
+    expect(cumulative(10)).toBe(483);
+    expect(cumulative(20)).toBe(3184);
+    expect(cumulative(30)).toBe(10000);
   });
 
   it('échelle des ennemis', () => {

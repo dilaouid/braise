@@ -18,11 +18,11 @@
   "borderDecor": "decor-arbre",
   "horde": [
     { "from": 0, "to": 1, "weights": { "enemy.crawler": 100 } },
-    { "from": 1, "to": 3, "weights": { "enemy.crawler": 75, "enemy.soot-bat": 25 } },
-    { "from": 3, "to": 5.5, "weights": { "enemy.crawler": 55, "enemy.soot-bat": 25, "enemy.soot-spitter": 20 } },
-    { "from": 5.5, "to": 8, "weights": { "enemy.crawler": 45, "enemy.soot-bat": 20, "enemy.soot-spitter": 20, "enemy.dead-stump": 15 } },
-    { "from": 8, "to": 12, "weights": { "enemy.crawler": 35, "enemy.soot-bat": 20, "enemy.soot-spitter": 15, "enemy.dead-stump": 15, "enemy.ash-swarm": 15 } },
-    { "from": 12, "to": 15, "weights": { "enemy.crawler": 30, "enemy.soot-bat": 20, "enemy.soot-spitter": 15, "enemy.dead-stump": 20, "enemy.ash-swarm": 15 } }
+    { "from": 1, "to": 3, "weights": { "enemy.crawler": 100 } },
+    { "from": 3, "to": 5.5, "weights": { "enemy.crawler": 97, "enemy.soot-bat": 3 } },
+    { "from": 5.5, "to": 8, "weights": { "enemy.crawler": 95, "enemy.soot-bat": 2, "enemy.dead-stump": 3 } },
+    { "from": 8, "to": 12, "weights": { "enemy.crawler": 66, "enemy.soot-bat": 14, "enemy.soot-spitter": 1, "enemy.dead-stump": 7, "enemy.ash-swarm": 12 } },
+    { "from": 12, "to": 15, "weights": { "enemy.crawler": 58, "enemy.soot-bat": 14, "enemy.soot-spitter": 2, "enemy.dead-stump": 11, "enemy.ash-swarm": 15 } }
   ],
   "waves": [
     { "at": 0.75, "shape": "side", "enemy": "enemy.crawler", "count": 10 },
@@ -30,7 +30,11 @@
     { "at": 4, "shape": "line", "enemy": "enemy.soot-bat", "count": 20 },
     { "at": 7, "shape": "corners", "enemy": "enemy.dead-stump", "count": 4 },
     { "at": 9, "shape": "side", "enemy": "enemy.ash-swarm", "count": 60 },
-    { "at": 11, "shape": "side", "enemy": "enemy.ash-swarm", "count": 60 },
-    { "at": 13.5, "shape": "circle", "enemy": "enemy.crawler", "count": 40 }
+    { "at": 10.5, "shape": "circle", "enemy": "enemy.crawler", "count": 45 },
+    { "at": 11.25, "shape": "side", "enemy": "enemy.ash-swarm", "count": 100 },
+    { "at": 12, "shape": "line", "enemy": "enemy.soot-bat", "count": 50 },
+    { "at": 12.75, "shape": "corners", "enemy": "enemy.dead-stump", "count": 10 },
+    { "at": 13.5, "shape": "circle", "enemy": "enemy.crawler", "count": 60 },
+    { "at": 14.25, "shape": "side", "enemy": "enemy.ash-swarm", "count": 120 }
   ]
 }

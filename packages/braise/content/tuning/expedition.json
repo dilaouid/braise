@@ -5,7 +5,7 @@
   "startClearingTiles": 12,
   "borderTiles": 3,
   "obstacleCoverage": [0.06, 0.1],
-  "eliteMinutes": [5, 10],
+  "eliteMinutes": [5, 10, 12.5],
   "hero": {
     "speed": 90,
     "radius": 6,
@@ -41,7 +41,7 @@
     "overflowHpMult": 2,
     "waveWarning": 1
   },
-  "xp": { "base": 8, "linear": 6, "quadratic": 1.2 },
+  "xp": { "base": 8, "linear": 6, "quadratic": 0.95 },
   "death": { "keptShare": 0.5 },
   "victoryBonus": 1.2,
   "ultimate": { "gaugeMax": 100, "perKill": 1, "perElite": 10 },

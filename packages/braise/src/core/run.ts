@@ -90,7 +90,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
     zones: createZoneStore(), lamps: [], threads: [], telegraphs: createTelegraphStore(), pickups: createPickupStore(),
     director: {
-      budget: 0, bank: 0, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
+      budget: 0, bank: 0, nextKind: -1, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
       eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()),
       bossSpawned: false, bossUid: 0, bossPhase: 0, bossSummonT: 0, bossLast: -1, bossNext: -1, bossTell: -1, bossTellT: -1, bossDead: false,
       bossReformed: false, bossReformT: 0, bossShed: 0,
