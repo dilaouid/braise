@@ -1354,7 +1354,9 @@ async function boot(): Promise<void> {
           stepInput.moveY = f.moveY;
           stepInput.aimX = f.aimX;
           stepInput.aimY = f.aimY;
-          stepInput.dash = f.held.dash && now >= guardUntil;
+          // Espace et A confirment aussi les écrans de choix : tant que l'écran n'est pas refermé côté interface
+          // (la garde se pose plus bas), le bouton qui vient de choisir une carte ne doit pas lancer une ruée.
+          stepInput.dash = f.held.dash && now >= guardUntil && overlay.value === 'none';
           stepInput.skill = pendSkill;
           stepInput.ultimate = pendUlt;
           stepInput.flask = pendFlask;
