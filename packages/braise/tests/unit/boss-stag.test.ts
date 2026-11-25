@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { spawnEnemy } from '../../src/core/combat.ts';
-import { insideTelegraph, updateEnemies, updateTelegraphs } from '../../src/core/enemies.ts';
+import { contactDamage, insideTelegraph, updateEnemies, updateEnemyShots, updateTelegraphs } from '../../src/core/enemies.ts';
+import { idleInput, stepRun } from '../../src/core/run.ts';
+import { buildGrid } from '../../src/core/stores.ts';
 import { TG_CIRCLE, TG_LINE, TG_RING, type Run } from '../../src/core/types.ts';
-import { makeImmortal, makeRun } from './helpers.ts';
+import { data, makeImmortal, makeRun } from './helpers.ts';
 
 const CHARGE = 0;
 const ROOTS = 1;
@@ -167,5 +169,103 @@ describe('le Cerf sans lumière', () => {
     attackNow(run, i, ROOTS);
     for (let t = 0; t < 4 && run.director.bossLast === ROOTS; t += DT) updateEnemies(run, DT);
     expect(run.director.bossLast).toBe(STALK);
+  });
+});
+
+describe('les dégâts du Cerf et le temps', () => {
+  const TIMED = 1 + data.tuning.scale.dmgLin * data.tuning.durationMin;
+
+  /** Le Cerf à la quinzième minute, quand la horde frappe plus fort qu'au début. */
+  function lateStag(vigil = 1): { run: Run; i: number } {
+    const made = makeStag();
+    made.run.cfg.vigil = vigil;
+    made.run.time = data.tuning.durationMin * 60;
+    made.run.enemies.timer2[made.i] = 99;
+    stepRun(made.run, idleInput());
+    expect(made.run.enemies.count).toBe(1);
+    return made;
+  }
+
+  /** Les dégâts d'un contact avec un ennemi posé sur le héros. */
+  function contactWith(run: Run, i: number): number {
+    const before = run.hero.damageTaken;
+    run.hero.invuln = 0;
+    run.enemies.x[i] = run.hero.x;
+    run.enemies.y[i] = run.hero.y;
+    buildGrid(run);
+    contactDamage(run);
+    return run.hero.damageTaken - before;
+  }
+
+  function kindOf(id: string): number {
+    return data.enemies.findIndex((e) => e.id === id);
+  }
+
+  it('ses annonces frappent comme au début de la partie', () => {
+    const { run, i } = lateStag();
+    const def = data.enemies[run.region.bossIdx]!;
+    attackNow(run, i, STOMP);
+    expect(run.telegraphs.damage[0]).toBeCloseTo(def.stomp!.damage, 4);
+    attackNow(run, i, ROOTS);
+    expect(run.telegraphs.damage[0]).toBeCloseTo(def.roots!.damage, 4);
+    attackNow(run, i, ROAR);
+    expect(run.telegraphs.damage[0]).toBeCloseTo(def.slam!.damage, 4);
+    attackNow(run, i, STALK);
+    updateEnemies(run, DT);
+    expect(run.telegraphs.damage[0]).toBeCloseTo(def.stalk!.damage, 4);
+  });
+
+  it('son contact et sa charge aussi', () => {
+    const { run, i } = lateStag();
+    const def = data.enemies[run.region.bossIdx]!;
+    run.hero.stats.armor = 0;
+    run.enemies.state[i] = 0;
+    expect(contactWith(run, i)).toBe(def.damage);
+    run.enemies.state[i] = 2;
+    expect(contactWith(run, i)).toBe(def.charge!.damage);
+  });
+
+  it('ses éclats aussi', () => {
+    const { run, i } = lateStag();
+    const def = data.enemies[run.region.bossIdx]!;
+    run.hero.stats.armor = 0;
+    attackNow(run, i, VOLLEY);
+    run.enemies.timer[i] = 0;
+    updateEnemies(run, DT);
+    expect(run.enemyShots.count).toBe(def.volley!.shots);
+    run.enemyShots.count = 1;
+    run.enemyShots.x[0] = run.hero.x;
+    run.enemyShots.y[0] = run.hero.y - 6;
+    const before = run.hero.damageTaken;
+    run.hero.invuln = 0;
+    updateEnemyShots(run, DT);
+    expect(run.hero.damageTaken - before).toBe(def.volley!.damage);
+  });
+
+  it('la Veillée les durcit toujours', () => {
+    const { run, i } = lateStag(2);
+    attackNow(run, i, STOMP);
+    expect(run.telegraphs.damage[0]).toBeCloseTo(data.enemies[run.region.bossIdx]!.stomp!.damage * data.tuning.scale.dmgVigil, 4);
+  });
+
+  it('la horde et le Cerf de Cendre suivent toujours le temps', () => {
+    for (const id of ['enemy.crawler', 'boss.ash-stag']) {
+      const { run } = lateStag();
+      run.hero.stats.armor = 0;
+      run.enemies.count = 0;
+      const i = spawnEnemy(run, kindOf(id), run.hero.x, run.hero.y, 1);
+      expect(contactWith(run, i), id).toBe(Math.round(data.enemies[kindOf(id)]!.damage * TIMED));
+    }
+  });
+
+  it('au contact de deux ennemis, le coup le plus fort après échelle l\'emporte', () => {
+    const { run, i } = lateStag();
+    run.hero.stats.armor = 0;
+    const ash = spawnEnemy(run, kindOf('elite.dim-hunter'), run.hero.x, run.hero.y, 1);
+    run.enemies.state[i] = 0;
+    run.enemies.state[ash] = 0;
+    const hunter = Math.round(data.enemies[kindOf('elite.dim-hunter')]!.damage * TIMED);
+    expect(hunter).toBeGreaterThan(data.enemies[run.region.bossIdx]!.damage);
+    expect(contactWith(run, i)).toBe(hunter);
   });
 });

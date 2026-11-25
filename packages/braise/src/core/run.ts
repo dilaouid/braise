@@ -97,7 +97,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
       arenaX: 0, arenaY: 0, arenaR: 0,
       scratch: new Float32Array(kinds),
     },
-    dmgScale: 1, hpScaleNow: 1,
+    dmgScale: 1, dmgScaleFlat: 1, hpScaleNow: 1,
     pendingLevels: 0, cards: [], banned: new Set(), pityCount: 0,
     weaponPool: data.weapons.filter((w) => !w.evolved && (unlockedWeapons.has(w.id) || w.index === cls.startWeaponIndex)).map((w) => w.index),
     relicPool: data.relics.filter((r) => unlockedRelics.has(r.id)).map((r) => r.index),
@@ -488,6 +488,7 @@ export function stepRun(run: Run, input: StepInput): void {
   run.tick++;
   run.time += dt;
   // Le tutoriel ne durcit pas avec le temps.
+  run.dmgScaleFlat = run.tutorial ? 1 : enemyDamageScale(tuning.scale, 0, run.cfg.vigil - 1, 0);
   run.dmgScale = run.tutorial ? 1 : enemyDamageScale(tuning.scale, Math.min(run.time / 60, tuning.durationMin), run.cfg.vigil - 1, 0);
 
   updateDirector(run, dt);

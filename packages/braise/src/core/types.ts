@@ -511,6 +511,8 @@ export interface Run {
   director: Director;
   /** Multiplicateurs des dégâts et des points de vie des ennemis au temps courant. */
   dmgScale: number;
+  /** Le multiplicateur de dégâts sans le temps (la Veillée seule), pour les ennemis `flatDamage`. */
+  dmgScaleFlat: number;
   hpScaleNow: number;
   // Montée de niveau
   pendingLevels: number;

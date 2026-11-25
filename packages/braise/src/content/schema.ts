@@ -327,6 +327,8 @@ export const enemySchema = z
     weak: damageTypeSchema.nullable(),
     resist: damageTypeSchema.nullable(),
     knockbackResist: z.number().optional(),
+    /** Ses dégâts ne suivent pas l'échelle par minute, seulement celle de la Veillée. */
+    flatDamage: z.boolean().optional(),
     pack: z.number().int().optional(),
     shot: z
       .object({ damage: z.number(), speed: z.number(), interval: z.number(), keepDistance: z.number(), radius: z.number(), life: z.number() })

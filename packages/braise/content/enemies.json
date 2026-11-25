@@ -19,7 +19,7 @@
     "spawner": { "enemy": "enemy.crawler", "interval": 2, "max": 14 },
     "slam": { "damage": 15, "radius": 92, "telegraph": 0.9, "cooldown": 4.5, "triggerRange": 130 } },
   { "id": "boss.lightless-stag", "sprite": "boss-cerf", "family": "boss", "behavior": "boss-stag", "rank": "boss",
-    "hp": 30000, "damage": 25, "speed": 62, "cost": 0, "entryMinute": 15, "xp": 500, "radius": 30, "flying": false, "weak": null, "resist": null, "knockbackResist": 1,
+    "hp": 30000, "damage": 25, "speed": 62, "cost": 0, "entryMinute": 15, "xp": 500, "radius": 30, "flying": false, "weak": null, "resist": null, "knockbackResist": 1, "flatDamage": true,
     "phases": [0.66, 0.33],
     "pauses": [1.5, 1.1, 0.75],
     "charge": { "damage": 40, "telegraph": 0.8, "speed": 440, "distance": 330, "width": 72, "cooldown": 0.35, "repeats": 3, "triggerRange": 9999 },
