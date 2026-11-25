@@ -10,6 +10,7 @@
     "speed": 90,
     "radius": 6,
     "glow": 40,
+    "lightMargin": 24,
     "invulnAfterHit": 0.5,
     "critChance": 0.05,
     "critMult": 1.5,

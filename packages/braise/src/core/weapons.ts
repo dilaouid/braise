@@ -1,9 +1,10 @@
-import type { WeaponDef, WeaponParams } from '../content/index.ts';
+import { DMG_FIRE, type WeaponDef, type WeaponParams } from '../content/index.ts';
 import { hurtEnemy, knockEnemy, stunEnemy, healHero } from './combat.ts';
+import { tickLights, updateChain, updateLamp, updateVerge, updateWake } from './light-weapons.ts';
 import { effectiveCooldown } from './stats.ts';
 import { SHOT_HIT_MEMORY, emit, nearestEnemy, queryCircle, removeShot, removeZone } from './stores.ts';
 import {
-  CAP_SHOTS, CAP_ZONES, EV, HIT_BLEED, HIT_BURN, MAX_WEAPON_SLOTS, SHOT_HOMING, SHOT_LOB, SHOT_STRAIGHT, ZONE_PUDDLE,
+  CAP_SHOTS, CAP_ZONES, EV, HIT_BLEED, HIT_BURN, MAX_WEAPON_SLOTS, SHOT_HOMING, SHOT_LOB, SHOT_STRAIGHT, ZONE_PUDDLE, ZONE_TRAIL,
   type Run, type WeaponInstance,
 } from './types.ts';
 
@@ -382,6 +383,7 @@ function updateNova(run: Run, slot: number, w: WeaponInstance, def: WeaponDef, p
 
 /** Fait avancer toutes les armes d'un pas : rechargements, tirs, zones autour du héros. */
 export function updateWeapons(run: Run, dt: number): void {
+  tickLights(run, dt);
   for (let slot = 0; slot < run.weapons.length; slot++) {
     const w = run.weapons[slot]!;
     const def = run.data.weapons[w.def]!;
@@ -392,6 +394,10 @@ export function updateWeapons(run: Run, dt: number): void {
       case 'orbit': updateOrbit(run, slot, w, def, p, dt); break;
       case 'lob': updateLob(run, slot, w, def, p, dt); break;
       case 'nova': updateNova(run, slot, w, def, p, dt); break;
+      case 'verge': updateVerge(run, slot, def, p); break;
+      case 'chain': updateChain(run, slot, w, def, p, dt); break;
+      case 'lamp': updateLamp(run, slot, w, def, p, dt); break;
+      case 'wake': updateWake(run, slot, def, p); break;
     }
   }
 }
@@ -489,6 +495,12 @@ export function updateZones(run: Run, dt: number): void {
     z.tick[i]! -= dt;
     if (z.tick[i]! > 0) continue;
     z.tick[i]! += z.interval[i]!;
+    if (z.kind[i] === ZONE_TRAIL) {
+      // Les braises de la ruée : du feu, avec la Puissance du héros, sans arme créditée.
+      const hits = queryCircle(run, z.x[i]!, z.y[i]!, z.radius[i]!);
+      for (let k = 0; k < hits; k++) hurtEnemy(run, run.query[k]!, z.damage[i]!, DMG_FIRE, null, -1, 0);
+      continue;
+    }
     const slot = z.slot[i]!;
     const w = run.weapons[slot];
     if (!w) continue;

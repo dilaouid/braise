@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import type { AltarBoostRaw } from '../content/index.ts';
 import { altarCost, altarRank, altarSpent, canBuyAltarRank } from '../meta/altar.ts';
 import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
@@ -182,6 +183,36 @@ function describeBonus(id: string, rank: number): string {
   }
 }
 
+/** Un déblocage : un seul rang, qui ouvre une rareté de Flamme ou une arme, et peut en demander un autre. */
+function Unlock({ boost }: { boost: AltarBoostRaw }): JSX.Element {
+  // La sauvegarde est modifiée en place : c'est `saveRev` qui fait redessiner.
+  saveRev.value;
+  const s = save.value!;
+  const data = gameData();
+  const owned = altarRank(s, boost.id) > 0;
+  const err = canBuyAltarRank(s, data, boost.id);
+  const disabled = s.account.altarDisabled.includes(boost.id);
+  const weapon = data.weapons.find((w) => w.id === boost.weapon);
+  const relic = weapon ? data.relics[weapon.relic] : undefined;
+  return (
+    <button
+      type="button" class={`boost unlock ${boost.unlock ? `rarity-${boost.unlock}` : 'weapon'} ${err ? 'cannot' : ''} ${disabled ? 'off' : ''}`}
+      data-focus={boost.id} title={relic ? `${t(`${boost.id}.desc`)} ${t('altar.weapon.relic', { name: t(`${relic.id}.name`) })}` : t(`${boost.id}.desc`)} onClick={() => actions().buyAltar(boost.id)}
+    >
+      <span class="boost-icon"><Icon name={boost.icon} /></span>
+      <span class="boost-body">
+        <span class="boost-name">{t(`${boost.id}.name`)}</span>
+        {boost.weapon ? <span class="boost-line dim">{t(`${boost.id}.desc`)}</span> : null}
+        {owned ? <span class="boost-line gold">{t(disabled ? 'altar.disabled' : 'altar.unlock.open')}</span> : null}
+        {!owned && err === 'requires' ? <span class="boost-line">{t('altar.unlock.requires', { name: t(`${boost.requires}.name`) })}</span> : null}
+        {owned || err === 'requires' ? null : (
+          <span class={`boost-cost ${err === 'ashes' ? 'bad' : ''}`}><Icon name="icon-ashes" /> {fmt(altarCost(boost, 1))}</span>
+        )}
+      </span>
+    </button>
+  );
+}
+
 export function Altar(): JSX.Element {
   const ref = useFocusScope('altar');
   saveRev.value;
@@ -209,7 +240,7 @@ export function Altar(): JSX.Element {
         </header>
         <p class="quote">{t('altar.ysolde')}</p>
         <div class="altar-grid">
-          {data.altar.map((boost, i) => {
+          {data.altar.filter((b) => b.unlock === undefined && b.weapon === undefined).map((boost, i) => {
             const rank = altarRank(s, boost.id);
             const max = boost.ranks;
             const maxed = max > 0 && rank >= max;
@@ -239,6 +270,14 @@ export function Altar(): JSX.Element {
               </button>
             );
           })}
+        </div>
+        <h2 class="altar-row">{t('altar.flames')}</h2>
+        <div class="altar-unlocks">
+          {data.altar.filter((b) => b.unlock !== undefined).map((boost) => <Unlock key={boost.id} boost={boost} />)}
+        </div>
+        <h2 class="altar-row">{t('altar.weapons')}</h2>
+        <div class="altar-unlocks">
+          {data.altar.filter((b) => b.weapon !== undefined).map((boost) => <Unlock key={boost.id} boost={boost} />)}
         </div>
         <p class="dim">{t('altar.spent', { spent: fmt(spent) })}</p>
       </Panel>

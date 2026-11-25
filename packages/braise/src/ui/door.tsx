@@ -1,7 +1,29 @@
 import type { JSX } from 'preact';
+import { Portrait } from './dialogue.tsx';
 import { HelpBar, Icon, useFocusScope, useHandlers } from './parts.tsx';
 import { Currencies } from './screens.tsx';
 import { actions, fmtTime, gameData, holdProgress, lastSeed, replaySeed, save, saveRev, t } from './store.ts';
+
+const CLASS = 'class.ash-blade';
+
+/**
+ * Le porteur de la lanterne : qui part, et son trait (un bonus, un malus). Moon est seul pour l'instant ;
+ * les emplacements fermés annoncent les suivants.
+ */
+function Carrier(): JSX.Element {
+  return (
+    <div class="carrier">
+      <span class="carrier-face"><Portrait name="face-moon-neutral" size={40} /></span>
+      <div class="carrier-body">
+        <span class="carrier-name">{t(`${CLASS}.who`)} <em>{t(`${CLASS}.trait.name`)}</em></span>
+        <span class="carrier-bonus">{t(`${CLASS}.trait.bonus`)}</span>
+        <span class="carrier-malus">{t(`${CLASS}.trait.malus`)}</span>
+      </div>
+      <span class="carrier-slot closed" title={t('door.carrier.closed')} />
+      <span class="carrier-slot closed" title={t('door.carrier.closed')} />
+    </div>
+  );
+}
 
 /** La porte : choisir où l'on va. Une carte par région, puis des cartes fermées. */
 export function DoorScreen(): JSX.Element {
@@ -26,6 +48,7 @@ export function DoorScreen(): JSX.Element {
         <span title={t('door.wins')}><Icon name="sign-crown" /> {stats.victories ?? 0}</span>
         <span title={t('door.best')}><Icon name="sign-hourglass" /> {fmtTime(stats.bestSeconds ?? 0)}</span>
       </div>
+      <Carrier />
       <div class="door-cards">
         {regions.map((r, i) => {
           const lit = s.account.regions[r.id]?.lit === true;

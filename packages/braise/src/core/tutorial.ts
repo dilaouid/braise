@@ -464,6 +464,8 @@ export function tutorialRespawn(run: Run): void {
   run.enemyShots.count = 0;
   run.telegraphs.count = 0;
   run.zones.count = 0;
+  run.lamps.length = 0;
+  run.threads.length = 0;
   run.director.bossUid = 0;
   run.director.bossPhase = 0;
   // Un lieu commencé (le totem en cours de charge) repart de zéro ; un lieu fini le reste.

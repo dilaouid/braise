@@ -1,8 +1,9 @@
 import { DMG_FIRE, DMG_PHYSICAL, type Attribute } from '../content/index.ts';
+import { isLit } from './light.ts';
 import { damageTaken } from './stats.ts';
 import { addTelegraph, clearEnemy, emit, removeEnemy, removePickup } from './stores.ts';
 import {
-  CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_NO_NUMBER, HIT_RESIST, HIT_WEAK,
+  CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_FREEZE, HIT_NO_NUMBER, HIT_RESIST, HIT_SHOCK, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
   TG_CIRCLE, type Run,
 } from './types.ts';
@@ -101,10 +102,9 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   const tuning = run.data.tuning;
   let power = st.power;
   if (hero.buffT > 0) power += run.cls.skill.damageBonus;
-  const passive = run.cls.passive;
-  const dx = e.x[i]! - hero.x;
-  const dy = e.y[i]! - hero.y;
-  if (dx * dx + dy * dy < passive.range * passive.range) power += passive.bonus;
+  // Le trait : la cible est-elle éclairée (le disque de lumière du héros, ou une Veilleuse) ?
+  const trait = run.cls.trait;
+  power += isLit(run, e.x[i]!, e.y[i]!) ? trait.inside : trait.outside;
   if (def.rank !== 'normal') power += st.eliteDamage;
   if (lowHp(run)) power += run.mods.lowHpPower;
   power += run.mods.eliteKillPower * hero.elites;
@@ -124,6 +124,8 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   registerDamage(run, i, dmg, slot, outFlags);
   if (flags & HIT_BURN) applyBurn(run, i, dmg);
   if (flags & HIT_BLEED) applyBleed(run, i, dmg);
+  if (flags & HIT_SHOCK) applyShock(run, i);
+  if (flags & HIT_FREEZE) applyFreeze(run, i);
   return dmg;
 }
 

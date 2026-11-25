@@ -1324,6 +1324,153 @@
   prompt: "a lone red-painted wooden front door with a brass knocker, standing upright in its frame with no house around it, paint faded and dusted with ash"
   settings: {"width":64,"height":112,"no_background":true}
   edits: "palette réduite"
+- file: sprites/icon-flame-kindling.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 5b9403e2-7005-46ed-b0a0-1d7ae34e5b3f
+  prompt: "three small glowing orange embers with sparks rising from a tiny pile of dark kindling twigs, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-bait.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 2668451c-ba67-4761-a028-873d9d7dc055
+  prompt: "a steel fishing hook with a small bright orange flame burning on it as bait, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-surge.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: c9888216-2a72-4d52-acf4-020826c3f63c
+  prompt: "a bright orange comet dashing diagonally with a long fiery tail, speed, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-shadow.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 0fc56803-55e4-4304-9845-5ae2dbab7d15
+  prompt: "a dark round moon eclipsing a small orange flame, thin bright rim of light around the dark disc, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-swarm.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: e6765906-eb4f-43eb-ad9d-4e583d1c5e00
+  prompt: "three bright orange fireballs in a row, each a simple round ball with a short flame tail, flying to the right, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-flame-recall.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 7a6822b9-5367-4032-81f4-be78574bc12e
+  prompt: "a teal glowing crystal gem in the center with two curved arrows spiraling inward toward it, pulling, filling the frame, big simple shapes, game buff icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-epic.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 24ba6ab0-b9a9-4148-a8fe-d59d44abd389
+  prompt: "a single tall bright magenta pink flame with a light blue core, burning in a small grey stone altar bowl, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-legendary.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: f94dac05-ffc3-482d-8058-f62769af3a34
+  prompt: "a single tall golden yellow flame burning in a small grey stone altar bowl, short light rays around it, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-altar-flames-mythic.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 78b215e3-b987-45f6-8c59-f8f349bd2da9
+  prompt: "a single tall white-hot pale flame with a small crown of sparks above it, burning in a small grey stone altar bowl, game upgrade icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-weapon-verge.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 30a19ca5-5d78-4359-9572-9648eaa66bb7
+  prompt: "a thick pale ice-blue glowing ring, its rim edged with sharp frost spikes pointing outward, small warm orange light in the center, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-weapon-storm-watch.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: ace21597-daa1-48a3-8b89-2dc7f00ec731
+  prompt: "a bright pale yellow lightning bolt striking down out of a small dark storm cloud, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-weapon-nightlights.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 470cd4cd-43c6-4bae-b35f-908bd9468146
+  prompt: "a simple round glowing yellow light bulb globe on a small dark wooden base, with short orange light rays around it, night light, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-weapon-wake.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 52c62b00-e8d8-4378-a195-f629613da219
+  prompt: "a glowing cyan blue electric spark trail shaped like a lightning zigzag streak, left to right, white hot core, no frame, no box, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-evo-solstice.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 9d969a3a-8f39-428f-9696-1e5cf851937d
+  prompt: "two concentric ice-blue frost rings, one inside the other, with a white snowflake star in the center, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-evo-black-storm.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: dfe75a46-93c3-4163-9445-e27675b1cff6
+  prompt: "a black storm cloud with three bright yellow lightning bolts striking down, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-evo-garland.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: cab21207-87f9-423d-b3b2-4cf2229dc158
+  prompt: "a string garland of three small glowing orange lanterns linked by a curved burning wire, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-evo-web.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 4538af2b-d93e-455e-83a6-3d2974a7d489
+  prompt: "two pale blue electric wires crossing in an X with a bright white burst where they meet, filling the frame, big simple shapes, game ability icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-relic-scarf.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 4752210a-09dd-4868-a809-c2345a410e5a
+  prompt: "a thick folded knitted winter scarf, ice blue with white stripes, filling the frame, big simple shapes, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-relic-coil.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 2f173d79-77df-48ef-a6c2-703422d3f392
+  prompt: "a coil of shiny orange copper wire wound on a dark spool, with a small yellow spark, filling the frame, big simple shapes, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-relic-hollow-lantern.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 648d6103-0ca3-4d7e-9b3f-a5eed750be4a
+  prompt: "a hollow empty metal lantern with a dark cage, a faint teal glow inside, filling the frame, big simple shapes, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
+- file: sprites/icon-relic-sole.png
+  tool: create_image_pixen
+  date: 2026-11-25
+  pixellab_id: 1811a75b-550e-40ae-81d2-d3959a40d1fa
+  prompt: "the sole of a boot seen from below, made of shiny orange copper plate with rivets, filling the frame, big simple shapes, game item icon"
+  settings: {"no_background":true}
+  edits: "palette réduite"
 - file: sprites/camp-door-open.png
   tool: dérivé de sprites/camp-door.png (tools/process-assets.mjs)
 - file: sprites/pickup-gem-small.png
@@ -1621,6 +1768,24 @@
   date: 2026-11-24
   pixellab_id: d5320858-2d63-4a12-bc14-d08f2e62119d
   prompt: "a young woman's short light sincere laugh, a soft warm giggle, close and natural, no music"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-flame-feed.ogg
+  tool: create_sound_effect
+  date: 2026-11-25
+  pixellab_id: ca226adf-cef6-455a-902a-7be8ce49a351
+  prompt: "a soft breath blowing on embers, then a small flame flaring up warmly with a low whoosh and settling, short and quiet"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-bolt.ogg
+  tool: create_sound_effect
+  date: 2026-11-25
+  pixellab_id: b764735e-9640-42a8-8607-1ea8ae423552
+  prompt: "a short sharp electric lightning zap crack, quick, dry, not too loud, no long thunder"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-frost.ogg
+  tool: create_sound_effect
+  date: 2026-11-25
+  pixellab_id: 43e6faf3-228f-4e43-86d9-808ede064b8a
+  prompt: "a tiny crisp ice crackle, frost forming on glass, very short and soft"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music

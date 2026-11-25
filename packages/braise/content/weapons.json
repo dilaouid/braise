@@ -70,5 +70,53 @@
       { "damage": 55, "cooldown": 3.0, "radius": 72, "knockback": 140, "stun": 0.5, "waves": 1 },
       { "damage": 55, "cooldown": 3.0, "radius": 90, "knockback": 140, "stun": 0.5, "waves": 2 }
     ]
+  },
+  {
+    "id": "weapon.verge", "icon": "icon-weapon-verge", "damageType": "frost", "scale": "spi", "aim": "around", "behavior": "verge",
+    "relic": "relic.winter-scarf", "evolution": "weapon.solstice", "starting": false,
+    "levels": [
+      { "damage": 5, "band": 10, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 10, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 16, "hitInterval": 2.2, "bite": 0.8, "freeze": true },
+      { "damage": 7, "band": 16, "hitInterval": 1.7, "bite": 0.8, "freeze": true },
+      { "damage": 9, "band": 16, "hitInterval": 1.7, "bite": 0.8, "freeze": true },
+      { "damage": 12, "band": 22, "hitInterval": 1.7, "bite": 0.8, "freeze": true }
+    ]
+  },
+  {
+    "id": "weapon.storm-watch", "icon": "icon-weapon-storm-watch", "damageType": "lightning", "scale": "spi", "aim": "nearest", "behavior": "chain",
+    "relic": "relic.copper-coil", "evolution": "weapon.black-storm", "starting": false,
+    "levels": [
+      { "damage": 11, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 3, "jumpRange": 80 },
+      { "damage": 11, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 4, "jumpRange": 80 },
+      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 4, "jumpRange": 80 },
+      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 6, "jumpRange": 80 },
+      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 6, "jumpRange": 80, "shock": true },
+      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 2, "jumps": 6, "jumpRange": 80, "shock": true }
+    ]
+  },
+  {
+    "id": "weapon.nightlights", "icon": "icon-weapon-nightlights", "damageType": "fire", "scale": "spi", "aim": "placed", "behavior": "lamp",
+    "relic": "relic.hollow-lantern", "evolution": "weapon.garland", "starting": false,
+    "levels": [
+      { "damage": 3, "cooldown": 5, "count": 1, "radiusShare": 0.5, "life": 6, "hitInterval": 0.5, "max": 8, "scatter": 60 },
+      { "damage": 3, "cooldown": 5, "count": 1, "radiusShare": 0.5, "life": 8, "hitInterval": 0.5, "max": 8, "scatter": 60 },
+      { "damage": 3, "cooldown": 5, "count": 2, "radiusShare": 0.5, "life": 8, "hitInterval": 0.5, "max": 8, "scatter": 60 },
+      { "damage": 3, "cooldown": 5, "count": 2, "radiusShare": 0.6, "life": 8, "hitInterval": 0.5, "max": 8, "scatter": 60 },
+      { "damage": 5, "cooldown": 5, "count": 2, "radiusShare": 0.6, "life": 8, "hitInterval": 0.5, "max": 8, "scatter": 60 },
+      { "damage": 5, "cooldown": 5, "count": 3, "radiusShare": 0.6, "life": 8, "hitInterval": 0.5, "max": 8, "scatter": 60 }
+    ]
+  },
+  {
+    "id": "weapon.wake", "icon": "icon-weapon-wake", "damageType": "lightning", "scale": "agi", "aim": "placed", "behavior": "wake",
+    "relic": "relic.copper-sole", "evolution": "weapon.web", "starting": false,
+    "levels": [
+      { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 2.5, "max": 3, "minLength": 20 },
+      { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
+      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
+      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
+      { "damage": 19, "hitInterval": 0.6, "width": 22, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
+      { "damage": 26, "hitInterval": 0.6, "width": 22, "life": 4, "max": 3, "minLength": 20, "shock": true }
+    ]
   }
 ]

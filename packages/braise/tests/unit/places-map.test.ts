@@ -61,12 +61,11 @@ describe('carte vivante : placement des lieux', () => {
     }
   });
 
-  it('le contenu a 6 buffs et 12 trouvailles, chacun avec un effet et ses textes', () => {
-    expect(data.boons.length).toBe(6);
+  it('le contenu a 12 trouvailles, chacune avec un effet et ses textes', () => {
     expect(data.finds.length).toBe(12);
-    const ids = [...data.boons, ...data.finds].map((d) => d.id);
+    const ids = data.finds.map((d) => d.id);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const d of [...data.boons, ...data.finds]) {
+    for (const d of data.finds) {
       expect(Object.keys(d.bonus).length).toBeGreaterThan(0);
       expect(FR[`${d.id}.name`]).toBeTruthy();
       expect(FR[`${d.id}.desc`]).toBeTruthy();

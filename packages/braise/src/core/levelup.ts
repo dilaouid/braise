@@ -1,10 +1,11 @@
 import { healHero } from './combat.ts';
+import { flameMods, glowLoss } from './flames.ts';
 import { addBonus, cloneSheet, resolveStats, runXpForNext } from './stats.ts';
 import { emit, tutorialNote } from './stores.ts';
 import { EV, type Card, type Run, type WeaponInstance } from './types.ts';
 import { addWeapon } from './weapons.ts';
 
-/** Recalcule les statistiques du héros à partir de sa feuille de départ et de ses reliques. */
+/** Recalcule les statistiques et les règles de la partie : feuille de départ, reliques, Flammes, trouvailles, Lueur brûlée. */
 export function recomputeStats(run: Run): void {
   const sheet = cloneSheet(run.cfg.sheet);
   for (const r of run.relics) {
@@ -12,18 +13,37 @@ export function recomputeStats(run: Run): void {
     addBonus(sheet, def.perLevel, r.level);
     for (const [lvl, bonus] of Object.entries(def.atLevels)) if (r.level >= Number(lvl)) addBonus(sheet, bonus, 1);
   }
-  for (const b of run.boons) addBonus(sheet, run.data.boons[b]!.bonus, 1);
+  for (const f of run.flames) {
+    const tier = run.data.flames.lines[f.line]!.tiers[f.rarity];
+    if (tier) addBonus(sheet, tier.stats, 1);
+  }
   for (const f of run.finds) addBonus(sheet, run.data.finds[f]!.bonus, 1);
   sheet.flasks += run.extraFlasks;
+  // La Lueur brûlée pour nourrir des Flammes, moins ce que les braséros ont remboursé.
+  sheet.glowShare -= glowLoss(run) / 100;
   run.sheet = sheet;
   const hero = run.hero;
+  const chargesBefore = run.mods.dashCharges;
+  run.mods = flameMods(run);
+  // Une charge de ruée de plus arrive prête à servir.
+  if (run.mods.dashCharges > chargesBefore) hero.dashCharges += run.mods.dashCharges - chargesBefore;
   const before = hero.stats.maxHp;
   const flasksBefore = hero.stats.flasks;
   const revivesBefore = hero.stats.revives;
+  const rerollsBefore = hero.stats.rerolls;
+  const banishesBefore = hero.stats.banishes;
   resolveStats(sheet, run.data.tuning, run.data.heroTuning, hero.stats);
+  // Ombre : du critique pour chaque point de Lueur sous la Lueur de base.
+  if (run.mods.shadowCrit > 0) {
+    const tuning = run.data.tuning.hero;
+    const missing = Math.max(0, 100 - (100 * hero.stats.glow) / tuning.glow);
+    hero.stats.critChance = Math.min(tuning.critCap, hero.stats.critChance + run.mods.shadowCrit * missing);
+  }
   // Une fiole ou une résurrection de plus arrive prête à servir.
   if (hero.stats.flasks > flasksBefore) hero.flasks += hero.stats.flasks - flasksBefore;
   if (hero.stats.revives > revivesBefore) hero.revives += hero.stats.revives - revivesBefore;
+  if (hero.stats.rerolls > rerollsBefore) hero.rerolls += hero.stats.rerolls - rerollsBefore;
+  if (hero.stats.banishes > banishesBefore) hero.banishes += hero.stats.banishes - banishesBefore;
   // Des points de vie maximum en plus sont aussi des points de vie en plus.
   if (before > 0 && hero.stats.maxHp > before) hero.hp += hero.stats.maxHp - before;
   if (hero.hp > hero.stats.maxHp) hero.hp = hero.stats.maxHp;
@@ -49,6 +69,9 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
   const data = run.data;
   const luck = 1 + run.hero.stats.luck;
   const limits = slotLimits(run);
+  // Une arme achetée à l'Autel élargit le choix sans noyer le reste : le poids total du nouveau reste celui du tirage de départ.
+  const weaponShare = Math.min(1, data.weapons.filter((w) => w.starting).length / Math.max(1, run.weaponPool.length));
+  const relicShare = Math.min(1, data.relics.filter((x) => x.starting).length / Math.max(1, run.relicPool.length));
   for (const w of run.weapons) {
     const def = data.weapons[w.def]!;
     if (def.evolved || w.level >= def.levels.length) continue;
@@ -65,7 +88,7 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
     for (const idx of run.weaponPool) {
       const def = data.weapons[idx]!;
       if (ownsWeaponLine(run, idx) || run.banned.has(def.id)) continue;
-      out.push({ card: { kind: 'weapon', def: idx, level: 1, evolves: false }, weight: 1 });
+      out.push({ card: { kind: 'weapon', def: idx, level: 1, evolves: false }, weight: weaponShare });
     }
   }
   if (run.relics.length < limits.relics) {
@@ -76,7 +99,7 @@ export function cardCandidates(run: Run): Array<{ card: Card; weight: number }> 
       const line = ownsWeaponLine(run, def.weapon);
       // La relique liée à une arme possédée pèse une fois et demie plus, et sert son évolution.
       const evolves = linked !== undefined;
-      out.push({ card: { kind: 'relic', def: idx, level: 1, evolves }, weight: (line ? 1.5 : 1) * (evolves ? luck : 1) });
+      out.push({ card: { kind: 'relic', def: idx, level: 1, evolves }, weight: (line ? 1.5 : relicShare) * (evolves ? luck : 1) });
     }
   }
   return out;

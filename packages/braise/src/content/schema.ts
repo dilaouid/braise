@@ -58,11 +58,37 @@ export const weaponParamsSchema = z
     fissureLength: z.number().optional(),
     fissureWidth: z.number().optional(),
     fissureDamage: z.number().optional(),
+    // lumière et ruée (Lisière, Guet d'orage, Veilleuses, Sillage)
+    freeze: z.boolean().optional(),
+    shock: z.boolean().optional(),
+    /** Épaisseur du bord coupant. */
+    band: z.number().positive().optional(),
+    /** Part de dégâts en plus quand toute la Lueur manque. */
+    bite: z.number().nonnegative().optional(),
+    jumps: z.number().int().nonnegative().optional(),
+    jumpRange: z.number().positive().optional(),
+    jumpsIntoLight: z.boolean().optional(),
+    /** Rayon d'une Veilleuse, en part du disque de lumière. */
+    radiusShare: z.number().positive().optional(),
+    /** Durée d'une Veilleuse ou d'un fil. */
+    life: z.number().positive().optional(),
+    /** Combien de Veilleuses ou de fils vivent à la fois. */
+    max: z.number().int().positive().optional(),
+    /** Distance des Veilleuses posées en plus de la première. */
+    scatter: z.number().nonnegative().optional(),
+    linkRange: z.number().positive().optional(),
+    linkDamage: z.number().positive().optional(),
+    linkWidth: z.number().positive().optional(),
+    width: z.number().positive().optional(),
+    /** Une ruée plus courte ne tend pas de fil. */
+    minLength: z.number().nonnegative().optional(),
+    crossRadius: z.number().positive().optional(),
+    crossDamage: z.number().positive().optional(),
   })
   .strict();
 
 const aimSchema = z.enum(['nearest', 'directed', 'around', 'orbit', 'random', 'placed']);
-const behaviorSchema = z.enum(['arc', 'projectile', 'orbit', 'lob', 'nova']);
+const behaviorSchema = z.enum(['arc', 'projectile', 'orbit', 'lob', 'nova', 'verge', 'chain', 'lamp', 'wake']);
 
 export const weaponSchema = z
   .object({
@@ -123,8 +149,7 @@ export const statBonusSchema = z
   })
   .strict();
 
-/** Un buff de totem ou une trouvaille : un bonus de statistiques pour la partie. */
-export const boonSchema = z.object({ id: z.string().regex(/^boon\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
+/** Une trouvaille : un bonus de statistiques pour la partie. */
 export const findSchema = z.object({ id: z.string().regex(/^find\.[a-z-]+$/), icon: z.string(), bonus: statBonusSchema }).strict();
 
 /** Ce qu'une pièce de la Lanterne change aux règles d'une partie. Une clé absente ne change rien. */
@@ -150,6 +175,48 @@ export const runModsSchema = z
     eliteHpMult: z.number().positive().optional(),
     /** Part des points de vie rendue par la première résurrection (0 : la part habituelle). */
     firstReviveShare: z.number().positive().max(1).optional(),
+    /** Charges de ruée en plus de la première. */
+    dashCharges: z.number().int().positive().optional(),
+    /** Dégâts par tic des braises que la ruée laisse au sol. */
+    dashTrail: z.number().positive().optional(),
+    /** Dégâts par tic de la Brûlure donnée aux Éteints dans le disque de lumière. */
+    haloBurn: z.number().positive().optional(),
+    /** Chance de critique gagnée par point de Lueur sous 100 %. */
+    shadowCrit: z.number().positive().optional(),
+    /** Toutes les N secondes, les gemmes de la carte volent vers le héros. */
+    recallEvery: z.number().positive().optional(),
+  })
+  .strict();
+
+export const RARITY_NAMES = ['common', 'rare', 'epic', 'legendary', 'mythic'] as const;
+export const raritySchema = z.enum(RARITY_NAMES);
+
+const flameTierSchema = z
+  .object({
+    rarity: raritySchema,
+    stats: statBonusSchema.default({}),
+    mods: runModsSchema.default({}),
+    /** Élites qui surgissent quand la Flamme est prise. */
+    elites: z.number().int().min(0).default(0),
+  })
+  .strict();
+
+/** Les Flammes des totems : des lignées, chacune en plusieurs raretés, et le prix en Lueur pour les nourrir. */
+export const flamesSchema = z
+  .object({
+    /** Points de Lueur pour atteindre chaque rareté depuis la précédente ; le premier vaut 0. */
+    costs: z.array(z.number().min(0)).length(RARITY_NAMES.length),
+    /** Part de la Lueur de base sous laquelle on ne peut plus nourrir. */
+    floor: z.number().min(0).max(1),
+    /** Flammes de chaque rareté qu'une partie peut porter ; 0 : sans limite. */
+    caps: z.array(z.number().int().min(0)).length(RARITY_NAMES.length),
+    /** La Chance fait arriver une carte déjà nourrie d'un cran. */
+    fed: z.object({ perLuck: z.number().min(0), max: z.number().min(0).max(1) }).strict(),
+    /** Points de Lueur brûlée que rembourse un braséro rallumé. */
+    brazierRefund: z.number().min(0),
+    halo: z.object({ tick: z.number().positive() }).strict(),
+    trail: z.object({ radius: z.number().positive(), duration: z.number().positive(), tick: z.number().positive(), spacing: z.number().positive() }).strict(),
+    lines: z.array(z.object({ id: z.string().regex(/^flame\.[a-z-]+$/), icon: z.string(), tiers: z.array(flameTierSchema) }).strict()),
   })
   .strict();
 
@@ -260,6 +327,8 @@ export const enemySchema = z
     weak: damageTypeSchema.nullable(),
     resist: damageTypeSchema.nullable(),
     knockbackResist: z.number().optional(),
+    /** Ses dégâts ne suivent pas l'échelle par minute, seulement celle de la Veillée. */
+    flatDamage: z.boolean().optional(),
     pack: z.number().int().optional(),
     shot: z
       .object({ damage: z.number(), speed: z.number(), interval: z.number(), keepDistance: z.number(), radius: z.number(), life: z.number() })
@@ -347,7 +416,8 @@ export const classSchema = z
     growth: z.object({ every: attributeSchema, even: attributeSchema, odd: attributeSchema }).strict(),
     freeProfile: z.array(attributeSchema).min(1),
     startWeapon: weaponId,
-    passive: z.object({ kind: z.literal('closeDamage'), range: z.number(), bonus: z.number() }).strict(),
+    /** Le trait du personnage : toujours un bonus et un malus. « lit » : les dégâts changent selon que la cible est dans sa lumière ou non. */
+    trait: z.object({ kind: z.literal('lit'), inside: z.number().positive(), outside: z.number().negative() }).strict(),
     skill: z
       .object({
         id: id('skill'),
@@ -389,6 +459,12 @@ export const altarBoostSchema = z
     growth: z.number().positive(),
     shards: z.number().int().min(0),
     perRank: statBonusSchema,
+    /** La rareté de Flamme que ce boost ouvre, au lieu d'un bonus chiffré. */
+    unlock: z.enum(['epic', 'legendary', 'mythic']).optional(),
+    /** L'arme que ce boost ouvre, avec sa relique. */
+    weapon: weaponId.optional(),
+    /** Le boost qu'il faut posséder avant d'acheter celui-ci. */
+    requires: id('altar').optional(),
   })
   .strict();
 
@@ -403,7 +479,10 @@ export const expeditionTuningSchema = z
     eliteMinutes: z.array(z.number()),
     hero: z
       .object({
-        speed: z.number(), radius: z.number(), glow: z.number(), invulnAfterHit: z.number(),
+        speed: z.number(), radius: z.number(), glow: z.number(),
+        /** Ce que le disque de lumière dessiné ajoute à la Lueur, en pixels : Lueur + marge = rayon éclairé. */
+        lightMargin: z.number().min(0),
+        invulnAfterHit: z.number(),
         critChance: z.number(), critMult: z.number(), critCap: z.number(), armorCap: z.number(), speedCap: z.number(),
         reviveHpShare: z.number(), reviveKnockback: z.number(), reviveRadius: z.number(),
       })
@@ -639,7 +718,7 @@ export type CampObject = CampDef['objects'][number];
 export type RunModsRaw = z.infer<typeof runModsSchema>;
 export type PieceEffect = z.infer<typeof pieceEffectSchema>;
 export type LanternRaw = z.infer<typeof lanternSchema>;
-export type BoonDef = z.infer<typeof boonSchema>;
+export type FlamesRaw = z.infer<typeof flamesSchema>;
 export type FindDef = z.infer<typeof findSchema>;
 export type EnemyRaw = z.infer<typeof enemySchema>;
 export type RegionRaw = z.infer<typeof regionSchema>;

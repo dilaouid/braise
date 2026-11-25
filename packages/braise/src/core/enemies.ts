@@ -145,6 +145,11 @@ function clampToArena(run: Run, i: number): void {
   }
 }
 
+/** Le multiplicateur des dégâts d'un ennemi au temps courant. */
+function damageScale(run: Run, def: EnemyDef): number {
+  return def.flatDamage ? run.dmgScaleFlat : run.dmgScale;
+}
+
 /** Les attaques du Cerf sans lumière. */
 const A_CHARGE = 0;
 const A_ROOTS = 1;
@@ -214,7 +219,7 @@ function stagStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
       const tele = stagTele(run, roots.telegraph, haste);
       const offset = run.rngSpawn.float() * TAU;
       const step = TAU / roots.lines;
-      const dmg = roots.damage * run.dmgScale;
+      const dmg = roots.damage * damageScale(run, def);
       for (let k = 0; k < roots.lines; k++) {
         addTelegraph(run, TG_LINE, x, y, offset + k * step, roots.length, roots.width, tele, dmg, uid, kind);
       }
@@ -234,7 +239,7 @@ function stagStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
       const st = def.stomp!;
       const tele = stagTele(run, st.telegraph, haste);
       const stagger = st.stagger * (dir.bossPhase === 3 ? 0.85 : 1);
-      const dmg = st.damage * run.dmgScale;
+      const dmg = st.damage * damageScale(run, def);
       for (let k = 0; k < st.rings; k++) {
         const outer = (k + 1) * st.ringWidth;
         if (k === 0) addTelegraph(run, TG_CIRCLE, x, y, 0, outer, outer, tele, dmg, uid, kind);
@@ -263,7 +268,7 @@ function stagStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
       dir.bossNext = -1;
       const slam = def.slam!;
       const r = slam.radius * 1.6;
-      addTelegraph(run, TG_CIRCLE, x, y, 0, r, r, 1, slam.damage * run.dmgScale, uid, kind);
+      addTelegraph(run, TG_CIRCLE, x, y, 0, r, r, 1, slam.damage * damageScale(run, def), uid, kind);
       e.state[i] = ST_WAIT;
       e.timer[i] = 1.3;
       emit(run, EV.telegraph, x, y, 2);
@@ -364,7 +369,7 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
       if (phase === 3) {
         const slam = def.slam!;
         const tele = stagTele(run, slam.telegraph, 1);
-        addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, tele, slam.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+        addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, tele, slam.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
       }
       e.counter[i]!--;
       if (e.counter[i]! > 0) {
@@ -385,7 +390,7 @@ function updateStag(run: Run, i: number, dx: number, dy: number, speed: number, 
         e.counter[i]!--;
         e.timer[i] = stalk.interval * (phase === 3 ? 0.85 : 1);
         const hero = run.hero;
-        addTelegraph(run, TG_CIRCLE, hero.x, hero.y, 0, stalk.radius, stalk.radius, tele, stalk.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+        addTelegraph(run, TG_CIRCLE, hero.x, hero.y, 0, stalk.radius, stalk.radius, tele, stalk.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
         emit(run, EV.telegraph, hero.x, hero.y, 1);
       } else {
         e.state[i] = ST_WAIT;
@@ -545,7 +550,7 @@ export function updateEnemies(run: Run, dt: number): void {
         e.timer2[i]! -= dt;
         if (e.timer2[i]! <= 0 && dist < slam.triggerRange) {
           e.timer2[i] = slam.cooldown;
-          addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+          addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
           emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 1);
         }
         break;
@@ -571,7 +576,7 @@ export function updateEnemies(run: Run, dt: number): void {
             } else {
               e.state[i] = 3;
               e.timer[i] = slam.telegraph + 0.25;
-              addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * run.dmgScale, e.uid[i]!, e.kind[i]!);
+              addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
             }
             e.counter[i] = e.counter[i] === 0 ? 1 : 0;
             emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 2);
@@ -740,7 +745,7 @@ export function updateEnemyShots(run: Run, dt: number): void {
     const dy = s.y[i]! - (hero.y - 6);
     const r = s.radius[i]! + heroR + 2;
     if (dx * dx + dy * dy <= r * r && hero.dashT <= 0) {
-      if (hurtHero(run, s.damage[i]! * run.dmgScale, s.kind[i]!)) removeEnemyShot(s, i);
+      if (hurtHero(run, s.damage[i]! * damageScale(run, run.data.enemies[s.kind[i]!]!), s.kind[i]!)) removeEnemyShot(s, i);
     }
   }
 }
@@ -758,11 +763,11 @@ export function contactDamage(run: Run): void {
     if (e.status[i]! & 8 || isDust(run, i)) continue;
     const def = run.data.enemies[e.kind[i]!]!;
     const charging = def.charge !== undefined && e.state[i] === 2;
-    const dmg = charging ? def.charge!.damage : def.damage;
+    const dmg = (charging ? def.charge!.damage : def.damage) * damageScale(run, def);
     if (dmg > worst) {
       worst = dmg;
       worstKind = e.kind[i]!;
     }
   }
-  if (worst > 0) hurtHero(run, worst * run.dmgScale, worstKind);
+  if (worst > 0) hurtHero(run, worst, worstKind);
 }

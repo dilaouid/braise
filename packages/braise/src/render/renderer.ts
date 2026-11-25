@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, RenderTexture, Sprite, Texture, TextureSource } from 'pixi.js';
-import type { CampDef, GameData } from '../content/index.ts';
+import { DMG_LIGHTNING, type CampDef, type GameData } from '../content/index.ts';
 import {
   CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
@@ -9,6 +9,9 @@ import {
 import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
 import type { CampState } from '../core/camp.ts';
 import { lowHp } from '../core/combat.ts';
+import { litRadius } from '../core/light.ts';
+import { lampsLinked } from '../core/light-weapons.ts';
+import { dashReady } from '../core/run.ts';
 import type { SceneState } from '../core/scene.ts';
 import { tutorialTarget } from '../core/tutorial.ts';
 import { SHOT_SPRITES, orbPosition, weaponParams } from '../core/weapons.ts';
@@ -60,6 +63,8 @@ const FX_TELE_LINE = 6;
 const FX_TELE_CIRCLE = 7;
 const FX_TRAIL = 8;
 const FX_TELE_RING = 9;
+const FX_BOLT = 10;
+const FX_FROST = 11;
 /** Le bois sombre des racines du Cerf et le sol qu'elles ouvrent. */
 const ROOT_DARK = 0x2a1a14;
 
@@ -480,7 +485,10 @@ export class GameRenderer {
         this.addFx(FX_RING, x, y, a, C.emberPale, 4, 0.28);
         this.shake = Math.max(this.shake, 1);
         break;
-      case EV.burst: this.addFx(FX_BURST, x, y, a, C.emberHot, 0, 0.22); break;
+      case EV.burst: this.addFx(FX_BURST, x, y, a, b === DMG_LIGHTNING ? C.frost : C.emberHot, 0, 0.22); break;
+      case EV.bolt: this.addFx(FX_BOLT, x, y, c > 0 ? x + 18 : a, c > 0 ? y - VIEW_H / 2 : b, c, 0.2); break;
+      case EV.frost: this.addFx(FX_FROST, x, y, 0, 0, 0, 0.25); break;
+      case EV.threadCross: this.addFx(FX_RING, x, y, a, C.tealPale, 2, 0.35); break;
       case EV.fissure: this.addFx(FX_FISSURE, x, y, a, b, c, 0.4); break;
       case EV.skill:
         this.addFx(FX_RING, x, y, a, C.ember, 5, 0.3);
@@ -531,13 +539,17 @@ export class GameRenderer {
   }
 
   /** Perce la couche sombre d'un disque de lumière. `warm` ajoute une teinte chaude (lanterne, feux). */
-  private light(x: number, y: number, radius: number, warm = 0, tint: number = C.emberHot): void {
-    if (this.lightCount >= MAX_LIGHTS || radius < 3) return;
+  private light(x: number, y: number, radius: number, warm = 0, tint: number = C.emberHot, moon = false): void {
+    // La dernière lumière et le dernier halo sont gardés pour Moon, dessinée en dernier.
+    const kept = moon ? 0 : 1;
+    if (this.lightCount >= MAX_LIGHTS - kept || radius < 3) return;
+    // Une lumière hors de l'écran n'éclaire rien.
+    if (x < -radius || y < -radius || x > VIEW_W + radius || y > VIEW_H + radius) return;
     const s = this.lights[this.lightCount++]!;
     s.texture = lightDisc(radius);
     s.position.set(Math.round(x), Math.round(y));
     s.visible = true;
-    if (warm > 0 && this.warmCount < this.warms.length) {
+    if (warm > 0 && this.warmCount < this.warms.length - kept) {
       const w = this.warms[this.warmCount++]!;
       w.texture = s.texture;
       w.position.copyFrom(s.position);
@@ -810,6 +822,8 @@ export class GameRenderer {
       this.light(lightX(z.x[i]!), lightY(z.y[i]!), z.radius[i]! + 14);
     }
 
+    this.drawLightWeapons(run, g, time, hx, hy, lightX, lightY);
+
     // Annonces d'attaque : magenta, hachurées, qui se remplissent pendant le délai.
     const tg = run.telegraphs;
     for (let i = 0; i < tg.count; i++) {
@@ -1000,9 +1014,8 @@ export class GameRenderer {
       this.drawEmote(this.emotes[1]!, tuto.emoteCream, gx, gy - EMOTE_UP_CREAM, dt);
     }
     // Anneau de rechargement de la ruée, sous le héros.
-    const dash = run.data.tuning.dash;
-    if (hero.dashCd > 0) {
-      const frac = 1 - hero.dashCd / dash.cooldown;
+    const frac = dashReady(run);
+    if (frac < 1) {
       g.moveTo(hx + 9, hy + 1).arc(hx, hy + 1, 9, 0, frac * Math.PI * 2).stroke({ width: 1, color: C.emberPale, alpha: 0.7 });
     } else {
       g.circle(hx, hy + 1, 9).stroke({ width: 1, color: C.ember, alpha: 0.35 });
@@ -1076,8 +1089,8 @@ export class GameRenderer {
     this.drawFx(run, dt, paused, top2, g, hx, hy, camX, camY);
     this.drawOverlay(run, time, camX, camY);
 
-    // La lueur : un disque chaud autour de la lanterne ; son rayon est la statistique Lueur plus 24 px.
-    let glow = hero.stats.glow + 24 + Math.round(Math.sin(time * 1.6) * 2);
+    // La lueur : un disque chaud autour de la lanterne ; son rayon est le rayon éclairé (la Lueur plus sa marge).
+    let glow = hero.stats.glow + run.data.tuning.hero.lightMargin + Math.round(Math.sin(time * 1.6) * 2);
     if (run.phase === 'dead') {
       this.deathFade = Math.min(1.2, this.deathFade + dt * 0.8);
       glow *= Math.max(0, 1 - this.deathFade);
@@ -1086,7 +1099,7 @@ export class GameRenderer {
     // Dernière lueur : le disque rougit sous son seuil, plus ou moins selon le réglage des flashs.
     const last = lowHp(run) && this.settings.flashes > 0;
     const warmth = last ? 0.1 + 0.18 * this.settings.flashes : 0.1;
-    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : warmth, last ? C.emberDark : C.emberHot);
+    this.light(lightX(hx), lightY(hy - 8), glow, run.phase === 'dead' ? 0 : warmth, last ? C.emberDark : C.emberHot, true);
     // Retour à l'entrée de la salle après une chute : un fondu court depuis le noir.
     if (this.respawnFade > 0) {
       this.screenFx.rect(0, 0, VIEW_W, VIEW_H).fill({ color: 0x000000, alpha: Math.min(1, this.respawnFade) });
@@ -1140,6 +1153,69 @@ export class GameRenderer {
     if (f.t < 0.3) {
       const glow = 1 - f.t / 0.3;
       for (let d = 30; d < len; d += 70) this.light(f.x + ux * d - camX, f.y + uy * d - camY, Math.round(26 * glow), 0.08);
+    }
+  }
+
+  /** Le bord coupant de Lisière, les Veilleuses et leurs fils, les fils de Sillage. */
+  private drawLightWeapons(run: Run, g: Graphics, time: number, hx: number, hy: number, lightX: (x: number) => number, lightY: (y: number) => number): void {
+    for (const w of run.weapons) {
+      if (run.data.weapons[w.def]!.behavior !== 'verge') continue;
+      const p = weaponParams(run, w);
+      const band = p.band * (1 + run.hero.stats.zone);
+      for (let r = 1; r <= p.rings; r++) {
+        const radius = (litRadius(run) * r) / p.rings;
+        // Centré comme le disque de lumière : à hauteur des corps, pas des pieds.
+        const cy = hy - 8;
+        g.circle(hx, cy, radius).stroke({ width: band, color: C.frost, alpha: 0.12 });
+        g.circle(hx, cy, radius).stroke({ width: 1, color: C.frost, alpha: 0.6 });
+        // Des éclats de givre qui courent sur le bord.
+        for (let k = 0; k < 10; k++) {
+          const a = k * 0.6283 + time * 0.25 * (r % 2 === 0 ? -1 : 1);
+          const spike = 2 + 2 * Math.sin(time * 5 + k * 2.1);
+          g.moveTo(hx + Math.cos(a) * radius, cy + Math.sin(a) * radius).lineTo(hx + Math.cos(a) * (radius + spike), cy + Math.sin(a) * (radius + spike))
+            .stroke({ width: 1, color: C.white, alpha: 0.7 });
+        }
+      }
+    }
+    const lamps = run.lamps;
+    for (let k = 0; k < lamps.length; k++) {
+      const lamp = lamps[k]!;
+      const fade = Math.min(1, lamp.life / 0.5, (lamp.maxLife - lamp.life) / 0.2 + 0.2);
+      const w = run.weapons[lamp.slot];
+      const p = w ? weaponParams(run, w) : null;
+      const prev = lamps[k - 1];
+      if (p && prev && p.linkRange > 0 && lampsLinked(prev, lamp, p.linkRange)) {
+        g.moveTo(prev.x, prev.y - 4).lineTo(lamp.x, lamp.y - 4).stroke({ width: p.linkWidth * (1 + run.hero.stats.zone), color: C.emberHot, alpha: 0.18 * fade });
+        g.moveTo(prev.x, prev.y - 4).lineTo(lamp.x, lamp.y - 4).stroke({ width: 1, color: C.emberPale, alpha: (0.7 + Math.sin(time * 12 + k) * 0.2) * fade });
+      }
+      g.circle(lamp.x, lamp.y, lamp.radius).fill({ color: C.emberPale, alpha: 0.08 * fade });
+      g.circle(lamp.x, lamp.y, lamp.radius).stroke({ width: 1, color: C.ember, alpha: 0.35 * fade });
+      // La flammèche, sur son petit socle.
+      const flick = Math.round(Math.sin(time * 10 + k * 1.7));
+      g.rect(Math.round(lamp.x) - 2, Math.round(lamp.y) - 1, 4, 2).fill({ color: C.emberDark, alpha: fade });
+      g.rect(Math.round(lamp.x) - 2, Math.round(lamp.y) - 5, 4, 4).fill({ color: C.ember, alpha: fade });
+      g.rect(Math.round(lamp.x) - 1, Math.round(lamp.y) - 7 - flick, 2, 4).fill({ color: C.emberWhite, alpha: fade });
+      this.light(lightX(lamp.x), lightY(lamp.y), Math.round(lamp.radius * fade), 0.06);
+    }
+    for (const t of run.threads) {
+      const fade = Math.min(1, t.life / t.maxLife + 0.15);
+      const w = run.weapons[t.slot];
+      const width = w ? weaponParams(run, w).width * (1 + run.hero.stats.zone) : 8;
+      const dx = t.x2 - t.x1;
+      const dy = t.y2 - t.y1;
+      const len = Math.hypot(dx, dy) || 1;
+      g.moveTo(t.x1, t.y1).lineTo(t.x2, t.y2).stroke({ width, color: C.frost, alpha: 0.16 * fade });
+      // Le fil grésille : un trait brisé qui change dix fois par seconde.
+      const beat = Math.floor(time * 10);
+      const steps = Math.max(2, Math.round(len / 14));
+      g.moveTo(t.x1, t.y1);
+      for (let s = 1; s < steps; s++) {
+        const u = s / steps;
+        const off = (hash(beat + s * 5 + t.x1) - 0.5) * 8;
+        g.lineTo(t.x1 + dx * u - (dy / len) * off, t.y1 + dy * u + (dx / len) * off);
+      }
+      g.lineTo(t.x2, t.y2).stroke({ width: 1, color: C.white, alpha: 0.9 * fade });
+      this.light(lightX((t.x1 + t.x2) / 2), lightY((t.y1 + t.y2) / 2), Math.round(24 * fade), 0.05, C.frost);
     }
   }
 
@@ -1222,6 +1298,31 @@ export class GameRenderer {
           this.drawRootSpikes(ground, f, camX, camY);
           break;
         }
+        case FX_BOLT: {
+          // Un trait brisé, toujours le même pour un même coup ; celui du ciel est plus épais.
+          const steps = f.c > 0 ? 7 : 4;
+          const draw = (width: number, color: number, alpha: number): void => {
+            top.moveTo(f.a, f.b);
+            for (let s = 1; s < steps; s++) {
+              const u = s / steps;
+              top.lineTo(f.a + (f.x - f.a) * u + (hash(f.x + s * 7) - 0.5) * 16, f.b + (f.y - f.b) * u + (hash(f.y + s * 3) - 0.5) * 12);
+            }
+            top.lineTo(f.x, f.y).stroke({ width, color, alpha });
+          };
+          draw(f.c > 0 ? 4 : 3, C.spark, 0.45 * fade);
+          draw(1, C.white, 0.9 * fade);
+          if (f.t < 0.12) this.light(f.x - camX, f.y - camY, Math.round(22 * (1 - f.t / 0.12)));
+          // L'éclair du ciel perce aussi le noir sur son trajet.
+          for (let s = 1; s < 4 && f.c > 0 && f.t < 0.12; s++) this.light(f.a + ((f.x - f.a) * s) / 4 - camX, f.b + ((f.y - f.b) * s) / 4 - camY, Math.round(20 * (1 - f.t / 0.12)));
+          break;
+        }
+        case FX_FROST:
+          for (let s = 0; s < 4; s++) {
+            const a = s * (Math.PI / 2) + hash(f.x) * 1.5;
+            const r = 3 + 6 * k;
+            top.rect(Math.round(f.x + Math.cos(a) * r), Math.round(f.y - 6 + Math.sin(a) * r), 2, 2).fill({ color: s % 2 === 0 ? C.frost : C.white, alpha: fade });
+          }
+          break;
         case FX_TRAIL:
           ground.moveTo(f.x, f.y).lineTo(f.x + Math.cos(f.a) * 110, f.y + Math.sin(f.a) * 110).stroke({ width: 4, color: C.ember, alpha: 0.3 * fade });
           break;

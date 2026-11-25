@@ -1,23 +1,29 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
+import { RARITIES } from '../content/index.ts';
 import type { Card } from '../core/types.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers, type Glyph } from './parts.tsx';
 import { SettingsScreen } from './screens.tsx';
 import { Portrait } from './dialogue.tsx';
 import {
-  actions, chest, findState, fmt, forgeState, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
+  actions, chest, findState, fmt, focusedId, forgeState, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
   totemState, tutoHud,
 } from './store.ts';
 
 const LESSON_GLYPHS: readonly Glyph[] = ['move', 'dash', 'flask', 'skill', 'confirm'];
 
 /** Un anneau de rechargement, en pixels : il se remplit dans le sens des aiguilles. */
-function Ring({ frac, icon, glyph, active }: { frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean }): JSX.Element {
+function Ring({ frac, icon, glyph, active, count }: {
+  frac: number; icon: string; glyph: 'skill' | 'ultimate' | 'dash' | 'flask'; active?: boolean;
+  /** Un nombre de charges, affiché dans le coin (la ruée, quand elle en a plusieurs). */
+  count?: number;
+}): JSX.Element {
   const pct = Math.round(Math.max(0, Math.min(1, frac)) * 100);
   return (
     <span class={`ring ${pct >= 100 ? 'ready' : ''} ${active ? 'active' : ''}`} style={`--pct: ${pct}%`}>
       <Icon name={icon} />
       <Btn g={glyph} />
+      {count === undefined ? null : <b class="ring-count">{count}</b>}
     </span>
   );
 }
@@ -72,7 +78,7 @@ export function Hud(): JSX.Element | null {
         {h.fps > 0 ? <span class="fps">{h.fps} i/s</span> : null}
       </div>
       <div class="hud-bl">
-        <Ring frac={h.dashFrac} icon="icon-dash" glyph="dash" />
+        <Ring frac={h.dashFrac} icon="icon-dash" glyph="dash" count={h.dashMax > 1 ? h.dashCharges : undefined} />
         <Ring frac={h.skillFrac} icon={cls.skill.icon} glyph="skill" />
         <Ring frac={h.ultFrac} icon={cls.ultimate.icon} glyph="ultimate" active={h.ultActive} />
       </div>
@@ -263,32 +269,71 @@ export function ForgeScreen(): JSX.Element | null {
   );
 }
 
-/** Le totem chargé : un buff à choisir parmi ceux qu'il propose. Pas de retour possible. */
+/** Un pourcentage de Lueur, arrondi. */
+const glowPct = (share: number): number => Math.round(share * 100);
+
+/**
+ * Le totem chargé : trois Flammes. X nourrit la carte au focus (elle monte d'une rareté, et coûtera de la
+ * Lueur), Y reprend un cran ; rien n'est payé avant de prendre. Pas de retour possible.
+ */
 export function TotemScreen(): JSX.Element | null {
   const ref = useFocusScope('totem');
-  const boons = totemState.value;
-  if (!boons) return null;
+  const state = totemState.value;
+  const focus = focusedId.value;
+  const index = focus?.startsWith('flame') ? Number(focus.slice(5)) : 0;
+  useHandlers({
+    x: () => actions().feedFlame(index),
+    y: () => actions().unfeedFlame(index),
+  });
+  if (!state) return null;
   const data = gameData();
+  const current = state.cards[index] ?? state.cards[0];
   return (
     <div class="backdrop levelup totem" ref={ref}>
       <h1 class="gold">{t('totem.title')}</h1>
+      <p class="totem-glow">
+        <Icon name="sign-glow" />{' '}
+        {current && current.cost > 0
+          ? t('totem.glowAfter', { from: glowPct(state.glow), to: glowPct(current.glowAfter) })
+          : t('totem.glow', { glow: glowPct(state.glow) })}
+      </p>
       <div class="cards">
-        {boons.map((b, i) => {
-          const def = data.boons[b]!;
+        {state.cards.map((c, i) => {
+          const def = data.flames.lines[c.line]!;
+          const rarity = RARITIES[c.rarity]!;
           return (
             <button
-              type="button" key={`${def.id}-${i}`} class="card card-boon" data-focus={`boon${i}`} data-index={i}
-              data-focus-default={i === 0 ? '' : undefined} onClick={() => actions().takeBoon(i)}
+              type="button" key={`${def.id}-${i}`} class={`card card-flame rarity-${c.rarity}`} data-focus={`flame${i}`} data-index={i}
+              data-rarity={rarity} data-focus-default={i === 0 ? '' : undefined} onClick={() => actions().takeFlame(i)}
             >
               <span class="card-icon"><Icon name={def.icon} /></span>
               <span class="card-name">{t(`${def.id}.name`)}</span>
-              <span class="card-tag">{t('place.totem')}</span>
-              <span class="card-text">{t(`${def.id}.desc`)}</span>
+              <span class="card-tag">{t(`rarity.${rarity}`)}</span>
+              <span class="card-text">{t(`${def.id}.${rarity}`)}</span>
+              <span class="rarity-ladder">
+                {def.tiers.map((tier, r) => (tier ? (
+                  <span
+                    key={r} title={t(`rarity.${RARITIES[r]}`)}
+                    class={`rung rarity-${r}${r === c.rarity ? ' on' : ''}${r > state.open ? ' locked' : ''}`}
+                  />
+                ) : null))}
+              </span>
+              <span class={`card-price${c.cost > 0 ? ' paid' : ''}`}>
+                {c.cost > 0 ? t('totem.cost', { points: c.cost }) : t('totem.free')}
+              </span>
+              {i === index && c.block && c.block !== 'top' ? <span class="card-block">{t(`totem.block.${c.block}`)}</span> : null}
             </button>
           );
         })}
       </div>
-      <HelpBar items={[['nav', t('ui.move')], ['confirm', t('totem.take')]]} />
+      <HelpBar
+        items={[
+          ['nav', t('ui.move')],
+          ['confirm', t('totem.take')],
+          current && current.block === null && ['x', t('totem.feed', { points: current.feedCost })],
+          current && current.canUnfeed && ['y', t('totem.unfeed', { points: current.unfeedGain })],
+        ]}
+      />
     </div>
   );
 }
@@ -391,9 +436,16 @@ export function PauseScreen(): JSX.Element {
             <div class="slots">
               {h?.relics.map((r, i) => <span class="slot relic" key={i}><Icon name={r.icon} /><Pips value={r.level} max={r.max} /></span>)}
             </div>
-            {extras.boons.length + extras.finds.length > 0 ? (
+            {extras.flames.length + extras.finds.length > 0 ? (
               <div class="slots extras" title={t('pause.boons')}>
-                {extras.boons.map((b, i) => <span class="slot boon" key={`b${i}`}><Icon name={data.boons[b]!.icon} /></span>)}
+                {extras.flames.map((f) => {
+                  const def = data.flames.lines[f.line]!;
+                  return (
+                    <span class={`slot flame rarity-${f.rarity}`} key={def.id} title={`${t(`${def.id}.name`)} · ${t(`rarity.${RARITIES[f.rarity]}`)}`}>
+                      <Icon name={def.icon} />
+                    </span>
+                  );
+                })}
                 {extras.finds.map((f, i) => <span class="slot find" key={`f${i}`}><Icon name={data.finds[f]!.icon} /></span>)}
               </div>
             ) : null}
@@ -423,7 +475,7 @@ export function PauseScreen(): JSX.Element {
                 <p><span>{t('stat.critChance')}</span><b>{(stats.critChance * 100).toFixed(1).replace('.', ',')} %</b></p>
                 <p><span>{t('stat.armor')}</span><b>{stats.armor.toFixed(1).replace('.', ',')}</b></p>
                 <p><span>{t('stat.speed')}</span><b>{Math.round(stats.speed)} px/s</b></p>
-                <p><span>{t('stat.glow')}</span><b>{Math.round(stats.glow)} px</b></p>
+                <p><span>{t('stat.glow')}</span><b>{Math.round(stats.glow)} px · {glowPct(extras.glow)} %</b></p>
                 <p><span>{t('stat.str')} · {t('stat.agi')} · {t('stat.spi')}</span><b>{stats.attrs.str} · {stats.attrs.agi} · {stats.attrs.spi}</b></p>
                 <p><span>{t('stat.vig')} · {t('stat.luck')}</span><b>{stats.attrs.vig} · {stats.attrs.luck}</b></p>
               </div>

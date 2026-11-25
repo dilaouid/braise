@@ -4,5 +4,9 @@
   { "id": "relic.bottomless-quiver", "icon": "icon-relic-quiver", "weapon": "weapon.volley", "maxLevel": 5, "starting": true, "perLevel": { "projectileSpeed": 0.1 }, "atLevels": { "3": { "projectiles": 1 }, "5": { "projectiles": 1 } } },
   { "id": "relic.glass-jar", "icon": "icon-relic-jar", "weapon": "weapon.fireflies", "maxLevel": 5, "starting": true, "perLevel": { "duration": 0.08 } },
   { "id": "relic.oil-flask", "icon": "icon-relic-oil", "weapon": "weapon.firebrand", "maxLevel": 5, "starting": true, "perLevel": { "zone": 0.08 } },
-  { "id": "relic.portable-anvil", "icon": "icon-relic-anvil", "weapon": "weapon.hearth-hammer", "maxLevel": 5, "starting": true, "perLevel": { "knockback": 0.12, "eliteDamage": 0.05 } }
+  { "id": "relic.portable-anvil", "icon": "icon-relic-anvil", "weapon": "weapon.hearth-hammer", "maxLevel": 5, "starting": true, "perLevel": { "knockback": 0.12, "eliteDamage": 0.05 } },
+  { "id": "relic.winter-scarf", "icon": "icon-relic-scarf", "weapon": "weapon.verge", "maxLevel": 5, "starting": false, "perLevel": { "armor": 3 } },
+  { "id": "relic.copper-coil", "icon": "icon-relic-coil", "weapon": "weapon.storm-watch", "maxLevel": 5, "starting": false, "perLevel": { "critChance": 0.04 } },
+  { "id": "relic.hollow-lantern", "icon": "icon-relic-hollow-lantern", "weapon": "weapon.nightlights", "maxLevel": 5, "starting": false, "perLevel": { "glowShare": 0.1 } },
+  { "id": "relic.copper-sole", "icon": "icon-relic-sole", "weapon": "weapon.wake", "maxLevel": 5, "starting": false, "perLevel": { "speedShare": 0.03 } }
 ]

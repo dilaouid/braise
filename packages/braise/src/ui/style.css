@@ -180,6 +180,14 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .door-fire.lit { filter: none; }
 .door-card .hold-track { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 4px; margin: 0; }
 .door-card .hold-fill { display: block; }
+.carrier { position: absolute; left: 10px; top: 28px; display: flex; align-items: center; gap: 6px; padding: 5px 6px; background: rgba(11, 15, 26, 0.82); border: 1px solid var(--ash-1); max-width: 330px; }
+.carrier-face { display: flex; border: 1px solid var(--ember-3); background: var(--night-0); flex: none; }
+.carrier-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.carrier-name { font-family: var(--font-title); font-size: 15px; line-height: 14px; color: var(--ember-0); }
+.carrier-name em { font-style: normal; font-family: var(--font); font-size: 10px; color: var(--ash-4); margin-left: 4px; }
+.carrier-bonus { color: var(--ember-1); }
+.carrier-malus { color: var(--danger-0); }
+.carrier-slot.closed { width: 22px; height: 22px; border: 1px dashed var(--ash-2); background: rgba(19, 28, 46, 0.75); flex: none; }
 .screen.door .seed { position: absolute; left: 0; right: 0; top: 216px; text-align: center; color: var(--ember-1); }
 
 /* Autel */
@@ -248,10 +256,13 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .memory-slot.empty .memory-rank { color: var(--ash-2); }
 .memory-slot .memory-name { font-family: var(--font-title); font-size: 15px; line-height: 15px; color: var(--ash-5); }
 .memory-slot.empty .memory-name { color: var(--ash-2); }
-.altar-panel { position: absolute; left: 60px; right: 60px; top: 18px; bottom: 28px; display: flex; flex-direction: column; gap: 6px; }
+.altar-panel { position: absolute; left: 60px; right: 60px; top: 6px; bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
 .altar-panel header { display: flex; justify-content: space-between; align-items: center; }
 .quote { color: var(--ash-3); }
-.altar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; }
+.altar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; flex: 1; }
+/* Le prix d'un boost se lit à droite de son nom : les quatre armes tiennent sous les Flammes. */
+.altar-grid .boost { padding: 4px 7px; }
+.altar-grid .boost-cost { position: absolute; top: 4px; right: 7px; }
 .boost { display: flex; gap: 7px; padding: 7px; background: var(--night-2); border: 1px solid var(--ash-1); align-items: flex-start; }
 .boost.is-focused { background: var(--night-3); }
 .boost.off { opacity: 0.55; }
@@ -263,6 +274,19 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost-cost { display: inline-flex; align-items: center; gap: 3px; color: var(--ember-0); }
 .boost-cost.bad { color: var(--danger-0); }
 .boost.cannot .boost-icon { border-color: var(--ash-1); }
+.altar-row { margin: 0; line-height: 10px; }
+/* Deux colonnes, alignées sur celles des boosts : à la croix, « droite » depuis Lueur va à Sagesse, pas à la rangée du dessous. */
+.altar-unlocks { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+.boost.unlock { padding: 0 5px; align-items: center; }
+.boost.unlock .boost-icon { width: 24px; height: 22px; border: 0; background: none; }
+.boost.unlock .boost-body { flex: 1; flex-direction: row; gap: 6px; align-items: center; }
+.boost.unlock .boost-cost, .boost.unlock .boost-line.gold { margin-left: auto; }
+.boost.unlock .boost-icon { border-color: var(--rarity); }
+.boost.unlock .boost-name { color: var(--rarity); }
+.boost.unlock.weapon { --rarity: var(--ember-1); }
+.rarity-epic { --rarity: #ff3d81; }
+.rarity-legendary { --rarity: #ffb020; }
+.rarity-mythic { --rarity: #fff1c2; }
 
 /* Réglages */
 .settings.over { background: rgba(11, 15, 26, 0.72); }
@@ -381,8 +405,40 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .card-text { color: var(--ash-4); line-height: 11px; flex: 1; }
 .card-link { display: inline-flex; align-items: center; gap: 4px; color: var(--ash-3); }
 .card-evolves::after { content: ''; position: absolute; right: 3px; top: 3px; width: 5px; height: 5px; background: var(--ember-1); transform: rotate(45deg); }
-.card-boon { border-color: var(--teal-1); }
-.card-boon .card-name { color: var(--teal-0); }
+/* Les Flammes : la rareté se lit par la couleur du cadre et par le nombre de coins dessinés. */
+.rarity-0 { --rarity: #c9d1dc; }
+.rarity-1 { --rarity: #7fd4ff; }
+.rarity-2 { --rarity: #ff3d81; }
+.rarity-3 { --rarity: #ffb020; }
+.rarity-4 { --rarity: #fff1c2; }
+.card-flame { width: 140px; height: 190px; border: 2px solid var(--rarity); }
+.card-flame .card-name, .card-flame .card-tag { color: var(--rarity); }
+.card-flame .card-icon { border-color: var(--rarity); }
+/* Épique : un cadre tramé, rose et bleu, qui se lit violet. */
+.card-flame.rarity-2, .slot.flame.rarity-2 {
+  border-color: transparent;
+  background: linear-gradient(var(--night-1), var(--night-1)) padding-box, repeating-conic-gradient(#ff3d81 0 25%, #7fd4ff 0 50%) 0 0 / 4px 4px border-box;
+}
+.card-flame.rarity-2.is-focused { background: linear-gradient(var(--night-2), var(--night-2)) padding-box, repeating-conic-gradient(#ff3d81 0 25%, #7fd4ff 0 50%) 0 0 / 4px 4px border-box; }
+/* Mythique : le cadre est doublé. */
+.card-flame.rarity-4 { box-shadow: 0 0 0 2px var(--night-0), 0 0 0 3px var(--rarity); }
+.card-flame::before { content: ''; position: absolute; inset: 2px; pointer-events: none; background-repeat: no-repeat; background-size: 6px 6px; }
+.card-flame.rarity-1::before { background-image: linear-gradient(var(--rarity), var(--rarity)), linear-gradient(var(--rarity), var(--rarity)); background-position: top left, bottom right; }
+.card-flame.rarity-2::before { background-image: linear-gradient(#7fd4ff, #7fd4ff), linear-gradient(#ff3d81, #ff3d81), linear-gradient(#7fd4ff, #7fd4ff); background-position: top left, top right, bottom right; }
+.card-flame.rarity-3::before, .card-flame.rarity-4::before {
+  background-image: linear-gradient(var(--rarity), var(--rarity)), linear-gradient(var(--rarity), var(--rarity)), linear-gradient(var(--rarity), var(--rarity)), linear-gradient(var(--rarity), var(--rarity));
+  background-position: top left, top right, bottom left, bottom right;
+}
+.rarity-ladder { display: inline-flex; gap: 3px; align-items: center; }
+.rung { width: 8px; height: 8px; border: 1px solid var(--rarity); opacity: 0.55; position: relative; }
+.rung.on { background: var(--rarity); opacity: 1; box-shadow: 0 0 0 1px var(--night-0), 0 0 0 2px var(--ash-5); }
+.rung.locked { border-style: dashed; opacity: 0.3; }
+.rung.locked::after { content: ''; position: absolute; left: 2px; top: 2px; width: 2px; height: 2px; background: var(--ash-3); }
+.card-price.paid { color: var(--teal-0); }
+.card-block { color: var(--danger-0); line-height: 10px; }
+.totem-glow { display: inline-flex; align-items: center; gap: 4px; color: var(--teal-0); margin-bottom: 4px; }
+.slot.flame { border: 2px solid var(--rarity); justify-content: center; }
+.ring-count { position: absolute; left: -2px; top: -3px; min-width: 9px; padding: 0 1px; background: var(--night-0); color: var(--ember-0); font-size: 9px; line-height: 9px; text-align: center; }
 .card-service .card-name { color: var(--ash-5); }
 .card-price { display: inline-flex; align-items: center; gap: 3px; color: var(--ember-1); }
 .card-off { opacity: 0.45; }

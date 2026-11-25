@@ -2,5 +2,12 @@
   { "id": "altar.ardor", "icon": "icon-altar-ardor", "row": 1, "ranks": 10, "baseCost": 5, "growth": 1.45, "shards": 0, "perRank": { "power": 0.03 } },
   { "id": "altar.endurance", "icon": "icon-altar-endurance", "row": 1, "ranks": 10, "baseCost": 5, "growth": 1.45, "shards": 0, "perRank": { "maxHpShare": 0.05 } },
   { "id": "altar.glow", "icon": "icon-altar-glow", "row": 1, "ranks": 5, "baseCost": 8, "growth": 1.6, "shards": 0, "perRank": { "glowShare": 0.08 } },
-  { "id": "altar.wisdom", "icon": "icon-altar-wisdom", "row": 1, "ranks": 5, "baseCost": 10, "growth": 1.7, "shards": 0, "perRank": { "wisdom": 0.04 } }
+  { "id": "altar.wisdom", "icon": "icon-altar-wisdom", "row": 1, "ranks": 5, "baseCost": 10, "growth": 1.7, "shards": 0, "perRank": { "wisdom": 0.04 } },
+  { "id": "altar.flames-epic", "icon": "icon-altar-flames-epic", "row": 2, "ranks": 1, "baseCost": 60, "growth": 1, "shards": 0, "perRank": {}, "unlock": "epic" },
+  { "id": "altar.flames-legendary", "icon": "icon-altar-flames-legendary", "row": 2, "ranks": 1, "baseCost": 180, "growth": 1, "shards": 0, "perRank": {}, "unlock": "legendary", "requires": "altar.flames-epic" },
+  { "id": "altar.flames-mythic", "icon": "icon-altar-flames-mythic", "row": 2, "ranks": 1, "baseCost": 450, "growth": 1, "shards": 0, "perRank": {}, "unlock": "mythic", "requires": "altar.flames-legendary" },
+  { "id": "altar.weapon-wake", "icon": "icon-weapon-wake", "row": 3, "ranks": 1, "baseCost": 30, "growth": 1, "shards": 0, "perRank": {}, "weapon": "weapon.wake" },
+  { "id": "altar.weapon-verge", "icon": "icon-weapon-verge", "row": 3, "ranks": 1, "baseCost": 50, "growth": 1, "shards": 0, "perRank": {}, "weapon": "weapon.verge" },
+  { "id": "altar.weapon-storm-watch", "icon": "icon-weapon-storm-watch", "row": 3, "ranks": 1, "baseCost": 80, "growth": 1, "shards": 0, "perRank": {}, "weapon": "weapon.storm-watch" },
+  { "id": "altar.weapon-nightlights", "icon": "icon-weapon-nightlights", "row": 3, "ranks": 1, "baseCost": 120, "growth": 1, "shards": 0, "perRank": {}, "weapon": "weapon.nightlights" }
 ]

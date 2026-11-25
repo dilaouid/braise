@@ -1,7 +1,8 @@
 import { insideTelegraph } from './enemies.ts';
-import { closeChest, closeFind, takeCard } from './levelup.ts';
+import { closeChest, closeFind, evolvableWeapons, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
-import { buyItem, canBuy, closeShop, shopItems, takeBoon, takeEvolution } from './places.ts';
+import { feedOffer, feedTarget, glowShareNow, offerCost, takeFlame } from './flames.ts';
+import { buyItem, canBuy, closeShop, shopItems, takeEvolution } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { PK_GEM, PK_RED_GEM, SERVICES, type Poi, type Run, type StepInput } from './types.ts';
 
@@ -10,7 +11,7 @@ export type Bot = (run: Run, input: StepInput) => void;
 
 const DIRS = 16;
 /** Seuils de prudence du robot actif (réglés par simulation). */
-export const BOT_TUNE = { calm: 0.0045, hurt: 0.0015, go: 0.006, fleeReach: 50, touch: 22, lead: 0.22 };
+export const BOT_TUNE = { calm: 0.0045, hurt: 0.0015, go: 0.006, fleeReach: 50, touch: 22, lead: 0.22, gather: 320 };
 const best = { x: 0, y: 0, danger: 0 };
 /** Le point autour duquel le robot reste : le centre de la carte, ou le lieu qu'il vise. */
 const anchor = { on: false, x: 0, y: 0 };
@@ -164,7 +165,7 @@ export const activeBot: Bot = (run, input) => {
     if (!has) {
       // Rien à frapper tout de suite : aller chercher ce qui traîne au sol.
       const p = run.pickups;
-      let bestD = 320 * 320;
+      let bestD = BOT_TUNE.gather * BOT_TUNE.gather;
       for (let k = 0; k < p.count; k++) {
         const dx = p.x[k]! - hero.x;
         const dy = p.y[k]! - hero.y;
@@ -206,9 +207,12 @@ function nextPlace(run: Run): Poi | null {
   const hero = run.hero;
   const ev = run.data.tuning.events;
   let found: Poi | null = null;
+  const ready = evolvableWeapons(run).length > 0;
   let foundD = Infinity;
   for (const poi of run.map.pois) {
     if (poi.state === 2 || poi.kind === 'portal' || poi.kind === 'memory') continue;
+    // Un braséro déjà allumé n'a rien à donner tant qu'aucune arme n'est prête à évoluer.
+    if (poi.state === 3 && !ready) continue;
     if (poi.kind === 'spring' && hero.hp > hero.stats.maxHp * 0.6) continue;
     if (poi.kind === 'smith') {
       if (hero.gold < ev.smith.basePrice + ev.smith.priceStep * run.smithBuys) continue;
@@ -307,12 +311,43 @@ export function plannedPick(run: Run): number {
   return best;
 }
 
+/** Comment un robot mise sa Lueur aux totems. */
+export type FeedPolicy = 'never' | 'smart' | 'max';
+
+/** La Lueur que la politique « smart » veut garder après une mise, en part de la Lueur de base. */
+const SMART_GLOW = 0.7;
+
+/**
+ * Nourrit les offres du totem selon la politique, puis renvoie l'indice de celle à prendre.
+ * `never` : la première carte gratuite (sinon la moins chère), sans rien nourrir.
+ * `max` : chaque carte est nourrie jusqu'au blocage, la plus rare est prise.
+ * `smart` : pareil, mais un cran n'est monté que si la Lueur reste à 70 % ou plus.
+ */
+export function feedAndPick(run: Run, policy: FeedPolicy): number {
+  const offers = run.totemOffers;
+  if (policy === 'never') {
+    let best = 0;
+    for (let i = 1; i < offers.length; i++) if (offerCost(run, offers[i]!) < offerCost(run, offers[best]!)) best = i;
+    return best;
+  }
+  for (let i = 0; i < offers.length; i++) {
+    for (let target = feedTarget(run, i); target >= 0; target = feedTarget(run, i)) {
+      const next = offerCost(run, { ...offers[i]!, rarity: target });
+      if (policy === 'smart' && glowShareNow(run, next) < SMART_GLOW - 1e-9) break;
+      if (!feedOffer(run, i)) break;
+    }
+  }
+  let best = 0;
+  for (let i = 1; i < offers.length; i++) if (offers[i]!.rarity > offers[best]!.rarity) best = i;
+  return best;
+}
+
 export interface SimOptions {
   bot: Bot;
   /** Carte choisie à chaque montée de niveau (0 : toujours la première). */
   pickCard?: (run: Run) => number;
-  /** Buff choisi à chaque totem (0 : toujours le premier). */
-  pickBoon?: (run: Run) => number;
+  /** Comment le robot mise sa Lueur aux totems (par défaut : jamais). */
+  feed?: FeedPolicy;
   /** Nombre maximum de pas (par défaut : 20 minutes). */
   maxSteps?: number;
   /** Appelé à chaque pas, après la simulation. */
@@ -342,7 +377,7 @@ export function simulate(run: Run, options: SimOptions): Run {
       continue;
     }
     if (run.phase === 'totem') {
-      takeBoon(run, options.pickBoon ? options.pickBoon(run) : 0);
+      if (!takeFlame(run, feedAndPick(run, options.feed ?? 'never'))) takeFlame(run, 0);
       continue;
     }
     if (run.phase === 'find') {
@@ -404,7 +439,17 @@ export function hashRun(run: Run): number {
   for (const w of run.weapons) {
     mix(w.def); mix(w.level); mix(w.damageDone);
   }
-  for (const b of run.boons) mix(b);
+  for (const f of run.flames) {
+    mix(f.line); mix(f.rarity);
+  }
+  // Sans mise, l'empreinte reste celle d'une partie d'avant les Flammes.
+  if (run.glowBurned > 0) mix(run.glowBurned);
+  for (const l of run.lamps) {
+    mix(l.x); mix(l.y); mix(l.radius); mix(l.life);
+  }
+  for (const t of run.threads) {
+    mix(t.x1); mix(t.y1); mix(t.x2); mix(t.y2); mix(t.life);
+  }
   for (const f of run.finds) mix(f);
   mix(hero.goldSpent); mix(run.smithBuys); mix(run.extraFlasks); mix(run.pendingFinds);
   for (const n of run.serviceBuys) mix(n);

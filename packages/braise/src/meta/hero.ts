@@ -76,6 +76,8 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     const rank = save.account.altar[boost.id] ?? 0;
     // Un boost désactivé n'a aucun effet.
     if (rank <= 0 || save.account.altarDisabled.includes(boost.id)) continue;
+    // Un déblocage n'a pas de bonus chiffré : il n'est pas une source de la fiche.
+    if (Object.keys(boost.perRank).length === 0) continue;
     addBonus(sheet, boost.perRank, rank);
     sources.push({ label: boost.id, bonus: boost.perRank, times: rank });
   }
@@ -89,6 +91,14 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
 /** Les armes et les reliques proposables dans les cartes de niveau. */
 export function unlockedContent(data: GameData, save: Save): { weapons: string[]; relics: string[] } {
   const extra = new Set(save.account.unlocks);
+  // Un boost d'Autel ouvre une arme et sa relique, tant qu'il est acheté et actif.
+  for (const boost of data.altar) {
+    if (boost.weapon === undefined || (save.account.altar[boost.id] ?? 0) <= 0 || save.account.altarDisabled.includes(boost.id)) continue;
+    const weapon = data.weapons.find((w) => w.id === boost.weapon);
+    if (!weapon) continue;
+    extra.add(weapon.id);
+    extra.add(data.relics[weapon.relic]!.id);
+  }
   return {
     weapons: data.weapons.filter((w) => !w.evolved && (w.starting || extra.has(w.id))).map((w) => w.id),
     relics: data.relics.filter((r) => r.starting || extra.has(r.id)).map((r) => r.id),

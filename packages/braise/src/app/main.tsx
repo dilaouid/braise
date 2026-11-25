@@ -13,15 +13,16 @@ import { activeBot } from '../core/bots.ts';
 import { nearestObject, newCamp, stepCamp, stopCamp, walkTo } from '../core/camp.ts';
 import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
-import { buyItem, canBuy, closeForge, closeShop, shopItems, takeBoon, takeEvolution } from '../core/places.ts';
+import { feedBlock, feedOffer, feedTarget, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer, unfeedTarget } from '../core/flames.ts';
+import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
-import { abandonRun, clearEvents, createRun, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
+import { abandonRun, clearEvents, createRun, dashChargesMax, dashReady, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
-import { buyAltarRank, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
+import { buyAltarRank, flameRarity, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
@@ -322,6 +323,27 @@ async function boot(): Promise<void> {
     };
   }
 
+  /** Recopie les Flammes du totem pour l'écran : rareté, prix, ce qui bloque, Lueur après la prise. */
+  function syncTotem(): void {
+    if (!run) return;
+    const r = run;
+    totemState.value = {
+      glow: glowShareNow(r),
+      open: openRarity(r),
+      cards: r.totemOffers.map((offer, i) => {
+        const cost = offerCost(r, offer);
+        const up = feedTarget(r, i);
+        const down = unfeedTarget(r, i);
+        return {
+          line: offer.line, rarity: offer.rarity, cost,
+          block: feedBlock(r, i), feedCost: up < 0 ? 0 : offerCost(r, { ...offer, rarity: up }) - cost,
+          canUnfeed: down >= 0, unfeedGain: down < 0 ? 0 : cost - offerCost(r, { ...offer, rarity: down }),
+          glowAfter: glowShareNow(r, cost),
+        };
+      }),
+    };
+  }
+
   function finishRun(): void {
     if (!run) return;
     if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
@@ -375,7 +397,7 @@ async function boot(): Promise<void> {
     if (on) {
       const worn = run.tutorial ? [] : resolveLantern(data, current.account.lantern).faces;
       runExtras.value = {
-        boons: run.boons.slice(), finds: run.finds.slice(),
+        flames: run.flames.map((f) => ({ ...f })), finds: run.finds.slice(), glow: glowShareNow(run),
         lantern: worn.flatMap((f) => (f ? [{ id: f.id, level: f.level }] : [])),
         piece: run.piece?.taken ? data.lantern.pieces[run.piece.index]!.id : null,
       };
@@ -621,6 +643,7 @@ async function boot(): Promise<void> {
       // Le souvenir que le boss de la région garde encore, s'il y en a un.
       memory: pendingMemory(data, current, regionId),
       reborn,
+      flameRarity: flameRarity(current, data),
       ...lanternRun(data, current, replay),
     });
     renderer.beginRun(run);
@@ -890,9 +913,27 @@ async function boot(): Promise<void> {
         guard(250);
       }
     },
-    takeBoon(index) {
+    takeFlame(index) {
       if (!run || performance.now() < guardUntil) return;
-      if (takeBoon(run, index)) audio.play('ui-confirm');
+      const paid = run.totemOffers[index] ? offerCost(run, run.totemOffers[index]!) : 0;
+      if (takeFlame(run, index)) audio.play(paid > 0 ? 'flame-feed' : 'ui-confirm');
+      else audio.play('refuse');
+    },
+    feedFlame(index) {
+      if (!run) return;
+      if (feedOffer(run, index)) {
+        audio.play('ui-move');
+        syncTotem();
+      } else {
+        audio.play('refuse');
+      }
+    },
+    unfeedFlame(index) {
+      if (!run) return;
+      if (unfeedOffer(run, index)) {
+        audio.play('ui-back');
+        syncTotem();
+      }
     },
     takeEvolution(index) {
       if (!run || performance.now() < guardUntil) return;
@@ -1036,6 +1077,11 @@ async function boot(): Promise<void> {
           break;
         }
         case EV.lobLand: audio.play('brand', 0.45, 1, 120); break;
+        case EV.lamp: audio.play('brand', 0.3, 1.2, 120); break;
+        case EV.bolt: if (c > 0) audio.play('bolt', 0.4, 1, 120); break;
+        case EV.frost: audio.play('frost', 0.3, 1, 180); break;
+        case EV.thread: audio.play('spark', 0.35, 0.8, 120); break;
+        case EV.threadCross: audio.play('bolt', 0.5, 0.8, 150); break;
         case EV.enemyShot: audio.play('enemy-shot', 0.4, 1, 120); break;
         case EV.waveWarning:
           audio.play('wave', 0.8);
@@ -1127,7 +1173,9 @@ async function boot(): Promise<void> {
       skillFrac: 1 - Math.max(0, h.skillCd) / skillCooldown(r),
       ultFrac: h.ultT > 0 ? h.ultT / r.cls.ultimate.duration : h.ultGauge / tuning.ultimate.gaugeMax,
       ultActive: h.ultT > 0,
-      dashFrac: 1 - Math.max(0, h.dashCd) / dashCooldown(r),
+      // Une ruée prête : l'anneau est plein ; sinon il montre la charge qui revient.
+      dashFrac: dashReady(r),
+      dashCharges: h.dashCharges, dashMax: dashChargesMax(r),
       message: now < bannerUntil ? banner : null,
       fps: current.settings.showFps ? fps : 0,
     };
@@ -1363,7 +1411,7 @@ async function boot(): Promise<void> {
         audio.play('chest', 0.9);
         guard(350);
       } else if (r.phase === 'totem' && overlay.value !== 'totem') {
-        totemState.value = r.totemChoices.slice();
+        syncTotem();
         overlay.value = 'totem';
         guard(350);
       } else if (r.phase === 'shop' && overlay.value !== 'shop') {
@@ -1491,7 +1539,7 @@ async function boot(): Promise<void> {
           if (run.phase === 'levelup') takeCard(run, 0);
           else if (run.phase === 'chest') closeChest(run);
           else if (run.phase === 'forge') takeEvolution(run, 0);
-          else if (run.phase === 'totem') takeBoon(run, 0);
+          else if (run.phase === 'totem') takeFlame(run, 0);
           else if (run.phase === 'shop') {
             // En tutoriel, le robot achète la première carte qu'il peut payer : c'est la leçon.
             const pick = tuto ? shopItems(run).findIndex((item) => item.card !== null && canBuy(run!, item)) : -1;

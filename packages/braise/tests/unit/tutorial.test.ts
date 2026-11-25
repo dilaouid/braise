@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { TutorialStep } from '../../src/content/index.ts';
 import { isSolidAt } from '../../src/core/map.ts';
-import { buyItem, closeShop, shopItems, takeBoon } from '../../src/core/places.ts';
+import { takeFlame } from '../../src/core/flames.ts';
+import { buyItem, closeShop, shopItems } from '../../src/core/places.ts';
 import { closeFind, takeCard } from '../../src/core/levelup.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue, tutorialTarget } from '../../src/core/tutorial.ts';
@@ -271,7 +272,7 @@ describe('conditions d\'attente', () => {
       steps(run, 1);
     }
     expect(run.phase).toBe('totem');
-    expect(takeBoon(run, 0)).toBe(true);
+    expect(takeFlame(run, 0)).toBe(true);
     steps(run, 1);
     expect(passed(run)).toBe(true);
   });
@@ -467,7 +468,7 @@ describe('mourir dans le tutoriel', () => {
       steps(run, 1);
     }
     expect(run.phase).toBe('totem');
-    takeBoon(run, 0);
+    takeFlame(run, 0);
     steps(run, 1);
     expect(passed(run)).toBe(true);
   });

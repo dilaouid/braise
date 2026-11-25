@@ -5,7 +5,7 @@ import evolutionsJson from '../../content/evolutions.json';
 import relicsJson from '../../content/relics.json';
 import enemiesJson from '../../content/enemies.json';
 import altarJson from '../../content/altar.json';
-import boonsJson from '../../content/boons.json';
+import flamesJson from '../../content/flames.json';
 import findsJson from '../../content/finds.json';
 import dialoguesJson from '../../content/dialogues.json';
 import tutorialJson from '../../content/tutorial.json';
@@ -17,10 +17,10 @@ import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
 import {
-  altarBoostSchema, boonSchema, campSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
-  lanternSchema, memoriesSchema, regionSchema, relicSchema, weaponSchema,
-  type AltarBoostRaw, type Attribute, type BoonDef, type CampDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type HeroTuning,
-  type PieceEffect, type RegionRaw, type StatBonus, type WeaponParamsRaw,
+  altarBoostSchema, campSchema, classSchema, findSchema, enemySchema, evolutionSchema, expeditionTuningSchema, heroTuningSchema,
+  flamesSchema, lanternSchema, memoriesSchema, regionSchema, relicSchema, weaponSchema, RARITY_NAMES,
+  type AltarBoostRaw, type Attribute, type CampDef, type FindDef, type ClassRaw, type EnemyRaw, type ExpeditionTuning, type FlamesRaw, type HeroTuning,
+  type PieceEffect, type RegionRaw, type RunModsRaw, type StatBonus, type WeaponParamsRaw,
 } from './schema.ts';
 import { CINEMATICS_RAW } from './cinematic.ts';
 import { SCENES_RAW, compileScenes, type SceneDef } from './scene.ts';
@@ -28,7 +28,7 @@ import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial
 
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
 export type {
-  Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, BoonDef, CampDef, CampObject, FindDef, PieceEffect, RunModsRaw,
+  Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, CampDef, CampObject, FindDef, PieceEffect, RunModsRaw,
 } from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
@@ -48,6 +48,8 @@ const PARAM_DEFAULTS: WeaponParams = {
   active: 0, pause: 0, hitInterval: 0.5, orbRadius: 6, turnTime: 2, rings: 1, ringGap: 0, sparkEvery: 0, sparkDamage: 0,
   impactRadius: 0, flight: 0.5, puddleRadius: 0, puddleDuration: 0, puddleDamage: 0, puddleTick: 0.5, puddleGrow: 0,
   knockback: 0, stun: 0, waves: 1, fissures: 0, fissureLength: 0, fissureWidth: 0, fissureDamage: 0,
+  freeze: false, shock: false, band: 0, bite: 0, jumps: 0, jumpRange: 0, jumpsIntoLight: false,
+  radiusShare: 0, life: 0, max: 0, scatter: 0, linkRange: 0, linkDamage: 0, linkWidth: 0, width: 0, minLength: 0, crossRadius: 0, crossDamage: 0,
 };
 
 export interface WeaponDef {
@@ -57,7 +59,7 @@ export interface WeaponDef {
   damageType: number;
   scale: Attribute;
   aim: 'nearest' | 'directed' | 'around' | 'orbit' | 'random' | 'placed';
-  behavior: 'arc' | 'projectile' | 'orbit' | 'lob' | 'nova';
+  behavior: 'arc' | 'projectile' | 'orbit' | 'lob' | 'nova' | 'verge' | 'chain' | 'lamp' | 'wake';
   /** Indice de la relique liée. */
   relic: number;
   /** Indice de la forme évoluée, ou -1 pour une arme déjà évoluée. */
@@ -140,6 +142,32 @@ export interface LanternDef {
   winsForThird: number;
 }
 
+/** Les raretés des Flammes, de la plus commune à la plus rare : leur indice sert partout. */
+export const RARITIES = RARITY_NAMES;
+
+/** Une Flamme à une rareté : ce qu'elle donne. */
+export interface FlameTier {
+  stats: StatBonus;
+  mods: RunModsRaw;
+  /** Élites qui surgissent quand elle est prise. */
+  elites: number;
+}
+
+/** Une lignée de Flammes. `tiers[r]` est nul pour une rareté qu'elle n'a pas. */
+export interface FlameLine {
+  id: string;
+  icon: string;
+  index: number;
+  tiers: Array<FlameTier | null>;
+  /** Sa première et sa dernière rareté. */
+  first: number;
+  last: number;
+}
+
+export interface FlamesDef extends Omit<FlamesRaw, 'lines'> {
+  lines: FlameLine[];
+}
+
 /** Toutes les données du jeu, validées et indexées. */
 export interface GameData {
   tuning: ExpeditionTuning;
@@ -150,8 +178,8 @@ export interface GameData {
   regions: Record<string, RegionDef>;
   classes: Record<string, ClassDef>;
   altar: AltarBoostRaw[];
-  /** Les buffs de totem. */
-  boons: BoonDef[];
+  /** Les Flammes des totems. */
+  flames: FlamesDef;
   /** Les trouvailles des trésors et des caches. */
   finds: FindDef[];
   /** Les dialogues, par identifiant. */
@@ -179,7 +207,7 @@ export const RAW = {
   relics: relicsJson as unknown,
   enemies: enemiesJson as unknown,
   altar: altarJson as unknown,
-  boons: boonsJson as unknown,
+  flames: flamesJson as unknown,
   finds: findsJson as unknown,
   dialogues: dialoguesJson as unknown,
   tutorial: tutorialJson as unknown,
@@ -202,6 +230,17 @@ function check<T>(schema: z.ZodType<T>, value: unknown, file: string, errors: st
   return null;
 }
 
+/** Les comportements sans rechargement : une arme permanente, ou déclenchée par la ruée. */
+const NO_COOLDOWN: string[] = ['orbit', 'verge', 'wake'];
+
+/** Ce qu'un comportement ne peut pas laisser à zéro. */
+const REQUIRED_PARAMS: Record<string, Array<keyof WeaponParamsRaw>> = {
+  verge: ['band', 'hitInterval'],
+  chain: ['range', 'jumpRange'],
+  lamp: ['radiusShare', 'life', 'max', 'hitInterval'],
+  wake: ['width', 'life', 'max', 'hitInterval'],
+};
+
 function fill(p: WeaponParamsRaw): WeaponParams {
   return { ...PARAM_DEFAULTS, ...p } as WeaponParams;
 }
@@ -219,14 +258,14 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   const relicsRaw = check(z.array(relicSchema), raw.relics, 'relics.json', errors);
   const enemiesRaw = check(z.array(enemySchema), raw.enemies, 'enemies.json', errors);
   const altar = check(z.array(altarBoostSchema), raw.altar, 'altar.json', errors);
-  const boons = check(z.array(boonSchema), raw.boons, 'boons.json', errors);
+  const flamesRaw = check(flamesSchema, raw.flames, 'flames.json', errors);
   const finds = check(z.array(findSchema), raw.finds, 'finds.json', errors);
   const memoriesRaw = check(memoriesSchema, raw.memories, 'memories.json', errors);
   const camp = check(campSchema, raw.camp, 'camp.json', errors);
   const lanternRaw = check(lanternSchema, raw.lantern, 'lantern.json', errors);
   const regionsRaw = raw.regions.map((r, i) => check(regionSchema, r, `regions[${i}]`, errors));
   const classesRaw = raw.classes.map((c, i) => check(classSchema, c, `classes[${i}]`, errors));
-  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !boons || !finds || !memoriesRaw || !lanternRaw || !camp
+  if (!tuning || !heroTuning || !weaponsRaw || !evolutionsRaw || !relicsRaw || !enemiesRaw || !altar || !flamesRaw || !finds || !memoriesRaw || !lanternRaw || !camp
     || regionsRaw.includes(null) || classesRaw.includes(null)) {
     return { data: null, errors };
   }
@@ -242,10 +281,32 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
   unique(relicsRaw.map((r) => r.id), 'relics.json');
   unique(enemiesRaw.map((e) => e.id), 'enemies.json');
   unique(altar.map((a) => a.id), 'altar.json');
-  unique(boons.map((b) => b.id), 'boons.json');
+  for (const a of altar) {
+    if (a.requires !== undefined && !altar.some((b) => b.id === a.requires)) errors.push(`${a.id}: référence inconnue « ${a.requires} »`);
+    if (a.unlock === undefined && a.weapon === undefined && Object.keys(a.perRank).length === 0) errors.push(`${a.id}: aucun effet`);
+  }
+  for (const rarity of ['epic', 'legendary', 'mythic'] as const) {
+    if (altar.filter((a) => a.unlock === rarity).length !== 1) errors.push(`altar.json: il faut un seul boost pour ouvrir « ${rarity} »`);
+  }
+  unique(flamesRaw.lines.map((l) => l.id), 'flames.json');
   unique(finds.map((f) => f.id), 'finds.json');
-  for (const d of [...boons, ...finds]) if (Object.keys(d.bonus).length === 0) errors.push(`${d.id}: aucun effet`);
-  if (boons.length < tuning.events.totem.choices) errors.push('boons.json: moins de buffs que de choix par totem');
+  for (const d of finds) if (Object.keys(d.bonus).length === 0) errors.push(`${d.id}: aucun effet`);
+  if (flamesRaw.lines.length < tuning.events.totem.choices) errors.push('flames.json: moins de lignées que de choix par totem');
+  if (flamesRaw.costs[0] !== 0) errors.push('flames.json: la première rareté ne coûte rien');
+  const flameLines: FlameLine[] = flamesRaw.lines.map((l, index) => {
+    const tiers: Array<FlameTier | null> = RARITIES.map(() => null);
+    for (const t of l.tiers) {
+      const r = RARITIES.indexOf(t.rarity);
+      if (tiers[r]) errors.push(`${l.id}: rareté « ${t.rarity} » en double`);
+      if (Object.keys(t.stats).length + Object.keys(t.mods).length + t.elites === 0) errors.push(`${l.id}: rareté « ${t.rarity} » sans effet`);
+      tiers[r] = { stats: t.stats, mods: t.mods, elites: t.elites };
+    }
+    const first = tiers.findIndex((t) => t !== null);
+    const last = tiers.length - 1 - [...tiers].reverse().findIndex((t) => t !== null);
+    if (first < 0) errors.push(`${l.id}: aucune rareté`);
+    else for (let r = first; r <= last; r++) if (!tiers[r]) errors.push(`${l.id}: il manque la rareté « ${RARITIES[r]} »`);
+    return { id: l.id, icon: l.icon, index, tiers, first, last: first < 0 ? -1 : last };
+  });
 
   const weaponIndex = new Map<string, number>();
   weaponsRaw.forEach((w, i) => weaponIndex.set(w.id, i));
@@ -273,7 +334,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       evolved: false, from: -1, starting: w.starting, levels: w.levels.map(fill),
     });
     for (let l = 0; l < w.levels.length; l++) {
-      if (w.behavior !== 'orbit' && w.levels[l]!.cooldown === undefined) errors.push(`${w.id}: niveau ${l + 1} sans rechargement`);
+      if (!NO_COOLDOWN.includes(w.behavior) && w.levels[l]!.cooldown === undefined) errors.push(`${w.id}: niveau ${l + 1} sans rechargement`);
     }
   }
   for (const e of evolutionsRaw) {
@@ -290,6 +351,11 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       if (base && base.evolution !== e.id) errors.push(`${e.id}: « ${base.id} » évolue vers « ${base.evolution} »`);
       if (base && base.relic !== e.relic) errors.push(`${e.id}: relique différente de celle de « ${base.id} »`);
     }
+  }
+  for (const raw of [...weaponsRaw.map((w) => ({ id: w.id, behavior: w.behavior, levels: w.levels })), ...evolutionsRaw.map((w) => ({ id: w.id, behavior: w.behavior, levels: [w.params] }))]) {
+    raw.levels.forEach((level, l) => {
+      for (const key of REQUIRED_PARAMS[raw.behavior] ?? []) if (level[key] === undefined) errors.push(`${raw.id}: niveau ${l + 1} sans « ${key} »`);
+    });
   }
   for (const w of weapons) {
     if (!w.evolved && w.evolution >= 0 && !weapons[w.evolution]!.evolved) errors.push(`${w.id}: son évolution n'est pas dans evolutions.json`);
@@ -361,6 +427,14 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     classes[c.id] = { ...c, startWeaponIndex: ref(weaponIndex, c.startWeapon, c.id) };
   }
 
+  for (const b of altar) {
+    if (b.weapon === undefined) continue;
+    const opened = weapons[ref(weaponIndex, b.weapon, b.id)];
+    if (b.unlock !== undefined) errors.push(`${b.id}: ouvre une rareté et une arme à la fois`);
+    if (altar.some((o) => o !== b && o.weapon === b.weapon)) errors.push(`${b.id}: « ${b.weapon} » s'achète deux fois`);
+    if (opened && (opened.starting || opened.evolved)) errors.push(`${b.id}: « ${b.weapon} » ne s'achète pas (arme de départ ou évolution)`);
+  }
+
   // Chaque identifiant a ses textes.
   const fr = raw.fr;
   const needText = (key: string): void => {
@@ -380,13 +454,21 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${a.id}.name`);
     needText(`${a.id}.desc`);
   }
-  for (const d of [...boons, ...finds]) {
+  for (const d of finds) {
     needText(`${d.id}.name`);
     needText(`${d.id}.desc`);
+  }
+  for (const r of RARITIES) needText(`rarity.${r}`);
+  for (const l of flameLines) {
+    needText(`${l.id}.name`);
+    l.tiers.forEach((t, r) => {
+      if (t) needText(`${l.id}.${RARITIES[r]}`);
+    });
   }
   for (const r of Object.values(regions)) needText(`${r.id}.name`);
   for (const c of Object.values(classes)) {
     needText(`${c.id}.name`);
+    for (const key of ['who', 'trait.name', 'trait.bonus', 'trait.malus']) needText(`${c.id}.${key}`);
     needText(`${c.skill.id}.name`);
     needText(`${c.skill.id}.desc`);
     needText(`${c.ultimate.id}.name`);
@@ -448,7 +530,7 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
 
   if (errors.length > 0 || !tuto) return { data: null, errors };
   return {
-    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, boons, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes, camp,
+    data: { tuning, heroTuning, weapons, relics, enemies, regions, classes, altar, flames: { ...flamesRaw, lines: flameLines }, finds, dialogues: tuto.dialogues, tutorial: tuto.tutorial, memories, memoriesTotal: memoriesRaw.total, scenes, camp,
       lantern: { pieces, drops: lanternRaw.drops, winsForThird: lanternRaw.winsForThird } },
     errors,
   };
