@@ -127,6 +127,11 @@ export function Pips({ value, max }: { value: number; max: number }): JSX.Elemen
   return <span class="pips">{pips}</span>;
 }
 
+/** L'infobulle d'un élément focalisable : elle se montre au-dessus de lui quand il a le focus (croix, clavier ou souris). */
+export function Tip({ text }: { text: string }): JSX.Element {
+  return <span class="tip">{text}</span>;
+}
+
 /** Un bouton de menu focalisable. */
 export function MenuButton(props: {
   id: string;

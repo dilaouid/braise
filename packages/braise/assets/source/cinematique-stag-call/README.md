@@ -13,11 +13,12 @@ Image de style de toutes les images : `cinematique-memory-meeting/ill-01.png` (l
 | `ill-01.png` | Le Bois large, le Cerf au loin | `49297e83-b9e4-4bad-a022-24fe590ad2b6` | sprite `boss-cerf` |
 | `ill-02.png` | Gros plan de la tête | `2c10affe-4dcc-4ca1-9b8f-44598fa16f93` | sprite `boss-cerf` |
 | `ill-03.png` | Il brame, la horde sort | `386a5435-21ed-4d63-b218-8b9b45c22be0` | sprites `boss-cerf`, `enemy-rampant`, `enemy-chauve-suie` |
-| `ill-04.png` | Le Bois sans le Cerf | inpaint `f929f6ea-a2c3-473c-945d-761aa17a5a1d` (10 générations) | `ill-01` |
+| `ill-04.png` | La horde seule, le Cerf a disparu | inpaint `80876988-dc09-4413-ac0d-ee46bae7dca6` (10 générations, graine 7, 2026-11-25) | `ill-03` |
 
-`ill-04` est `ill-01` dont le Cerf est effacé : l'inpaint ne prend pas plus de 512 px, donc le carré
-256 × 256 posé en (200, 60) a été repeint (masque 100 × 96 en (82, 64) du carré, « empty misty forest
-path… no animal »), puis recollé. Le carré rendu est `crop-sans-cerf.png` ; aucun pixel hors palette.
+`ill-04` est `ill-03` dont le Cerf est effacé, la horde reste au pixel près : l'inpaint ne prend pas plus
+de 512 px, donc le carré 256 × 256 posé en (192, 40) a été repeint sous le masque
+`crop-sans-cerf-masque.png` (« empty misty night forest clearing… no stag, no creature »), puis recollé. Le
+carré rendu est `crop-sans-cerf.png` ; aucun pixel hors palette.
 
 ## Prompts
 

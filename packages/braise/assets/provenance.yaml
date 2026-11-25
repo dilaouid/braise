@@ -1644,17 +1644,13 @@
   prompt: "drinking a potion, a quick gulp followed by a soft warm healing shimmer"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-ui-move.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: 577635e5-30e6-4881-8bb1-05d26f4d34c2
-  prompt: "a tiny soft wooden tick, user interface cursor move, very short and quiet"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
+  tool: assets/source/sons-interface/generer.py
+  date: 2026-11-25
+  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
 - file: public/audio/sfx-ui-confirm.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: efc48473-16be-49db-b2e9-e4b0963e64e5
-  prompt: "a soft warm confirm click with a small bell, user interface select"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
+  tool: assets/source/sons-interface/generer.py
+  date: 2026-11-25
+  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
 - file: public/audio/sfx-ui-back.ogg
   tool: create_sound_effect
   date: 2026-11-23
@@ -1710,11 +1706,9 @@
   prompt: "a wet sooty spit projectile launched, short dull plop"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-refuse.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: c3cb9c97-306c-4af1-8c7f-b20c5c9862c9
-  prompt: "a short dull double buzz, user interface action refused"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
+  tool: assets/source/sons-interface/generer.py
+  date: 2026-11-25
+  edits: "remplacé : la version PixelLab était du bruit large bande (glitché) ; notes de sinus synthétisées, sans aléa"
 - file: public/audio/sfx-totem.ogg
   tool: create_sound_effect
   date: 2026-11-23

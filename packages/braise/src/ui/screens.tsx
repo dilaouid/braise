@@ -1,9 +1,9 @@
 import type { JSX } from 'preact';
 import type { AltarBoostRaw } from '../content/index.ts';
 import { altarCost, altarRank, altarSpent, canBuyAltarRank } from '../meta/altar.ts';
-import { hasMemory, heroXpForNext, memoryCount } from '../meta/hero.ts';
+import { hasMemory, heroXpForNext, memoryCount, statsAtAltarRank } from '../meta/hero.ts';
 import { newHero, type Settings } from '../meta/save.ts';
-import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers } from './parts.tsx';
+import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, Tip, useFocusScope, useHandlers } from './parts.tsx';
 import {
   actions, cineCaption, cineCard, cineQuick, cineSkip, confirm, dialogueState, ending, fmt, fmtTime, gameData, knowsCream, memoryCard, notice,   roman, save, saveRev, t,
 } from './store.ts';
@@ -183,6 +183,26 @@ function describeBonus(id: string, rank: number): string {
   }
 }
 
+/** Ce que le rang suivant change vraiment pour le héros : « Points de vie : 100 → 105 ». Au rang maximum, la valeur atteinte. */
+function realChange(id: string, rank: number, maxed: boolean): string | null {
+  const data = gameData();
+  const key = Object.keys(data.altar.find((b) => b.id === id)!.perRank)[0];
+  const value = (r: number): [string, string] | null => {
+    const stats = statsAtAltarRank(data, save.value!, CLASS, id, r);
+    switch (key) {
+      case 'power': return ['power', `${fmt(Math.round((1 + stats.power) * 100))} %`];
+      case 'maxHpShare': return ['maxHp', fmt(stats.maxHp)];
+      case 'glowShare': return ['glow', `${fmt(Math.round(stats.glow))} px`];
+      case 'wisdom': return ['wisdom', `${fmt(Math.round((1 + stats.wisdom) * 100))} %`];
+      default: return null;
+    }
+  };
+  const now = value(rank);
+  if (!now) return null;
+  if (maxed) return t(`altar.real.${now[0]}.max`, { from: now[1] });
+  return t(`altar.real.${now[0]}`, { from: now[1], to: value(rank + 1)![1] });
+}
+
 /** Un déblocage : un seul rang, qui ouvre une rareté de Flamme ou une arme, et peut en demander un autre. */
 function Unlock({ boost }: { boost: AltarBoostRaw }): JSX.Element {
   // La sauvegarde est modifiée en place : c'est `saveRev` qui fait redessiner.
@@ -197,8 +217,9 @@ function Unlock({ boost }: { boost: AltarBoostRaw }): JSX.Element {
   return (
     <button
       type="button" class={`boost unlock ${boost.unlock ? `rarity-${boost.unlock}` : 'weapon'} ${err ? 'cannot' : ''} ${disabled ? 'off' : ''}`}
-      data-focus={boost.id} title={relic ? `${t(`${boost.id}.desc`)} ${t('altar.weapon.relic', { name: t(`${relic.id}.name`) })}` : t(`${boost.id}.desc`)} onClick={() => actions().buyAltar(boost.id)}
+      data-focus={boost.id} onClick={() => actions().buyAltar(boost.id)}
     >
+      <Tip text={weapon && relic ? `${t(`${weapon.id}.desc`)} ${t('altar.weapon.relic', { name: t(`${relic.id}.name`) })}` : t(`${boost.id}.desc`)} />
       <span class="boost-icon"><Icon name={boost.icon} /></span>
       <span class="boost-body">
         <span class="boost-name">{t(`${boost.id}.name`)}</span>
@@ -253,6 +274,7 @@ export function Altar(): JSX.Element {
                 data-focus={boost.id} data-focus-default={i === 0 ? '' : undefined}
                 onClick={() => actions().buyAltar(boost.id)}
               >
+                <Tip text={t(`${boost.id}.desc`)} />
                 <span class="boost-icon"><Icon name={boost.icon} /></span>
                 <span class="boost-body">
                   <span class="boost-name">{t(`${boost.id}.name`)} {disabled ? <em>({t('altar.disabled')})</em> : null}</span>
@@ -261,6 +283,7 @@ export function Altar(): JSX.Element {
                   {maxed
                     ? <span class="boost-line gold">{t('altar.max')}</span>
                     : <span class="boost-line">{t('altar.next', { value: describeBonus(boost.id, rank + 1) })}</span>}
+                  <span class="boost-line real">{realChange(boost.id, rank, maxed)}</span>
                   {maxed ? null : (
                     <span class={`boost-cost ${err === 'ashes' ? 'bad' : ''}`}>
                       <Icon name="icon-ashes" /> {fmt(cost)}

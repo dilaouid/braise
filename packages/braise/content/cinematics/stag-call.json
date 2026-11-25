@@ -57,9 +57,11 @@
       "duration": 5,
       "fadeIn": 0.6,
       "fadeOut": 1.8,
+      "camera": { "scale": [1.03, 1], "focus": [320, 140] },
       "layers": [
         { "type": "image", "asset": "ill-04", "at": [0, 0], "anchor": [0, 0] },
-        { "type": "smoke", "area": [200, 110, 260, 130], "drift": [3, -5], "count": 34, "radius": [16, 36], "alpha": [0, 0.65], "colors": ["#6b7285", "#9aa3b5", "#454a5c"] }
+        { "type": "eyes", "area": [0, 170, 640, 170], "count": 16, "interval": 0.01, "avoid": [300, 170, 90] },
+        { "type": "smoke", "area": [250, 80, 140, 115], "drift": [3, -5], "count": 30, "radius": [16, 34], "alpha": [0.6, 0.05], "colors": ["#6b7285", "#9aa3b5", "#454a5c"] }
       ],
       "cues": [
         { "at": 0.4, "sfx": "intro-vent", "volume": 0.4 }
