@@ -6,6 +6,8 @@
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
  * Trait : --trait 0.15,-0.05 essaie d'autres valeurs (dans la lumière, hors de la lumière).
  * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
+ * Armes de l'Autel : --unlock <all|wake,verge,storm-watch,nightlights> les ouvre, --give weapon.wake donne une arme de plus au départ
+ * (--glevel <1-6> son niveau).
  */
 import { loadGameData } from '../packages/braise/src/content/index.ts';
 import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate, type FeedPolicy } from '../packages/braise/src/core/bots.ts';
@@ -13,6 +15,7 @@ import { glowShareNow } from '../packages/braise/src/core/flames.ts';
 import { NEUTRAL_MODS, mergeMods } from '../packages/braise/src/core/mods.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
 import { createRun } from '../packages/braise/src/core/run.ts';
+import { addWeapon } from '../packages/braise/src/core/weapons.ts';
 import { simulateTutorial } from '../packages/braise/src/core/tutorial-bot.ts';
 import { addBonus } from '../packages/braise/src/core/stats.ts';
 import { createTutorialRun } from '../packages/braise/src/core/tutorial-run.ts';
@@ -66,8 +69,18 @@ const hero = newHero();
 hero.level = level;
 save.heroes[classId] = hero;
 if (ardor > 0) {
-  for (const b of data.altar) save.account.altar[b.id] = Math.min(b.ranks, ardor);
+  for (const b of data.altar) if (b.weapon === undefined) save.account.altar[b.id] = Math.min(b.ranks, ardor);
 }
+// --unlock : les armes achetées à l'Autel.
+const unlockArg = arg('unlock', '');
+const wanted = unlockArg === '' ? [] : unlockArg.split(',');
+for (const b of data.altar) if (b.weapon !== undefined && (unlockArg === 'all' || wanted.includes(b.weapon.replace('weapon.', '')))) save.account.altar[b.id] = 1;
+for (const name of wanted) if (name !== 'all' && !data.altar.some((b) => b.weapon === `weapon.${name}`)) throw new Error(`Arme inconnue à l'Autel : ${name}`);
+// --give : une arme de plus au départ, pour la mesurer.
+const giveId = arg('give', '');
+const giveDef = giveId === '' ? -1 : data.weapons.findIndex((w) => w.id === giveId);
+if (giveId !== '' && giveDef < 0) throw new Error(`Arme inconnue : ${giveId}`);
+const giveLevel = Number(arg('glevel', '1'));
 const { sheet } = buildSheet(data, save, classId);
 const unlocked = unlockedContent(data, save);
 const pieceId = arg('piece', '');
@@ -136,6 +149,7 @@ for (let r = 0; r < runs; r++) {
     seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
     unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity,
   });
+  if (giveDef >= 0) addWeapon(run, giveDef).level = giveLevel;
   let maxEnemies = 0;
   simulate(run, {
     bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorerBot : activeBot,
