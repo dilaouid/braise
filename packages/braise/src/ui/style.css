@@ -279,6 +279,8 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost.unlock .boost-body { gap: 1px; }
 .boost.unlock .boost-icon { border-color: var(--rarity); }
 .boost.unlock .boost-name { color: var(--rarity); }
+.boost.unlock.weapon { --rarity: var(--ember-1); }
+.boost.unlock.weapon .boost-body { flex-direction: row; gap: 6px; align-items: center; }
 .rarity-epic { --rarity: #ff3d81; }
 .rarity-legendary { --rarity: #ffb020; }
 .rarity-mythic { --rarity: #fff1c2; }

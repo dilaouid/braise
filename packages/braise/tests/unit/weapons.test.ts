@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyBleed, applyBurn, applyFreeze, applyShock, hurtEnemy, spawnEnemy } from '../../src/core/combat.ts';
 import { recomputeStats } from '../../src/core/levelup.ts';
+import { layThreads } from '../../src/core/light-weapons.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW, type Run } from '../../src/core/types.ts';
 import { data, makeImmortal, makeRun, noTrait } from './helpers.ts';
@@ -32,6 +33,8 @@ function play(run: Run, seconds: number): void {
   const input = idleInput();
   for (let i = 0; i < seconds * 60; i++) {
     run.director.budget = 0;
+    // Sillage ne frappe que si Moon rue : un fil toutes les 2,5 s, comme une ruée prête.
+    if (i % 150 === 0) layThreads(run, run.hero.x - 70, run.hero.y, run.hero.x + 70, run.hero.y);
     stepRun(run, input);
     run.evCount = 0;
     if (run.phase !== 'playing') break;

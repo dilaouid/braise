@@ -1063,6 +1063,78 @@
    "id": "78b215e3-b987-45f6-8c59-f8f349bd2da9",
    "prompt": "a single tall white-hot pale flame with a small crown of sparks above it, burning in a small grey stone altar bowl, game upgrade icon",
    "date": "2026-11-25"
+  },
+  {
+   "name": "icon-weapon-verge",
+   "id": "30a19ca5-5d78-4359-9572-9648eaa66bb7",
+   "prompt": "a thick pale ice-blue glowing ring, its rim edged with sharp frost spikes pointing outward, small warm orange light in the center, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-weapon-storm-watch",
+   "id": "ace21597-daa1-48a3-8b89-2dc7f00ec731",
+   "prompt": "a bright pale yellow lightning bolt striking down out of a small dark storm cloud, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-weapon-nightlights",
+   "id": "470cd4cd-43c6-4bae-b35f-908bd9468146",
+   "prompt": "a simple round glowing yellow light bulb globe on a small dark wooden base, with short orange light rays around it, night light, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-weapon-wake",
+   "id": "62d51743-5b3c-43ba-957b-17917c1182b0",
+   "prompt": "a single diagonal crackling pale blue electric line from bottom left to top right, with a bright white spark at each end, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-evo-solstice",
+   "id": "9d969a3a-8f39-428f-9696-1e5cf851937d",
+   "prompt": "two concentric ice-blue frost rings, one inside the other, with a white snowflake star in the center, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-evo-black-storm",
+   "id": "dfe75a46-93c3-4163-9445-e27675b1cff6",
+   "prompt": "a black storm cloud with three bright yellow lightning bolts striking down, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-evo-garland",
+   "id": "cab21207-87f9-423d-b3b2-4cf2229dc158",
+   "prompt": "a string garland of three small glowing orange lanterns linked by a curved burning wire, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-evo-web",
+   "id": "4538af2b-d93e-455e-83a6-3d2974a7d489",
+   "prompt": "two pale blue electric wires crossing in an X with a bright white burst where they meet, filling the frame, big simple shapes, game ability icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-relic-scarf",
+   "id": "4752210a-09dd-4868-a809-c2345a410e5a",
+   "prompt": "a thick folded knitted winter scarf, ice blue with white stripes, filling the frame, big simple shapes, game item icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-relic-coil",
+   "id": "2f173d79-77df-48ef-a6c2-703422d3f392",
+   "prompt": "a coil of shiny orange copper wire wound on a dark spool, with a small yellow spark, filling the frame, big simple shapes, game item icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-relic-hollow-lantern",
+   "id": "648d6103-0ca3-4d7e-9b3f-a5eed750be4a",
+   "prompt": "a hollow empty metal lantern with a dark cage, a faint teal glow inside, filling the frame, big simple shapes, game item icon",
+   "date": "2026-11-25"
+  },
+  {
+   "name": "icon-relic-sole",
+   "id": "1811a75b-550e-40ae-81d2-d3959a40d1fa",
+   "prompt": "the sole of a boot seen from below, made of shiny orange copper plate with rivets, filling the frame, big simple shapes, game item icon",
+   "date": "2026-11-25"
   }
  ],
  "sounds": [
@@ -1289,6 +1361,20 @@
    "id": "ca226adf-cef6-455a-902a-7be8ce49a351",
    "prompt": "a soft breath blowing on embers, then a small flame flaring up warmly with a low whoosh and settling, short and quiet",
    "seconds": 1.2,
+   "date": "2026-11-25"
+  },
+  {
+   "name": "sfx-bolt",
+   "id": "b764735e-9640-42a8-8607-1ea8ae423552",
+   "prompt": "a short sharp electric lightning zap crack, quick, dry, not too loud, no long thunder",
+   "seconds": 0.8,
+   "date": "2026-11-25"
+  },
+  {
+   "name": "sfx-frost",
+   "id": "43e6faf3-228f-4e43-86d9-808ede064b8a",
+   "prompt": "a tiny crisp ice crackle, frost forming on glass, very short and soft",
+   "seconds": 0.6,
    "date": "2026-11-25"
   }
  ],
