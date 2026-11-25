@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { explorerBot, feedAndPick, plannedPick, simulate, type FeedPolicy } from '../../src/core/bots.ts';
 import {
-  drawFlames, feedBlock, feedOffer, glowLoss, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer,
+  drawFlames, feedBlock, feedOffer, feedTarget, glowLoss, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer, unfeedTarget,
 } from '../../src/core/flames.ts';
 import { closeChest, recomputeStats, takeCard } from '../../src/core/levelup.ts';
+import { closeForge } from '../../src/core/places.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import type { FlameOffer, Run } from '../../src/core/types.ts';
 import { data, makeImmortal, makeRun, makeSave } from './helpers.ts';
@@ -391,4 +392,69 @@ describe('politiques de mise des robots', () => {
     }
     expect(burned).toBeGreaterThan(0);
   }, 120_000);
+});
+
+describe('corrections après relecture', () => {
+  it('rallumer un braséro rend la Lueur tout de suite, sans attendre un autre recalcul', () => {
+    const run = fresh();
+    makeImmortal(run);
+    offer(run, { line: line('flame.edge') });
+    feedOffer(run, 0);
+    feedOffer(run, 0);
+    takeFlame(run, 0);
+    expect(run.hero.stats.glow).toBeCloseTo(BASE_GLOW * 0.86, 4);
+    const poi = run.map.pois.find((p) => p.kind === 'brazier')!;
+    const input = idleInput();
+    for (let i = 0; i < 60 * 12 && run.braziersLit === 0; i++) {
+      run.hero.x = poi.x;
+      run.hero.y = poi.y + 4;
+      if (run.phase === 'levelup') takeCard(run, 0);
+      else if (run.phase === 'chest') closeChest(run);
+      else if (run.phase === 'forge') closeForge(run);
+      stepRun(run, input);
+      run.evCount = 0;
+    }
+    expect(run.braziersLit).toBe(1);
+    expect(glowLoss(run)).toBe(4);
+    expect(run.hero.stats.glow).toBeCloseTo(BASE_GLOW * 0.96, 4);
+    expect(glowShareNow(run)).toBeCloseTo(0.96, 6);
+  });
+
+  it('deux Légendaires portées : nourrir saute Légendaire et va à Mythique', () => {
+    const run = fresh();
+    own(run, 'flame.edge', 3);
+    own(run, 'flame.vein', 3);
+    offer(run, { line: line('flame.surge') }, { line: line('flame.swarm') }, { line: line('flame.breath'), rarity: 2 });
+    // Élan : Rare → Épique → Mythique, au prix de tous les crans.
+    expect(feedOffer(run, 0)).toBe(true);
+    expect(run.totemOffers[0]!.rarity).toBe(2);
+    expect(feedBlock(run, 0)).toBeNull();
+    expect(feedTarget(run, 0)).toBe(4);
+    expect(feedOffer(run, 0)).toBe(true);
+    expect(run.totemOffers[0]!.rarity).toBe(4);
+    expect(offerCost(run, run.totemOffers[0]!)).toBe(42);
+    // Reprendre redescend de la même façon, sans s'arrêter sur Légendaire.
+    expect(unfeedTarget(run, 0)).toBe(2);
+    expect(unfeedOffer(run, 0)).toBe(true);
+    expect(run.totemOffers[0]!.rarity).toBe(2);
+    // Essaim, qui commence à Épique, va droit à Mythique.
+    expect(feedTarget(run, 1)).toBe(4);
+    // Souffle s'arrête à Légendaire : là, le plafond bloque vraiment.
+    expect(feedBlock(run, 2)).toBe('cap');
+    expect(feedTarget(run, 2)).toBe(-1);
+    // Chaque état affiché reste prenable.
+    feedOffer(run, 0);
+    expect(takeFlame(run, 0)).toBe(true);
+    expect(run.flames.filter((f) => f.rarity === 4).length).toBe(1);
+  });
+
+  it('sans plafond atteint, nourrir monte toujours d\'un seul cran', () => {
+    const run = fresh();
+    offer(run, { line: line('flame.surge') });
+    expect(feedTarget(run, 0)).toBe(2);
+    expect(unfeedTarget(run, 0)).toBe(-1);
+    feedOffer(run, 0);
+    expect(feedTarget(run, 0)).toBe(3);
+    expect(unfeedTarget(run, 0)).toBe(1);
+  });
 });

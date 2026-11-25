@@ -13,10 +13,10 @@ import { activeBot } from '../core/bots.ts';
 import { nearestObject, newCamp, stepCamp, stopCamp, walkTo } from '../core/camp.ts';
 import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
-import { feedBlock, feedOffer, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer } from '../core/flames.ts';
+import { feedBlock, feedOffer, feedTarget, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer, unfeedTarget } from '../core/flames.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
 import { computeResult } from '../core/rewards.ts';
-import { abandonRun, clearEvents, createRun, dashChargesMax, dashCooldown, idleInput, skillCooldown, stepRun } from '../core/run.ts';
+import { abandonRun, clearEvents, createRun, dashChargesMax, dashReady, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
@@ -332,11 +332,12 @@ async function boot(): Promise<void> {
       open: openRarity(r),
       cards: r.totemOffers.map((offer, i) => {
         const cost = offerCost(r, offer);
-        const costs = r.data.flames.costs;
+        const up = feedTarget(r, i);
+        const down = unfeedTarget(r, i);
         return {
           line: offer.line, rarity: offer.rarity, cost,
-          block: feedBlock(r, i), feedCost: costs[offer.rarity + 1] ?? 0,
-          canUnfeed: offer.rarity > offer.base, unfeedGain: costs[offer.rarity] ?? 0,
+          block: feedBlock(r, i), feedCost: up < 0 ? 0 : offerCost(r, { ...offer, rarity: up }) - cost,
+          canUnfeed: down >= 0, unfeedGain: down < 0 ? 0 : cost - offerCost(r, { ...offer, rarity: down }),
           glowAfter: glowShareNow(r, cost),
         };
       }),
@@ -1168,7 +1169,7 @@ async function boot(): Promise<void> {
       ultFrac: h.ultT > 0 ? h.ultT / r.cls.ultimate.duration : h.ultGauge / tuning.ultimate.gaugeMax,
       ultActive: h.ultT > 0,
       // Une ruée prête : l'anneau est plein ; sinon il montre la charge qui revient.
-      dashFrac: h.dashCharges > 0 ? 1 : 1 - Math.max(0, h.dashCd) / dashCooldown(r),
+      dashFrac: dashReady(r),
       dashCharges: h.dashCharges, dashMax: dashChargesMax(r),
       message: now < bannerUntil ? banner : null,
       fps: current.settings.showFps ? fps : 0,

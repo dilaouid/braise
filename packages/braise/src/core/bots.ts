@@ -1,7 +1,7 @@
 import { insideTelegraph } from './enemies.ts';
 import { closeChest, closeFind, takeCard } from './levelup.ts';
 import { isSolidAt } from './map.ts';
-import { feedBlock, feedOffer, glowShareNow, offerCost, takeFlame } from './flames.ts';
+import { feedOffer, feedTarget, glowShareNow, offerCost, takeFlame } from './flames.ts';
 import { buyItem, canBuy, closeShop, shopItems, takeEvolution } from './places.ts';
 import { idleInput, stepRun } from './run.ts';
 import { PK_GEM, PK_RED_GEM, SERVICES, type Poi, type Run, type StepInput } from './types.ts';
@@ -328,8 +328,8 @@ export function feedAndPick(run: Run, policy: FeedPolicy): number {
     return best;
   }
   for (let i = 0; i < offers.length; i++) {
-    while (feedBlock(run, i) === null) {
-      const next = offerCost(run, { ...offers[i]!, rarity: offers[i]!.rarity + 1 });
+    for (let target = feedTarget(run, i); target >= 0; target = feedTarget(run, i)) {
+      const next = offerCost(run, { ...offers[i]!, rarity: target });
       if (policy === 'smart' && glowShareNow(run, next) < SMART_GLOW - 1e-9) break;
       if (!feedOffer(run, i)) break;
     }

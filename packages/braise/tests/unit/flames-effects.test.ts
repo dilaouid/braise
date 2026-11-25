@@ -3,7 +3,7 @@ import type { RunModsRaw } from '../../src/content/index.ts';
 import { addPickup, spawnEnemy } from '../../src/core/combat.ts';
 import { litRadius, takeFlame } from '../../src/core/flames.ts';
 import { recomputeStats } from '../../src/core/levelup.ts';
-import { dashChargesMax, dashCooldown, idleInput, stepRun } from '../../src/core/run.ts';
+import { dashChargesMax, dashCooldown, dashReady, idleInput, stepRun } from '../../src/core/run.ts';
 import { EV, PK_GEM, ST_BURN, STEP, type Run } from '../../src/core/types.ts';
 import { data, makeImmortal, makeModRun, makeRun, makeTutorial } from './helpers.ts';
 
@@ -275,5 +275,21 @@ describe('élites appelés par l\'Appât', () => {
     expect(take(run, 3)).toBe(true);
     expect(elites(run)).toBe(0);
     expect(run.flames.length).toBe(1);
+  });
+});
+
+describe('anneau de ruée', () => {
+  it('plein tant qu\'une charge est prête, sinon la part de la charge qui revient', () => {
+    const run = calm({ dashCharges: 1, dashCooldownMult: 1.5 });
+    expect(dashReady(run)).toBe(1);
+    play(run, 0.1, true, true);
+    // Une charge sur deux est partie : l'anneau reste plein.
+    expect(run.hero.dashCharges).toBe(1);
+    expect(dashReady(run)).toBe(1);
+    play(run, 0.4, true, true);
+    expect(run.hero.dashCharges).toBe(0);
+    expect(dashReady(run)).toBeCloseTo(1 - run.hero.dashCd / dashCooldown(run), 6);
+    expect(dashReady(run)).toBeGreaterThan(0);
+    expect(dashReady(run)).toBeLessThan(0.3);
   });
 });

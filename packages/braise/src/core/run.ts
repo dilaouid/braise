@@ -134,6 +134,12 @@ export function dashCooldown(run: Run): number {
   return run.data.tuning.dash.cooldown * run.mods.dashCooldownMult;
 }
 
+/** L'anneau de la ruée : plein (1) tant qu'une charge est prête, sinon la part déjà revenue de la prochaine. */
+export function dashReady(run: Run): number {
+  const hero = run.hero;
+  return hero.dashCharges > 0 ? 1 : 1 - Math.max(0, hero.dashCd) / dashCooldown(run);
+}
+
 /** Le nombre de ruées que le héros peut garder en réserve. */
 export function dashChargesMax(run: Run): number {
   return 1 + run.mods.dashCharges;

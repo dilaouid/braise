@@ -59,31 +59,65 @@ function affordable(run: Run, points: number): boolean {
   return points <= 0 || glowShareNow(run, points) >= run.data.flames.floor - EPS;
 }
 
-/** Ce qui empêche de nourrir l'offre d'un cran de plus, ou null. */
+/**
+ * La rareté qu'atteindrait l'offre nourrie une fois de plus, ou ce qui l'en empêche. Une rareté dont le
+ * plafond de la partie est atteint est sautée : deux Légendaires portées n'interdisent pas la Mythique,
+ * et une offre n'est jamais affichée à une rareté qu'on ne pourrait pas prendre.
+ */
+function nextStep(run: Run, offer: FlameOffer): number | FeedBlock {
+  const def = run.data.flames.lines[offer.line]!;
+  if (offer.rarity >= def.last) return 'top';
+  const open = openRarity(run);
+  let capped = false;
+  for (let r = offer.rarity + 1; r <= def.last; r++) {
+    if (r > open) return capped ? 'cap' : 'locked';
+    if (capReached(run, r)) {
+      capped = true;
+      continue;
+    }
+    return affordable(run, offerCost(run, { ...offer, rarity: r })) ? r : 'floor';
+  }
+  return 'cap';
+}
+
+/** Ce qui empêche de nourrir l'offre une fois de plus, ou null. */
 export function feedBlock(run: Run, index: number): FeedBlock | null {
   const offer = run.totemOffers[index];
   if (!offer) return 'top';
-  const def = run.data.flames.lines[offer.line]!;
-  const next = offer.rarity + 1;
-  if (next > def.last) return 'top';
-  if (next > openRarity(run)) return 'locked';
-  if (capReached(run, next)) return 'cap';
-  if (!affordable(run, offerCost(run, { ...offer, rarity: next }))) return 'floor';
-  return null;
+  const step = nextStep(run, offer);
+  return typeof step === 'number' ? null : step;
 }
 
-/** Monte l'offre d'une rareté. Rien n'est payé avant la prise. */
+/** La rareté qu'atteindrait l'offre nourrie une fois de plus, ou -1 si rien ne le permet. */
+export function feedTarget(run: Run, index: number): number {
+  const offer = run.totemOffers[index];
+  const step = offer ? nextStep(run, offer) : 'top';
+  return typeof step === 'number' ? step : -1;
+}
+
+/** La rareté à laquelle l'offre redescendrait : jamais sous celle de son arrivée, ni sur un plafond atteint. -1 : aucune. */
+export function unfeedTarget(run: Run, index: number): number {
+  const offer = run.totemOffers[index];
+  if (!offer) return -1;
+  for (let r = offer.rarity - 1; r >= offer.base; r--) if (!capReached(run, r)) return r;
+  return -1;
+}
+
+/** Nourrit l'offre : elle monte à la rareté suivante que la partie peut porter. Rien n'est payé avant la prise. */
 export function feedOffer(run: Run, index: number): boolean {
-  if (run.phase !== 'totem' || feedBlock(run, index) !== null) return false;
-  run.totemOffers[index]!.rarity++;
+  if (run.phase !== 'totem') return false;
+  const target = feedTarget(run, index);
+  if (target < 0) return false;
+  run.totemOffers[index]!.rarity = target;
   return true;
 }
 
-/** Redescend l'offre d'une rareté, jamais sous celle à laquelle elle est arrivée. */
+/** Reprend ce que la dernière mise a ajouté à l'offre. */
 export function unfeedOffer(run: Run, index: number): boolean {
-  const offer = run.totemOffers[index];
-  if (run.phase !== 'totem' || !offer || offer.rarity <= offer.base) return false;
-  offer.rarity--;
+  if (run.phase !== 'totem') return false;
+  const target = unfeedTarget(run, index);
+  if (target < 0) return false;
+  run.totemOffers[index]!.rarity = target;
   return true;
 }
 
