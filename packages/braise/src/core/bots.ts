@@ -441,6 +441,12 @@ export function hashRun(run: Run): number {
   }
   // Sans mise, l'empreinte reste celle d'une partie d'avant les Flammes.
   if (run.glowBurned > 0) mix(run.glowBurned);
+  for (const l of run.lamps) {
+    mix(l.x); mix(l.y); mix(l.radius); mix(l.life);
+  }
+  for (const t of run.threads) {
+    mix(t.x1); mix(t.y1); mix(t.x2); mix(t.y2); mix(t.life);
+  }
   for (const f of run.finds) mix(f);
   mix(hero.goldSpent); mix(run.smithBuys); mix(run.extraFlasks); mix(run.pendingFinds);
   for (const n of run.serviceBuys) mix(n);

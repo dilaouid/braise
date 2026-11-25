@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RunModsRaw } from '../../src/content/index.ts';
 import { addPickup, spawnEnemy } from '../../src/core/combat.ts';
-import { litRadius, takeFlame } from '../../src/core/flames.ts';
+import { takeFlame } from '../../src/core/flames.ts';
+import { litRadius } from '../../src/core/light.ts';
 import { recomputeStats } from '../../src/core/levelup.ts';
 import { dashChargesMax, dashCooldown, dashReady, idleInput, stepRun } from '../../src/core/run.ts';
 import { EV, PK_GEM, ST_BURN, STEP, type Run } from '../../src/core/types.ts';

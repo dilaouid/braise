@@ -31,6 +31,8 @@ export const HIT_RESIST = 4;
 export const HIT_BURN = 8;
 export const HIT_BLEED = 16;
 export const HIT_NO_NUMBER = 32;
+export const HIT_FREEZE = 64;
+export const HIT_SHOCK = 128;
 
 /** Comportements d'ennemis, en indices. */
 export const BH = { chase: 0, zigzag: 1, shooter: 2, swarm: 3, charger: 4, spawner: 5, 'boss-stag': 6, 'boss-watcher': 7 } as const;
@@ -83,7 +85,32 @@ export const EV = {
   pieceDrop: 48,
   /** De la Lueur est brûlée pour une Flamme (a : les points). */
   flameFeed: 49,
+  /** Un éclair frappe (x, y) depuis (a, b) ; c vaut 1 quand il tombe du ciel. */
+  bolt: 50,
+  /** Le bord de la lumière touche un Éteint. */
+  frost: 51,
+  /** Des Veilleuses sont posées. */
+  lamp: 52,
+  /** Un fil de ruée est tendu ; deux fils se croisent (a : le rayon de l'éclat). */
+  thread: 53, threadCross: 54,
 } as const;
+
+/** Une Veilleuse posée : une lumière au sol. */
+export interface Lamp {
+  x: number; y: number;
+  radius: number;
+  life: number; maxLife: number;
+  slot: number;
+}
+
+/** Un fil tendu par une ruée. */
+export interface Thread {
+  x1: number; y1: number; x2: number; y2: number;
+  life: number; maxLife: number;
+  slot: number;
+  /** Vrai jusqu'à ce que ses croisements soient résolus. */
+  fresh: boolean;
+}
 
 export interface EnemyStore {
   count: number;
@@ -461,6 +488,9 @@ export interface Run {
   /** Minuteries du Rappel et du Halo, et distance de ruée avant la prochaine braise de la Traînée. */
   recallT: number;
   haloT: number;
+  /** Là où la ruée en cours a commencé. */
+  dashFromX: number;
+  dashFromY: number;
   trailLeft: number;
   /** Gemmes ramassées depuis le dernier point de vie rendu par Faim. */
   gemsHeld: number;
@@ -473,6 +503,9 @@ export interface Run {
   shots: ShotStore;
   enemyShots: EnemyShotStore;
   zones: ZoneStore;
+  /** Les Veilleuses et les fils vivants, du plus ancien au plus récent. */
+  lamps: Lamp[];
+  threads: Thread[];
   telegraphs: TelegraphStore;
   pickups: PickupStore;
   director: Director;

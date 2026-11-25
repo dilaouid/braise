@@ -176,11 +176,6 @@ export function takeFlame(run: Run, index: number): boolean {
   return true;
 }
 
-/** Le rayon éclairé : la Lueur plus la marge du disque de lumière dessiné à l'écran. */
-export function litRadius(run: Run): number {
-  return run.hero.stats.glow + run.data.tuning.hero.lightMargin;
-}
-
 /** Les règles de la partie : celles de la Lanterne, puis celles de chaque Flamme. */
 export function flameMods(run: Run): RunMods {
   let mods: RunMods = { ...(run.cfg.mods ?? NEUTRAL_MODS) };

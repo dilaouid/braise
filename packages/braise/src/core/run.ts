@@ -6,7 +6,8 @@ import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
-import { litRadius } from './flames.ts';
+import { litRadius } from './light.ts';
+import { layThreads } from './light-weapons.ts';
 import { closeChest, gainXp, resumeRun } from './levelup.ts';
 import { NEUTRAL_MODS } from './mods.ts';
 import { generateMap, isSolidForHero } from './map.ts';
@@ -84,10 +85,10 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     rngMap, rngSpawn, rngDraw, rngCombat, rngLantern,
     tick: 0, time: 0, phase: 'playing',
     map, hero, sheet,
-    mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, trailLeft: 0, gemsHeld: 0, revived: 0,
+    mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, dashFromX: 0, dashFromY: 0, trailLeft: 0, gemsHeld: 0, revived: 0,
     weapons: [], relics: [], acquired: 0,
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
-    zones: createZoneStore(), telegraphs: createTelegraphStore(), pickups: createPickupStore(),
+    zones: createZoneStore(), lamps: [], threads: [], telegraphs: createTelegraphStore(), pickups: createPickupStore(),
     director: {
       budget: 0, bank: 0, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
       eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()),
@@ -279,6 +280,8 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
     hero.dashT = tuning.dash.duration;
     if (hero.dashCd <= 0) hero.dashCd = dashCooldown(run);
     run.trailLeft = 0;
+    run.dashFromX = hero.x;
+    run.dashFromY = hero.y;
     hero.dashX = hero.faceX;
     hero.dashY = hero.faceY;
     emit(run, EV.heroDash, hero.x, hero.y, Math.atan2(hero.dashY, hero.dashX));
@@ -301,6 +304,7 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
       }
     }
     hero.dashT -= dt;
+    if (hero.dashT <= 0) layThreads(run, run.dashFromX, run.dashFromY, hero.x, hero.y);
   } else if (run.tutorial && inThicket(run)) {
     // Une ruée finie dans la rangée d'Éteints : l'élan l'emporte jusqu'à en sortir, et s'il bute, il revient.
     const dist = (tuning.dash.distance / tuning.dash.duration) * dt;
@@ -385,6 +389,10 @@ function flameRules(run: Run, dt: number): void {
       const hit = mods.haloBurn / run.data.tuning.statuses.burn.damageShare;
       const n = queryCircle(run, run.hero.x, run.hero.y, litRadius(run));
       for (let k = 0; k < n; k++) if (!isDust(run, run.query[k]!)) applyBurn(run, run.query[k]!, hit);
+      for (const lamp of run.lamps) {
+        const m = queryCircle(run, lamp.x, lamp.y, lamp.radius);
+        for (let k = 0; k < m; k++) if (!isDust(run, run.query[k]!)) applyBurn(run, run.query[k]!, hit);
+      }
     }
   }
   if (mods.recallEvery > 0) {

@@ -1,5 +1,6 @@
 import { DMG_FIRE, type WeaponDef, type WeaponParams } from '../content/index.ts';
 import { hurtEnemy, knockEnemy, stunEnemy, healHero } from './combat.ts';
+import { tickLights, updateChain, updateLamp, updateVerge, updateWake } from './light-weapons.ts';
 import { effectiveCooldown } from './stats.ts';
 import { SHOT_HIT_MEMORY, emit, nearestEnemy, queryCircle, removeShot, removeZone } from './stores.ts';
 import {
@@ -382,6 +383,7 @@ function updateNova(run: Run, slot: number, w: WeaponInstance, def: WeaponDef, p
 
 /** Fait avancer toutes les armes d'un pas : rechargements, tirs, zones autour du héros. */
 export function updateWeapons(run: Run, dt: number): void {
+  tickLights(run, dt);
   for (let slot = 0; slot < run.weapons.length; slot++) {
     const w = run.weapons[slot]!;
     const def = run.data.weapons[w.def]!;
@@ -392,6 +394,10 @@ export function updateWeapons(run: Run, dt: number): void {
       case 'orbit': updateOrbit(run, slot, w, def, p, dt); break;
       case 'lob': updateLob(run, slot, w, def, p, dt); break;
       case 'nova': updateNova(run, slot, w, def, p, dt); break;
+      case 'verge': updateVerge(run, slot, def, p); break;
+      case 'chain': updateChain(run, slot, w, def, p, dt); break;
+      case 'lamp': updateLamp(run, slot, w, def, p, dt); break;
+      case 'wake': updateWake(run, slot, def, p); break;
     }
   }
 }
