@@ -140,7 +140,10 @@ function PieceDetail({ data, face, details }: { data: GameData; face: FaceView; 
   const words = pieceWords(data, face);
   return (
     <>
-      <p class="piece-name"><Icon name={piece.icon} /> {t(`${piece.id}.name`)}{off ? <span class="dim">{t('lantern.off')}</span> : null}</p>
+      <p class="piece-name">
+        <Icon name={piece.icon} /> {t(`${piece.id}.name`)}
+        {off ? <span class="dim">{t('lantern.off')}</span> : piece.kind === 'rune' ? <span class="dim">{t('lantern.level', { n: face.level, max: 3 })}</span> : null}
+      </p>
       <Chips chips={pieceChips(data, face)} />
       {details ? (
         <p class="piece-words">
@@ -151,11 +154,22 @@ function PieceDetail({ data, face, details }: { data: GameData; face: FaceView; 
   );
 }
 
+/** Une face fermée : ce qu'il faut faire pour l'ouvrir. */
+function ClosedDetail({ text }: { text: string }): JSX.Element {
+  return (
+    <>
+      <p class="piece-name"><Icon name="lantern-face-closed" /> {t('lantern.closedTitle')}</p>
+      <p class="piece-words"><span class="dim">{t('lantern.closedHow')}</span> {text}</p>
+    </>
+  );
+}
+
 /** L'écran de la Lanterne, au refuge : ses quatre faces, et les pièces à y poser, en images. */
 export function LanternScreen(): JSX.Element {
   const ref = useFocusScope('lantern');
   const [editing, setEditing] = useState<number | null>(null);
-  const [details, setDetails] = useState(false);
+  // Les mots sous les pastilles sont là d'emblée : X les cache, pour qui n'en veut plus.
+  const [details, setDetails] = useState(true);
   saveRev.value;
   const data = gameData();
   const lantern = save.value!.account.lantern;
@@ -187,6 +201,7 @@ export function LanternScreen(): JSX.Element {
     }
   };
   const placed = new Set(lantern.faces);
+  const summary = lanternChips(data, view);
   return (
     <div class="screen lantern" ref={ref}>
       <div class="lantern-ring">
@@ -201,7 +216,11 @@ export function LanternScreen(): JSX.Element {
           />
         ))}
       </div>
-      <div class="lantern-summary"><Chips chips={lanternChips(data, view)} /></div>
+      <div class="lantern-summary">
+        {summary.length > 0 ? <span class="lantern-caption">{t('lantern.total')}</span> : null}
+        <Chips chips={summary} />
+      </div>
+      <p class="lantern-count">{t('lantern.pieces', { have: lantern.owned.length, total: data.lantern.pieces.length })}</p>
       {editing !== null
         ? <PieceChooser face={editing} onClose={() => setEditing(null)} onDetails={toggle} />
         : (
@@ -213,7 +232,7 @@ export function LanternScreen(): JSX.Element {
         )}
       <div class={`lantern-detail${shown || faceIndex >= lantern.opened || owned.length === 0 ? '' : ' empty'}`}>
         {faceIndex >= lantern.opened
-          ? <p>{closedText(data, lantern, faceIndex)}</p>
+          ? <ClosedDetail text={closedText(data, lantern, faceIndex)} />
           : shown ? <PieceDetail data={data} face={shown} details={details} /> : owned.length === 0 ? <p>{t('lantern.empty')}</p> : null}
       </div>
       <HelpBar

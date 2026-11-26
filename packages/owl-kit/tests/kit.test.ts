@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FocusManager, pickInDirection, type Rect } from '../src/focus/index.ts';
-import { createMemoryHost, type Host } from '../src/host/index.ts';
+import { createMemoryHost, createOwlHost, type Host } from '../src/host/index.ts';
 import { InputManager, PAD } from '../src/input/index.ts';
 import { createFixedLoop } from '../src/loop/index.ts';
 import { Rng, deriveSeed, seedFromString } from '../src/rng/index.ts';
@@ -81,6 +81,18 @@ describe('boucle à pas fixe', () => {
 });
 
 interface Save { version: number; gold: number; name?: string }
+
+it('une sauvegarde absente dans Owl Player retourne null', async () => {
+  const host = createOwlHost({
+    info: () => '{}',
+    read: (name) => name === 'save.json' ? '{"version":2}' : undefined,
+    write: () => true,
+    remove: () => true,
+    quit() {},
+  });
+  await expect(host.read('save.json')).resolves.toBe('{"version":2}');
+  await expect(host.read('save.bak1')).resolves.toBeNull();
+});
 
 function store(host: Host, version = 2) {
   return createSaveStore<Save>({

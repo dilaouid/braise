@@ -61,6 +61,8 @@ async function boot(): Promise<void> {
   refs.data = data;
   const base = import.meta.env.BASE_URL;
   const host = detectHost('braise');
+  // Owl Player interdit l'évaluation dynamique de code dans ses paquets.
+  if (host.id === 'owl') await import('pixi.js/unsafe-eval');
   const store = createSaveStore<Save>({ host, name: 'save', version: SAVE_VERSION, migrations: MIGRATIONS, validate: validateSave });
   const loaded = await store.load();
   let current: Save = loaded.data ?? newSave(Date.now());
@@ -77,6 +79,10 @@ async function boot(): Promise<void> {
   refs.atlasUrl = `${base}atlas/atlas.png`;
 
   const input = new InputManager(window);
+  if (host.id === 'owl') {
+    input.frame.device = 'gamepad';
+    device.value = 'gamepad';
+  }
   const focus = new FocusManager(uiRoot);
   focusRef.setScope = (el, key, optional) => {
     // Le focus se pose après le rendu de l'écran, quand ses éléments existent.
@@ -1016,10 +1022,13 @@ async function boot(): Promise<void> {
   // Mise à l'échelle entière de l'image native, avec des bandes noires si l'écran n'est pas en 16:9.
   function layout(): void {
     const k = Math.min(window.innerWidth / 640, window.innerHeight / 360);
-    const scale = k >= 1 ? Math.floor(k) : k;
+    const pixelRatio = host.id === 'owl' ? window.devicePixelRatio : 1;
+    // Le viewport de la WebView est arrondi au pixel CSS, même sur un écran 16:9.
+    const wholeScale = Math.floor((k + (host.id === 'owl' ? 1 / 360 : 0)) * pixelRatio);
+    const scale = wholeScale > 0 ? Math.min(k, wholeScale / pixelRatio) : k;
     document.documentElement.style.setProperty('--scale', String(scale));
-    stage.classList.toggle('smooth', k < 1);
-    (document.getElementById('small-hint') as HTMLElement).hidden = k >= 1;
+    stage.classList.toggle('smooth', wholeScale === 0);
+    (document.getElementById('small-hint') as HTMLElement).hidden = wholeScale > 0;
   }
   window.addEventListener('resize', layout);
   layout();

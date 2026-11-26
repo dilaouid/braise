@@ -18,109 +18,65 @@
   "shots": [
     {
       "id": "p01",
-      "duration": 9,
+      "duration": 7.6,
+      "captionAt": 1.15,
+      "fadeIn": 0.85,
+      "fadeOut": 0.55,
       "caption": "cine.memory-meeting.t1",
-      "captionAt": 1.2,
-      "fadeIn": 1,
-      "fadeOut": 0.8,
+      "camera": { "scale": [1, 1.045], "focus": [322, 171] },
       "layers": [
-        {
-          "type": "image",
-          "asset": "ill-01",
-          "at": [
-            0,
-            0
-          ],
-          "anchor": [
-            0,
-            0
-          ]
-        }
+        { "type": "image", "asset": "ill-01", "at": [0, 0], "anchor": [0, 0] }
       ],
       "cues": [
-        {
-          "at": 0,
-          "music": "music-intro-a"
-        }
+        { "at": 0, "music": "music-intro-a" },
+        { "at": 0.65, "sfx": "intro-pas-cendre", "volume": 0.18 },
+        { "at": 2.8, "sfx": "intro-pas-cendre", "volume": 0.13 }
       ]
     },
     {
       "id": "p02",
-      "duration": 9,
+      "duration": 8.8,
+      "captionAt": 2.1,
+      "fadeIn": 0.6,
+      "fadeOut": 0.45,
       "caption": "cine.memory-meeting.t2",
-      "captionAt": 1.2,
-      "fadeIn": 1,
-      "fadeOut": 0.8,
+      "camera": { "scale": [1, 1.12], "focus": [401, 140] },
       "layers": [
-        {
-          "type": "image",
-          "asset": "ill-02",
-          "at": [
-            0,
-            0
-          ],
-          "anchor": [
-            0,
-            0
-          ]
-        }
+        { "type": "image", "asset": "ill-02", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 0.35, "sfx": "intro-vent", "volume": 0.22 }
       ]
     },
     {
       "id": "p03",
-      "duration": 10,
+      "duration": 8.8,
+      "captionAt": 0.8,
+      "fadeIn": 0.65,
+      "fadeOut": 0.55,
       "caption": "cine.memory-meeting.t3",
-      "captionAt": 1.2,
-      "fadeIn": 1,
-      "fadeOut": 0.8,
+      "camera": { "scale": [1, 1.035], "focus": [337, 157] },
       "layers": [
-        {
-          "type": "image",
-          "asset": "ill-03",
-          "at": [
-            0,
-            0
-          ],
-          "anchor": [
-            0,
-            0
-          ]
-        }
+        { "type": "image", "asset": "ill-03", "at": [0, 0], "anchor": [0, 0] }
       ],
       "cues": [
-        {
-          "at": 4,
-          "sfx": "memory-rire",
-          "volume": 0.7
-        }
+        { "at": 4.7, "sfx": "memory-rire", "volume": 0.7 }
       ]
     },
     {
       "id": "p04",
-      "duration": 10,
+      "duration": 8.8,
+      "captionAt": 1.35,
+      "fadeIn": 0.8,
+      "fadeOut": 1.4,
       "caption": "cine.memory-meeting.t4",
-      "captionAt": 1.2,
-      "fadeIn": 1,
-      "fadeOut": 1.6,
+      "camera": { "scale": [1.065, 1], "focus": [310, 166] },
       "layers": [
-        {
-          "type": "image",
-          "asset": "ill-04",
-          "at": [
-            0,
-            0
-          ],
-          "anchor": [
-            0,
-            0
-          ]
-        }
+        { "type": "image", "asset": "ill-04", "at": [0, 0], "anchor": [0, 0] }
       ],
       "cues": [
-        {
-          "at": 9,
-          "musicStop": true
-        }
+        { "at": 0.45, "sfx": "intro-pas-cendre", "volume": 0.15 },
+        { "at": 8.25, "musicStop": true }
       ]
     }
   ]

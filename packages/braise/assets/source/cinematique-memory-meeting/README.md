@@ -14,6 +14,10 @@ hors palette, vérifié par `tests/unit/cinematic.test.ts`). Même méthode que 
 | `ill-03.png` | L'ombre de lapin, le rire | `361f2352-5b89-494c-9c8d-0659c1a387fa` | `ill-01` du prologue (Moon, et image de style) |
 | `ill-04.png` | Le retour, elle lui tient le bras | `f3a9f874-6963-458e-aae0-4580ac2e23ce` | `ill-03` (les deux personnages, et image de style), `ill-01` (la forêt) |
 
+`ill-01` et `ill-04` ont été remplacées le 2026-11-26 par des illustrations fournies par l'auteur (1672 × 941),
+réduites en 640 × 360 par moyenne de zones puis ramenées au plus proche voisin dans la palette ; leurs jobs ci-dessus
+ne correspondent plus aux fichiers.
+
 Une génération par plan (25 générations PixelLab chacune), aucune retouche. `ancre/` contient les copies
 agrandies trois fois.
 

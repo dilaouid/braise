@@ -7,7 +7,9 @@ const SHOTS = 'lanterne';
 
 interface Lantern { owned: string[]; seen: string[]; faces: Array<string | null>; opened: number; wins: number }
 
-/** Une sauvegarde jouée, au souvenir déjà repris, avec cette Lanterne. « Inverser A et B » est à faux : ici A valide. */
+/**
+ * Une sauvegarde jouée, au souvenir déjà repris, avec cette Lanterne. « Inverser A et B » est à faux : ici A valide.
+ */
 function saveWith(lantern: Partial<Lantern>): string {
   const save = JSON.parse(fixtureSave('v1-m1-played'));
   save.settings.swapAB = false;
@@ -79,13 +81,14 @@ test('à la manette : poser, échanger, retirer, partir, pause', async ({ page }
   expect(await faces(page)).toEqual(['rune.hunger', null, null, null]);
   await expect(page.locator('[data-focus="face-1"]')).toHaveAttribute('data-level', '1');
   await expect(page.locator('.lantern-detail')).toContainText(FR['rune.hunger.name']!);
-  // Une seule phrase au plus : les images suffisent, X donne les mots.
-  await expect(page.locator('.piece-words')).toHaveCount(0);
+  // Les mots sont là d'emblée, avec le niveau ; X les cache, et les rend.
+  await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.level']!.replace('{n}', '1').replace('{max}', '3'));
+  await expect(page.locator('.piece-words')).toContainText(FR['rune.hunger.malus']!);
   await settle(page);
   await pad.press('X');
-  await expect(page.locator('.piece-words')).toContainText(FR['rune.hunger.malus']!);
-  await pad.press('X');
   await expect(page.locator('.piece-words')).toHaveCount(0);
+  await pad.press('X');
+  await expect(page.locator('.piece-words')).toContainText(FR['rune.hunger.malus']!);
 
   // Le Verre poli sur la face 2 : l'aperçu montre déjà le niveau II, avant de valider.
   await settle(page);
@@ -171,6 +174,7 @@ test('une face fermée dit sa condition et refuse A', async ({ page }, info) => 
   await toLantern(page, pad);
   await pad.press('RIGHT');
   await expectFocus(page, 'face-2');
+  await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.closedTitle']!);
   await expect(page.locator('.lantern-detail')).toContainText(FR['lantern.unlock.2']!);
   await expect(page.locator('.helpbar')).not.toContainText(FR['lantern.choose']!);
   await settle(page);

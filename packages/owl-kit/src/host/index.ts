@@ -20,7 +20,7 @@ export interface Host {
 /** Le pont injecté par le lecteur OwlLeaf (document 09 §5). */
 interface OwlHostBridge {
   info(): string;
-  read(name: string): string | null;
+  read(name: string): string | null | undefined;
   write(name: string, text: string): boolean;
   remove(name: string): boolean;
   quit(): void;
@@ -155,7 +155,7 @@ export function createOwlHost(bridge: OwlHostBridge): Host {
   return {
     id: 'owl',
     async read(name) {
-      return bridge.read(name);
+      return bridge.read(name) ?? null;
     },
     async write(name, text) {
       if (!bridge.write(name, text)) throw new Error(`OwlHost: écriture refusée (${name})`);
