@@ -1335,7 +1335,10 @@ async function boot(): Promise<void> {
           endScene();
         }
       }
-      if (scene) renderer.drawScene(now, Math.min(0.1, dt / 1000), lit, data.classes[CLASS]!.sprite, scene, Math.min(1, sceneT / SCENE_FADE_S));
+      if (scene) {
+        renderer.drawScene(now, Math.min(0.1, dt / 1000), lit, data.classes[CLASS]!.sprite, scene,
+          Math.min(1, sceneT / SCENE_FADE_S), campVisible(data, current));
+      }
       requestAnimationFrame(frame);
       return;
     }
@@ -1475,7 +1478,6 @@ async function boot(): Promise<void> {
       const atCamp = screen.value === 'camp';
       if (atCamp) tickCamp(f, dt);
       renderer.drawCamp(now, lit, data.classes[CLASS]!.sprite, screen.value !== 'title' && knowsCream(current), {
-        dt: dt / 1000,
         moon: screen.value === 'title' ? null : camp,
         visible: campVisible(data, current),
         near: atCamp ? focusedId.value : null,
