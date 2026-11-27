@@ -6,7 +6,7 @@ import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFoc
 import { SettingsScreen } from './screens.tsx';
 import { Portrait } from './dialogue.tsx';
 import {
-  actions, chest, findState, fmt, focusedId, forgeState, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
+  actions, bossCard, chest, findState, fmt, focusedId, forgeState, fmtTime, gameData, hud, levelUp, overlay, pauseReason, pauseStats, roman, runExtras, shopState, t,
   totemState, tutoHud,
 } from './store.ts';
 
@@ -50,6 +50,13 @@ export function Hud(): JSX.Element | null {
           </span>
           <span class="lvl">{t('hud.level', { level: h.level })}</span>
         </div>
+        {h.statuses.length > 0 ? (
+          <div class="statuses">
+            {h.statuses.map((s) => (
+              <span class={`status status-${s.id}`} key={s.id}><Icon name={s.icon} /><b>{t(`hud.status.${s.id}`)}</b></span>
+            ))}
+          </div>
+        ) : null}
         <div class="slots">
           {h.weapons.map((w, i) => (
             <span class={`slot weapon ${w.ready ? 'evolve' : ''}`} key={`w${i}`}>
@@ -109,6 +116,21 @@ export function Hud(): JSX.Element | null {
         </div>
       ) : null}
       {h.message ? <div class="banner">{h.message}</div> : null}
+      <BossCard />
+    </div>
+  );
+}
+
+/** Le carton d'un boss : un nom en grandes lettres entre deux filets, qui vient, tient et s'efface. */
+function BossCard(): JSX.Element | null {
+  const card = bossCard.value;
+  if (!card) return null;
+  return (
+    <div class={`boss-card${card.felled ? ' felled' : ''}`} key={card.key}>
+      <i class="boss-card-rule" />
+      <span class="boss-card-name">{card.name}</span>
+      <span class="boss-card-title">{card.title}</span>
+      <i class="boss-card-rule" />
     </div>
   );
 }

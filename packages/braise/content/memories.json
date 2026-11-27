@@ -6,6 +6,12 @@
       "boss": "boss.lightless-stag",
       "cinematic": "memory-meeting",
       "scene": "after-memory-meeting"
+    },
+    {
+      "id": "memory.wedding",
+      "boss": "boss.mud-lady",
+      "cinematic": "memory-wedding",
+      "scene": "after-memory-wedding"
     }
   ]
 }

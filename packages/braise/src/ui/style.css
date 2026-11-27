@@ -500,3 +500,37 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .dmg-row .bar { flex: 1; }
 .dmg-row b { width: 30px; text-align: right; font-weight: normal; }
 .end-panel .menu-button { width: 110px; justify-content: center; }
+
+/* Les états du héros : la vase, la morsure, la Lueur étouffée, l'eau profonde, l'élan. */
+.statuses { display: flex; gap: 3px; flex-wrap: wrap; max-width: 150px; }
+.status { display: inline-flex; align-items: center; gap: 3px; padding: 1px 4px 1px 2px; background: rgba(11, 15, 26, 0.78); border: 1px solid var(--teal-2); color: var(--teal-0); line-height: 11px; }
+.status b { font-weight: normal; text-shadow: 1px 1px 0 var(--night-0); }
+.status-drain, .status-dim { border-color: var(--danger-1, #c2185b); color: var(--danger-0); }
+.status-dodge { border-color: var(--ember-1); color: var(--ember-0); }
+
+/* Le carton d'un boss : son nom entre deux filets, qui vient, tient et s'efface. */
+.boss-card { position: absolute; left: 0; right: 0; top: 272px; display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; opacity: 0; animation: boss-card 4.4s linear forwards; }
+.boss-card::before { content: ''; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; background: linear-gradient(rgba(11, 15, 26, 0), rgba(11, 15, 26, 0.82) 30%, rgba(11, 15, 26, 0.82) 70%, rgba(11, 15, 26, 0)); z-index: -1; }
+.boss-card-rule { display: block; width: 260px; height: 1px; background: linear-gradient(90deg, rgba(255, 61, 129, 0), var(--danger-0) 50%, rgba(255, 61, 129, 0)); animation: boss-rule 4.4s ease-out forwards; }
+.boss-card-name { font-family: var(--font-title); font-size: 30px; line-height: 26px; letter-spacing: 3px; text-transform: uppercase; color: var(--ash-5); text-shadow: 0 2px 0 var(--night-0), 2px 0 0 var(--night-0), -2px 0 0 var(--night-0), 0 -2px 0 var(--night-0); }
+.boss-card-title { color: var(--danger-0); letter-spacing: 1px; text-shadow: 1px 1px 0 var(--night-0); }
+.boss-card.felled .boss-card-name { color: var(--ember-0); }
+.boss-card.felled .boss-card-title { color: var(--ash-4); }
+.boss-card.felled .boss-card-rule { background: linear-gradient(90deg, rgba(255, 176, 32, 0), var(--ember-1) 50%, rgba(255, 176, 32, 0)); }
+@keyframes boss-card { 0% { opacity: 0; } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes boss-rule { 0% { width: 20px; } 30% { width: 260px; } 100% { width: 300px; } }
+.hud.talking .boss-card, .hud.talking .statuses { visibility: hidden; }
+
+/* La porte : l'image de la région, son niveau, son gardien, et une route fermée. */
+.door-card { width: 104px; height: 108px; justify-content: flex-start; padding-top: 4px; gap: 2px; }
+.door-art { height: 64px; width: 96px; justify-content: center; }
+.door-level { position: absolute; left: 6px; top: 6px; padding: 0 3px; background: rgba(11, 15, 26, 0.8); color: var(--ash-4); line-height: 11px; }
+.door-keeper { color: var(--ash-3); line-height: 10px; }
+.door-memory { position: absolute; right: 5px; top: 22px; }
+.door-card.locked { background: rgba(19, 28, 46, 0.85); border-style: dashed; }
+.door-card.locked .door-art { filter: grayscale(1) brightness(0.45); }
+.door-card.locked .door-name { color: var(--ash-3); }
+.door-lock { display: inline-flex; align-items: center; gap: 3px; color: var(--danger-0); line-height: 10px; }
+.door-hint { display: none; position: absolute; left: -40px; right: -40px; top: -16px; text-align: center; color: var(--ash-5); text-shadow: 1px 1px 0 var(--night-0); }
+.door-card.locked.is-focused .door-hint { display: block; }
+.door-card.closed { width: 84px; height: 108px; justify-content: center; }

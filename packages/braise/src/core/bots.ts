@@ -39,6 +39,18 @@ function dangerAt(run: Run, x: number, y: number): number {
   }
   const tg = run.telegraphs;
   for (let t = 0; t < tg.count; t++) if (insideTelegraph(run, t, x, y, 15)) danger += 0.05;
+  // Le Marais : la vase colle, la marée blesse hors des îlots.
+  for (const m of run.mires) {
+    const dx = x - m.x;
+    const dy = y - m.y;
+    if (dx * dx + dy * dy < m.radius * m.radius) danger += 0.01;
+  }
+  const tide = run.director.tide;
+  if (tide) {
+    let nearest = Infinity;
+    for (const islet of tide.islets) nearest = Math.min(nearest, Math.hypot(x - islet.x, y - islet.y) - islet.r);
+    if (nearest > 0) danger += 0.03 + nearest * 0.0004;
+  }
   if (isSolidAt(run.map, x, y)) danger += 1;
   const size = run.map.size * run.map.tile;
   const d = run.director;

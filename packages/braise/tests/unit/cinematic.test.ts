@@ -53,7 +53,7 @@ describe('cinématique d\'intro (document 15)', () => {
 
   it('ne dit rien de ce que Cream est (document 14 §6)', () => {
     const all = cinematic!.shots.filter((s) => s.caption).map((s) => RAW.fr[s.caption!]).join(' ');
-    expect(all).not.toMatch(/ombre|parl|deux mondes/i);
+    expect(all).not.toMatch(/\bombre|parl|deux mondes/i);
   });
 
   it('chaque image est construite, de la bonne taille, et dans la palette', () => {
@@ -183,10 +183,10 @@ describe('les cinématiques du Cerf', () => {
   });
 
   it('chaque région nomme des cinématiques qui existent', () => {
-    for (const region of Object.values(RAW.regions as Array<{ cinematics?: { first: string; reborn: string } }>)) {
+    for (const region of Object.values(RAW.regions as Array<{ cinematics?: { first: string; reborn?: string } }>)) {
       if (!region.cinematics) continue;
       expect(CINEMATICS_RAW[region.cinematics.first]).toBeDefined();
-      expect(CINEMATICS_RAW[region.cinematics.reborn]).toBeDefined();
+      if (region.cinematics.reborn !== undefined) expect(CINEMATICS_RAW[region.cinematics.reborn]).toBeDefined();
     }
   });
 });

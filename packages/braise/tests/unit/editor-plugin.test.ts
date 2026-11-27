@@ -97,7 +97,7 @@ describe('greffon de l\'éditeur : lecture', () => {
     expect(c.hashes.dialogues).toMatch(/^[0-9a-f]{64}$/);
     expect(c.hashes.fr).not.toBe(c.hashes.dialogues);
     expect((c.tutorial as { steps: unknown[] }).steps.length).toBeGreaterThan(10);
-    expect(Object.keys(c.cinematics).sort()).toEqual(['intro', 'memory-meeting', 'stag-ash', 'stag-call']);
+    expect(Object.keys(c.cinematics).sort()).toEqual(['intro', 'marsh-arrival', 'memory-meeting', 'memory-wedding', 'stag-ash', 'stag-call']);
   });
 });
 

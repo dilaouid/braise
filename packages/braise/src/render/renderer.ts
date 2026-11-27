@@ -1,11 +1,13 @@
 import { Application, Container, Graphics, RenderTexture, Sprite, Texture, TextureSource } from 'pixi.js';
 import { DMG_LIGHTNING, type CampDef, type GameData } from '../content/index.ts';
 import {
-  CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
-  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_CIRCLE, TG_LINE, TG_RING,
+  BH, CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_PICKUPS, CAP_SHOTS, EV, HIT_CRIT, HIT_RESIST, HIT_WEAK,
+  PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, SHOT_LOB, ST_BURN, ST_FROZEN, ST_SLOW, TG_ARC, TG_CIRCLE, TG_LINE, TG_RING,
   TILE_GATE, TILE_THICKET,
   type Run,
 } from '../core/types.ts';
+import { LADY_RISE, LS_EMERGE, L_DIVE } from '../core/boss-lady.ts';
+import { floodRadius } from '../core/marsh.ts';
 import { CAMP_CREAM, CAMP_MOON } from '../content/scene.ts';
 import type { CampState } from '../core/camp.ts';
 import { lowHp } from '../core/combat.ts';
@@ -64,6 +66,12 @@ const FX_TRAIL = 8;
 const FX_TELE_RING = 9;
 const FX_BOLT = 10;
 const FX_FROST = 11;
+const FX_TELE_ARC = 12;
+/** La vase, l'eau noire et le turquoise sombre du Marais. */
+const MUD = 0x2a2d3a;
+const WATER = 0x131c2e;
+const TEAL_DARK = 0x1f9e96;
+const TAU = Math.PI * 2;
 /** Le bois sombre des racines du Cerf et le sol qu'elles ouvrent. */
 const ROOT_DARK = 0x2a1a14;
 
@@ -79,6 +87,16 @@ const MAX_PROPS = 420;
 const MAX_GATES = 24;
 const MAX_THICKETS = 16;
 const MAX_GATE_FADES = 12;
+const MAX_BEACONS = 20;
+const MAX_HANDS = 14;
+/** Le temps qu'une main de vase met à jaillir puis à retomber, et celui que la Dame met à ressortir de l'eau. */
+const HAND_TIME = 0.75;
+const SURGE_TIME = 0.5;
+/** La Dame vaincue s'enfonce, puis ses lanternes remontent. */
+const SINK_TIME = 3.2;
+const SINK_END = 9;
+/** De combien la caméra monte pendant le combat contre la Dame de Vase, en pixels. */
+const LADY_LIFT = 70;
 /** La fumée d'une barrière ouverte met ce temps à se dissiper. */
 const GATE_FADE = 0.7;
 /** Où sont les pattes sur l'image : Cream tient sur une toile de 48 px, pattes à 33 px du haut. */
@@ -86,9 +104,16 @@ const CREAM_ANCHOR = 33 / 48;
 /** Part de Cream qui reste visible dans le noir, hors de la lueur de Moon. */
 const CREAM_PALE = 0.5;
 /** L'ancre verticale des sprites dont les pieds ne sont pas là où la règle du rang les attend. */
-const SPRITE_ANCHOR: Record<string, number> = { 'boss-guetteur': 0.84 };
+const SPRITE_ANCHOR: Record<string, number> = {
+  'boss-guetteur': 0.84, 'boss-dame': 0.95, 'enemy-main': 0.92, 'enemy-pecheur': 0.9, 'enemy-echassier': 0.9, 'elite-passeur': 0.8,
+};
 /** Les ennemis dessinés tournés vers la gauche : tous les autres regardent à droite. */
 const FACES_LEFT = new Set(['boss-cerf']);
+/** Ceux qui sont dessinés de face : ils ne se retournent pas. */
+const NO_FLIP = new Set(['boss-dame', 'enemy-main', 'elite-lanterne-mere']);
+/** Les clips d'annonce de la Dame de Vase, dans l'ordre de ses attaques (mains, balayage, lanternes, plongée, étreinte, marée, cri). */
+const LADY_TELL_CLIPS = ['hands', 'sweep', 'lanterns', 'dive', 'embrace', 'tide', 'scream'];
+const LADY_TELL_FPS = 9;
 /** Les clips d'annonce du Cerf, dans l'ordre de ses attaques (charge, racines, onde, traque, volée, rugissement). */
 const STAG_TELL_CLIPS = ['charge', 'roots', 'stomp', 'stalk', 'volley', 'roar'];
 const STAG_TELL_FPS = 14;
@@ -106,6 +131,8 @@ function caveCorner(x: number, y: number): number {
 
 interface EmoteFx { sprite: Sprite; name: string; t: number }
 interface GateFade { sprite: Sprite; x: number; y: number; t: number }
+/** Une main de vase : son ombre pendant `delay`, puis le jaillissement. `radius` 0 : la main est un Éteint, seule l'ombre est dessinée. */
+interface HandFx { sprite: Sprite; x: number; y: number; delay: number; radius: number; t: number }
 const MAX_LIGHTS = 140;
 
 interface Puff { sprite: Sprite; t: number; frames: Texture[]; rate: number }
@@ -160,6 +187,17 @@ export class GameRenderer {
   /** Par sorte d'ennemi puis par attaque : le clip de la pose d'annonce (vide si le Cerf n'en a pas). */
   private stagTell: Texture[][][] = [];
   private stagTellWhite: Texture[][][] = [];
+  private bossTellFps: number[] = [];
+  /** Le Marais : les lanternes noyées, les mains de vase, le projectile de chaque sorte d'ennemi, la Dame qui ressort et qui sombre. */
+  private readonly beaconSprites: Sprite[] = [];
+  private beaconTexture: Texture = Texture.EMPTY;
+  private readonly handFx: HandFx[] = [];
+  private handFrames: Texture[] = [];
+  private enemyShotTex: Texture[] = [];
+  private surgeT = -1;
+  private bossLift = 0;
+  private sinkTime = SINK_TIME;
+  private readonly sink: { sprite: Sprite; x: number; y: number; t: number };
   private enemyAnchor: number[] = [];
   private readonly propSprites: Sprite[] = [];
   private propTextures: Texture[] = [];
@@ -294,6 +332,9 @@ export class GameRenderer {
     this.creamPale = pool(1, this.numberLayer, 0.5, CREAM_ANCHOR)[0]!;
     this.creamPale.alpha = CREAM_PALE;
     for (const s of pool(2, this.numberLayer, 0.5, 1)) this.emotes.push({ sprite: s, name: '', t: 0 });
+    this.beaconSprites = pool(MAX_BEACONS, this.entities, 0.5, 0.9);
+    for (const s of pool(MAX_HANDS, this.entities, 0.5, 0.94)) this.handFx.push({ sprite: s, x: 0, y: 0, delay: 0, radius: 0, t: -1 });
+    this.sink = { sprite: pool(1, this.entities, 0.5, 0.95)[0]!, x: 0, y: 0, t: -1 };
     this.poiSprites = pool(28, this.entities, 0.5, 0.8);
     this.poiFlames = pool(28, this.entities, 0.5, 1);
     this.pickupSprites = pool(CAP_PICKUPS, this.pickups);
@@ -366,9 +407,24 @@ export class GameRenderer {
     this.borderTexture = a.get(run.region.borderDecor);
     this.enemyFrames = data.enemies.map((e) => a.anim(e.sprite));
     this.enemyWhite = data.enemies.map((e) => a.whiteAnim(e.sprite));
-    const isStag = (e: (typeof data.enemies)[number]): boolean => e.behavior === 'boss-stag';
-    this.stagTell = data.enemies.map((e) => (isStag(e) ? STAG_TELL_CLIPS.map((n) => a.anim(`${e.sprite}-tell-${n}`)) : []));
-    this.stagTellWhite = data.enemies.map((e) => (isStag(e) ? STAG_TELL_CLIPS.map((n) => a.whiteAnim(`${e.sprite}-tell-${n}`)) : []));
+    const tells = (e: (typeof data.enemies)[number]): string[] =>
+      e.behavior === 'boss-stag' ? STAG_TELL_CLIPS : e.behavior === 'boss-lady' ? LADY_TELL_CLIPS : [];
+    this.stagTell = data.enemies.map((e) => tells(e).map((n) => a.anim(`${e.sprite}-tell-${n}`)));
+    this.stagTellWhite = data.enemies.map((e) => tells(e).map((n) => a.whiteAnim(`${e.sprite}-tell-${n}`)));
+    this.bossTellFps = data.enemies.map((e) => (e.behavior === 'boss-lady' ? LADY_TELL_FPS : STAG_TELL_FPS));
+    this.enemyShotTex = data.enemies.map((e) => a.get(e.shot?.slow !== undefined ? 'shot-vase' : 'shot-enemy'));
+    this.beaconTexture = run.region.beacons ? a.get(run.region.beacons.sprite) : Texture.EMPTY;
+    const bigHand = a.anim('fx-main-dame');
+    this.handFrames = bigHand[0] === Texture.EMPTY ? a.anim('enemy-main') : bigHand;
+    for (const s of this.beaconSprites) s.visible = false;
+    for (const h of this.handFx) {
+      h.t = -1;
+      h.sprite.visible = false;
+    }
+    this.sink.t = -1;
+    this.sink.sprite.visible = false;
+    this.surgeT = -1;
+    this.bossLift = 0;
     this.enemyAnchor = data.enemies.map((e) => SPRITE_ANCHOR[e.sprite] ?? (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
     this.heroSprite = run.cls.sprite;
     // Les murs du donjon sont posés au pied de leur tuile ; les décors du Bois gardent leur ancre.
@@ -475,6 +531,17 @@ export class GameRenderer {
       case EV.kill: this.puff(x, y, this.puffFrames); break;
       case EV.eliteDeath:
       case EV.bossDeath:
+        if (type === EV.bossDeath && run.data.enemies[a]?.behavior === 'boss-lady') {
+          // La Dame ne tombe pas en poussière : elle s'enfonce, et ses lanternes remontent, rallumées.
+          this.sink.t = 0;
+          this.sink.x = x;
+          this.sink.y = y;
+          this.sinkTime = run.data.enemies[a]!.sink ?? SINK_TIME;
+          this.sink.sprite.texture = this.enemyFrames[a]![0]!;
+          this.addFx(FX_RING, x, y, 240, C.tealPale, 3, 0.9);
+          this.shake = Math.max(this.shake, 3);
+          break;
+        }
         for (let k = 0; k < 6; k++) this.puff(x + Math.cos(k) * 14, y + Math.sin(k * 2) * 12, this.puffFrames, 0xffffff, 9);
         this.addFx(FX_RING, x, y, type === EV.bossDeath ? 220 : 90, C.emberWhite, 3, 0.6);
         this.shake = Math.max(this.shake, type === EV.bossDeath ? 3 : 2);
@@ -509,7 +576,12 @@ export class GameRenderer {
       case EV.telegraphHit: {
         // a : la forme ; b : l'angle d'une ligne ou le rayon intérieur d'un anneau ; c : la longueur ou le rayon.
         const dust = 0x8f8173;
-        if (a === TG_CIRCLE) {
+        if (Math.floor(a) === TG_ARC) {
+          // Un secteur : sa demi-ouverture voyage dans la partie décimale de `a`, divisée par 8.
+          const half = (a - TG_ARC) * 8;
+          this.addFx(FX_TELE_ARC, x, y, b, c, half, 0.6);
+          for (let k = -1; k <= 1; k++) this.puff(x + Math.cos(b + k * half * 0.7) * c * 0.7, y + Math.sin(b + k * half * 0.7) * c * 0.7, this.puffFrames, dust, 12);
+        } else if (a === TG_CIRCLE) {
           this.addFx(FX_TELE_CIRCLE, x, y, c, 0, 0, 0.7);
           for (let k = 0; k < 4; k++) this.puff(x + Math.cos(k * 1.6) * c * 0.6, y + Math.sin(k * 1.6) * c * 0.5, this.puffFrames, dust, 12);
         } else if (a === TG_RING) {
@@ -543,6 +615,51 @@ export class GameRenderer {
         break;
       }
       case EV.tutoRespawn: this.respawnFade = 1; break;
+      case EV.handRise: {
+        const h = this.handFx.find((k) => k.t < 0);
+        if (h) {
+          h.t = 0;
+          h.x = x;
+          h.y = y;
+          h.delay = a;
+          h.radius = b;
+        }
+        break;
+      }
+      case EV.mire: this.puff(x, y - 2, this.puffFrames, 0x4fe0c8, 10); break;
+      case EV.wispPop:
+        this.addFx(FX_BURST, x, y, 34, C.teal, 0, 0.3);
+        for (let k = 0; k < 3; k++) this.puff(x + Math.cos(k * 2.1) * 12, y + Math.sin(k * 2.1) * 10, this.puffFrames, 0xb8fff0, 11);
+        break;
+      case EV.toadBurst:
+        for (let k = 0; k < 5; k++) this.puff(x + Math.cos(k * 1.3) * 12, y + Math.sin(k * 1.3) * 9, this.puffFrames, 0x5f8a4e, 9);
+        break;
+      case EV.beaconLit: this.addFx(FX_RING, x, y - 8, 86, C.tealPale, 2, 0.6); break;
+      case EV.dodge:
+        this.addFx(FX_RING, x, y - 6, 34, C.white, 2, 0.3);
+        this.addFx(FX_RING, x, y - 6, 22, C.tealPale, 1, 0.45);
+        break;
+      case EV.bossDive:
+        for (let k = 0; k < 8; k++) this.puff(x + Math.cos(k * 0.8) * 30, y - 6 + Math.sin(k * 0.8) * 12, this.puffFrames, 0x7fd4ff, 9);
+        this.addFx(FX_RING, x, y, 90, C.teal, 2, 0.6);
+        this.shake = Math.max(this.shake, 2);
+        break;
+      case EV.bossSurge:
+        for (let k = 0; k < 10; k++) this.puff(x + Math.cos(k * 0.63) * 38, y - 10 + Math.sin(k * 0.63) * 16, this.puffFrames, 0x7fd4ff, 8);
+        this.addFx(FX_RING, x, y, 130, C.tealPale, 3, 0.6);
+        this.shake = Math.max(this.shake, 3);
+        this.surgeT = 0;
+        break;
+      case EV.tideStart: this.shake = Math.max(this.shake, 2); break;
+      case EV.toll:
+        this.addFx(FX_RING, x, y - 20, 70, C.pale, 2, 0.5);
+        this.addFx(FX_RING, x, y - 20, 120, C.grey, 1, 0.8);
+        this.shake = Math.max(this.shake, 1.5);
+        break;
+      case EV.vanish:
+      case EV.appear:
+        for (let k = 0; k < 6; k++) this.puff(x + Math.cos(k) * 16, y - 12 + Math.sin(k * 2) * 12, this.puffFrames, 0x9aa3b5, 8);
+        break;
     }
   }
 
@@ -614,6 +731,11 @@ export class GameRenderer {
       // La boîte de dialogue couvre le bas de l'image : les deux sont cadrés un peu plus haut.
       focusY += (Math.max(-maxY, Math.min(maxY, (gy - hy) / 2)) + 30) * k;
     }
+    // Face à la Dame de Vase, la caméra monte : elle se tient au-dessus de Moon, et on doit la voir en entier.
+    const dir0 = run.director;
+    const tall = dir0.bossSpawned && !dir0.bossDead && run.data.enemies[run.region.bossIdx]!.behavior === 'boss-lady';
+    this.bossLift += Math.max(-dt * 90, Math.min(dt * 90, (tall ? LADY_LIFT : 0) - this.bossLift));
+    focusY -= this.bossLift;
     const mapPx = map.size * map.tile;
     let camX = Math.round(Math.min(mapPx - VIEW_W, Math.max(0, focusX - VIEW_W / 2)));
     let camY = Math.round(Math.min(mapPx - VIEW_H, Math.max(0, focusY - VIEW_H / 2 - 8)));
@@ -735,7 +857,9 @@ export class GameRenderer {
       const s = this.poiSprites[k]!;
       const f = this.poiFlames[k]!;
       const poi = map.pois[k];
-      if (!poi || poi.x < camX - 80 || poi.x > camX + VIEW_W + 80 || poi.y < camY - 80 || poi.y > camY + VIEW_H + 80) {
+      // Un Souvenir ou un portail au temps négatif n'est pas encore là : le boss sombre.
+      const pending = poi !== undefined && poi.progress < 0 && (poi.kind === 'memory' || poi.kind === 'portal');
+      if (!poi || pending || poi.x < camX - 80 || poi.x > camX + VIEW_W + 80 || poi.y < camY - 80 || poi.y > camY + VIEW_H + 80) {
         s.visible = false;
         f.visible = false;
         continue;
@@ -830,6 +954,7 @@ export class GameRenderer {
       this.light(lightX(z.x[i]!), lightY(z.y[i]!), z.radius[i]! + 14);
     }
 
+    this.drawMarsh(run, g, top2, time, dt, paused, camX, camY);
     this.drawLightWeapons(run, g, time, hx, hy, lightX, lightY);
 
     // Annonces d'attaque : magenta, hachurées, qui se remplissent pendant le délai.
@@ -851,6 +976,24 @@ export class GameRenderer {
         g.circle(tg.x[i]!, tg.y[i]!, outer).stroke({ width: 1, color: C.danger, alpha: edge });
         g.circle(tg.x[i]!, tg.y[i]!, inner).stroke({ width: 1, color: C.danger, alpha: edge });
         if (!waiting) g.circle(tg.x[i]!, tg.y[i]!, inner + w / 2).stroke({ width: 1, color: C.dangerDark, alpha: 0.5 });
+      } else if (tg.shape[i] === TG_ARC) {
+        // Un secteur : le balayage de la Dame. Il se remplit depuis elle.
+        const x0 = tg.x[i]!;
+        const y0 = tg.y[i]!;
+        const r = tg.length[i]!;
+        const a0 = tg.angle[i]! - tg.width[i]!;
+        const a1 = tg.angle[i]! + tg.width[i]!;
+        if (waiting) {
+          g.moveTo(x0, y0).arc(x0, y0, r, a0, a1).closePath().stroke({ width: 1, color: C.danger, alpha: 0.3 });
+        } else {
+          g.moveTo(x0, y0).arc(x0, y0, r, a0, a1).closePath().fill({ color: C.danger, alpha: 0.12 });
+          if (frac > 0.02) g.moveTo(x0, y0).arc(x0, y0, r * frac, a0, a1).closePath().fill({ color: C.danger, alpha: 0.22 });
+          g.moveTo(x0, y0).arc(x0, y0, r, a0, a1).closePath().stroke({ width: 1, color: C.danger, alpha: 0.9 });
+          for (let ring = 1; ring <= 3; ring++) {
+            const rr = (r * ring) / 4;
+            g.moveTo(x0 + Math.cos(a0) * rr, y0 + Math.sin(a0) * rr).arc(x0, y0, rr, a0, a1).stroke({ width: 1, color: C.dangerDark, alpha: 0.5 });
+          }
+        }
       } else if (waiting) {
         if (tg.shape[i] === TG_CIRCLE) {
           g.circle(tg.x[i]!, tg.y[i]!, tg.width[i]!).stroke({ width: 1, color: C.danger, alpha: 0.3 });
@@ -903,7 +1046,7 @@ export class GameRenderer {
       const s = this.pickupSprites[i]!;
       const x = p.px[i]! + (p.x[i]! - p.px[i]!) * alpha;
       const y = p.py[i]! + (p.y[i]! - p.py[i]!) * alpha;
-      if (x < camX - 16 || x > camX + VIEW_W + 16 || y < camY - 16 || y > camY + VIEW_H + 16) {
+      if (p.age[i]! < 0 || x < camX - 16 || x > camX + VIEW_W + 16 || y < camY - 16 || y > camY + VIEW_H + 16) {
         s.visible = false;
         continue;
       }
@@ -948,20 +1091,66 @@ export class GameRenderer {
         const clip = (white ? this.stagTellWhite : this.stagTell)[kind]?.[tellDir.bossTell >= 0 ? tellDir.bossTell : tellDir.bossLast];
         if (clip && clip[0] !== Texture.EMPTY) {
           frames = clip;
-          frame = Math.min(clip.length - 1, Math.floor(tellDir.bossTellT * STAG_TELL_FPS));
+          frame = Math.min(clip.length - 1, Math.floor(tellDir.bossTellT * this.bossTellFps[kind]!));
+        }
+      }
+      const def = defs[kind]!;
+      const dir = run.director;
+      const behavior = run.enemyBehavior[kind]!;
+      let hidden = false;
+      if (behavior === BH['boss-lady'] && e.uid[i] === dir.bossUid) {
+        // Sous l'eau, on ne voit que son ombre et ses remous. Quand elle sort, le clip de la plongée se joue à l'envers.
+        const dive = (white ? this.stagTellWhite : this.stagTell)[kind]?.[L_DIVE];
+        const hasDive = dive !== undefined && dive[0] !== Texture.EMPTY;
+        let rise = -1;
+        if (dir.bossHidden) hidden = true;
+        else if (e.state[i] === LS_EMERGE) rise = 1 - Math.max(0, e.timer[i]!) / LADY_RISE;
+        else if (this.surgeT >= 0) rise = this.surgeT / SURGE_TIME;
+        if (hidden) {
+          for (let ring = 0; ring < 2; ring++) {
+            const pulse = (time * 1.3 + ring * 0.5) % 1;
+            const rr = 22 + pulse * 44;
+            g.ellipse(x, y, rr, rr * 0.42).stroke({ width: 1, color: C.teal, alpha: 0.65 * (1 - pulse) });
+          }
+          g.ellipse(x, y, 36, 15).fill({ color: C.night, alpha: 0.6 });
+        } else if (rise >= 0 && rise < 1 && hasDive) {
+          frames = dive;
+          frame = Math.max(0, Math.min(dive.length - 1, dive.length - 1 - Math.floor(rise * dive.length)));
         }
       }
       s.texture = frames[frame]!;
       s.anchor.set(0.5, this.enemyAnchor[kind]!);
-      s.scale.x = (e.facing[i]! < 0) !== FACES_LEFT.has(defs[kind]!.sprite) ? -1 : 1;
+      s.scale.x = NO_FLIP.has(def.sprite) ? 1 : (e.facing[i]! < 0) !== FACES_LEFT.has(def.sprite) ? -1 : 1;
+      s.scale.y = 1;
       s.position.set(Math.round(x), Math.round(y));
       s.zIndex = y;
       const st = e.status[i]!;
       s.tint = st & ST_FROZEN || st & ST_SLOW ? 0x9fd8ff : st & ST_BURN ? 0xffc79a : 0xffffff;
       s.alpha = 1;
-      s.visible = true;
-      const def = defs[kind]!;
-      const dir = run.director;
+      s.visible = !hidden;
+      if (behavior === BH.grabber && e.state[i] === 1) {
+        // La Main noyée sort de terre pendant son annonce.
+        const k = 1 - Math.max(0, e.timer[i]!) / def.grab!.telegraph;
+        s.scale.y = 0.15 + 0.85 * k * k;
+        s.alpha = 0.5 + 0.5 * k;
+      } else if (behavior === BH.leaper && e.state[i] === 1) {
+        // Le Crapaud en l'air : son ombre court au sol, lui passe au-dessus.
+        const k = 1 - Math.max(0, e.timer[i]!) / def.leap!.telegraph;
+        g.ellipse(x, y + 2, 11, 4).fill({ color: C.night, alpha: 0.45 });
+        s.position.y = Math.round(y - Math.sin(k * Math.PI) * 38);
+      } else if (behavior === BH.ferryman && e.state[i] === 1) {
+        s.alpha = 0.12 + 0.88 * (1 - Math.max(0, e.timer[i]!) / def.slam!.telegraph);
+      } else if (behavior === BH.wisp) {
+        this.light(lightX(x), lightY(y), 18, 0.12, C.teal);
+        if (e.state[i] === 1) {
+          // La mèche : elle enfle et blanchit avant d'éclater.
+          const k = 1 - Math.max(0, e.timer2[i]!) / def.wisp!.fuse;
+          s.scale.set(s.scale.x * (1 + 0.6 * k), 1 + 0.6 * k);
+          if (Math.floor(time * 24) % 2 === 0) s.tint = 0xdff6ff;
+        }
+      } else if (behavior === BH.beacon) {
+        this.light(lightX(x), lightY(y - 12), 44 + Math.round(Math.sin(time * 4) * 3), 0.16, C.tealPale);
+      }
       if (dir.bossReformT > 0 && e.uid[i] === dir.bossUid && def.reform) {
         // En poussière : il s'efface presque, de la cendre s'en échappe, puis il se recompose.
         const k = 1 - dir.bossReformT / def.reform.duration;
@@ -991,7 +1180,17 @@ export class GameRenderer {
     this.hero.zIndex = hy;
     const blink = hero.invuln > 0 && hero.dashT <= 0 && Math.floor(time * 20) % 2 === 0;
     this.hero.alpha = run.phase === 'dead' ? Math.max(0, 1 - this.deathFade * 1.5) : blink ? 0.35 : 1;
-    this.hero.tint = hero.invuln > 0 && hero.dashT <= 0 ? 0xff9ac0 : hero.buffT > 0 ? 0xffdfae : 0xffffff;
+    this.hero.tint = hero.invuln > 0 && hero.dashT <= 0 ? 0xff9ac0 : hero.mireT > 0 ? 0x9cc4b8 : hero.buffT > 0 ? 0xffdfae : 0xffffff;
+    if (hero.wading) {
+      // Il patauge : des remous autour de ses jambes.
+      for (let ring = 0; ring < 2; ring++) {
+        const pulse = (time * 1.5 + ring * 0.5) % 1;
+        g.ellipse(hx, hy + 1, 7 + pulse * 9, (7 + pulse * 9) * 0.42).stroke({ width: 1, color: C.tealPale, alpha: 0.55 * (1 - pulse) });
+      }
+    }
+    if (hero.mireT > 0) g.ellipse(hx, hy + 2, 9, 4).fill({ color: MUD, alpha: 0.7 });
+    // L'élan d'une esquive juste : un liseré clair qui bat.
+    if (hero.dodgeT > 0) g.circle(hx, hy - 6, 13 + Math.sin(time * 14) * 1.5).stroke({ width: 1, color: C.white, alpha: Math.min(0.8, hero.dodgeT) });
     for (let k = 0; k < this.ghost.length; k++) {
       const gs = this.ghost[k]!;
       if (hero.dashT > 0) {
@@ -1098,6 +1297,7 @@ export class GameRenderer {
     const es = run.enemyShots;
     for (let i = 0; i < es.count; i++) {
       const s = this.enemyShotSprites[i]!;
+      s.texture = this.enemyShotTex[es.kind[i]!]!;
       s.position.set(Math.round(es.px[i]! + (es.x[i]! - es.px[i]!) * alpha), Math.round(es.py[i]! + (es.y[i]! - es.py[i]!) * alpha));
       s.visible = true;
     }
@@ -1108,7 +1308,14 @@ export class GameRenderer {
     this.drawOverlay(run, time, camX, camY);
 
     // La lueur : un disque chaud autour de la lanterne ; son rayon est le rayon éclairé (la Lueur plus sa marge).
-    let glow = hero.stats.glow + run.data.tuning.hero.lightMargin + Math.round(Math.sin(time * 1.6) * 2);
+    let glow = litRadius(run) + Math.round(Math.sin(time * 1.6) * 2);
+    // Face à la Dame de Vase, la nuit se resserre.
+    const lady = d.bossSpawned && !d.bossDead && defs[run.region.bossIdx]!.behavior === 'boss-lady';
+    this.darkness.alpha = run.region.darkness.opacity + (lady ? 0.1 : 0);
+    if (this.surgeT >= 0 && !paused) {
+      this.surgeT += dt;
+      if (this.surgeT > SURGE_TIME) this.surgeT = -1;
+    }
     if (run.phase === 'dead') {
       this.deathFade = Math.min(1.2, this.deathFade + dt * 0.8);
       glow *= Math.max(0, 1 - this.deathFade);
@@ -1125,6 +1332,150 @@ export class GameRenderer {
     }
     this.renderLight();
     this.app.renderer.render(this.app.stage);
+  }
+
+  /** Le Marais : les flaques de vase, les lanternes noyées, la marée, les mains de vase, la brume, et la Dame qui sombre. */
+  private drawMarsh(run: Run, g: Graphics, top: Graphics, time: number, dt: number, paused: boolean, camX: number, camY: number): void {
+    const seen = (x: number, y: number, pad: number): boolean => x > camX - pad && x < camX + VIEW_W + pad && y > camY - pad && y < camY + VIEW_H + pad;
+    for (let k = 0; k < run.mires.length; k++) {
+      const m = run.mires[k]!;
+      if (!seen(m.x, m.y, m.radius + 8)) continue;
+      const fade = Math.min(1, m.life / 0.6, (m.maxLife - m.life) / 0.25 + 0.2);
+      g.circle(m.x, m.y, m.radius).fill({ color: MUD, alpha: 0.72 * fade });
+      g.circle(m.x, m.y, m.radius * 0.66).fill({ color: C.night, alpha: 0.35 * fade });
+      g.circle(m.x, m.y, m.radius).stroke({ width: 1, color: TEAL_DARK, alpha: 0.75 * fade });
+      for (let b = 0; b < 4; b++) {
+        // Des bulles qui montent et crèvent, toujours aux mêmes endroits de la flaque.
+        const ph = (time * 0.7 + hash(k * 7 + b * 13)) % 1;
+        const a = hash(m.x + b * 3) * TAU;
+        const r = m.radius * 0.7 * hash(m.y + b);
+        g.rect(Math.round(m.x + Math.cos(a) * r), Math.round(m.y + Math.sin(a) * r - ph * 4), 2, 2).fill({ color: C.teal, alpha: (1 - ph) * 0.85 * fade });
+      }
+    }
+
+    const bc = run.region.beacons;
+    let bi = 0;
+    if (bc) {
+      for (const b of run.map.beacons) {
+        if (bi >= MAX_BEACONS) break;
+        if (!seen(b.x, b.y, bc.radius + 20)) continue;
+        const s = this.beaconSprites[bi++]!;
+        s.texture = this.beaconTexture;
+        s.position.set(b.x, b.y + 6);
+        s.zIndex = b.y + 2;
+        s.visible = true;
+        if (b.life > 0) {
+          // Ravivée : elle éclaire, et sa lumière perce la brume. Elle faiblit sur ses trois dernières secondes.
+          const fade = Math.min(1, b.life / 3);
+          const flick = Math.sin(time * 5 + b.x);
+          s.tint = 0xffffff;
+          g.circle(b.x, b.y, bc.radius).fill({ color: C.teal, alpha: 0.05 * fade });
+          g.circle(b.x, b.y, bc.radius).stroke({ width: 1, color: C.teal, alpha: (0.32 + flick * 0.08) * fade });
+          this.light(b.x - camX, b.y - 10 - camY, Math.round((bc.radius + 8) * (0.45 + 0.55 * fade) + flick * 2), 0.12 * fade, C.teal);
+        } else {
+          s.tint = 0x9aa3b5;
+          this.light(b.x - camX, b.y - 10 - camY, 13 + Math.round(Math.sin(time * 2 + b.y) * 2));
+        }
+      }
+    }
+    for (; bi < MAX_BEACONS; bi++) {
+      if (!this.beaconSprites[bi]!.visible) break;
+      this.beaconSprites[bi]!.visible = false;
+    }
+
+    const d = run.director;
+    const tide = d.tide;
+    if (tide) {
+      // La marée : l'eau gagne depuis le bord de l'arène ; les îlots restent au sec.
+      const dry = Math.min(d.arenaR, floodRadius(run, run.data.enemies[run.region.bossIdx]!));
+      const w = d.arenaR - dry;
+      if (w > 1) {
+        g.circle(d.arenaX, d.arenaY, dry + w / 2).stroke({ width: w, color: WATER, alpha: 0.74 });
+        g.circle(d.arenaX, d.arenaY, dry + w / 2).stroke({ width: w, color: TEAL_DARK, alpha: 0.12 + Math.sin(time * 3) * 0.03 });
+        if (dry > 3) {
+          g.circle(d.arenaX, d.arenaY, dry).stroke({ width: 2, color: C.tealPale, alpha: 0.85 });
+          g.circle(d.arenaX, d.arenaY, dry + 6).stroke({ width: 1, color: C.teal, alpha: 0.5 });
+        }
+      }
+      for (const islet of tide.islets) {
+        const reached = Math.hypot(islet.x - d.arenaX, islet.y - d.arenaY) + islet.r > dry;
+        if (reached) g.circle(islet.x, islet.y, islet.r).fill({ color: 0x454a5c, alpha: 0.96 });
+        g.circle(islet.x, islet.y, islet.r).stroke({ width: 2, color: C.tealPale, alpha: 0.75 + Math.sin(time * 6) * 0.2 });
+        g.circle(islet.x, islet.y, islet.r - 5).stroke({ width: 1, color: C.teal, alpha: 0.5 });
+        this.light(islet.x - camX, islet.y - camY, islet.r + 8, 0.07, C.teal);
+      }
+    }
+
+    for (const h of this.handFx) {
+      if (h.t < 0) continue;
+      if (!paused) h.t += dt;
+      const rise = h.t - h.delay;
+      if (rise < 0) {
+        // L'ombre d'une seconde : elle grandit sous Moon, des bulles crèvent.
+        const k = h.t / h.delay;
+        g.ellipse(h.x, h.y, 6 + k * 16, 3 + k * 7).fill({ color: C.night, alpha: 0.35 + 0.4 * k });
+        for (let b = 0; b < 3; b++) {
+          const ph = (time * 2 + b * 0.33) % 1;
+          g.rect(Math.round(h.x + (hash(h.x + b) - 0.5) * 20 * k), Math.round(h.y + (hash(h.y + b) - 0.5) * 8 - ph * 5), 2, 2).fill({ color: C.teal, alpha: (1 - ph) * k });
+        }
+        h.sprite.visible = false;
+      } else if (rise >= HAND_TIME || h.radius <= 0 || this.handFrames[0] === Texture.EMPTY) {
+        h.t = -1;
+        h.sprite.visible = false;
+      } else {
+        const k = rise / HAND_TIME;
+        const frames = this.handFrames;
+        h.sprite.texture = frames[Math.min(frames.length - 1, Math.floor(k * frames.length))]!;
+        h.sprite.scale.y = k < 0.15 ? 0.25 + 5 * k : 1;
+        h.sprite.alpha = k > 0.8 ? (1 - k) / 0.2 : 1;
+        h.sprite.position.set(Math.round(h.x), Math.round(h.y + 8));
+        h.sprite.zIndex = h.y + 4;
+        h.sprite.visible = true;
+      }
+    }
+
+    const sink = this.sink;
+    if (sink.t >= 0) {
+      if (!paused) sink.t += dt;
+      const t = sink.t;
+      const k = Math.min(1, t / this.sinkTime);
+      const s = sink.sprite;
+      s.visible = k < 1;
+      s.position.set(Math.round(sink.x), Math.round(sink.y));
+      // Ancrée à la ligne d'eau : elle se tasse dedans plutôt que de glisser dessous.
+      s.scale.y = 1 - k * 0.92;
+      s.alpha = 1 - k * k * 0.7;
+      s.tint = 0x9aa3b5;
+      s.zIndex = sink.y;
+      for (let ring = 0; ring < 2 && k < 1; ring++) {
+        const pulse = (time * 1.1 + ring * 0.5) % 1;
+        g.ellipse(sink.x, sink.y, 26 + pulse * 50, (26 + pulse * 50) * 0.42).stroke({ width: 1, color: C.teal, alpha: 0.6 * (1 - pulse) });
+      }
+      // Les lanternes de sa coiffe remontent une à une, rallumées : chaudes, les seules de tout le Marais.
+      for (let n = 0; n < 12; n++) {
+        const lt = t - 1 - n * 0.3;
+        if (lt < 0 || lt > 5) continue;
+        const lx = sink.x + (hash(n * 2.3) - 0.5) * 96 + Math.sin(lt * 1.3 + n) * 6;
+        const ly = sink.y - 16 - lt * 24 - hash(n) * 34;
+        const fade = lt > 4 ? 5 - lt : Math.min(1, lt * 2);
+        top.rect(Math.round(lx) - 1, Math.round(ly) - 2, 3, 4).fill({ color: C.emberPale, alpha: fade });
+        top.rect(Math.round(lx), Math.round(ly) - 1, 1, 2).fill({ color: C.emberWhite, alpha: fade });
+        this.light(lx - camX, ly - camY, Math.round(15 * fade), 0.22 * fade, C.ember);
+      }
+      if (t > SINK_END) sink.t = -1;
+    }
+
+    if (run.region.fog) {
+      // La brume : des nappes pâles qui dérivent, un peu moins vite que le sol ne défile.
+      const w2 = VIEW_W + 280;
+      const h2 = VIEW_H + 120;
+      for (let k = 0; k < 9; k++) {
+        const speed = 5 + hash(k) * 8;
+        const sx = ((((hash(k * 3.1) * w2 + time * speed - camX * 0.6) % w2) + w2) % w2) - 140;
+        const sy = ((((hash(k * 5.7) * h2 - camY * 0.6) % h2) + h2) % h2) - 60;
+        top.ellipse(camX + sx, camY + sy, 70 + hash(k + 1) * 60, 14 + hash(k + 2) * 12).fill({ color: 0x9aa3b5, alpha: 0.055 });
+      }
+    }
   }
 
   /** Une bulle au-dessus d'une tête, avec un petit rebond quand elle apparaît ou change. */
@@ -1334,6 +1685,18 @@ export class GameRenderer {
           for (let s = 1; s < 4 && f.c > 0 && f.t < 0.12; s++) this.light(f.a + ((f.x - f.a) * s) / 4 - camX, f.b + ((f.y - f.b) * s) / 4 - camY, Math.round(20 * (1 - f.t / 0.12)));
           break;
         }
+        case FX_TELE_ARC: {
+          // Le balayage : un éclair sur tout le secteur, puis l'eau soulevée qui file vers son bord.
+          const a0 = f.a - f.c;
+          const a1 = f.a + f.c;
+          const flash = Math.max(0, 1 - f.t / 0.14);
+          if (flash > 0) ground.moveTo(f.x, f.y).arc(f.x, f.y, f.b, a0, a1).closePath().fill({ color: C.danger, alpha: 0.5 * flash });
+          ground.moveTo(f.x, f.y).arc(f.x, f.y, f.b, a0, a1).closePath().fill({ color: MUD, alpha: 0.35 * fade });
+          const front = f.b * (0.5 + 0.5 * Math.min(1, k * 1.6));
+          ground.moveTo(f.x + Math.cos(a0) * front, f.y + Math.sin(a0) * front).arc(f.x, f.y, front, a0, a1).stroke({ width: 3, color: C.danger, alpha: 0.7 * fade });
+          ground.moveTo(f.x + Math.cos(a0) * (front - 5), f.y + Math.sin(a0) * (front - 5)).arc(f.x, f.y, front - 5, a0, a1).stroke({ width: 1, color: C.tealPale, alpha: 0.6 * fade });
+          break;
+        }
         case FX_FROST:
           for (let s = 0; s < 4; s++) {
             const a = s * (Math.PI / 2) + hash(f.x) * 1.5;
@@ -1436,7 +1799,7 @@ export class GameRenderer {
     }
     if (target && !(run.director.bossSpawned && !run.director.bossDead)) arrow(target.x, target.y, C.emberPale);
     const p = run.pickups;
-    for (let i = 0; i < p.count; i++) if (p.kind[i] === PK_CHEST || p.kind[i] === PK_PIECE) arrow(p.x[i]!, p.y[i]!, C.ember);
+    for (let i = 0; i < p.count; i++) if (p.age[i]! >= 0 && (p.kind[i] === PK_CHEST || p.kind[i] === PK_PIECE)) arrow(p.x[i]!, p.y[i]!, C.ember);
     for (; used < this.arrows.length; used++) this.arrows[used]!.visible = false;
   }
 

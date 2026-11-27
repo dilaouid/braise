@@ -1,8 +1,25 @@
-import type { Run } from './types.ts';
+import type { Beacon, Run } from './types.ts';
+
+/** La Lueur du moment : celle de la feuille, moins ce que la brume ou une Lanterne-mère en étouffe. */
+export function glowNow(run: Run): number {
+  return run.hero.stats.glow * run.dim;
+}
 
 /** Le rayon éclairé par Moon : la Lueur plus la marge du disque de lumière dessiné à l'écran. */
 export function litRadius(run: Run): number {
-  return run.hero.stats.glow + run.data.tuning.hero.lightMargin;
+  return glowNow(run) + run.data.tuning.hero.lightMargin;
+}
+
+/** La lanterne noyée ravivée dont la lumière couvre ce point, ou null. */
+export function beaconAt(run: Run, x: number, y: number): Beacon | null {
+  const radius = run.region.beacons?.radius ?? 0;
+  for (const b of run.map.beacons) {
+    if (b.life <= 0) continue;
+    const dx = x - b.x;
+    const dy = y - b.y;
+    if (dx * dx + dy * dy < radius * radius) return b;
+  }
+  return null;
 }
 
 /** Vrai si ce point est éclairé : dans le disque de Moon, ou dans la lumière d'une Veilleuse. */
@@ -16,5 +33,5 @@ export function isLit(run: Run, x: number, y: number): boolean {
     const ly = y - lamp.y;
     if (lx * lx + ly * ly < lamp.radius * lamp.radius) return true;
   }
-  return false;
+  return run.map.beacons.length > 0 && beaconAt(run, x, y) !== null;
 }

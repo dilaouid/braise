@@ -1,0 +1,14 @@
+{
+  "id": "after-memory-wedding",
+  "fire": false,
+  "moon": [-30, 250],
+  "cream": [-56, 258],
+  "steps": [
+    { "do": "move", "moon": [204, 232], "cream": [172, 238] },
+    { "do": "say", "dialogue": "scene.after-memory-wedding.1" },
+    { "do": "move", "moon": [366, 214], "cream": [276, 216] },
+    { "do": "kindle" },
+    { "do": "wait", "seconds": 0.8 },
+    { "do": "say", "dialogue": "scene.after-memory-wedding.2" }
+  ]
+}

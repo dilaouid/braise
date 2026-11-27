@@ -35,7 +35,10 @@ export const HIT_FREEZE = 64;
 export const HIT_SHOCK = 128;
 
 /** Comportements d'ennemis, en indices. */
-export const BH = { chase: 0, zigzag: 1, shooter: 2, swarm: 3, charger: 4, spawner: 5, 'boss-stag': 6, 'boss-watcher': 7 } as const;
+export const BH = {
+  chase: 0, zigzag: 1, shooter: 2, swarm: 3, charger: 4, spawner: 5, 'boss-stag': 6, 'boss-watcher': 7,
+  wisp: 8, leaper: 9, grabber: 10, ferryman: 11, beacon: 12, toller: 13, 'boss-lady': 14,
+} as const;
 
 /** Sortes de ramassables. */
 export const PK_GEM = 0;
@@ -64,6 +67,17 @@ export const TG_LINE = 0;
 export const TG_CIRCLE = 1;
 /** Un anneau : `width` est le rayon extérieur, `length` le rayon intérieur. */
 export const TG_RING = 2;
+/** Un secteur : `angle` est son axe, `length` son rayon, `width` sa demi-ouverture en radians. */
+export const TG_ARC = 3;
+
+/** Ce qu'une annonce fait de plus au héros qu'elle touche. */
+export const TFX_NONE = 0;
+/** De la vase : `fxValue` secondes de ralenti. */
+export const TFX_MIRE = 1;
+/** Tiré vers l'origine de l'annonce : `fxValue` est la force, `fxSize` les secondes de vase. */
+export const TFX_PULL = 2;
+/** Laisse une flaque de vase là où elle frappe : `fxValue` est sa durée, `fxSize` son rayon. */
+export const TFX_PUDDLE = 3;
 
 /** Événements émis pour le rendu et le son. `core` ne joue aucun son lui-même. */
 export const EV = {
@@ -93,7 +107,45 @@ export const EV = {
   lamp: 52,
   /** Un fil de ruée est tendu ; deux fils se croisent (a : le rayon de l'éclat). */
   thread: 53, threadCross: 54,
+  /** Le Marais. Une flaque de vase se forme (a : son rayon). */
+  mire: 55,
+  /** Le héros est pris dans la vase, ou mordu par des sangsues (a : 0 vase, 1 morsure, 2 tiré). */
+  heroAfflict: 56,
+  /** Une esquive juste : la ruée a traversé un coup. */
+  dodge: 57,
+  /** Une lanterne noyée ravivée. */
+  beaconLit: 58,
+  /** Une main de vase va sortir (a : le délai, b : son rayon). */
+  handRise: 59,
+  /** La Dame plonge, resurgit ; la marée monte (a : sa durée), se retire. */
+  bossDive: 60, bossSurge: 61, tideStart: 62, tideEnd: 63,
+  /** Le Glas sonne ; le Passeur disparaît, reparaît ; une Lueur éclate ; un Crapaud éclate. */
+  toll: 64, vanish: 65, appear: 66, wispPop: 67, toadBurst: 68,
+  /** La Dame chante (un souffle entre deux attaques). */
+  bossHum: 69,
 } as const;
+
+/** Une flaque de vase : le héros qui la traverse est ralenti. */
+export interface Mire {
+  x: number; y: number;
+  radius: number;
+  life: number; maxLife: number;
+}
+
+/** Une lanterne noyée de la carte : ravivée, elle éclaire et perce la brume un moment. */
+export interface Beacon {
+  x: number; y: number;
+  /** Secondes de lumière qui lui restent (0 : éteinte). */
+  life: number;
+}
+
+/** La marée de la Dame de Vase. */
+export interface Tide {
+  /** Secondes écoulées depuis qu'elle a commencé à monter. */
+  t: number;
+  islets: Array<{ x: number; y: number; r: number }>;
+  tick: number;
+}
 
 /** Une Veilleuse posée : une lumière au sol. */
 export interface Lamp {
@@ -183,6 +235,8 @@ export interface TelegraphStore {
   t: Float32Array; duration: Float32Array; damage: Float32Array;
   owner: Uint32Array;
   kind: Uint16Array;
+  /** Ce que l'annonce fait de plus (`TFX_*`), sa valeur, et une seconde valeur (le rayon d'une flaque, la vase d'une étreinte). */
+  fx: Uint8Array; fxValue: Float32Array; fxSize: Float32Array;
 }
 
 export interface PickupStore {
@@ -225,8 +279,12 @@ export interface GameMap {
   tile: number;
   /** 0 : libre · 1 : obstacle · 2 : bordure · 3 : barrière du tutoriel · 4 : rangée d'Éteints (seule la ruée la franchit). */
   solid: Uint8Array;
-  /** Terrain aux coins des tuiles ((size + 1)²) : 0 cendre, 1 chemin. */
+  /** Terrain aux coins des tuiles ((size + 1)²) : 0 cendre, 1 chemin (ou eau profonde, si `waterSlow` > 0). */
   corners: Uint8Array;
+  /** Part de vitesse que l'eau profonde retire au héros (0 : la carte n'a pas d'eau). */
+  waterSlow: number;
+  /** Les lanternes noyées de la carte. */
+  beacons: Beacon[];
   props: Prop[];
   pois: Poi[];
   /** Part de l'intérieur couverte par des obstacles. */
@@ -340,6 +398,14 @@ export interface Hero {
   ultGauge: number;
   ultT: number; ultTick: number;
   revives: number;
+  /** Secondes de vase (ralenti) et de morsure (plus de régénération) qui restent. */
+  mireT: number; drainT: number;
+  /** Vrai si le héros patauge dans l'eau profonde. */
+  wading: boolean;
+  /** Secondes d'élan qui restent après une esquive juste ; faux tant que la ruée en cours n'en a pas donné. */
+  dodgeT: number; dodged: boolean;
+  /** L'élan d'une étreinte : une vitesse qui s'amortit. */
+  pullX: number; pullY: number;
   level: number; xp: number; xpNext: number;
   /** Or, Cendres et gemmes ramassés pendant la partie (avant les multiplicateurs de fin). */
   gold: number; ashDrops: number; gems: number;
@@ -379,6 +445,11 @@ export interface Director {
   bossReformT: number;
   /** Paquets d'éclats déjà lâchés par le boss dans sa vie en cours. */
   bossShed: number;
+  /** Le boss est sous l'eau : rien ne le touche, il ne touche rien. */
+  bossHidden: boolean;
+  /** La marée en cours, et le temps avant la prochaine. */
+  tide: Tide | null;
+  tideCd: number;
   arenaX: number; arenaY: number; arenaR: number;
   /** Poids de travail, un par sorte d'ennemi. */
   scratch: Float32Array;
@@ -511,6 +582,12 @@ export interface Run {
   /** Les Veilleuses et les fils vivants, du plus ancien au plus récent. */
   lamps: Lamp[];
   threads: Thread[];
+  /** Les flaques de vase. */
+  mires: Mire[];
+  /** Ce que la brume et les Lanternes-mères laissent de la Lueur (1 : toute). */
+  dim: number;
+  /** Ce que les Lanternes-mères vivantes laissent de la Lueur à ce pas (1 : aucune n'est là). */
+  blind: number;
   telegraphs: TelegraphStore;
   pickups: PickupStore;
   director: Director;

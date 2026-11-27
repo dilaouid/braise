@@ -6,7 +6,8 @@ import { updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
-import { litRadius } from './light.ts';
+import { glowNow, litRadius } from './light.ts';
+import { isWading, updateMarsh } from './marsh.ts';
 import { layThreads } from './light-weapons.ts';
 import { closeChest, gainXp, resumeRun } from './levelup.ts';
 import { NEUTRAL_MODS } from './mods.ts';
@@ -65,6 +66,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     dashT: 0, dashCd: 0, dashX: 0, dashY: 1, dashCharges: 1 + (cfg.mods?.dashCharges ?? 0),
     flasks: stats.flasks, skillCd: 0, buffT: 0, ultGauge: 0, ultT: 0, ultTick: 0,
     revives: stats.revives,
+    mireT: 0, drainT: 0, wading: false, dodgeT: 0, dodged: false, pullX: 0, pullY: 0,
     level: 1, xp: 0, xpNext: runXpForNext(1, tuning.xp),
     gold: 0, goldSpent: 0, ashDrops: 0, gems: 0, kills: 0, elites: 0, bossKills: 0,
     rerolls: stats.rerolls, banishes: stats.banishes, damageTaken: 0,
@@ -88,12 +90,13 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, dashFromX: 0, dashFromY: 0, trailLeft: 0, gemsHeld: 0, revived: 0,
     weapons: [], relics: [], acquired: 0,
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
-    zones: createZoneStore(), lamps: [], threads: [], telegraphs: createTelegraphStore(), pickups: createPickupStore(),
+    zones: createZoneStore(), lamps: [], threads: [], mires: [], dim: 1, blind: 1,
+    telegraphs: createTelegraphStore(), pickups: createPickupStore(),
     director: {
       budget: 0, bank: 0, nextKind: -1, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
       eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()),
       bossSpawned: false, bossUid: 0, bossPhase: 0, bossSummonT: 0, bossLast: -1, bossNext: -1, bossTell: -1, bossTellT: -1, bossDead: false,
-      bossReformed: false, bossReformT: 0, bossShed: 0,
+      bossReformed: false, bossReformT: 0, bossShed: 0, bossHidden: false, tide: null, tideCd: 0,
       arenaX: 0, arenaY: 0, arenaR: 0,
       scratch: new Float32Array(kinds),
     },
@@ -249,7 +252,11 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
   }
   if (hero.skillCd > 0) hero.skillCd -= dt;
   if (hero.buffT > 0) hero.buffT -= dt;
-  if (hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * run.mods.healMult * dt);
+  if (hero.mireT > 0) hero.mireT -= dt;
+  if (hero.drainT > 0) hero.drainT -= dt;
+  if (hero.dodgeT > 0) hero.dodgeT -= dt;
+  // Mordu par des sangsues, le héros ne se régénère plus.
+  if (hero.drainT <= 0 && hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * run.mods.healMult * dt);
 
   let mx = input.moveX;
   let my = input.moveY;
@@ -284,6 +291,10 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
     run.dashFromY = hero.y;
     hero.dashX = hero.faceX;
     hero.dashY = hero.faceY;
+    hero.dodged = false;
+    // La ruée arrache à l'étreinte.
+    hero.pullX = 0;
+    hero.pullY = 0;
     emit(run, EV.heroDash, hero.x, hero.y, Math.atan2(hero.dashY, hero.dashX));
     tutorialNote(run, 'dash');
   }
@@ -317,10 +328,25 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
       hero.dashY = -hero.dashY;
     }
   } else if (hero.moving) {
-    const speed = hero.stats.speed * dt;
+    // L'eau profonde et la vase freinent la marche ; la ruée, elle, passe par-dessus.
+    let slow = 1;
+    if (hero.wading) slow *= 1 - (run.map.waterSlow > 0 ? run.map.waterSlow : WADE_SLOW);
+    if (hero.mireT > 0) slow *= 1 - tuning.heroStatuses.mireSlow;
+    const speed = hero.stats.speed * slow * dt;
     moveHeroBy(run, mx * speed, my * speed);
   }
+  if (hero.pullX !== 0 || hero.pullY !== 0) {
+    // L'étreinte : un élan vers la Dame, qui s'amortit.
+    if (hero.dashT <= 0) moveHeroBy(run, hero.pullX * dt, hero.pullY * dt);
+    const damp = Math.pow(0.02, dt);
+    hero.pullX = Math.abs(hero.pullX) < 4 ? 0 : hero.pullX * damp;
+    hero.pullY = Math.abs(hero.pullY) < 4 ? 0 : hero.pullY * damp;
+  }
+  hero.wading = hero.dashT <= 0 && isWading(run, hero.x, hero.y);
 }
+
+/** Ce que la marée retire à la marche quand la carte n'a pas d'eau à elle. */
+const WADE_SLOW = 0.3;
 
 /** Fiole, compétence et ultime. Appelé après la reconstruction de la grille. */
 function heroAbilities(run: Run, input: StepInput, dt: number): void {
@@ -411,12 +437,14 @@ function updatePickups(run: Run, dt: number): void {
   const p = run.pickups;
   const hero = run.hero;
   const gems = run.data.tuning.gems;
-  const glow = hero.stats.glow;
+  const glow = glowNow(run);
   const collect2 = gems.collectRadius * gems.collectRadius;
   for (let i = p.count - 1; i >= 0; i--) {
     p.px[i] = p.x[i]!;
     p.py[i] = p.y[i]!;
     p.age[i]! += dt;
+    // Pas encore là : le butin d'un boss qui sombre attend que l'eau se referme.
+    if (p.age[i]! < 0) continue;
     const dx = hero.x - p.x[i]!;
     const dy = hero.y - 6 - p.y[i]!;
     const d2 = dx * dx + dy * dy;
@@ -469,11 +497,16 @@ function onBossDeath(run: Run): void {
   e.count = 0;
   run.enemyShots.count = 0;
   run.telegraphs.count = 0;
+  run.mires.length = 0;
+  d.tide = null;
+  d.bossHidden = false;
   // Un boss qui garde encore un souvenir le laisse à la place du portail : c'est lui qui ramène au refuge.
   const memory = Boolean(run.cfg.memory);
+  // Un boss qui sombre : le Souvenir (ou le portail) ne paraît qu'une fois l'eau refermée.
+  const sink = run.data.enemies[run.region.bossIdx]!.sink ?? 0;
   run.map.pois.push({
-    kind: memory ? 'memory' : 'portal', x: d.arenaX, y: d.arenaY, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null,
-    armed: !memory,
+    kind: memory ? 'memory' : 'portal', x: d.arenaX, y: d.arenaY, state: 0, progress: -sink, discovered: true, guardUid: 0, offers: null,
+    armed: !memory && sink === 0,
   });
 }
 
@@ -494,7 +527,9 @@ export function stepRun(run: Run, input: StepInput): void {
   updateDirector(run, dt);
   moveHero(run, input, dt);
   updateFlow(run);
+  run.blind = 1;
   updateEnemies(run, dt);
+  updateMarsh(run, dt);
   buildGrid(run);
   separateEnemies(run);
   heroAbilities(run, input, dt);
@@ -506,10 +541,12 @@ export function stepRun(run: Run, input: StepInput): void {
   updateTelegraphs(run, dt);
   contactDamage(run);
 
-  // Les élites et le boss morts emportent leurs annonces.
+  // Les élites et le boss morts emportent leurs annonces ; les Éteints ordinaires qui en posent aussi.
   const e = run.enemies;
   for (let i = 0; i < e.count; i++) {
-    if (e.hp[i]! <= 0 && run.data.enemies[e.kind[i]!]!.rank !== 'normal') clearTelegraphsOf(run, e.uid[i]!);
+    if (e.hp[i]! > 0) continue;
+    const dead = run.data.enemies[e.kind[i]!]!;
+    if (dead.rank !== 'normal' || dead.wisp || dead.leap || dead.grab) clearTelegraphsOf(run, e.uid[i]!);
   }
   const bossKilled = reapEnemies(run);
   if (bossKilled) {

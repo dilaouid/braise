@@ -141,6 +141,37 @@ for (const c of manifest.characters) {
   }
 }
 
+/**
+ * Efface la bande d'eau plate que le générateur pose parfois sous un personnage, d'un bord à l'autre de l'image :
+ * depuis les bords gauche, droit et bas, à partir de la ligne `fromRow`, on retire de proche en proche les pixels
+ * bleu sombre. Les remous clairs et le personnage arrêtent l'effacement.
+ */
+function clearBand(png, fromRow) {
+  const { width: w, height: h, data } = png;
+  const band = (i) => data[i * 4 + 3] !== 0 && data[i * 4] < 45 && data[i * 4 + 1] >= 35 && data[i * 4 + 1] <= 80 && data[i * 4 + 2] >= 50 && data[i * 4 + 2] <= 100;
+  const seen = new Uint8Array(w * h);
+  const stack = [];
+  const push = (x, y) => {
+    const i = y * w + x;
+    if (x < 0 || y < fromRow || x >= w || y >= h || seen[i] || !band(i)) return;
+    seen[i] = 1;
+    stack.push(i);
+  };
+  for (let y = fromRow; y < h; y++) {
+    push(0, y);
+    push(w - 1, y);
+  }
+  for (let x = 0; x < w; x++) push(x, h - 1);
+  while (stack.length) {
+    const i = stack.pop();
+    data[i * 4 + 3] = 0;
+    const x = i % w;
+    const y = (i - x) / w;
+    push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
+  }
+  return png;
+}
+
 // ───────────── Les objets : ennemis, décors, points d'intérêt ─────────────
 for (const o of manifest.objects) {
   const base = join(source, o.name);
@@ -150,9 +181,11 @@ for (const o of manifest.objects) {
   if (o.animated && existsSync(animRoot)) {
     const anim = readdirSync(animRoot)[0];
     const dir = readdirSync(join(animRoot, anim))[0];
-    const frames = framesIn(join(animRoot, anim, dir));
+    // `skip` : les images de tête écartées (la pose de départ, que le générateur range avant celles qu'il anime).
+    const frames = framesIn(join(animRoot, anim, dir)).slice(o.skip ?? 0);
+    if (o.clearBand) for (const f of frames) clearBand(f, o.clearBand.fromRow);
     write(`${o.name}@${frames.length}`, strip(frames));
-    record(`sprites/${o.name}@${frames.length}.png`, 'create_map_object + animate_object', o.id, o.prompt, settings, 'palette réduite ; images assemblées en bande', o.date);
+    record(`sprites/${o.name}@${frames.length}.png`, 'create_map_object + animate_object', o.id, o.prompt, settings, `palette réduite ; ${o.clearBand ? 'bande d\'eau du bas effacée ; ' : ''}images assemblées en bande`, o.date);
   } else {
     const rot = join(base, 'rotations');
     const file = readdirSync(rot)[0];
@@ -205,7 +238,7 @@ for (const c of manifest.clips ?? []) {
   if (!existsSync(dir)) continue;
   const frames = framesIn(dir).slice(c.skip ?? 0).filter((_, i) => !(c.drop ?? []).includes(i)).map((f) => despeckle(f, c.despeckle ?? 16));
   write(`${c.name}@${frames.length}`, strip(frames));
-  record(`sprites/${c.name}@${frames.length}.png`, 'animate_image', c.id, c.prompt, { width: 128, height: 128, frames: c.frames, skipped: c.skip ?? 0, dropped: c.drop ?? [] }, 'palette réduite ; poussières isolées retirées ; images assemblées en bande', c.date);
+  record(`sprites/${c.name}@${frames.length}.png`, 'animate_image', c.id, c.prompt, { width: frames[0].width, height: frames[0].height, frames: c.frames, skipped: c.skip ?? 0, dropped: c.drop ?? [] }, 'palette réduite ; poussières isolées retirées ; images assemblées en bande', c.date);
 }
 
 // ───────────── Le sol : seize tuiles nommées par leurs coins ─────────────
@@ -691,6 +724,112 @@ hand('shot-enemy', [
   'kNMmmMNNk',
   '.kNMMNNk.',
   '..kkkkk..',
+]);
+// Le Marais : la boule de vase du Pêcheur (le bord magenta dit le danger), les sangsues, et les signes des états du héros.
+hand('shot-vase', [
+  '..kkkkk..',
+  '.kMMMMMk.',
+  'kMnnbnnMk',
+  'kMnbBbnMk',
+  'kMnbbnnMk',
+  'kMnnnnnMk',
+  'kMMnnnMMk',
+  '.kMMMMMk.',
+  '..kkkkk..',
+]);
+hand('enemy-sangsues', [
+  [
+    '............',
+    '..kk....kk..',
+    '.kDDk..kDDk.',
+    '.kDmk...kDk.',
+    '..kDk....kDk',
+    '...kDk..kDmk',
+    '....kk...kk.',
+    '..kk........',
+    '.kDDkk......',
+    '.kmDDDk.....',
+    '..kkkkk.....',
+    '............',
+  ],
+  [
+    '............',
+    '.kk......kk.',
+    'kDDk....kDDk',
+    'kmDk....kDk.',
+    '.kDk...kDk..',
+    '.kDk...kmDk.',
+    '..kk....kk..',
+    '...kk.......',
+    '..kDDkkk....',
+    '..kDDDmk....',
+    '...kkkkk....',
+    '............',
+  ],
+]);
+hand('sign-mire', [
+  '....kk....',
+  '...kqqk...',
+  '..kqttqk..',
+  '.kqtttqqk.',
+  '.kqttqqqk.',
+  'kDDqqqqDDk',
+  'kDDDDDDDDk',
+  '.kkkkkkkk.',
+]);
+hand('sign-drain', [
+  '....k....',
+  '...kmk...',
+  '...kmk...',
+  '..kmmmk..',
+  '.kmwmmMk.',
+  '.kmmmmMk.',
+  '.kmmmMMk.',
+  '..kMMMk..',
+  '...kkk...',
+]);
+hand('sign-dim', [
+  '...kkkk...',
+  '..kggggk..',
+  '.kgGGGGgk.',
+  'kgGGddGGgk',
+  'kgGddddGgk',
+  'kgGddddGgk',
+  'kgGGddGGgk',
+  '.kgGGGGgk.',
+  '..kggggk..',
+  '...kkkk...',
+]);
+hand('sign-wade', [
+  '..........',
+  '.kk...kk..',
+  'kttk.kttk.',
+  'k..ktk..kk',
+  '.kk...kk..',
+  'kqqk.kqqk.',
+  'k..kqk..kk',
+  '..........',
+]);
+hand('sign-dodge', [
+  'kk...kk...',
+  'kyk..kyk..',
+  '.kyk..kyk.',
+  '..kyk..kyk',
+  '.kyk..kyk.',
+  'kyk..kyk..',
+  'kk...kk...',
+]);
+hand('sign-lock', [
+  '..kkkk..',
+  '.kGGGGk.',
+  'kGk..kGk',
+  'kGk..kGk',
+  'kkkkkkkk',
+  'kyyyyyyk',
+  'kyykkyyk',
+  'kyykkyyk',
+  'kyyyyyyk',
+  'kkkkkkkk',
 ]);
 hand('enemy-nuee', [
   [

@@ -1,0 +1,75 @@
+{
+  "id": "memory-wedding",
+  "skipHoldMs": 1000,
+  "assets": {
+    "ill-01": { "src": "ill-01.png" },
+    "ill-02": { "src": "ill-02.png" },
+    "ill-03": { "src": "ill-03.png" },
+    "ill-04": { "src": "ill-04.png" }
+  },
+  "shots": [
+    {
+      "id": "p01",
+      "duration": 8,
+      "captionAt": 1.2,
+      "fadeIn": 0.9,
+      "fadeOut": 0.55,
+      "caption": "cine.memory-wedding.t1",
+      "camera": { "scale": [1, 1.05], "focus": [320, 180] },
+      "layers": [
+        { "type": "image", "asset": "ill-01", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 0, "music": "music-intro-a" },
+        { "at": 0.8, "sfx": "memory-wedding-rires", "volume": 0.9 }
+      ]
+    },
+    {
+      "id": "p02",
+      "duration": 8.5,
+      "captionAt": 1.4,
+      "fadeIn": 0.6,
+      "fadeOut": 0.45,
+      "caption": "cine.memory-wedding.t2",
+      "camera": { "scale": [1, 1.1], "focus": [330, 170] },
+      "layers": [
+        { "type": "image", "asset": "ill-02", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 3.4, "sfx": "memory-rire", "volume": 0.6 }
+      ]
+    },
+    {
+      "id": "p03",
+      "duration": 8.5,
+      "captionAt": 1,
+      "fadeIn": 0.65,
+      "fadeOut": 0.55,
+      "caption": "cine.memory-wedding.t3",
+      "camera": { "scale": [1.08, 1], "focus": [320, 190] },
+      "layers": [
+        { "type": "image", "asset": "ill-03", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 2.2, "sfx": "lanterne", "volume": 0.6 }
+      ]
+    },
+    {
+      "id": "p04",
+      "duration": 9.5,
+      "captionAt": 1.4,
+      "fadeIn": 0.8,
+      "fadeOut": 1.6,
+      "caption": "cine.memory-wedding.t4",
+      "camera": { "scale": [1.06, 1], "focus": [320, 170] },
+      "layers": [
+        { "type": "image", "asset": "ill-04", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 1.2, "sfx": "lanterne", "volume": 0.4 },
+        { "at": 4, "sfx": "lanterne", "volume": 0.3 },
+        { "at": 8.9, "musicStop": true }
+      ]
+    }
+  ]
+}

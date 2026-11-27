@@ -457,7 +457,7 @@ export function EndScreen(): JSX.Element | null {
             <h2>{t('end.heroXp')} +{fmt(result.heroXp)}</h2>
             <p><span>{t('end.heroLevel', { level: summary.heroLevel })}</span>{summary.levelsGained > 0 ? <b class="gold">{t('end.levelUp', { n: summary.levelsGained })}</b> : null}</p>
             <Bar class="bar-xp" value={hero.xp} max={next} />
-            <p class="dim">{t('end.seed', { seed: result.seed })} · {t('region.ash-woods.name')} · {t('hud.vigil', { vigil: roman(result.vigil) })}</p>
+            <p class="dim">{t('end.seed', { seed: result.seed })} · {t(`${result.regionId}.name`)} · {t('hud.vigil', { vigil: roman(result.vigil) })}</p>
           </div>
         </div>
         <div class="row">

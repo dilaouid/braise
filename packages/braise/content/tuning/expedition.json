@@ -59,6 +59,8 @@
   "cardHealShare": 0.3,
   "luckPity": 3,
   "boss": { "arenaRadiusTiles": 16, "minTelegraph": 0.7 },
+  "dodge": { "power": 0.25, "duration": 3, "ult": 6, "dashRefund": 0.5 },
+  "heroStatuses": { "mireSlow": 0.4, "mireLinger": 0.5 },
   "events": {
     "poiMinFromCenterTiles": 20,
     "poiMinApartTiles": 12,

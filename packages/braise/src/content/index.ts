@@ -13,6 +13,7 @@ import campJson from '../../content/camp.json';
 import lanternJson from '../../content/lantern.json';
 import memoriesJson from '../../content/memories.json';
 import boisJson from '../../content/regions/bois-des-cendres.json';
+import maraisJson from '../../content/regions/marais-des-lanternes.json';
 import lameCendreJson from '../../content/classes/lame-cendre.json';
 import frJson from '../../content/i18n/fr.json';
 import { z } from 'zod';
@@ -95,12 +96,16 @@ export interface EnemyDef extends EnemyRaw {
 }
 
 export interface RegionDef extends Omit<RegionRaw, 'horde' | 'waves' | 'cinematics'> {
+  /** Son rang à la porte. */
+  index: number;
   enemyIdx: number[];
   eliteIdx: number[];
   bossIdx: number;
   /** Le boss qui revient une fois le premier battu (-1 : aucun). */
   rebornBossIdx: number;
-  cinematics: { first: string; reborn: string } | null;
+  /** L'Éteint des vagues de braséro et de totem (-1 : celui du réglage commun). */
+  waveEnemyIdx: number;
+  cinematics: { first: string; reborn?: string | undefined } | null;
   /** Poids par indice d'ennemi, pour chaque tranche. */
   horde: Array<{ from: number; to: number; weights: Float32Array }>;
   waves: Array<{ at: number; shape: 'circle' | 'line' | 'corners' | 'side'; enemy: number; count: number }>;
@@ -215,7 +220,7 @@ export const RAW = {
   lantern: lanternJson as unknown,
   camp: campJson as unknown,
   scenes: SCENES_RAW,
-  regions: [boisJson] as unknown[],
+  regions: [boisJson, maraisJson] as unknown[],
   classes: [lameCendreJson] as unknown[],
   fr: frJson as unknown as Record<string, string>,
 };
@@ -390,8 +395,21 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     if (e.behavior === 'boss-stag' && (!e.charge || !e.roots || !e.summon || !e.phases || !e.slam || !e.stomp || !e.stalk || !e.volley || !e.pauses)) {
       errors.push(`${e.id}: boss incomplet`);
     }
-    // Toute attaque annoncée l'est au moins 0,7 s avant (document 02 §6.3).
-    for (const t of [e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph, e.stomp?.telegraph, e.stalk?.telegraph, e.volley?.windup]) {
+    if (e.behavior === 'wisp' && !e.wisp) errors.push(`${e.id}: une lueur sans « wisp »`);
+    if (e.behavior === 'leaper' && !e.leap) errors.push(`${e.id}: un bondisseur sans « leap »`);
+    if (e.behavior === 'grabber' && !e.grab) errors.push(`${e.id}: une main sans « grab »`);
+    if (e.behavior === 'ferryman' && (!e.ferry || !e.slam || !e.charge)) errors.push(`${e.id}: il manque « ferry », « slam » ou « charge »`);
+    if (e.behavior === 'beacon' && (!e.blind || !e.spawner)) errors.push(`${e.id}: il manque « blind » ou « spawner »`);
+    if (e.behavior === 'toller' && (!e.stomp || !e.summon)) errors.push(`${e.id}: il manque « stomp » ou « summon »`);
+    if (e.behavior === 'boss-lady' && (!e.hands || !e.sweep || !e.lanterns || !e.dive || !e.embrace || !e.tide || !e.slam || !e.summon || !e.phases || !e.pauses || !e.emerge)) {
+      errors.push(`${e.id}: boss incomplet`);
+    }
+    // Toute attaque annoncée l'est au moins 0,7 s avant (document 02 §6.3). La mèche d'une Lueur fait exception : elle se voit enfler.
+    for (const t of [
+      e.charge?.telegraph, e.slam?.telegraph, e.roots?.telegraph, e.stomp?.telegraph, e.stalk?.telegraph, e.volley?.windup,
+      e.leap?.telegraph, e.deathBurst?.telegraph, e.grab?.telegraph, e.hands?.telegraph, e.sweep?.telegraph, e.lanterns?.telegraph,
+      e.dive?.telegraph, e.embrace?.telegraph,
+    ]) {
       if (t !== undefined && t < tuning.boss.minTelegraph) errors.push(`${e.id}: annonce de ${t} s, inférieure à ${tuning.boss.minTelegraph} s`);
     }
   }
@@ -406,8 +424,13 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
       }
       return { from: slice.from, to: slice.to, weights };
     });
+    if (r.requires !== undefined && !(regionsRaw as RegionRaw[]).some((o) => o.id === r.requires && o.id !== r.id)) {
+      errors.push(`${r.id}: région inconnue « ${r.requires} »`);
+    }
     regions[r.id] = {
       ...r,
+      index: Object.keys(regions).length,
+      waveEnemyIdx: r.waveEnemy ? ref(enemyIndex, r.waveEnemy, r.id) : -1,
       enemyIdx: r.enemies.map((e) => ref(enemyIndex, e, r.id)),
       eliteIdx: r.elites.map((e) => ref(enemyIndex, e, r.id)),
       bossIdx: ref(enemyIndex, r.boss, r.id),

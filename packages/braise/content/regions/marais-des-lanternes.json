@@ -1,0 +1,51 @@
+{
+  "id": "region.drowned-marsh",
+  "level": 12,
+  "requires": "region.ash-woods",
+  "art": "door-marais",
+  "tileset": "tile-marais",
+  "darkness": { "color": "#0b0f1a", "opacity": 0.48 },
+  "water": { "threshold": 0.56, "slow": 0.3 },
+  "fog": { "glowMult": 0.8 },
+  "beacons": { "count": 14, "sprite": "decor-lanterne-noyee", "radius": 78, "reach": 30, "seconds": 22 },
+  "waveEnemy": "enemy.drowned",
+  "music": { "calm": "music-marais", "boss": "music-dame" },
+  "enemies": [
+    "enemy.drowned", "enemy.false-glow", "enemy.mud-fisher", "enemy.drowned-hand", "enemy.bloat-toad", "enemy.stilt-heron",
+    "enemy.leeches", "enemy.tadpole"
+  ],
+  "elites": ["elite.ferryman", "elite.mother-lantern", "elite.knell"],
+  "boss": "boss.mud-lady",
+  "cinematics": { "first": "marsh-arrival" },
+  "decor": [
+    { "sprite": "decor-roseaux", "weight": 4 },
+    { "sprite": "decor-ponton", "weight": 2 },
+    { "sprite": "decor-barque", "weight": 1 },
+    { "sprite": "decor-saule", "weight": 2 }
+  ],
+  "borderDecor": "decor-saule",
+  "horde": [
+    { "from": 0, "to": 1.5, "weights": { "enemy.drowned": 100 } },
+    { "from": 1.5, "to": 3, "weights": { "enemy.drowned": 92, "enemy.false-glow": 8 } },
+    { "from": 3, "to": 5, "weights": { "enemy.drowned": 84, "enemy.false-glow": 8, "enemy.drowned-hand": 4 } },
+    { "from": 5, "to": 7, "weights": { "enemy.drowned": 74, "enemy.false-glow": 8, "enemy.mud-fisher": 1, "enemy.drowned-hand": 4, "enemy.bloat-toad": 2, "enemy.stilt-heron": 3 } },
+    { "from": 7, "to": 9.5, "weights": { "enemy.drowned": 60, "enemy.false-glow": 9, "enemy.mud-fisher": 1, "enemy.drowned-hand": 4, "enemy.bloat-toad": 3, "enemy.stilt-heron": 3, "enemy.leeches": 12 } },
+    { "from": 9.5, "to": 12, "weights": { "enemy.drowned": 52, "enemy.false-glow": 9, "enemy.mud-fisher": 1, "enemy.drowned-hand": 5, "enemy.bloat-toad": 3, "enemy.stilt-heron": 4, "enemy.leeches": 13, "enemy.tadpole": 4 } },
+    { "from": 12, "to": 15, "weights": { "enemy.drowned": 46, "enemy.false-glow": 10, "enemy.mud-fisher": 1, "enemy.drowned-hand": 5, "enemy.bloat-toad": 4, "enemy.stilt-heron": 4, "enemy.leeches": 14, "enemy.tadpole": 4 } }
+  ],
+  "waves": [
+    { "at": 0.75, "shape": "side", "enemy": "enemy.drowned", "count": 10 },
+    { "at": 2, "shape": "circle", "enemy": "enemy.drowned", "count": 16 },
+    { "at": 3.5, "shape": "line", "enemy": "enemy.false-glow", "count": 8 },
+    { "at": 5, "shape": "corners", "enemy": "enemy.bloat-toad", "count": 3 },
+    { "at": 6.5, "shape": "side", "enemy": "enemy.stilt-heron", "count": 4 },
+    { "at": 8, "shape": "side", "enemy": "enemy.leeches", "count": 40 },
+    { "at": 9.5, "shape": "circle", "enemy": "enemy.drowned", "count": 32 },
+    { "at": 10.5, "shape": "corners", "enemy": "enemy.bloat-toad", "count": 4 },
+    { "at": 11.25, "shape": "side", "enemy": "enemy.leeches", "count": 60 },
+    { "at": 12, "shape": "line", "enemy": "enemy.false-glow", "count": 12 },
+    { "at": 12.75, "shape": "circle", "enemy": "enemy.drowned", "count": 42 },
+    { "at": 13.5, "shape": "corners", "enemy": "enemy.bloat-toad", "count": 6 },
+    { "at": 14.25, "shape": "side", "enemy": "enemy.leeches", "count": 80 }
+  ]
+}

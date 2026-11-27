@@ -90,7 +90,8 @@ for (const img of manifest.images) {
     skipped++;
     continue;
   }
-  save(file, await download(`${API}/images/${img.id}/download`));
+  // Une génération rend parfois plusieurs propositions : `index` dit laquelle est gardée.
+  save(file, await download(`${API}/images/${img.id}/download${img.index !== undefined ? `?index=${img.index}` : ''}`));
   console.log(`${img.name} : image`);
   fetched++;
 }

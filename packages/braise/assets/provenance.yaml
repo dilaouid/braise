@@ -498,6 +498,125 @@
   prompt: "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   settings: {"width":48,"height":48,"view":"low top-down"}
   edits: "palette réduite"
+- file: sprites/decor-roseaux.png
+  tool: create_map_object
+  date: 2026-11-27
+  pixellab_id: 664023e3-d069-4f6a-b7e5-ff3d1d844aea
+  prompt: "a dense clump of tall dead reeds and cattails growing from a small patch of dark mud, grey-green stalks, brown cattail heads, top-down prop"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
+- file: sprites/decor-saule.png
+  tool: create_map_object
+  date: 2026-11-27
+  pixellab_id: e9111c11-75f1-47c7-bd77-41ab48dbb3f0
+  prompt: "a tall dead weeping willow tree, thick twisted ash-grey trunk with pale grey highlights, a wide drooping crown of many long thin bare branches hanging down like a curtain almost to the ground, the branches draped with dark green moss, no leaves, roots standing in a small pool of black water, top-down RPG prop"
+  settings: {"width":64,"height":96,"view":"low top-down"}
+  edits: "palette réduite"
+- file: sprites/decor-ponton.png
+  tool: create_map_object
+  date: 2026-11-27
+  pixellab_id: 81d4f3be-31d4-4c21-9fcf-352e9c4a9c7c
+  prompt: "broken wooden pontoon posts and rotten grey planks sticking out of dark mud, a frayed rope hanging from one post, ruined fishing jetty remains, top-down prop"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
+- file: sprites/decor-barque.png
+  tool: create_map_object
+  date: 2026-11-27
+  pixellab_id: 4d2fcf40-0eb0-4298-ad82-a87a566fe82f
+  prompt: "a wrecked old wooden rowboat half sunk in dark mud, tilted with its stern buried, dark grey weathered rotten planks, a big hole in the hull, a broken oar lying beside it, dark grey-brown wood, no bright colors, top-down prop"
+  settings: {"width":64,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
+- file: sprites/decor-lanterne-noyee.png
+  tool: create_map_object
+  date: 2026-11-27
+  pixellab_id: e9ddf96a-ea83-40ce-8951-cbf2b2590a1e
+  prompt: "a tall crooked leaning wooden post half sunk in a small mound of dark mud, with an old rusty iron fisherman's lantern hanging from a hook at its top, cracked glass, the lantern glows with a faint turquoise teal green-blue light, the post and lantern fill the whole frame from top to bottom, top-down prop"
+  settings: {"width":32,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
+- file: sprites/enemy-noye@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 3552e000-81f6-4bb1-b218-7971b726ee7e
+  prompt: "a hunched mud golem in the shape of a drowned man, body of wet dark grey-brown mud, dripping, draped with dark green waterweed, long arms hanging down to the knees, carrying a small rusty dark iron lantern with no light in one hand, head a smooth lump of mud with a dark hollow face and two small glowing hot pink magenta eyes, side view facing right"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-lueur@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 7d8667b4-5642-4674-9b9c-272fb93de2ab
+  prompt: "a small will-o'-the-wisp: a floating bright turquoise teal flame with a tiny dark skull-like face inside, the skull has two glowing hot pink magenta eyes, wispy teal tail"
+  settings: {"width":32,"height":32,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-crapaud@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: fa01fb3a-1427-427c-9982-9aab3c5c9bf2
+  prompt: "a huge bloated monster toad made of dark grey-brown wet mud, swollen pale grey belly like a waterskin about to burst, warty dark back draped with dark green waterweed, wide mouth, two small glowing magenta pink eyes, crouching, side view facing right, dark muddy desaturated colours"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-tetard@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: a8031cfd-f4f1-4be9-8e5a-8d71fdc55258
+  prompt: "a tiny tadpole creature, dark slate grey body with a lighter grey-blue highlight on top, small round head, one single glowing hot pink magenta eye, thin wriggling tail, side view facing right, very small sprite about 14 pixels long centered with empty space around it"
+  settings: {"width":32,"height":32,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-pecheur@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 758b1158-cc53-48d3-a1a9-4494bb18a12c
+  prompt: "a very tall thin hooded figure of soaked grey rags and dark mud, standing, holding a long crooked fishing rod with a dripping ball of mud hanging on the line, face hidden in the dark hood, two small glowing magenta pink eyes in the hood, side view facing right, the rod pointing to the right"
+  settings: {"width":48,"height":64,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-echassier@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 946400f5-c3c1-460f-a94a-d9b45fabd938
+  prompt: "a tall gaunt undead heron monster, body of bundled pale grey dead reeds and pale exposed rib bones, bony pale skull head with a very long sharp spear beak, two small glowing hot pink magenta eyes, ragged dark green waterweed draped over the back and dripping, very long thin stilt legs, hunched neck, menacing, mid grey and pale grey tones, full body side view facing right"
+  settings: {"width":48,"height":64,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/enemy-main@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 81a7b9b6-0918-44f6-908b-946bbfbce3c2
+  prompt: "a large hand and forearm made of dark grey dripping mud rising straight up out of a small dark mud puddle, long thin fingers curled like claws, a thin pale silver wedding ring on one finger, no eyes, no face, lighter grey-blue highlights"
+  settings: {"width":32,"height":48,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/elite-lanterne-mere@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 795d4ee8-7ab2-42e1-8e6b-b9a4c49cbf03
+  prompt: "a huge old iron lantern creature with cracked glass walking on six thin spider-like metal legs, a blinding pale turquoise-white light inside with a small dark shape curled up in it, small dead unlit lanterns hanging from it on chains, two small glowing hot pink magenta eyes behind the glass, rusty dark iron frame"
+  settings: {"width":64,"height":64,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/elite-glas@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 3840af91-90b2-4fed-b0fb-35458ca8c7c3
+  prompt: "a hunched giant drowned bell-ringer creature made of dark grey mud, carrying a huge cracked bronze church bell on its back tied with ropes, barnacles and dark green waterweed on the bell, bent under the weight, hollow dark face with two small glowing hot pink magenta eyes, side view facing right"
+  settings: {"width":64,"height":64,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/elite-passeur@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: 57dc0bf8-473d-4fb1-91e5-af0f84fb5b3e
+  prompt: "a very tall skeleton-thin hooded ferryman of soaked grey rags standing on a small rotten wooden rowboat, holding a long pole planted in the water, face hidden in the dark hood, two small glowing magenta pink eyes in the hood, side view facing right, the pole and the prow pointing to the right, a small dead unlit iron lantern hanging at the prow, ragged cloak, thin wisps of pale mist under the boat"
+  settings: {"width":64,"height":64,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
+- file: sprites/boss-dame@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: dc9b2365-9842-4a02-965e-87415d791d79
+  prompt: "a towering drowned bride wraith seen from the front, standing in black water, gigantic, she fills the whole height of the image from the top edge to the bottom edge. A long pale grey lace veil hangs straight down over her head and completely covers her face down to the chest like a shroud, no face visible, no mouth, only a faint magenta glow behind the veil where the eyes would be. A tall crown of many small rusty iron lanterns on her head, a few glowing faint turquoise, long wet black hair hanging out from under the veil. Extremely long thin arms hanging down to the water with long claw fingers. Gaunt thin body, tattered pale grey wedding dress stained with dark mud and roots, water ripple rings around the dress at the very bottom edge. Eerie tragic horror"
+  settings: {"width":160,"height":176,"view":"side"}
+  edits: "palette réduite ; bande d'eau du bas effacée ; images assemblées en bande"
+- file: sprites/fx-main-dame@8.png
+  tool: create_map_object + animate_object
+  date: 2026-11-27
+  pixellab_id: d611f443-8173-44c5-8161-9987db7a0b16
+  prompt: "a huge hand and forearm made of dark grey dripping mud bursting straight up out of a dark mud puddle at the very bottom of the image, long thin clawed fingers spread wide, mud dripping from the fingers, a thin pale silver wedding ring on one finger, no eyes, no face, lighter grey-blue highlights, the whole hand fits inside the image with a small margin at the top"
+  settings: {"width":64,"height":96,"view":"low top-down"}
+  edits: "palette réduite ; images assemblées en bande"
 - file: sprites/boss-cerf-tell-charge@4.png
   tool: animate_image
   date: 2026-11-25
@@ -581,6 +700,55 @@
   pixellab_id: 64e69495-307c-4b63-aa96-c963e0bde580
   prompt: "the stag raises its head roaring, its neck mane splits open into a huge fanged maw, body still"
   settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-hands@5.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: c386fd32-8a5c-4087-a34d-713d1b304dab
+  prompt: "she quickly leans forward and plunges both long arms down into the water up to the elbows, water splashing"
+  settings: {"width":160,"height":176,"frames":7,"skipped":2,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-sweep@4.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: 87fd7cd7-0ab6-45cb-b65a-b6e2531b68f3
+  prompt: "she quickly draws one long arm far back and out to the side, fingers spread, winding up to sweep"
+  settings: {"width":160,"height":176,"frames":7,"skipped":3,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-lanterns@6.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: e4d2e974-e3bd-4a38-b2c9-bcd53d81fb05
+  prompt: "she quickly throws her head back, the lanterns in her hair flare up bright turquoise, body still"
+  settings: {"width":160,"height":176,"frames":7,"skipped":1,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-dive@5.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: 29db7a48-5d70-4257-baac-5e062739327a
+  prompt: "she sinks straight down into the water until only the top of the veil and the lanterns remain above the surface, ripples spreading"
+  settings: {"width":160,"height":176,"frames":7,"skipped":2,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-embrace@5.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: e587bcee-a6f0-4bc8-8111-514298596d24
+  prompt: "she quickly opens both long arms wide toward the viewer, fingers spreading, as if inviting an embrace"
+  settings: {"width":160,"height":176,"frames":7,"skipped":2,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-tide@5.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: 3602ab34-502c-45d9-9fd9-f2d4386401c2
+  prompt: "she quickly lifts both long arms up from her sides to high above her head, sleeves dripping, no splash, no trails"
+  settings: {"width":160,"height":176,"frames":7,"skipped":2,"dropped":[]}
+  edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
+- file: sprites/boss-dame-tell-scream@5.png
+  tool: animate_image
+  date: 2026-11-27
+  pixellab_id: 47e5f92e-3e58-4562-b530-9c8e58102852
+  prompt: "her veil suddenly lifts and tears open, revealing a hollow black face with a gaping screaming mouth and a small lantern light inside the skull, she lunges toward the viewer screaming, hair flying out"
+  settings: {"width":160,"height":176,"frames":7,"skipped":2,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/tile-bois-13.png
   tool: create_topdown_tileset
@@ -805,6 +973,118 @@
   pixellab_id: 3f5dd6ec-39ea-45ed-a3d6-3d51305feca1
   prompt: "lower: dark grey cellar stone floor, large worn flagstones, dusted with pale ash · upper: cracked old paving stones with small rubble and pebbles, slightly lighter grey"
   settings: {"tile_size":32,"mode":"standard","view":"high top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-13.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-10.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-4.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-12.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-6.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-8.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-0.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-1.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-11.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-3.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-2.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-5.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-15.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-14.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-9.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
+  edits: "palette réduite ; tuile découpée"
+- file: sprites/tile-marais-7.png
+  tool: create_topdown_tileset
+  date: 2026-11-23
+  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
+  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/icon-weapon-scythe.png
   tool: create_image_pixen
@@ -1555,6 +1835,20 @@
   prompt: "the sole of a boot seen from below, made of shiny orange copper plate with rivets, filling the frame, big simple shapes, game item icon"
   settings: {"no_background":true}
   edits: "palette réduite"
+- file: sprites/door-bois.png
+  tool: create_image_pro
+  date: 2026-11-27
+  pixellab_id: 26656f25-9680-4271-a511-0d72386010d8
+  prompt: "A small landscape vignette: a night forest of dead ash-grey leafless trees, bare twisted branches, pale grey ash covering the ground, a faint dirt path leading into the distance between the trunks, deep blue night sky, light mist between the trunks. No characters, no moon. 16-bit pixel art, three-tone shading, limited palette, cool desaturated colors, quiet dark night mood, large calm shapes, no text, no frame"
+  settings: {"width":96,"height":64,"no_background":false}
+  edits: "palette réduite"
+- file: sprites/door-marais.png
+  tool: create_image_pro
+  date: 2026-11-27
+  pixellab_id: beebb01d-581b-4fcf-8ada-526c1258a1e5
+  prompt: "A small landscape vignette: a flat black marsh at night under thick pale fog, wide still black water, a broken wooden pontoon with crooked posts leading into the water, several faint turquoise lantern glows shining from under the water surface, the dark silhouette of one dead leafless weeping willow on the side. Dark green and turquoise tones. No characters, no moon. 16-bit pixel art, three-tone shading, limited palette, cool desaturated colors, eerie quiet night mood, large calm shapes, no text, no frame"
+  settings: {"width":96,"height":64,"no_background":false}
+  edits: "palette réduite"
 - file: sprites/camp-door-open.png
   tool: dérivé de sprites/camp-door.png (tools/process-assets.mjs)
 - file: sprites/pickup-gem-small.png
@@ -1614,6 +1908,22 @@
 - file: sprites/shot-brand.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/shot-enemy.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/shot-vase.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/enemy-sangsues@2.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-mire.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-drain.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-dim.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-wade.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-dodge.png
+  tool: dessiné à la main (tools/process-assets.mjs)
+- file: sprites/sign-lock.png
   tool: dessiné à la main (tools/process-assets.mjs)
 - file: sprites/enemy-nuee@2.png
   tool: dessiné à la main (tools/process-assets.mjs)
@@ -1871,6 +2181,108 @@
   pixellab_id: 43e6faf3-228f-4e43-86d9-808ede064b8a
   prompt: "a tiny crisp ice crackle, frost forming on glass, very short and soft"
   edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-dame-chant.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 0595ba1a-3dee-47ea-8c31-78dc48933cb6
+  prompt: "a woman humming a slow sad lullaby alone, distant, wet cavernous reverb, eerie"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-dame-cri.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: a3680081-42e1-4e5b-8323-299bf6a23805
+  prompt: "a horrifying drowned woman's shriek, a gurgling underwater scream rising into a piercing wail, distorted"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-dame-plonge.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 4c1b7c7d-8cf7-411c-894a-bf093c3b2fb7
+  prompt: "a huge heavy body sinking into deep water, a deep bubbling gulp"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-dame-surgit.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 9f39c8f3-8750-47d3-826f-a7e136247e19
+  prompt: "something enormous bursting up out of water, a big splash and a low roar of falling water"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-dame-souffle.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 0363b25d-d947-4886-ad56-b15d716d9bbe
+  prompt: "the slow wet rattling breath of a very large creature, close"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-main-vase.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 8fa08736-28f3-44c7-9f35-3dd3a2f5f6be
+  prompt: "a hand bursting out of thick mud, a wet squelching burst"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-cloche.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 6440be32-b82d-4801-b9c9-bbb8a594150f
+  prompt: "a deep cracked church bell tolling once underwater, muffled, long decay"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-crapaud.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 513b32f7-a693-4674-a94a-c8207e6b40f0
+  prompt: "a deep bloated toad croak ending in a wet pop burst"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-lueur.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 80cb1a2e-809c-46bb-b407-e1527ec4f682
+  prompt: "a small ghostly flame popping with an airy whisper and a short sizzle on water"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-vase.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 1ec6d8c7-2b6a-416e-bf59-cb96e8f7c66f
+  prompt: "a thick ball of mud splatting on the ground"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-maree.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 5ae303bb-6502-4521-8a7c-493561eeda22
+  prompt: "water rising fast, a rushing flood surge swelling"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-brume.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 654f2009-69de-49e6-aacf-1b47997afcd3
+  prompt: "a soft eerie airy whoosh, fog swallowing a figure"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-eau.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 2eeba3d8-d6b6-4f73-b998-b115b9b29d8c
+  prompt: "a single footstep sloshing in shallow water, soft"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-lanterne.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: ac2e97fa-464f-4c48-b642-18cf8bb5d809
+  prompt: "a small warm glassy chime as a lantern lights up, gentle"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-boss-titre.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: b0e4a01b-c0e7-4853-ada1-fc1e3648a509
+  prompt: "a deep ominous orchestral hit with a low boom and a long dark reverb tail, a boss title card appearing"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-marsh-arrival-eau.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 1d4503ff-b2cc-4bb5-b23e-8f8e6b507c5a
+  prompt: "black water lapping slowly against wooden posts, slow drips, quiet"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-memory-wedding-rires.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 14f3ce4e-2546-439c-ad14-7d337e0f27b1
+  prompt: "a small outdoor wedding crowd: warm laughter and soft applause, a little distant, no music"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music
   date: 2026-11-23
@@ -1888,4 +2300,22 @@
   date: 2026-11-23
   pixellab_id: 210a2335-097b-4ddd-a7d7-1791727138ab
   prompt: "Gentle warm campfire theme: fingerpicked acoustic guitar, quiet wooden flute, warm pad, no drums. 76 BPM."
+  edits: "converti en OGG Vorbis stéréo"
+- file: public/audio/music-marais.ogg
+  tool: create_music
+  date: 2026-11-27
+  pixellab_id: 412e7905-6dca-4a15-8337-c9fdc84c649f
+  prompt: "Calm eerie marsh exploration theme, quiet and sparse: a detuned music box plays a slow fragile melody over a low bowed double-bass drone, a distant bell tolls now and then, soft harp arpeggios fall like dripping water, and a far breathy flute drifts in and out. Dark, melancholic, foggy still water at night, uneasy but gentle, steady throughout with no climax. 80 BPM."
+  edits: "converti en OGG Vorbis stéréo"
+- file: public/audio/music-dame.ogg
+  tool: create_music
+  date: 2026-11-27
+  pixellab_id: 7937969c-d1e3-417a-9d78-46ea727eeaeb
+  prompt: "Ominous boss theme, a ruined wedding waltz in 3/4: a detuned music box carries a broken bridal melody over a heavy low cello and contrabass ostinato, deep timpani hits mark the downbeats, a distant wordless female choir hums behind, and church bell tolls ring through. Tragic, oppressive and dreadful, building steadily in weight and intensity from a bare opening to a crushing full ensemble. 96 BPM."
+  edits: "converti en OGG Vorbis stéréo"
+- file: public/audio/music-marsh-arrival-a.ogg
+  tool: create_music
+  date: 2026-11-27
+  pixellab_id: 3c8b82a3-0fa1-465f-9608-4f887961cc48
+  prompt: "Very slow cinematic cue for arriving at a drowned marsh, about 56 BPM: a low sustained drone holds underneath, a lone woman hums a wordless lullaby far away, isolated celesta notes ring out one at a time with long silences, and water drips in the dark. Still, cold, mournful and uneasy, ending on the drone left alone. 60 BPM."
   edits: "converti en OGG Vorbis stéréo"

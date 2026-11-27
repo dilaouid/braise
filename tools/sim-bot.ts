@@ -161,7 +161,7 @@ const hurtBy = new Float64Array(data.enemies.length);
 
 for (let r = 0; r < runs; r++) {
   const run = createRun(data, {
-    seed: seed0 + r, regionId: 'region.ash-woods', classId, vigil: 1, sheet,
+    seed: seed0 + r, regionId: `region.${arg('region', 'ash-woods')}`, classId, vigil: 1, sheet,
     unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity, reborn: process.argv.includes('--reborn'),
   });
   if (giveDef >= 0) addWeapon(run, giveDef).level = giveLevel;

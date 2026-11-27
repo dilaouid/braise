@@ -5,7 +5,7 @@ import { addTelegraph, clearEnemy, emit, removeEnemy, removePickup } from './sto
 import {
   CAP_ENEMIES, CAP_PICKUPS, EV, HIT_BLEED, HIT_BURN, HIT_CRIT, HIT_FREEZE, HIT_NO_NUMBER, HIT_RESIST, HIT_SHOCK, HIT_WEAK,
   PK_ASH, PK_CALL, PK_CHEST, PK_DROP, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, ST_BLEED, ST_BURN, ST_FROZEN, ST_SHOCK, ST_SLOW,
-  TG_CIRCLE, type Run,
+  TFX_PUDDLE, TG_CIRCLE, type Run,
 } from './types.ts';
 
 /** Pose un ramassable au sol. Au-delà du plafond de gemmes, les plus anciennes fusionnent. */
@@ -59,10 +59,10 @@ function typedMultiplier(run: Run, i: number, type: number): number {
   return 1;
 }
 
-/** Le boss retombé en poussière : rien ne le touche jusqu'à ce qu'il se relève. */
+/** Le boss retombé en poussière, ou sous l'eau : rien ne le touche jusqu'à ce qu'il se relève. */
 export function isDust(run: Run, i: number): boolean {
   const d = run.director;
-  return d.bossReformT > 0 && run.enemies.uid[i] === d.bossUid;
+  return (d.bossReformT > 0 || d.bossHidden) && run.enemies.uid[i] === d.bossUid;
 }
 
 /** La part de la barre du boss : pendant la poussière, elle se remplit depuis zéro. */
@@ -107,6 +107,8 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   power += isLit(run, e.x[i]!, e.y[i]!) ? trait.inside : trait.outside;
   if (def.rank !== 'normal') power += st.eliteDamage;
   if (lowHp(run)) power += run.mods.lowHpPower;
+  // L'élan d'une esquive juste.
+  if (hero.dodgeT > 0) power += tuning.dodge.power;
   power += run.mods.eliteKillPower * hero.elites;
   let dmg = base * (1 + power);
   if (scale) dmg *= 1 + run.data.heroTuning.damagePerScalePoint * st.attrs[scale];
@@ -384,22 +386,36 @@ export function reapEnemies(run: Run): boolean {
       bossKilled = true;
       // Le boss du tutoriel ne laisse rien : on n'en rapporte ni or ni Cendres.
       if (!run.tutorial) {
+        const first = run.pickups.count;
         addPickup(run, PK_CHEST, x, y + 10, 1);
         const loot = def.loot ?? 1;
         addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss * loot);
         addPickup(run, PK_ASH, x - 12, y, tuning.ashes.boss * loot);
         // Sans aucune pièce, le boss en doit une ; sinon seul un boss qui s'est reformé peut en lâcher.
         rollPiece(run, x, y - 8, run.cfg.lantern?.guaranteed ? 1 : def.reform ? run.data.lantern.drops.reborn : 0, true);
+        // Un boss qui sombre : son butin ne paraît qu'une fois l'eau refermée (un âge négatif : pas encore là).
+        if (def.sink !== undefined) for (let k = first; k < run.pickups.count; k++) run.pickups.age[k] = -def.sink;
       }
       emit(run, EV.bossDeath, x, y, kind);
     }
     const spawnKind = def.onDeathIndex;
     const spawnCount = def.onDeath?.count ?? 0;
+    const uid = e.uid[i]!;
     removeEnemy(e, i);
     if (spawnKind >= 0 && !bossKilled) {
       for (let k = 0; k < spawnCount; k++) {
-        spawnEnemy(run, spawnKind, x + (k === 0 ? -8 : 8), y + 4, e.count > 0 ? run.hpScaleNow : 1);
+        // Deux petits de part et d'autre ; au-delà, ils s'étalent en éventail.
+        const ox = spawnCount <= 2 ? (k === 0 ? -8 : 8) : Math.round(Math.cos((k * 6.283) / spawnCount) * 12);
+        const oy = spawnCount <= 2 ? 4 : Math.round(Math.sin((k * 6.283) / spawnCount) * 10);
+        spawnEnemy(run, spawnKind, x + ox, y + oy, e.count > 0 ? run.hpScaleNow : 1);
       }
+    }
+    // Il éclate : un cercle annoncé là où il est tombé, qui n'appartient plus à personne.
+    const burst = def.deathBurst;
+    if (burst && !bossKilled && !run.director.bossDead) {
+      const dmg = burst.damage * (def.flatDamage ? run.dmgScaleFlat : run.dmgScale);
+      addTelegraph(run, TG_CIRCLE, x, y, 0, burst.radius, burst.radius, burst.telegraph, dmg, 0, kind, 0, burst.mire ? TFX_PUDDLE : 0, burst.mire?.duration ?? 0, burst.mire?.radius ?? 0);
+      emit(run, EV.toadBurst, x, y, uid);
     }
   }
   return bossKilled;

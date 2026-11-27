@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import introJson from '../../content/cinematics/intro.json';
+import marshArrivalJson from '../../content/cinematics/marsh-arrival.json';
+import memoryWeddingJson from '../../content/cinematics/memory-wedding.json';
 import memoryMeetingJson from '../../content/cinematics/memory-meeting.json';
 import stagAshJson from '../../content/cinematics/stag-ash.json';
 import stagCallJson from '../../content/cinematics/stag-call.json';
@@ -202,6 +204,8 @@ export const CINEMATICS_RAW: Record<string, unknown> = {
   'memory-meeting': memoryMeetingJson,
   'stag-call': stagCallJson,
   'stag-ash': stagAshJson,
+  'marsh-arrival': marshArrivalJson,
+  'memory-wedding': memoryWeddingJson,
 };
 
 const compiled = new Map<string, Cinematic>();

@@ -1,0 +1,80 @@
+{
+  "id": "marsh-arrival",
+  "skipHoldMs": 1000,
+  "assets": {
+    "ill-01": { "src": "ill-01.png" },
+    "ill-02": { "src": "ill-02.png" },
+    "ill-03": { "src": "ill-03.png" },
+    "ill-04": { "src": "ill-04.png" }
+  },
+  "shots": [
+    {
+      "id": "p01-ponton",
+      "duration": 8,
+      "captionAt": 1.2,
+      "fadeIn": 1.6,
+      "fadeOut": 0.5,
+      "caption": "cine.marsh-arrival.t1",
+      "camera": { "scale": [1, 1.05], "focus": [320, 190] },
+      "layers": [
+        { "type": "image", "asset": "ill-01", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "smoke", "area": [-40, 150, 720, 120], "drift": [7, 0], "count": 34, "radius": [18, 38], "alpha": [0.22, 0.36], "colors": ["#6b7285", "#9aa3b5", "#2c3e5c"] }
+      ],
+      "cues": [
+        { "at": 0, "music": "music-marsh-arrival-a" },
+        { "at": 0.6, "sfx": "marsh-arrival-eau", "volume": 0.9 }
+      ]
+    },
+    {
+      "id": "p02-lanternes",
+      "duration": 7.5,
+      "captionAt": 0.9,
+      "fadeIn": 0.5,
+      "fadeOut": 0.5,
+      "caption": "cine.marsh-arrival.t2",
+      "camera": { "scale": [1.06, 1], "focus": [320, 200] },
+      "layers": [
+        { "type": "image", "asset": "ill-02", "at": [0, 0], "anchor": [0, 0] }
+      ],
+      "cues": [
+        { "at": 0.5, "sfx": "marsh-arrival-eau", "volume": 0.7 },
+        { "at": 3.2, "sfx": "lanterne", "volume": 0.35 }
+      ]
+    },
+    {
+      "id": "p03-noyes",
+      "duration": 7.5,
+      "captionAt": 1,
+      "fadeIn": 0.4,
+      "fadeOut": 0.5,
+      "caption": "cine.marsh-arrival.t3",
+      "camera": { "scale": [1, 1.08], "focus": [380, 170] },
+      "layers": [
+        { "type": "image", "asset": "ill-03", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "smoke", "area": [-40, 120, 720, 130], "drift": [5, -1], "count": 30, "radius": [16, 34], "alpha": [0.3, 0.45], "colors": ["#6b7285", "#9aa3b5", "#454a5c"] }
+      ],
+      "cues": [
+        { "at": 0.4, "sfx": "brume", "volume": 0.6 },
+        { "at": 3.6, "sfx": "dame-souffle", "volume": 0.4 }
+      ]
+    },
+    {
+      "id": "p04-dame",
+      "duration": 9,
+      "captionAt": 1.4,
+      "fadeIn": 0.6,
+      "fadeOut": 2,
+      "caption": "cine.marsh-arrival.t4",
+      "camera": { "scale": [1, 1.12], "focus": [330, 130] },
+      "layers": [
+        { "type": "image", "asset": "ill-04", "at": [0, 0], "anchor": [0, 0] },
+        { "type": "smoke", "area": [-40, 180, 720, 130], "drift": [4, -2], "count": 34, "radius": [18, 38], "alpha": [0.3, 0.5], "colors": ["#454a5c", "#6b7285", "#2a2d3a"] }
+      ],
+      "cues": [
+        { "at": 0.8, "sfx": "dame-chant", "volume": 0.8 },
+        { "at": 5.2, "sfx": "cloche", "volume": 0.6 },
+        { "at": 8.2, "musicStop": true }
+      ]
+    }
+  ]
+}

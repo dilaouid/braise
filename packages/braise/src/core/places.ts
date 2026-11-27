@@ -11,7 +11,8 @@ const TAU = Math.PI * 2;
 
 /** Une vague qui converge vers un lieu, en cercle. */
 export function convergingWave(run: Run, poi: Poi, count: number, enemyId: string): void {
-  const kind = run.data.enemies.findIndex((e) => e.id === enemyId);
+  // La région peut avoir son propre Éteint de vague : les Noyés du Marais, pas les Rampants du Bois.
+  const kind = run.region.waveEnemyIdx >= 0 ? run.region.waveEnemyIdx : run.data.enemies.findIndex((e) => e.id === enemyId);
   if (kind < 0) return;
   const offset = run.rngSpawn.float() * TAU;
   for (let k = 0; k < count; k++) {

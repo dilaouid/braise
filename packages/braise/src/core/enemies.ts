@@ -1,9 +1,11 @@
 import type { EnemyDef } from '../content/index.ts';
+import { updateLady } from './boss-lady.ts';
 import { hurtHero, isDust, spawnEnemy, tickStatuses } from './combat.ts';
-import { isSolidAt, isSolidTile } from './map.ts';
+import { isDeepAt, isSolidAt, isSolidTile } from './map.ts';
+import { BLIND_RANGE, addMire, drainHero, grantDodge, mireHero, strikeCircle } from './marsh.ts';
 import { addTelegraph, emit, queryCircle, removeEnemyShot, removeTelegraph } from './stores.ts';
 import {
-  BH, CAP_ENEMY_SHOTS, EV, MAX_WEAPON_SLOTS, TG_CIRCLE, TG_LINE, TG_RING,
+  BH, CAP_ENEMY_SHOTS, EV, MAX_WEAPON_SLOTS, TFX_MIRE, TFX_PUDDLE, TFX_PULL, TG_ARC, TG_CIRCLE, TG_LINE, TG_RING,
   type Run,
 } from './types.ts';
 
@@ -491,7 +493,8 @@ export function updateEnemies(run: Run, dt: number): void {
     if (dx > 0.1) e.facing[i] = 1;
     else if (dx < -0.1) e.facing[i] = -1;
     if (factor === 0) continue;
-    const speed = def.speed * factor * dt;
+    // Les sangsues filent dans l'eau profonde.
+    const speed = def.speed * factor * dt * (def.waterSpeed !== undefined && isDeepAt(map, e.x[i]!, e.y[i]!) ? def.waterSpeed : 1);
 
     switch (run.enemyBehavior[e.kind[i]!]) {
       case BH.chase:
@@ -578,8 +581,198 @@ export function updateEnemies(run: Run, dt: number): void {
         }
         break;
       }
+      case BH.wisp: {
+        // La Lueur trompeuse : elle fonce en dansant, s'arrête contre Moon, enfle, puis éclate en flaque de vase.
+        const w = def.wisp!;
+        if (e.state[i] === 0) {
+          e.timer[i]! += dt;
+          const a = Math.sin(e.timer[i]! * 5 + e.dirX[i]!) * 0.7;
+          const c = Math.cos(a);
+          const s = Math.sin(a);
+          e.x[i]! += (dx * c - dy * s) * speed;
+          e.y[i]! += (dx * s + dy * c) * speed;
+          if (dist < w.triggerRange) {
+            e.state[i] = 1;
+            e.timer2[i] = w.fuse;
+            addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, w.radius, w.radius, w.fuse, 0, e.uid[i]!, e.kind[i]!);
+          }
+        } else {
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0) {
+            strikeCircle(run, e.x[i]!, e.y[i]!, w.radius, w.damage * damageScale(run, def), e.kind[i]!);
+            addMire(run, e.x[i]!, e.y[i]!, w.mire.radius, w.mire.duration);
+            emit(run, EV.wispPop, e.x[i]!, e.y[i]!);
+            e.hp[i] = 0;
+          }
+        }
+        break;
+      }
+      case BH.leaper: {
+        // Le Crapaud-outre : il rampe, puis bondit là où se tient Moon ; un cercle annonce où il retombe.
+        const lp = def.leap!;
+        if (e.state[i] === 0) {
+          approach(run, i, dx, dy, speed, false, def.radius, dt);
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0 && dist < lp.range && dist > lp.minRange) {
+            if (isSolidAt(map, hero.x, hero.y)) {
+              e.timer2[i] = 0.5;
+            } else {
+              e.state[i] = 1;
+              e.timer[i] = lp.telegraph;
+              e.dirX[i] = hero.x;
+              e.dirY[i] = hero.y;
+              addTelegraph(run, TG_CIRCLE, hero.x, hero.y, 0, lp.radius, lp.radius, lp.telegraph, 0, e.uid[i]!, e.kind[i]!);
+              emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 1);
+            }
+          }
+        } else {
+          // En l'air : il glisse vers son point de chute, par-dessus tout.
+          const left = Math.max(dt, e.timer[i]!);
+          const k = Math.min(1, dt / left);
+          e.x[i]! += (e.dirX[i]! - e.x[i]!) * k;
+          e.y[i]! += (e.dirY[i]! - e.y[i]!) * k;
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            strikeCircle(run, e.x[i]!, e.y[i]!, lp.radius, lp.damage * damageScale(run, def), e.kind[i]!);
+            e.state[i] = 0;
+            e.timer2[i] = lp.cooldown;
+          }
+        }
+        break;
+      }
+      case BH.grabber: {
+        // La Main noyée : elle replonge et ressort sous Moon, un peu devant lui s'il marche. Touché, il est retenu.
+        const g = def.grab!;
+        if (e.state[i] === 0) {
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0 && dist < g.reach) {
+            const tx = hero.x + (hero.moving ? hero.faceX * g.lead : 0);
+            const ty = hero.y + (hero.moving ? hero.faceY * g.lead : 0);
+            if (isSolidAt(map, tx, ty)) {
+              e.timer2[i] = 0.4;
+            } else {
+              e.x[i] = tx; e.y[i] = ty; e.px[i] = tx; e.py[i] = ty;
+              e.state[i] = 1;
+              e.timer[i] = g.telegraph;
+              addTelegraph(run, TG_CIRCLE, tx, ty, 0, g.radius, g.radius, g.telegraph, 0, e.uid[i]!, e.kind[i]!);
+              emit(run, EV.handRise, tx, ty, g.telegraph, 0);
+            }
+          }
+        } else {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            if (strikeCircle(run, e.x[i]!, e.y[i]!, g.radius, g.damage * damageScale(run, def), e.kind[i]!)) mireHero(run, g.slow, 0);
+            e.state[i] = 0;
+            e.timer2[i] = g.cooldown;
+          }
+        }
+        break;
+      }
+      case BH.ferryman: {
+        // Le Passeur : il glisse sur l'eau, disparaît dans la brume et reparaît dans le dos de Moon ; entre deux, sa perche frappe en ligne.
+        const f = def.ferry!;
+        const slam = def.slam!;
+        const ch = def.charge!;
+        const state = e.state[i]!;
+        if (state === 0) {
+          approach(run, i, dx, dy, speed, true, def.radius, dt);
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0) {
+            if ((e.counter[i]! & 1) === 0) {
+              emit(run, EV.vanish, e.x[i]!, e.y[i]!);
+              const inner = tuning.borderTiles * tuning.tileSize + 24;
+              const outer = map.size * map.tile - inner;
+              const tx = Math.min(outer, Math.max(inner, hero.x - hero.faceX * f.behind));
+              const ty = Math.min(outer, Math.max(inner, hero.y - hero.faceY * f.behind));
+              e.x[i] = tx; e.y[i] = ty; e.px[i] = tx; e.py[i] = ty;
+              e.vx[i] = 0; e.vy[i] = 0;
+              e.state[i] = 1;
+              e.timer[i] = slam.telegraph;
+              addTelegraph(run, TG_CIRCLE, tx, ty, 0, slam.radius, slam.radius, slam.telegraph, slam.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
+              emit(run, EV.appear, tx, ty);
+            } else {
+              e.state[i] = 2;
+              e.timer[i] = ch.telegraph;
+              addTelegraph(run, TG_LINE, e.x[i]!, e.y[i]!, Math.atan2(dy, dx), ch.distance, ch.width, ch.telegraph, ch.damage * damageScale(run, def), e.uid[i]!, e.kind[i]!);
+            }
+            e.counter[i] = (e.counter[i]! + 1) & 255;
+            emit(run, EV.telegraph, e.x[i]!, e.y[i]!, 1);
+          }
+        } else {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            e.timer2[i] = state === 1 ? f.recover : f.cooldown;
+            e.state[i] = 0;
+          }
+        }
+        break;
+      }
+      case BH.beacon: {
+        // La Lanterne-mère : tant qu'elle vit près de Moon, sa Lueur est étouffée. Elle lâche des Lueurs et des éclats en couronne.
+        const b = def.blind!;
+        const sp = def.spawner!;
+        if (dist < BLIND_RANGE) run.blind = Math.min(run.blind, b.glowMult);
+        approach(run, i, dx, dy, speed, false, def.radius, dt);
+        e.timer[i]! -= dt;
+        if (e.timer[i]! <= 0) {
+          e.timer[i] = sp.interval;
+          if (dist < 420 && countChildren(run, e.uid[i]!) < sp.max) {
+            const a = run.rngSpawn.float() * TAU;
+            const child = spawnEnemy(run, def.spawnerIndex, e.x[i]! + Math.cos(a) * 26, e.y[i]! + Math.sin(a) * 22, run.hpScaleNow);
+            if (child >= 0) e.parent[child] = e.uid[i]!;
+          }
+        }
+        e.timer2[i]! -= dt;
+        if (e.timer2[i]! <= 0 && dist < 320) {
+          e.timer2[i] = b.flashEvery;
+          const offset = run.rngSpawn.float() * TAU;
+          for (let k = 0; k < b.shots; k++) {
+            const a = offset + (k * TAU) / b.shots;
+            fireEnemyShot(run, e.kind[i]!, e.x[i]!, e.y[i]! - 10, Math.cos(a), Math.sin(a), b.shotSpeed, b.shotDamage, b.shotRadius, b.shotLife);
+          }
+        }
+        break;
+      }
+      case BH.toller: {
+        // Le Glas : il avance, s'arrête et sonne. Des anneaux partent de lui, et des Noyés sortent de l'eau autour de Moon.
+        const st = def.stomp!;
+        const sm = def.summon!;
+        if (e.state[i] === 0) {
+          approach(run, i, dx, dy, speed, false, def.radius, dt);
+          e.timer2[i]! -= dt;
+          if (e.timer2[i]! <= 0 && dist < 280) {
+            const dmg = st.damage * damageScale(run, def);
+            for (let k = 0; k < st.rings; k++) {
+              const outer = (k + 1) * st.ringWidth;
+              if (k === 0) addTelegraph(run, TG_CIRCLE, e.x[i]!, e.y[i]!, 0, outer, outer, st.telegraph, dmg, e.uid[i]!, e.kind[i]!);
+              else addTelegraph(run, TG_RING, e.x[i]!, e.y[i]!, 0, k * st.ringWidth, outer, st.telegraph, dmg, e.uid[i]!, e.kind[i]!, k * st.stagger);
+            }
+            const offset = run.rngSpawn.float() * TAU;
+            for (let k = 0; k < sm.count; k++) {
+              const a = offset + (k * TAU) / sm.count;
+              const r = 120 + run.rngSpawn.float() * 40;
+              const sx = hero.x + Math.cos(a) * r;
+              const sy = hero.y + Math.sin(a) * r;
+              if (!isSolidAt(map, sx, sy)) spawnEnemy(run, def.summonIndex, sx, sy, run.hpScaleNow);
+            }
+            e.state[i] = 1;
+            e.timer[i] = (st.rings - 1) * st.stagger + st.telegraph + 0.3;
+            emit(run, EV.toll, e.x[i]!, e.y[i]!);
+          }
+        } else {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
+            e.state[i] = 0;
+            e.timer2[i] = sm.cooldown;
+          }
+        }
+        break;
+      }
       case BH['boss-stag']:
         updateStag(run, i, dx, dy, speed, dt);
+        break;
+      case BH['boss-lady']:
+        updateLady(run, i, dx, dy, dist, speed, dt);
         break;
       case BH['boss-watcher']: {
         // Le Guetteur : il approche, puis alterne une charge en ligne et un cercle autour de lui.
@@ -718,6 +911,14 @@ export function insideTelegraph(run: Run, t: number, x: number, y: number, margi
     const d = Math.hypot(dx, dy);
     return d >= tg.length[t]! - margin && d <= tg.width[t]! + margin;
   }
+  if (tg.shape[t] === TG_ARC) {
+    const d = Math.hypot(dx, dy);
+    if (d > tg.length[t]! + margin) return false;
+    if (d < margin) return true;
+    let diff = Math.atan2(dy, dx) - tg.angle[t]!;
+    diff -= Math.round(diff / TAU) * TAU;
+    return Math.abs(diff) <= tg.width[t]! + margin / d;
+  }
   const a = tg.angle[t]!;
   const ux = Math.cos(a);
   const uy = Math.sin(a);
@@ -734,10 +935,32 @@ export function updateTelegraphs(run: Run, dt: number): void {
     tg.t[t]! += dt;
     if (tg.t[t]! < tg.duration[t]!) continue;
     if (tg.damage[t]! > 0) {
-      // b : l'angle d'une ligne, le rayon intérieur d'un anneau. c : la longueur d'une ligne, le rayon d'un cercle ou d'un anneau.
+      // b : l'angle d'une ligne ou d'un secteur, le rayon intérieur d'un anneau. c : la longueur d'une ligne, le rayon d'un cercle, d'un anneau ou d'un secteur.
+      // Un secteur ajoute sa demi-ouverture à `a`, divisée par 8 pour rester sous 1.
       const shape = tg.shape[t]!;
-      emit(run, EV.telegraphHit, tg.x[t]!, tg.y[t]!, shape, shape === TG_RING ? tg.length[t]! : tg.angle[t]!, shape === TG_LINE ? tg.length[t]! : tg.width[t]!);
-      if (insideTelegraph(run, t, hero.x, hero.y, run.data.tuning.hero.radius * 0.5)) hurtHero(run, tg.damage[t]!, tg.kind[t]!);
+      const fx = tg.fx[t]!;
+      emit(
+        run, EV.telegraphHit, tg.x[t]!, tg.y[t]!, shape === TG_ARC ? shape + tg.width[t]! / 8 : shape,
+        shape === TG_RING ? tg.length[t]! : tg.angle[t]!, shape === TG_LINE || shape === TG_ARC ? tg.length[t]! : tg.width[t]!,
+      );
+      if (insideTelegraph(run, t, hero.x, hero.y, run.data.tuning.hero.radius * 0.5)) {
+        if (hero.dashT > 0) {
+          grantDodge(run);
+        } else if (hurtHero(run, tg.damage[t]!, tg.kind[t]!)) {
+          if (fx === TFX_MIRE) {
+            mireHero(run, tg.fxValue[t]!, 0);
+          } else if (fx === TFX_PULL) {
+            // Tiré vers l'origine de l'annonce : un élan qui s'amortit.
+            const px = tg.x[t]! - hero.x;
+            const py = tg.y[t]! - hero.y;
+            const pd = Math.hypot(px, py) || 1;
+            hero.pullX = (px / pd) * tg.fxValue[t]!;
+            hero.pullY = (py / pd) * tg.fxValue[t]!;
+            mireHero(run, tg.fxSize[t]!, 2);
+          }
+        }
+      }
+      if (fx === TFX_PUDDLE) addMire(run, tg.x[t]!, tg.y[t]!, tg.fxSize[t]!, tg.fxValue[t]!);
     }
     removeTelegraph(tg, t);
   }
@@ -767,8 +990,16 @@ export function updateEnemyShots(run: Run, dt: number): void {
     const dx = s.x[i]! - hero.x;
     const dy = s.y[i]! - (hero.y - 6);
     const r = s.radius[i]! + heroR + 2;
-    if (dx * dx + dy * dy <= r * r && hero.dashT <= 0) {
-      if (hurtHero(run, s.damage[i]! * damageScale(run, run.data.enemies[s.kind[i]!]!), s.kind[i]!)) removeEnemyShot(s, i);
+    if (dx * dx + dy * dy > r * r) continue;
+    if (hero.dashT > 0) {
+      grantDodge(run);
+      continue;
+    }
+    const shooter = run.data.enemies[s.kind[i]!]!;
+    if (hurtHero(run, s.damage[i]! * damageScale(run, shooter), s.kind[i]!)) {
+      // La boule de vase du Pêcheur colle aux bottes.
+      if (shooter.shot?.slow !== undefined) mireHero(run, shooter.shot.slow, 0);
+      removeEnemyShot(s, i);
     }
   }
 }
@@ -781,10 +1012,14 @@ export function contactDamage(run: Run): void {
   const n = queryCircle(run, hero.x, hero.y, run.data.tuning.hero.radius);
   let worst = 0;
   let worstKind = -1;
+  let drain = 0;
   for (let k = 0; k < n; k++) {
     const i = run.query[k]!;
     if (e.status[i]! & 8 || isDust(run, i)) continue;
     const def = run.data.enemies[e.kind[i]!]!;
+    // Un Crapaud en l'air ne touche personne : c'est sa chute qui frappe.
+    if (def.leap !== undefined && e.state[i] === 1) continue;
+    if (def.drain !== undefined && def.drain > drain) drain = def.drain;
     const charging = def.charge !== undefined && e.state[i] === 2;
     const dmg = (charging ? def.charge!.damage : def.damage) * damageScale(run, def);
     if (dmg > worst) {
@@ -792,5 +1027,5 @@ export function contactDamage(run: Run): void {
       worstKind = e.kind[i]!;
     }
   }
-  if (worst > 0) hurtHero(run, worst, worstKind);
+  if (worst > 0 && hurtHero(run, worst, worstKind) && drain > 0) drainHero(run, drain);
 }

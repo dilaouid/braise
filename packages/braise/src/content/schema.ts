@@ -295,6 +295,9 @@ export const relicSchema = z
   })
   .strict();
 
+/** Une flaque de vase laissée au sol : elle ralentit le héros qui la traverse. */
+const mireSchema = z.object({ radius: z.number().positive(), duration: z.number().positive() }).strict();
+
 const chargeSchema = z
   .object({
     damage: z.number(),
@@ -313,7 +316,10 @@ export const enemySchema = z
     id: enemyId,
     sprite: z.string(),
     family: z.enum(['walker', 'fast', 'tank', 'shooter', 'swarm', 'elite', 'boss']),
-    behavior: z.enum(['chase', 'zigzag', 'shooter', 'swarm', 'charger', 'spawner', 'boss-stag', 'boss-watcher']),
+    behavior: z.enum([
+      'chase', 'zigzag', 'shooter', 'swarm', 'charger', 'spawner', 'boss-stag', 'boss-watcher',
+      'wisp', 'leaper', 'grabber', 'ferryman', 'beacon', 'toller', 'boss-lady',
+    ]),
     rank: z.enum(['normal', 'elite', 'boss']),
     hp: z.number().positive(),
     damage: z.number(),
@@ -331,9 +337,84 @@ export const enemySchema = z
     flatDamage: z.boolean().optional(),
     pack: z.number().int().optional(),
     shot: z
-      .object({ damage: z.number(), speed: z.number(), interval: z.number(), keepDistance: z.number(), radius: z.number(), life: z.number() })
+      .object({
+        damage: z.number(), speed: z.number(), interval: z.number(), keepDistance: z.number(), radius: z.number(), life: z.number(),
+        /** Secondes de vase (ralenti) que le projectile laisse au héros. */
+        slow: z.number().positive().optional(),
+      })
       .strict()
       .optional(),
+    /** Secondes sans régénération que laisse chaque morsure. */
+    drain: z.number().positive().optional(),
+    /** Multiplicateur de vitesse dans l'eau profonde. */
+    waterSpeed: z.number().positive().optional(),
+    /** Une Lueur : arrivée près du héros, elle enfle puis éclate en flaque de vase. */
+    wisp: z
+      .object({ triggerRange: z.number(), fuse: z.number(), radius: z.number(), damage: z.number(), mire: mireSchema })
+      .strict()
+      .optional(),
+    /** Un bond annoncé par un cercle à l'arrivée. */
+    leap: z
+      .object({ range: z.number(), minRange: z.number(), cooldown: z.number(), telegraph: z.number(), radius: z.number(), damage: z.number() })
+      .strict()
+      .optional(),
+    /** À sa mort, il éclate : un cercle annoncé, qui frappe et laisse (ou non) de la vase. */
+    deathBurst: z.object({ radius: z.number(), damage: z.number(), telegraph: z.number(), mire: mireSchema.optional() }).strict().optional(),
+    /** Une main qui replonge et ressort sous le héros : elle le retient `slow` secondes. */
+    grab: z
+      .object({ radius: z.number(), telegraph: z.number(), damage: z.number(), slow: z.number(), cooldown: z.number(), lead: z.number(), reach: z.number() })
+      .strict()
+      .optional(),
+    /** Le Passeur : il disparaît dans la brume et reparaît derrière le héros. */
+    ferry: z.object({ behind: z.number(), cooldown: z.number(), recover: z.number() }).strict().optional(),
+    /** Tant qu'il vit, la lueur du héros est multipliée par `glowMult` ; il lâche des éclats en couronne. */
+    blind: z
+      .object({
+        glowMult: z.number().positive().max(1), flashEvery: z.number(), shots: z.number().int(), shotSpeed: z.number(), shotDamage: z.number(),
+        shotRadius: z.number(), shotLife: z.number(),
+      })
+      .strict()
+      .optional(),
+    /** Les mains de vase de la Dame : des cercles posés sous le héros. */
+    hands: z
+      .object({ damage: z.number(), telegraph: z.number(), count: z.number().int(), interval: z.number(), radius: z.number(), slow: z.number() })
+      .strict()
+      .optional(),
+    /** Un balayage en secteur devant elle (`arc` : l'ouverture, en radians ; `gap` : le délai du second balayage). */
+    sweep: z.object({ damage: z.number(), telegraph: z.number(), radius: z.number(), arc: z.number(), gap: z.number() }).strict().optional(),
+    /** Des lanternes noyées jetées autour du héros : elles frappent et laissent de la vase. */
+    lanterns: z
+      .object({
+        damage: z.number(), telegraph: z.number(), count: z.number().int(), stagger: z.number(), radius: z.number(), scatter: z.number(),
+        mire: mireSchema,
+      })
+      .strict()
+      .optional(),
+    /** Elle plonge, suit le héros sous l'eau, puis resurgit. */
+    dive: z
+      .object({
+        damage: z.number(), telegraph: z.number(), seconds: z.number(), speed: z.number(), radius: z.number(), rings: z.number().int(),
+        ringWidth: z.number(), stagger: z.number(),
+      })
+      .strict()
+      .optional(),
+    /** Ses bras s'allongent en ligne : le héros touché est tiré vers elle. */
+    embrace: z
+      .object({ damage: z.number(), telegraph: z.number(), length: z.number(), width: z.number(), pull: z.number(), slow: z.number() })
+      .strict()
+      .optional(),
+    /** La marée : l'arène se remplit d'eau par le bord, sauf des îlots. */
+    tide: z
+      .object({
+        rise: z.number(), hold: z.number(), ebb: z.number(), islets: z.number().int().positive(), isletRadius: z.number(),
+        damage: z.number(), tick: z.number(), cooldown: z.number(),
+      })
+      .strict()
+      .optional(),
+    /** Le temps qu'elle met à sortir de l'eau à son arrivée. */
+    emerge: z.number().positive().optional(),
+    /** Le temps qu'elle met à sombrer une fois vaincue : son butin ne paraît qu'après. */
+    sink: z.number().positive().optional(),
     onDeath: z.object({ spawn: enemyId, count: z.number().int() }).strict().optional(),
     charge: chargeSchema.optional(),
     spawner: z.object({ enemy: enemyId, interval: z.number(), max: z.number().int() }).strict().optional(),
@@ -384,13 +465,31 @@ export const regionSchema = z
     tileset: z.string(),
     darkness: z.object({ color: z.string(), opacity: z.number() }).strict(),
     music: z.object({ calm: z.string(), boss: z.string() }).strict(),
-    enemies: z.array(enemyId).length(5),
-    elites: z.array(enemyId).length(2),
+    enemies: z.array(enemyId).min(1),
+    elites: z.array(enemyId).min(1),
+    /** La région dont le boss doit être battu avant que celle-ci s'ouvre. */
+    requires: id('region').optional(),
+    /** L'image de sa carte, à la porte. */
+    art: z.string().optional(),
+    /** Ce qui remplace le chemin : de l'eau profonde, qui ralentit le héros. */
+    water: z.object({ threshold: z.number().min(0).max(1), slow: z.number().min(0).max(0.9) }).strict().optional(),
+    /** La brume : elle réduit la lueur du héros, hors de la lumière d'une lanterne ravivée. */
+    fog: z.object({ glowMult: z.number().positive().max(1) }).strict().optional(),
+    /** Les lanternes noyées que le passage du héros ravive. */
+    beacons: z
+      .object({
+        count: z.number().int().positive(), sprite: z.string(), radius: z.number().positive(), reach: z.number().positive(),
+        seconds: z.number().positive(),
+      })
+      .strict()
+      .optional(),
+    /** L'Éteint des vagues de braséro et de totem, à la place de celui du réglage commun. */
+    waveEnemy: enemyId.optional(),
     boss: enemyId,
     /** Le boss qui revient une fois le premier battu. */
     rebornBoss: enemyId.optional(),
     /** La cinématique jouée avant chaque départ : boss jamais battu, puis boss reformé. */
-    cinematics: z.object({ first: z.string(), reborn: z.string() }).strict().optional(),
+    cinematics: z.object({ first: z.string(), reborn: z.string().optional() }).strict().optional(),
     decor: z.array(z.object({ sprite: z.string(), weight: z.number() }).strict()).min(1),
     borderDecor: z.string(),
     horde: z.array(z.object({ from: z.number(), to: z.number(), weights: z.record(enemyId, z.number()) }).strict()).min(1),
@@ -533,6 +632,10 @@ export const expeditionTuningSchema = z
     cardHealShare: z.number(),
     luckPity: z.number().int(),
     boss: z.object({ arenaRadiusTiles: z.number(), minTelegraph: z.number() }).strict(),
+    /** L'esquive juste : une ruée qui traverse un coup au moment où il frappe. */
+    dodge: z.object({ power: z.number(), duration: z.number(), ult: z.number(), dashRefund: z.number().min(0).max(1) }).strict(),
+    /** Les états du héros : la vase ralentit, et colle encore un instant après qu'on en est sorti. */
+    heroStatuses: z.object({ mireSlow: z.number().min(0).max(0.9), mireLinger: z.number().positive() }).strict(),
     events: z
       .object({
         poiMinFromCenterTiles: z.number(),

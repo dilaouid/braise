@@ -1,6 +1,6 @@
 import type { Rng } from '@owl/kit/rng';
 import type { ExpeditionTuning, RegionDef } from '../content/index.ts';
-import { TILE_THICKET, type GameMap, type Poi, type Prop } from './types.ts';
+import { TILE_THICKET, type Beacon, type GameMap, type Poi, type Prop } from './types.ts';
 
 /** Écart minimal entre deux amas d'obstacles : aucun couloir de moins de 4 tuiles. */
 const MIN_GAP = 4;
@@ -56,6 +56,15 @@ export function findPath(map: GameMap, from: number, to: number, passable: (tile
   const path: number[] = [];
   for (let cur = to; cur !== from; cur = prev[cur]!) path.push(cur);
   return path.reverse();
+}
+
+/** Vrai si ce point est dans l'eau profonde : le terrain « haut » d'une carte qui a de l'eau, pris au coin de tuile le plus proche. */
+export function isDeepAt(map: GameMap, x: number, y: number): boolean {
+  if (map.waterSlow <= 0) return false;
+  const cx = Math.round(x / map.tile);
+  const cy = Math.round(y / map.tile);
+  if (cx < 0 || cy < 0 || cx > map.size || cy > map.size) return false;
+  return map.corners[cy * (map.size + 1) + cx] === 1;
 }
 
 /** Vrai si la tuile est pleine ou hors de la carte. */
@@ -212,14 +221,35 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
   const cs = size + 1;
   const corners = new Uint8Array(cs * cs);
   const noise = valueNoise(rng, 14);
+  const water = region.water;
   for (let y = 0; y < cs; y++) {
     for (let x = 0; x < cs; x++) {
-      let path = sampleNoise(noise, 14, x / size, y / size) > 0.63;
-      if (Math.hypot(x - center, y - center) < 5) path = true;
-      for (const p of pois) if (Math.hypot(x - p.x / tile, y - p.y / tile) < 3) path = true;
+      let path = sampleNoise(noise, 14, x / size, y / size) > (water ? water.threshold : 0.63);
+      // Le Bois : la clairière et les lieux sont en terre battue. Le Marais : ils restent au sec, comme la bordure.
+      const clear = !water;
+      if (Math.hypot(x - center, y - center) < (water ? 6 : 5)) path = clear;
+      for (const p of pois) if (Math.hypot(x - p.x / tile, y - p.y / tile) < 3) path = clear;
+      if (water && (x <= border || y <= border || x >= size - border || y >= size - border)) path = false;
       corners[y * cs + x] = path ? 1 : 0;
     }
   }
 
-  return { size, tile, solid, corners, props, pois, coverage: covered / interior };
+  // Les lanternes noyées : dans l'eau, loin de la clairière, loin les unes des autres.
+  const beacons: Beacon[] = [];
+  const bc = region.beacons;
+  if (bc && water) {
+    for (let attempt = 0; attempt < 4000 && beacons.length < bc.count; attempt++) {
+      const tx = rng.intRange(margin, size - margin - 1);
+      const ty = rng.intRange(margin, size - margin - 1);
+      if (corners[ty * cs + tx] !== 1 || solid[ty * size + tx] !== 0) continue;
+      if (Math.hypot(tx - center, ty - center) < tuning.startClearingTiles) continue;
+      const x = tx * tile;
+      const y = ty * tile;
+      if (beacons.some((b) => Math.hypot(b.x - x, b.y - y) < 9 * tile)) continue;
+      if (pois.some((p) => Math.hypot(p.x - x, p.y - y) < 4 * tile)) continue;
+      beacons.push({ x, y, life: 0 });
+    }
+  }
+
+  return { size, tile, solid, corners, props, pois, coverage: covered / interior, waterSlow: water ? water.slow : 0, beacons };
 }

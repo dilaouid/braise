@@ -141,6 +141,13 @@ export function bossBeaten(save: Save, regionId: string): boolean {
   return (save.account.regions[regionId]?.bossKills ?? 0) > 0;
 }
 
+/** La route de cette région est-elle ouverte ? Elle l'est sans condition, ou une fois battu le gardien de la région qu'elle demande. */
+export function regionOpen(data: GameData, save: Save, regionId: string): boolean {
+  const region = data.regions[regionId];
+  if (!region) return false;
+  return region.requires === undefined || bossBeaten(save, region.requires);
+}
+
 /** Ce qu'une expédition terminée a changé dans la sauvegarde. */
 export interface RunSummary {
   levelsGained: number;

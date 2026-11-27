@@ -21,6 +21,8 @@ export interface HudState {
   xpNext: number;
   time: number;
   boss: { name: string; frac: number; phase: number } | null;
+  /** Les états du héros : la vase, la morsure, la Lueur étouffée, l'eau profonde, l'élan d'une esquive juste. */
+  statuses: Array<{ id: 'mire' | 'drain' | 'dim' | 'wade' | 'dodge'; icon: string }>;
   flasks: number;
   maxFlasks: number;
   /** La Lanterne empêche de boire : les fioles sont grisées. */
@@ -211,6 +213,8 @@ export const cineCaption = signal<string | null>(null);
 export const cineSkip = signal(0);
 /** La cinématique en cours se passe d'un seul appui (déjà vue), sans maintien. */
 export const cineQuick = signal(false);
+/** Le carton d'un boss : son nom et son titre à son arrivée ; « vaincu » et son nom à sa chute. `key` relance l'animation. */
+export const bossCard = signal<{ name: string; title: string; felled: boolean; key: number } | null>(null);
 /** Le carton posé après la scène d'un souvenir : son identifiant, et combien sont obtenus à ce moment. */
 export const memoryCard = signal<{ id: string; have: number; total: number } | null>(null);
 

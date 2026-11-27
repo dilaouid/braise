@@ -1,6 +1,7 @@
 {
   "id": "region.ash-woods",
   "level": 1,
+  "art": "door-bois",
   "tileset": "tile-bois",
   "darkness": { "color": "#0b0f1a", "opacity": 0.55 },
   "music": { "calm": "music-bois", "boss": "music-boss" },

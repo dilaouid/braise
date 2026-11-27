@@ -24,14 +24,14 @@ import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../cor
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, flameRarity, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
-import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, unlockedContent } from '../meta/hero.ts';
+import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, regionOpen, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
 import { GameRenderer } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
 import { focusRef } from '../ui/parts.tsx';
 import {
-  INTRO_SEEN, TUTORIAL_SEEN, UI_SOUNDS, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
+  INTRO_SEEN, TUTORIAL_SEEN, UI_SOUNDS, bossCard, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
   focusedId, campVisible, holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
@@ -121,6 +121,21 @@ async function boot(): Promise<void> {
   let bannerUntil = 0;
   /** Un bandeau qui attend la fin de celui affiché. */
   let bannerNext: { text: string; ms: number } | null = null;
+  /** Les conseils du Marais, dits une fois par expédition : l'eau, la lanterne ravivée, la Lueur étouffée. */
+  const told = { water: false, beacon: false, blind: false };
+  let bossCardKey = 0;
+
+  /** Le carton d'un boss : son nom et son titre à son arrivée, « Gardien vaincu » à sa chute. */
+  function showBossCard(r: Run, kind: number, felled: boolean): void {
+    const id = r.data.enemies[kind]!.id;
+    const title = FR[`${id}.title`];
+    if (!felled && title === undefined) {
+      say(t(`${id}.name`), 3500);
+      return;
+    }
+    bossCard.value = { name: felled ? t('hud.bossFelled') : t(`${id}.name`), title: felled ? t(`${id}.name`) : title ?? '', felled, key: ++bossCardKey };
+    if (!felled) audio.play('boss-titre', 0.9);
+  }
   let saveTimer = 0;
   let frames = 0;
   let fps = 0;
@@ -659,6 +674,10 @@ async function boot(): Promise<void> {
     banner = null;
     bannerNext = null;
     ending.value = null;
+    bossCard.value = null;
+    told.water = false;
+    told.beacon = false;
+    told.blind = false;
     audio.play('ui-confirm');
     audio.playMusic(run.region.music.calm);
     setScreen('run');
@@ -805,6 +824,11 @@ async function boot(): Promise<void> {
     },
     depart(seed, regionId = REGION) {
       audio.unlock();
+      // Une route fermée : le gardien de la région d'avant n'est pas battu.
+      if (!regionOpen(data, current, regionId)) {
+        audio.play('refuse');
+        return;
+      }
       // La porte ne grince que si on la passe : « Repartir », au bilan, n'y revient pas.
       if (screen.value === 'door') audio.play('intro-porte-grince', 0.7);
       // La graine est tirée avant la cinématique : « rejouer la même carte » reste la même carte.
@@ -812,7 +836,7 @@ async function boot(): Promise<void> {
       const reborn = bossBeaten(current, regionId);
       const replay = seed !== undefined;
       const cinematics = data.regions[regionId]?.cinematics;
-      const id = cinematics ? (reborn ? cinematics.reborn : cinematics.first) : null;
+      const id = cinematics ? (reborn ? cinematics.reborn ?? null : cinematics.first) : null;
       if (!id) {
         startExpedition(chosen, regionId, reborn, replay);
         return;
@@ -1101,17 +1125,63 @@ async function boot(): Promise<void> {
           say(t(`${r.data.enemies[a]!.id}.name`));
           break;
         case EV.bossSpawn:
+          if (r.data.enemies[a]?.emerge !== undefined) {
+            // La Dame de Vase n'est pas encore là : la musique se tait, on n'entend que son souffle.
+            audio.stopMusic();
+            audio.play('dame-souffle', 0.9);
+            break;
+          }
           audio.play('boss', 1);
           audio.playMusic(r.region.music.boss);
           // Le boss du tutoriel porte son propre nom, et sa leçon est déjà dans le bandeau.
-          if (!r.tutorial) say(t(`${r.data.enemies[r.region.bossIdx]!.id}.name`), 3500);
+          if (!r.tutorial) showBossCard(r, r.region.bossIdx, false);
           break;
-        case EV.bossPhase: if (a > 1) audio.play('boss', 0.8, 1.15); break;
+        case EV.bossSurge:
+          audio.play('dame-surgit', 1);
+          if (a === 1) {
+            // Elle est sortie de l'eau : son thème commence, son nom s'affiche.
+            audio.playMusic(r.region.music.boss);
+            showBossCard(r, r.region.bossIdx, false);
+          }
+          break;
+        case EV.bossDive: audio.play('dame-plonge', 0.9); break;
+        case EV.bossHum: audio.play('dame-chant', 0.5, 1, 6000); break;
+        case EV.bossPhase:
+          if (a > 1) audio.play(r.data.enemies[r.region.bossIdx]!.behavior === 'boss-lady' ? 'dame-cri' : 'boss', 0.9, r.data.enemies[r.region.bossIdx]!.behavior === 'boss-lady' ? 1 : 1.15);
+          break;
         case EV.bossDeath:
           audio.play('victory', 1);
           audio.playMusic(r.region.music.calm);
           // Pas de portail en tutoriel : la dernière barrière tombe.
-          if (!r.tutorial) say(t(r.map.pois.some((p) => p.kind === 'memory') ? 'hud.memory' : 'hud.portal'), 6000);
+          if (!r.tutorial) {
+            showBossCard(r, a, true);
+            sayAfter(t(r.map.pois.some((p) => p.kind === 'memory') ? 'hud.memory' : 'hud.portal'), 6000);
+          }
+          break;
+        case EV.tideStart:
+          audio.play('maree', 0.9);
+          say(t('hud.tide'), 3600);
+          break;
+        case EV.handRise: audio.play('main-vase', b > 0 ? 0.6 : 0.4, 1, 180); break;
+        case EV.mire: audio.play('vase', 0.4, 1, 140); break;
+        case EV.wispPop: audio.play('lueur', 0.5, 1, 120); break;
+        case EV.toadBurst: audio.play('crapaud', 0.6, 1, 200); break;
+        case EV.toll: audio.play('cloche', 0.9); break;
+        case EV.vanish: audio.play('brume', 0.7); break;
+        case EV.dodge:
+          audio.play('esquive', 0.7);
+          say(t('hud.dodge'), 1100);
+          break;
+        case EV.beaconLit:
+          audio.play('lanterne', 0.7, 1, 300);
+          if (!told.beacon) {
+            told.beacon = true;
+            say(t('hud.beacon'), 3600);
+          }
+          break;
+        case EV.heroAfflict:
+          if (a === 1) audio.play('hurt', 0.4, 1.4, 600);
+          else audio.play('vase', 0.6, 0.8, 300);
           break;
         case EV.gateOpen: audio.play('gate', 0.7, 1, 150); break;
         case EV.bark: audio.play('talk-cream', 0.35); break;
@@ -1138,7 +1208,7 @@ async function boot(): Promise<void> {
         case EV.totemDone: audio.play('totem', 0.9); break;
         case EV.shopOpen: audio.play('shop-open', 0.8); break;
         case EV.shopBuy: audio.play('shop-buy', 0.9); break;
-        case EV.bossWarning: say(t('hud.bossWarning'), 5000); break;
+        case EV.bossWarning: say(FR[`${r.cfg.regionId}.bossWarning`] ?? t('hud.bossWarning'), 5000); break;
         case EV.flameCall: say(t('hud.flameCall')); break;
         case EV.hunt: say(t('hud.hunt', { n: Math.round(a * 100) })); break;
         case EV.pieceDrop: say(t('hud.pieceDrop'), 4500); break;
@@ -1169,8 +1239,23 @@ async function boot(): Promise<void> {
     }
     const ready = readyEvolution(r);
     const minutes = r.time / 60;
+    // Les états du héros, du plus gênant au moins gênant : la vase, la morsure, la Lueur étouffée, l'eau, l'élan.
+    const statuses: HudState['statuses'] = [];
+    if (h.mireT > 0) statuses.push({ id: 'mire', icon: 'sign-mire' });
+    if (h.drainT > 0) statuses.push({ id: 'drain', icon: 'sign-drain' });
+    if (r.blind < 1) statuses.push({ id: 'dim', icon: 'sign-dim' });
+    if (h.wading) statuses.push({ id: 'wade', icon: 'sign-wade' });
+    if (h.dodgeT > 0) statuses.push({ id: 'dodge', icon: 'sign-dodge' });
+    if (h.wading && !told.water && r.map.waterSlow > 0) {
+      told.water = true;
+      sayAfter(t('hud.hint.water'), 4200);
+    }
+    if (r.blind < 1 && !told.blind) {
+      told.blind = true;
+      say(t('hud.blind'), 4200);
+    }
     return {
-      hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss,
+      hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss, statuses,
       flasks: h.flasks, maxFlasks: h.stats.flasks, flaskBlocked: r.mods.noFlask, gold: h.gold,
       ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops), kills: h.kills, vigil: r.cfg.vigil,
       weapons: r.weapons.map((w) => {
@@ -1197,6 +1282,23 @@ async function boot(): Promise<void> {
     const size = r.map.size * r.map.tile;
     const k = 48 / size;
     ctx.clearRect(0, 0, 48, 48);
+    if (r.map.waterSlow > 0) {
+      // L'eau profonde, à gros grains : un point de mini-carte pour deux tuiles et demie.
+      const cs = r.map.size + 1;
+      ctx.fillStyle = 'rgba(31, 158, 150, 0.45)';
+      for (let py = 0; py < 48; py++) {
+        for (let px = 0; px < 48; px++) {
+          const cx = Math.round(((px + 0.5) / 48) * r.map.size);
+          const cy = Math.round(((py + 0.5) / 48) * r.map.size);
+          if (r.map.corners[cy * cs + cx] === 1) ctx.fillRect(px, py, 1, 1);
+        }
+      }
+      for (const b of r.map.beacons) {
+        if (b.life <= 0) continue;
+        ctx.fillStyle = '#b8fff0';
+        ctx.fillRect(Math.round(b.x * k) - 1, Math.round(b.y * k) - 1, 2, 2);
+      }
+    }
     ctx.fillStyle = '#2c3e5c';
     const b = r.data.tuning.borderTiles * r.map.tile * k;
     ctx.fillRect(0, 0, 48, b); ctx.fillRect(0, 48 - b, 48, b); ctx.fillRect(0, 0, b, 48); ctx.fillRect(48 - b, 0, b, 48);

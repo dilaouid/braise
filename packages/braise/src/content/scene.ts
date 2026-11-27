@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import afterMemoryMeetingJson from '../../content/scenes/after-memory-meeting.json';
+import afterMemoryWeddingJson from '../../content/scenes/after-memory-wedding.json';
 import afterTutorialJson from '../../content/scenes/after-tutorial.json';
 
 /**
@@ -42,6 +43,7 @@ export type SceneDef = z.infer<typeof sceneSchema>;
 export const SCENES_RAW: Record<string, unknown> = {
   'after-tutorial': afterTutorialJson,
   'after-memory-meeting': afterMemoryMeetingJson,
+  'after-memory-wedding': afterMemoryWeddingJson,
 };
 
 /** Valide une scène ; `dialogues` : les identifiants connus de dialogues.json. */

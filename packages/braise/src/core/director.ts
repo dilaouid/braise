@@ -1,3 +1,4 @@
+import { LS_EMERGE } from './boss-lady.ts';
 import { spawnEnemy } from './combat.ts';
 import { isSolidAt } from './map.ts';
 import { enemyHpScale, threatPerSecond } from './stats.ts';
@@ -140,8 +141,10 @@ function spawnBoss(run: Run): void {
   // Le boss ne suit pas l'échelle par minute, seulement celle de la Veillée.
   const hpMult = enemyHpScale(tuning.scale, 0, run.cfg.vigil - 1, 0);
   let bx = d.arenaX;
-  let by = d.arenaY - 180;
-  for (let attempt = 0; attempt < 12 && (isSolidAt(run.map, bx, by) || Math.hypot(bx - hero.x, by - hero.y) < 140); attempt++) {
+  // Un boss qui sort de l'eau le fait à l'écran : on doit le voir se lever.
+  let by = d.arenaY - (def.emerge !== undefined ? 104 : 180);
+  const keep = def.emerge !== undefined ? 100 : 140;
+  for (let attempt = 0; attempt < 12 && (isSolidAt(run.map, bx, by) || Math.hypot(bx - hero.x, by - hero.y) < keep); attempt++) {
     const a = run.rngSpawn.float() * TAU;
     bx = d.arenaX + Math.cos(a) * 200;
     by = d.arenaY + Math.sin(a) * 200;
@@ -149,6 +152,14 @@ function spawnBoss(run: Run): void {
   const i = spawnEnemy(run, kind, bx, by, hpMult);
   if (i >= 0) {
     e.timer2[i] = 2.2;
+    if (def.emerge !== undefined) {
+      // La Dame de Vase n'est pas là quand l'arène se referme : elle sort de l'eau.
+      e.state[i] = LS_EMERGE;
+      e.timer[i] = def.emerge;
+      d.bossHidden = true;
+    }
+    d.tide = null;
+    d.tideCd = 0;
     d.bossUid = e.uid[i]!;
     d.bossPhase = 1;
     d.bossLast = -1;

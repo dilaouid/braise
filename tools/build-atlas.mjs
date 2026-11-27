@@ -10,7 +10,7 @@ import { PNG } from 'pngjs';
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages', 'braise');
 const spritesDir = join(pkg, 'assets', 'sprites');
 const outDir = join(pkg, 'public', 'atlas');
-const WIDTH = 1024;
+const WIDTH = 2048;
 const PAD = 1;
 
 const items = readdirSync(spritesDir)

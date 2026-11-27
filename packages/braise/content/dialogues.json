@@ -189,6 +189,18 @@
       {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.14"},
       {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-meeting.2.15"},
       {"who":"cream","face":"smug","text":"dialog.scene.after-memory-meeting.2.16","poses":{"cream":"scratch"}}
+    ],
+    "scene.after-memory-wedding.1": [
+      {"who":"moon","face":"sad","text":"dialog.scene.after-memory-wedding.1.1"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-wedding.1.2"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-memory-wedding.1.3","poses":{"moon":"think"}},
+      {"who":"cream","face":"serious","text":"dialog.scene.after-memory-wedding.1.4"}
+    ],
+    "scene.after-memory-wedding.2": [
+      {"who":"moon","face":"resolute","text":"dialog.scene.after-memory-wedding.2.1"},
+      {"who":"cream","face":"smug","text":"dialog.scene.after-memory-wedding.2.2","poses":{"cream":"groom"}},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-wedding.2.3"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-wedding.2.4"}
     ]
   }
 }

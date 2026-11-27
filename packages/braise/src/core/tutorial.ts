@@ -44,7 +44,7 @@ export function buildTutorialMap(def: TutorialDef, tile: number): GameMap {
       if (edge) props.push({ decor: 0, x: (x + 0.5) * tile, y: (y + 0.85) * tile });
     }
   }
-  return { size, tile, solid, corners: new Uint8Array((size + 1) * (size + 1)), props, pois: [], coverage: 0 };
+  return { size, tile, solid, corners: new Uint8Array((size + 1) * (size + 1)), props, pois: [], coverage: 0, waterSlow: 0, beacons: [] };
 }
 
 /** La région du tutoriel : celle du Bois, avec le décor de la ruine et le Guetteur pour boss. */

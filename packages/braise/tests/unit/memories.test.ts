@@ -67,7 +67,9 @@ describe('contenu des souvenirs', () => {
   it('le contenu livré compile', () => {
     expect(compileContent().errors).toEqual([]);
     expect(data.memoriesTotal).toBe(5);
-    expect(data.memories).toHaveLength(1);
+    expect(data.memories).toHaveLength(2);
+    expect(data.memories[1]).toMatchObject({ id: 'memory.wedding', index: 1, cinematic: 'memory-wedding', scene: 'after-memory-wedding' });
+    expect(data.enemies[data.memories[1]!.bossIdx]!.id).toBe('boss.mud-lady');
     expect(data.memories[0]).toMatchObject({ id: MEETING, index: 0, cinematic: 'memory-meeting' });
     expect(data.enemies[data.memories[0]!.bossIdx]!.id).toBe('boss.lightless-stag');
   });

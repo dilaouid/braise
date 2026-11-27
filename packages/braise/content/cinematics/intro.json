@@ -363,7 +363,7 @@
     },
     {
       "id": "p10-cream",
-      "duration": 8.5,
+      "duration": 9.2,
       "caption": "cine.intro.t10",
       "captionAt": 1.2,
       "fadeIn": 0.8,
@@ -400,7 +400,7 @@
     },
     {
       "id": "p11-mains",
-      "duration": 10,
+      "duration": 10.7,
       "caption": "cine.intro.t11",
       "captionAt": 2.2,
       "fadeIn": 1,

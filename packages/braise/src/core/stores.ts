@@ -117,6 +117,7 @@ export function createTelegraphStore(): TelegraphStore {
   return {
     count: 0, shape: new Uint8Array(n), x: f32(n), y: f32(n), angle: f32(n), length: f32(n), width: f32(n),
     t: f32(n), duration: f32(n), damage: f32(n), owner: new Uint32Array(n), kind: new Uint16Array(n),
+    fx: new Uint8Array(n), fxValue: f32(n), fxSize: f32(n),
   };
 }
 
@@ -125,19 +126,20 @@ export function removeTelegraph(t: TelegraphStore, i: number): void {
   if (i === l) return;
   t.shape[i] = t.shape[l]!; t.x[i] = t.x[l]!; t.y[i] = t.y[l]!; t.angle[i] = t.angle[l]!; t.length[i] = t.length[l]!;
   t.width[i] = t.width[l]!; t.t[i] = t.t[l]!; t.duration[i] = t.duration[l]!; t.damage[i] = t.damage[l]!; t.owner[i] = t.owner[l]!;
-  t.kind[i] = t.kind[l]!;
+  t.kind[i] = t.kind[l]!; t.fx[i] = t.fx[l]!; t.fxValue[i] = t.fxValue[l]!; t.fxSize[i] = t.fxSize[l]!;
 }
 
 /** Ajoute une annonce d'attaque au sol. `damage` nul : l'annonce est seulement visuelle. `delay` : elle n'apparaît qu'après ce temps. */
 export function addTelegraph(
   run: Run, shape: number, x: number, y: number, angle: number, length: number, width: number, duration: number, damage: number, owner: number,
-  kind = 0, delay = 0,
+  kind = 0, delay = 0, fx = 0, fxValue = 0, fxSize = 0,
 ): void {
   const t = run.telegraphs;
   if (t.count >= CAP_TELEGRAPHS) return;
   const i = t.count++;
   t.shape[i] = shape; t.x[i] = x; t.y[i] = y; t.angle[i] = angle; t.length[i] = length; t.width[i] = width;
   t.t[i] = -delay; t.duration[i] = duration; t.damage[i] = damage; t.owner[i] = owner; t.kind[i] = kind;
+  t.fx[i] = fx; t.fxValue[i] = fxValue; t.fxSize[i] = fxSize;
 }
 
 export function createPickupStore(): PickupStore {
