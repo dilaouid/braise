@@ -30,6 +30,7 @@ import { compileTutorial, type DialogueLine, type TutorialDef } from './tutorial
 export type { DialogueLine, TutorialDef, TutorialStep, Point } from './tutorial.ts';
 export type {
   Attribute, StatBonus, ExpeditionTuning, HeroTuning, AltarBoostRaw, CampDef, CampObject, FindDef, PieceEffect, RunModsRaw,
+  TalentNodeRaw,
 } from './schema.ts';
 
 /** Les types de dégâts, dans l'ordre de leur indice. */
@@ -496,6 +497,21 @@ export function compileContent(raw: typeof RAW = RAW): { data: GameData | null; 
     needText(`${c.skill.id}.desc`);
     needText(`${c.ultimate.id}.name`);
     needText(`${c.ultimate.id}.desc`);
+    // L'arbre : 6 nœuds par branche (2 à l'étage 1, 2 au 2, 1 au 3, 1 maître), chacun avec ses textes.
+    const tree = c.tree;
+    unique(tree.nodes.map((n) => n.id), `${c.id} (arbre)`);
+    for (const branch of tree.branches) {
+      needText(`talents.branch.${branch}`);
+      const perTier = [1, 2, 3, 4].map((tier) => tree.nodes.filter((n) => n.branch === branch && n.tier === tier).length);
+      if (perTier.join() !== '2,2,1,1') errors.push(`${c.id}: la branche « ${branch} » a ${perTier.join(' / ')} nœuds par étage au lieu de 2 / 2 / 1 / 1`);
+    }
+    for (const n of tree.nodes) {
+      needText(`${n.id}.name`);
+      needText(`${n.id}.desc`);
+      if (!tree.branches.includes(n.branch)) errors.push(`${n.id}: branche inconnue « ${n.branch} »`);
+      if ((n.perRank === undefined) === (n.levels === undefined)) errors.push(`${n.id}: il faut « perRank » ou « levels », pas les deux`);
+      if (n.levels !== undefined && n.levels.length !== n.ranks) errors.push(`${n.id}: ${n.levels.length} niveaux pour ${n.ranks} rangs`);
+    }
   }
 
   const memories: MemoryDef[] = memoriesRaw.memories.map((m, index) => ({

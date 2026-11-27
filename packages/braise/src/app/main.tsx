@@ -24,7 +24,8 @@ import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../cor
 import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
 import { buyAltarRank, flameRarity, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
-import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, regionOpen, unlockedContent } from '../meta/hero.ts';
+import { addTalent, removeTalent, resetTalents } from '../meta/talents.ts';
+import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, regionOpen, runMods, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
 import { GameRenderer } from '../render/renderer.ts';
@@ -662,6 +663,7 @@ async function boot(): Promise<void> {
   function startExpedition(seed: number, regionId: string, reborn: boolean, replay: boolean): void {
     const { sheet } = buildSheet(data, current, CLASS);
     const unlocked = unlockedContent(data, current);
+    const lantern = lanternRun(data, current, replay);
     run = createRun(data, {
       seed, regionId, classId: CLASS, vigil: 1, sheet,
       unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: current.settings.autoSkills,
@@ -669,7 +671,9 @@ async function boot(): Promise<void> {
       memory: pendingMemory(data, current, regionId),
       reborn,
       flameRarity: flameRarity(current, data),
-      ...lanternRun(data, current, replay),
+      lantern: lantern.lantern,
+      // La Lanterne, puis les talents de Moon.
+      mods: runMods(data, current, CLASS, lantern.mods),
     });
     renderer.beginRun(run);
     paused = false;
@@ -808,7 +812,8 @@ async function boot(): Promise<void> {
     goto(next) {
       audio.play(next === 'camp' ? 'ui-back' : 'ui-confirm', 0.7);
       // Moon s'arrête ; à côté de l'objet ouvert, s'il y allait.
-      if (screen.value === 'camp') stopCamp(camp, next);
+      // L'arbre s'ouvre au feu de camp : c'est près du feu que Moon s'arrête.
+      if (screen.value === 'camp') stopCamp(camp, next === 'talents' ? 'fire' : next);
       if (next === 'camp') {
         // Du bilan, on arrive devant la porte ; d'un écran du refuge, Moon est là où il était.
         if (ending.value) arriveAtCamp();
@@ -871,6 +876,34 @@ async function boot(): Promise<void> {
     refundAltar() {
       refundAltar(current, data);
       audio.play('ui-back');
+      changed();
+      persistSoon();
+    },
+    addTalent(id) {
+      const hero = current.heroes[CLASS];
+      if (!hero || !addTalent(data.classes[CLASS]!, hero, data.heroTuning, id)) {
+        audio.play('refuse');
+        return;
+      }
+      audio.play('flame-feed', 0.6);
+      changed();
+      persistSoon();
+    },
+    removeTalent(id) {
+      const hero = current.heroes[CLASS];
+      if (!hero || !removeTalent(data.classes[CLASS]!, hero, data.heroTuning, id)) {
+        audio.play('refuse');
+        return;
+      }
+      audio.play('ui-back', 0.6);
+      changed();
+      persistSoon();
+    },
+    resetTalents() {
+      const hero = current.heroes[CLASS];
+      if (!hero) return;
+      resetTalents(data.classes[CLASS]!, hero);
+      audio.play('ui-back', 0.7);
       changed();
       persistSoon();
     },
@@ -1196,6 +1229,7 @@ async function boot(): Promise<void> {
         case EV.skill: audio.play('skill', 0.8); break;
         case EV.ultimate: audio.play('ultimate', 0.9); break;
         case EV.flask: audio.play('flask', 0.8); break;
+        case EV.flaskRefill: audio.play('flask', 0.45, 1.3); break;
         case EV.evolution: audio.play('evolution', 1); break;
         case EV.heroDeath: audio.play('death', 1); break;
         case EV.heroRevive:

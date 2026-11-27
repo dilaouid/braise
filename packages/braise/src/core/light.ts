@@ -1,8 +1,17 @@
 import type { Beacon, Run } from './types.ts';
 
-/** La Lueur du moment : celle de la feuille, moins ce que la brume ou une Lanterne-mère en étouffe. */
+/** Le Phare : pendant ses 4 dernières secondes de chaque période, la Lueur double. */
+export const PULSE_SECONDS = 4;
+
+/** Vrai si le Phare brille en ce moment. */
+export function pulsing(run: Run): boolean {
+  const every = run.mods.beaconPulse;
+  return every > 0 && run.pulseT % every >= every - PULSE_SECONDS;
+}
+
+/** La Lueur du moment : celle de la feuille, moins ce que la brume ou une Lanterne-mère en étouffe, doublée par le Phare. */
 export function glowNow(run: Run): number {
-  return run.hero.stats.glow * run.dim;
+  return run.hero.stats.glow * run.dim * (pulsing(run) ? 2 : 1);
 }
 
 /** Le rayon éclairé par Moon : la Lueur plus la marge du disque de lumière dessiné à l'écran. */

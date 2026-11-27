@@ -35,7 +35,7 @@ test('Moon marche au stick, et A n\'ouvre que ce qui est près de lui', async ({
   await capture(page, info, SHOTS, '01-arrivee');
   // Plus de menu : les objets seulement.
   await expect(page.locator('.menu-button')).toHaveCount(0);
-  await expect(page.locator('.camp-object')).toHaveCount(5);
+  await expect(page.locator('.camp-object')).toHaveCount(6);
 
   // Vers le bas, loin de tout : rien au focus, et A ne fait rien.
   const before = await moon(page);
@@ -75,7 +75,7 @@ test('la croix saute d\'un objet à l\'autre et Moon y marche ; chaque objet s\'
   expect((await moon(page)).goal).toBeNull();
   await pad.stick(0, 0);
 
-  for (const [id, screen] of [['altar', 'altar'], ['lantern', 'lantern'], ['memories', 'memories'], ['door', 'door']] as const) {
+  for (const [id, screen] of [['altar', 'altar'], ['lantern', 'lantern'], ['memories', 'memories'], ['fire', 'talents'], ['door', 'door']] as const) {
     await toObject(page, pad, id);
     await pad.press('A');
     await expect(page.locator(`.screen.${screen}`)).toBeVisible();

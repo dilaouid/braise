@@ -3,6 +3,7 @@ import type { CampObject } from '../content/index.ts';
 import { canBuyAltarRank } from '../meta/altar.ts';
 import { heroXpForNext } from '../meta/hero.ts';
 import { lanternNews } from '../meta/lantern.ts';
+import { talentPointsLeft } from '../meta/talents.ts';
 import { newHero } from '../meta/save.ts';
 import { Bar, Btn, useFocusScope, useHandlers } from './parts.tsx';
 import { Currencies } from './screens.tsx';
@@ -14,6 +15,7 @@ const CLASS = 'class.ash-blade';
 function openObject(id: string): void {
   if (id === 'cream') actions().creamTalk();
   else if (id === 'door' || id === 'altar' || id === 'lantern' || id === 'memories') actions().goto(id);
+  else if (id === 'fire') actions().goto('talents');
 }
 
 /** Un objet du refuge : un bouton transparent posé sur son image, avec son nom quand Moon est à côté. */
@@ -54,6 +56,7 @@ export function CampScreen(): JSX.Element {
   const badges: Record<string, boolean> = {
     altar: data.altar.some((b) => canBuyAltarRank(s, data, b.id) === null),
     lantern: lanternNews(data, s.account.lantern),
+    fire: talentPointsLeft(data.classes[CLASS]!, hero, data.heroTuning) > 0,
   };
   const visible = campVisible(data, s);
   return (

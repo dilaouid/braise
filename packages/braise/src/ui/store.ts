@@ -8,7 +8,7 @@ import type { Card, ChestResult, ShopItem } from '../core/types.ts';
 import type { RunSummary } from '../meta/hero.ts';
 import type { Save, Settings } from '../meta/save.ts';
 
-export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'lantern' | 'door' | 'settings' | 'run' | 'end';
+export type Screen = 'boot' | 'title' | 'cinematic' | 'scene' | 'camp' | 'memories' | 'altar' | 'lantern' | 'talents' | 'door' | 'settings' | 'run' | 'end';
 export type Overlay = 'none' | 'levelup' | 'chest' | 'forge' | 'totem' | 'shop' | 'find' | 'pause' | 'dialogue';
 export type Device = 'keyboard' | 'gamepad';
 
@@ -136,6 +136,10 @@ export interface Actions {
   buyAltar(id: string): void;
   refundAltar(): void;
   toggleAltar(id: string): void;
+  /** Place un point de talent, en retire un, ou les reprend tous (gratuit). */
+  addTalent(id: string): void;
+  removeTalent(id: string): void;
+  resetTalents(): void;
   /** Pose une pièce sur une face de la Lanterne (0 à 3), vide une face, ou les vide toutes. */
   lanternPlace(face: number, id: string): void;
   lanternClear(face: number): void;

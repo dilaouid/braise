@@ -45,9 +45,15 @@ export function grantDodge(run: Run): void {
   if (hero.dodged || hero.dashT <= 0 || run.tutorial) return;
   const dodge = run.data.tuning.dodge;
   hero.dodged = true;
-  hero.dodgeT = dodge.duration;
+  hero.dodgeT = dodge.duration + run.mods.dodgeExtra;
   hero.ultGauge = Math.min(run.data.tuning.ultimate.gaugeMax, hero.ultGauge + dodge.ult * run.mods.ultChargeMult);
-  if (hero.dashCd > 0) hero.dashCd *= 1 - dodge.dashRefund;
+  if (run.mods.dodgeRefill) {
+    // Insaisissable : toute la ruée revient.
+    hero.dashCharges = 1 + run.mods.dashCharges;
+    hero.dashCd = 0;
+  } else if (hero.dashCd > 0) {
+    hero.dashCd *= 1 - dodge.dashRefund;
+  }
   emit(run, EV.dodge, hero.x, hero.y);
 }
 
@@ -246,8 +252,10 @@ export function updateMarsh(run: Run, dt: number): void {
 
   // La brume étouffe la Lueur, sauf dans la lumière d'une lanterne ravivée ; une Lanterne-mère l'étouffe partout.
   const fog = run.region.fog;
-  let target = fog && !run.tutorial && beaconAt(run, hero.x, hero.y) === null ? fog.glowMult : 1;
-  target *= run.blind;
+  // Perce-brume : on ne subit qu'une part de ce qui est étouffé.
+  const keep = 1 - run.mods.fogResist;
+  let target = fog && !run.tutorial && beaconAt(run, hero.x, hero.y) === null ? 1 - (1 - fog.glowMult) * keep : 1;
+  target *= 1 - (1 - run.blind) * keep;
   const step = DIM_RATE * dt;
   run.dim += Math.max(-step, Math.min(step, target - run.dim));
 

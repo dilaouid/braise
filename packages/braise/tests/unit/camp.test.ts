@@ -180,14 +180,14 @@ describe('ouvrir un objet', () => {
 });
 
 describe('l\'objet proche', () => {
-  it('rien loin de tout, le plus proche dans son rayon, jamais le feu', () => {
+  it('rien loin de tout, le plus proche dans son rayon, et le feu de camp, où se place l\'arbre de Moon', () => {
     expect(nearestObject(placed(330, 300), def, ALL)).toBeNull();
     const l = at('lantern');
     const c = at('cream');
     expect(nearestObject(placed(l.stand[0], l.stand[1]), def, ALL)).toBe('lantern');
     expect(nearestObject(placed(c.stand[0], c.stand[1]), def, ALL)).toBe('cream');
     const f = at('fire');
-    expect(nearestObject(placed(f.stand[0], f.stand[1]), def, new Set(['fire']))).toBeNull();
+    expect(nearestObject(placed(f.stand[0], f.stand[1]), def, new Set(['fire']))).toBe('fire');
   });
 
   it('un objet caché ne compte pas', () => {

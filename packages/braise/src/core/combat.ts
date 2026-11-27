@@ -104,7 +104,7 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   if (hero.buffT > 0) power += run.cls.skill.damageBonus;
   // Le trait : la cible est-elle éclairée (le disque de lumière du héros, ou une Veilleuse) ?
   const trait = run.cls.trait;
-  power += isLit(run, e.x[i]!, e.y[i]!) ? trait.inside : trait.outside;
+  power += isLit(run, e.x[i]!, e.y[i]!) ? trait.inside + run.mods.litPower : trait.outside;
   if (def.rank !== 'normal') power += st.eliteDamage;
   if (lowHp(run)) power += run.mods.lowHpPower;
   // L'élan d'une esquive juste.
@@ -113,7 +113,8 @@ export function hurtEnemy(run: Run, i: number, base: number, type: number, scale
   let dmg = base * (1 + power);
   if (scale) dmg *= 1 + run.data.heroTuning.damagePerScalePoint * st.attrs[scale];
   let outFlags = flags;
-  if (run.rngCombat.float() < st.critChance) {
+  const crit = st.critChance + (hero.feintT > 0 ? run.mods.dashCrit : 0);
+  if (run.rngCombat.float() < crit) {
     dmg *= st.critMult;
     outFlags |= HIT_CRIT;
   }

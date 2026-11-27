@@ -188,8 +188,44 @@ export const runModsSchema = z
     shadowCrit: z.number().positive().optional(),
     /** Toutes les N secondes, les gemmes de la carte volent vers le héros. */
     recallEvery: z.number().positive().optional(),
+    /** Ce que rend une fiole, multiplié. */
+    flaskHealMult: z.number().positive().optional(),
+    /** Toutes les N secondes, une fiole se remplit seule. */
+    flaskRefillEvery: z.number().positive().optional(),
+    /** Une fois par partie, un coup mortel laisse 1 point de vie et 3 s d'invulnérabilité. */
+    lastStand: z.boolean().optional(),
+    /** Secondes retirées à la recharge de la ruée. */
+    dashCooldownCut: z.number().positive().optional(),
+    /** Secondes d'élan en plus après une esquive juste. */
+    dodgeExtra: z.number().positive().optional(),
+    /** Chance de critique en plus pendant 2 s après une ruée. */
+    dashCrit: z.number().positive().optional(),
+    /** Une esquive juste recharge toute la ruée. */
+    dodgeRefill: z.boolean().optional(),
+    /** Puissance en plus sur un Éteint éclairé. */
+    litPower: z.number().positive().optional(),
+    /** Part de ce que la brume et la Lanterne-mère étouffent, qu'on ne subit pas (0 à 1). */
+    fogResist: z.number().positive().max(1).optional(),
+    /** Toutes les N secondes, la Lueur double pendant 4 s. */
+    beaconPulse: z.number().positive().optional(),
   })
   .strict();
+
+/** Un nœud de l'arbre d'une classe : un bonus par rang (`perRank`), ou l'effet total à chaque rang (`levels`). */
+export const talentNodeSchema = z
+  .object({
+    id: z.string().regex(/^talent\.[a-z-]+$/),
+    icon: z.string(),
+    branch: z.string(),
+    tier: z.number().int().min(1).max(4),
+    ranks: z.number().int().positive(),
+    perRank: statBonusSchema.optional(),
+    levels: z.array(z.object({ stats: statBonusSchema.default({}), mods: runModsSchema.default({}) }).strict()).optional(),
+  })
+  .strict();
+
+/** L'arbre de talents d'une classe : trois branches, leurs nœuds. */
+export const treeSchema = z.object({ branches: z.array(z.string()).length(3), nodes: z.array(talentNodeSchema) }).strict();
 
 export const RARITY_NAMES = ['common', 'rare', 'epic', 'legendary', 'mythic'] as const;
 export const raritySchema = z.enum(RARITY_NAMES);
@@ -558,6 +594,8 @@ export const classSchema = z
         autoRange: z.number(),
       })
       .strict(),
+    /** L'arbre de talents : le point de talent de chaque niveau s'y place. */
+    tree: treeSchema,
   })
   .strict();
 
@@ -684,6 +722,8 @@ export const heroTuningSchema = z
   .object({
     maxLevel: z.number().int(),
     pointsPerLevel: z.object({ auto: z.number().int(), free: z.number().int(), talent: z.number().int() }).strict(),
+    /** Points à placer dans une branche pour ouvrir ses étages 1 à 4. */
+    talentTiers: z.array(z.number().int().nonnegative()).length(4),
     xpCurve: z.object({ base: z.number(), linear: z.number(), quadratic: z.number() }).strict(),
     shardCurve: z.object({ base: z.number(), growth: z.number() }).strict(),
     baseHp: z.number(),
@@ -840,6 +880,7 @@ export type FindDef = z.infer<typeof findSchema>;
 export type EnemyRaw = z.infer<typeof enemySchema>;
 export type RegionRaw = z.infer<typeof regionSchema>;
 export type ClassRaw = z.infer<typeof classSchema>;
+export type TalentNodeRaw = z.infer<typeof talentNodeSchema>;
 export type AltarBoostRaw = z.infer<typeof altarBoostSchema>;
 export type ExpeditionTuning = z.infer<typeof expeditionTuningSchema>;
 export type HeroTuning = z.infer<typeof heroTuningSchema>;

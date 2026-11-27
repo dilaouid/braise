@@ -1,6 +1,8 @@
 import type { Attribute, ClassDef, GameData, HeroTuning, StatBonus } from '../content/index.ts';
 import { addBonus, emptySheet, resolveStats, type Attributes, type HeroStats, type StatSheet } from '../core/stats.ts';
+import { stackMods, type RunMods } from '../core/mods.ts';
 import { applyLantern, resolveLantern } from './lantern.ts';
+import { resolveTalents } from './talents.ts';
 import { CURRENCY_CAP, newHero, type HeroSave, type Save } from './save.ts';
 import type { RunResult } from '../core/rewards.ts';
 
@@ -85,7 +87,18 @@ export function buildSheet(data: GameData, save: Save, classId: string): { sheet
     addBonus(sheet, source.bonus, source.times);
     sources.push(source);
   }
+  for (const source of resolveTalents(cls, hero).sources) {
+    addBonus(sheet, source.bonus, source.times);
+    sources.push(source);
+  }
   return { sheet, sources };
+}
+
+/** Les modificateurs d'une partie : la Lanterne, puis les talents du héros par-dessus. */
+export function runMods(data: GameData, save: Save, classId: string, base: RunMods): RunMods {
+  const cls = data.classes[classId];
+  if (!cls) return base;
+  return stackMods(base, resolveTalents(cls, save.heroes[classId] ?? newHero()).mods);
 }
 
 /**

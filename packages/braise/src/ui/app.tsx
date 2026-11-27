@@ -3,6 +3,7 @@ import { DialogueBox } from './dialogue.tsx';
 import { CampScreen } from './camp.tsx';
 import { DoorScreen } from './door.tsx';
 import { LanternScreen } from './lantern.tsx';
+import { TalentsScreen } from './talents.tsx';
 import { ChestScreen, FindScreen, ForgeScreen, Hud, LevelUp, PauseScreen, ShopScreen, TotemScreen } from './run.tsx';
 import { Altar, CinematicScreen, EndScreen, Memories, SceneScreen, SettingsScreen, Title } from './screens.tsx';
 import { actions, overlay, screen } from './store.ts';
@@ -21,6 +22,7 @@ export function App(): JSX.Element {
       {s === 'memories' ? <Memories /> : null}
       {s === 'altar' ? <Altar /> : null}
       {s === 'lantern' ? <LanternScreen /> : null}
+      {s === 'talents' ? <TalentsScreen /> : null}
       {s === 'settings' ? <SettingsScreen onClose={() => actions().goto('camp')} /> : null}
       {s === 'run' ? <Hud /> : null}
       {s === 'run' && o === 'levelup' ? <LevelUp /> : null}

@@ -1,6 +1,7 @@
 {
   "maxLevel": 60,
   "pointsPerLevel": { "auto": 2, "free": 1, "talent": 1 },
+  "talentTiers": [0, 5, 10, 15],
   "xpCurve": { "base": 100, "linear": 50, "quadratic": 6 },
   "shardCurve": { "base": 25000, "growth": 1.02 },
   "baseHp": 80,

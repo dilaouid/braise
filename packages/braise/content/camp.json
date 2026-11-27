@@ -7,6 +7,6 @@
     { "id": "lantern", "x": 262, "y": 220, "box": [24, 40], "reach": 34, "stand": [254, 234], "solid": { "rx": 12, "ry": 7 } },
     { "id": "cream", "x": 288, "y": 220, "box": [28, 28], "reach": 34, "stand": [294, 234], "solid": { "rx": 14, "ry": 7 } },
     { "id": "memories", "x": 236, "y": 148, "box": [34, 44], "reach": 42, "stand": [236, 168], "solid": { "rx": 18, "ry": 9 } },
-    { "id": "fire", "x": 414, "y": 208, "box": [44, 44], "reach": 0, "stand": [392, 222], "solid": { "rx": 22, "ry": 11 } }
+    { "id": "fire", "x": 414, "y": 208, "box": [44, 44], "reach": 46, "stand": [392, 222], "solid": { "rx": 22, "ry": 11 } }
   ]
 }

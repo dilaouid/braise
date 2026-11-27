@@ -123,6 +123,8 @@ export const EV = {
   toll: 64, vanish: 65, appear: 66, wispPop: 67, toadBurst: 68,
   /** La Dame chante (un souffle entre deux attaques). */
   bossHum: 69,
+  /** Une fiole s'est remplie seule (Second souffle). */
+  flaskRefill: 70,
 } as const;
 
 /** Une flaque de vase : le héros qui la traverse est ralenti. */
@@ -408,6 +410,8 @@ export interface Hero {
   wading: boolean;
   /** Secondes d'élan qui restent après une esquive juste ; faux tant que la ruée en cours n'en a pas donné. */
   dodgeT: number; dodged: boolean;
+  /** Secondes de Feinte (critique en plus) qui restent après une ruée. */
+  feintT: number;
   /** L'élan d'une étreinte : une vitesse qui s'amortit. */
   pullX: number; pullY: number;
   level: number; xp: number; xpNext: number;
@@ -576,6 +580,10 @@ export interface Run {
   gemsHeld: number;
   /** Résurrections déjà utilisées. */
   revived: number;
+  /** Talents : minuterie de la fiole qui se remplit seule, du Phare, et le Dernier rempart déjà tenu. */
+  flaskT: number;
+  pulseT: number;
+  lastStandUsed: boolean;
   weapons: WeaponInstance[];
   relics: RelicInstance[];
   acquired: number;

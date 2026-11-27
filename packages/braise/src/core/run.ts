@@ -66,7 +66,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     dashT: 0, dashCd: 0, dashX: 0, dashY: 1, dashCharges: 1 + (cfg.mods?.dashCharges ?? 0),
     flasks: stats.flasks, skillCd: 0, buffT: 0, ultGauge: 0, ultT: 0, ultTick: 0,
     revives: stats.revives,
-    mireT: 0, drainT: 0, wading: false, dodgeT: 0, dodged: false, pullX: 0, pullY: 0,
+    mireT: 0, drainT: 0, wading: false, dodgeT: 0, dodged: false, feintT: 0, pullX: 0, pullY: 0,
     level: 1, xp: 0, xpNext: runXpForNext(1, tuning.xp),
     gold: 0, goldSpent: 0, ashDrops: 0, gems: 0, kills: 0, elites: 0, bossKills: 0,
     rerolls: stats.rerolls, banishes: stats.banishes, damageTaken: 0,
@@ -87,7 +87,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     rngMap, rngSpawn, rngDraw, rngCombat, rngLantern,
     tick: 0, time: 0, phase: 'playing',
     map, hero, sheet,
-    mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, dashFromX: 0, dashFromY: 0, trailLeft: 0, gemsHeld: 0, revived: 0,
+    mods: cfg.mods ?? NEUTRAL_MODS, recallT: 0, haloT: 0, dashFromX: 0, dashFromY: 0, trailLeft: 0, gemsHeld: 0, revived: 0, flaskT: 0, pulseT: 0, lastStandUsed: false,
     weapons: [], relics: [], acquired: 0,
     enemies: createEnemyStore(), shots: createShotStore(), enemyShots: createEnemyShotStore(),
     zones: createZoneStore(), lamps: [], threads: [], mires: [], dim: 1, blind: 1,
@@ -135,7 +135,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
 
 /** La recharge de la ruée, Lanterne comprise. */
 export function dashCooldown(run: Run): number {
-  return run.data.tuning.dash.cooldown * run.mods.dashCooldownMult;
+  return Math.max(0.4, run.data.tuning.dash.cooldown * run.mods.dashCooldownMult - run.mods.dashCooldownCut);
 }
 
 /** L'anneau de la ruée : plein (1) tant qu'une charge est prête, sinon la part déjà revenue de la prochaine. */
@@ -255,6 +255,7 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
   if (hero.mireT > 0) hero.mireT -= dt;
   if (hero.drainT > 0) hero.drainT -= dt;
   if (hero.dodgeT > 0) hero.dodgeT -= dt;
+  if (hero.feintT > 0) hero.feintT -= dt;
   // Mordu par des sangsues, le héros ne se régénère plus.
   if (hero.drainT <= 0 && hero.hp < hero.stats.maxHp) hero.hp = Math.min(hero.stats.maxHp, hero.hp + hero.stats.regen * run.mods.healMult * dt);
 
@@ -285,6 +286,8 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
   if (input.dash && hero.dashT <= 0 && hero.dashCharges > 0) {
     hero.dashCharges--;
     hero.dashT = tuning.dash.duration;
+    // La Feinte : un instant de critique en plus après la ruée.
+    if (run.mods.dashCrit > 0) hero.feintT = tuning.dash.duration + FEINT_SECONDS;
     if (hero.dashCd <= 0) hero.dashCd = dashCooldown(run);
     run.trailLeft = 0;
     run.dashFromX = hero.x;
@@ -347,6 +350,9 @@ function moveHero(run: Run, input: StepInput, dt: number): void {
 
 /** Ce que la marée retire à la marche quand la carte n'a pas d'eau à elle. */
 const WADE_SLOW = 0.3;
+/** Talents : la Feinte dure 2 s après la ruée, le Dernier rempart rend 3 s d'invulnérabilité. */
+const FEINT_SECONDS = 2;
+const LAST_STAND_SECONDS = 3;
 
 /** Fiole, compétence et ultime. Appelé après la reconstruction de la grille. */
 function heroAbilities(run: Run, input: StepInput, dt: number): void {
@@ -357,10 +363,26 @@ function heroAbilities(run: Run, input: StepInput, dt: number): void {
 
   if (input.flask && !run.mods.noFlask && hero.flasks > 0 && hero.hp < hero.stats.maxHp) {
     hero.flasks--;
-    healHero(run, hero.stats.maxHp * tuning.flask.healShare);
+    healHero(run, hero.stats.maxHp * tuning.flask.healShare * run.mods.flaskHealMult);
     emit(run, EV.flask, hero.x, hero.y);
     tutorialNote(run, 'flask');
   }
+
+  // Second souffle : une fiole se remplit seule.
+  if (run.mods.flaskRefillEvery > 0 && !run.mods.noFlask) {
+    if (hero.flasks < hero.stats.flasks) {
+      run.flaskT += dt;
+      if (run.flaskT >= run.mods.flaskRefillEvery) {
+        run.flaskT = 0;
+        hero.flasks++;
+        emit(run, EV.flaskRefill, hero.x, hero.y);
+      }
+    } else {
+      run.flaskT = 0;
+    }
+  }
+  // Le Phare : sa minuterie tourne toute la partie.
+  if (run.mods.beaconPulse > 0) run.pulseT += dt;
 
   // Ruée ardente : la Brûlure se rafraîchit sans se cumuler, la reposer à chaque pas ne change rien.
   if (run.mods.dashBurn > 0 && hero.dashT > 0) {
@@ -561,6 +583,12 @@ export function stepRun(run: Run, input: StepInput): void {
     if (bossKilled) {
       // Boss battu dans la même image : la victoire l'emporte.
       hero.hp = 1;
+    } else if (run.mods.lastStand && !run.lastStandUsed && !run.tutorial) {
+      // Dernier rempart : une fois, avant les résurrections.
+      run.lastStandUsed = true;
+      hero.hp = 1;
+      hero.invuln = LAST_STAND_SECONDS;
+      emit(run, EV.heroRevive, hero.x, hero.y);
     } else if (hero.revives > 0) {
       hero.revives--;
       const share = run.revived === 0 && run.mods.firstReviveShare > 0 ? run.mods.firstReviveShare : tuning.hero.reviveHpShare;

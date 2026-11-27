@@ -634,6 +634,7 @@ export class GameRenderer {
       case EV.toadBurst:
         for (let k = 0; k < 5; k++) this.puff(x + Math.cos(k * 1.3) * 12, y + Math.sin(k * 1.3) * 9, this.puffFrames, 0x5f8a4e, 9);
         break;
+      case EV.flaskRefill: this.addFx(FX_RING, x, y - 8, 40, C.emberPale, 2, 0.5); break;
       case EV.beaconLit: this.addFx(FX_RING, x, y - 8, 86, C.tealPale, 2, 0.6); break;
       case EV.dodge:
         this.addFx(FX_RING, x, y - 6, 34, C.white, 2, 0.3);

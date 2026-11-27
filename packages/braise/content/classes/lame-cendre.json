@@ -8,5 +8,53 @@
   "startWeapon": "weapon.scythe",
   "trait": { "kind": "lit", "inside": 0.1, "outside": -0.1 },
   "skill": { "id": "skill.ember-cry", "icon": "icon-skill-ember-cry", "kind": "emberCry", "cooldown": 12, "radius": 80, "knockback": 220, "damageBonus": 0.25, "duration": 5, "autoRange": 70 },
-  "ultimate": { "id": "ultimate.ardent-whirl", "icon": "icon-ultimate-ardent-whirl", "kind": "whirl", "duration": 4, "radius": 70, "ticksPerSecond": 4, "damage": 14, "damageType": "fire", "scale": "str", "autoRange": 70 }
+  "ultimate": { "id": "ultimate.ardent-whirl", "icon": "icon-ultimate-ardent-whirl", "kind": "whirl", "duration": 4, "radius": 70, "ticksPerSecond": 4, "damage": 14, "damageType": "fire", "scale": "str", "autoRange": 70 },
+  "tree": {
+    "branches": ["rampart", "stride", "glow"],
+    "nodes": [
+      { "id": "talent.thick-hide", "icon": "icon-altar-endurance", "branch": "rampart", "tier": 1, "ranks": 5, "perRank": { "maxHpShare": 0.04 } },
+      { "id": "talent.steady-foot", "icon": "icon-boon-vein", "branch": "rampart", "tier": 1, "ranks": 5, "perRank": { "regen": 0.15 } },
+      { "id": "talent.spare-flask", "icon": "icon-flask", "branch": "rampart", "tier": 2, "ranks": 3, "levels": [
+        { "stats": { "flasks": 1 } },
+        { "stats": { "flasks": 1 }, "mods": { "flaskHealMult": 1.1 } },
+        { "stats": { "flasks": 2 }, "mods": { "flaskHealMult": 1.1 } }
+      ] },
+      { "id": "talent.deep-draught", "icon": "icon-service-balm", "branch": "rampart", "tier": 2, "ranks": 5, "levels": [
+        { "mods": { "healMult": 1.06 } }, { "mods": { "healMult": 1.12 } }, { "mods": { "healMult": 1.18 } }, { "mods": { "healMult": 1.24 } }, { "mods": { "healMult": 1.3 } }
+      ] },
+      { "id": "talent.second-wind", "icon": "icon-find-flask", "branch": "rampart", "tier": 3, "ranks": 3, "levels": [
+        { "mods": { "flaskRefillEvery": 90 } }, { "mods": { "flaskRefillEvery": 70 } }, { "mods": { "flaskRefillEvery": 50 } }
+      ] },
+      { "id": "talent.last-stand", "icon": "icon-rune-reprieve", "branch": "rampart", "tier": 4, "ranks": 1, "levels": [{ "mods": { "lastStand": true } }] },
+
+      { "id": "talent.supple", "icon": "icon-dash", "branch": "stride", "tier": 1, "ranks": 5, "levels": [
+        { "mods": { "dashCooldownMult": 0.96 } }, { "mods": { "dashCooldownMult": 0.92 } }, { "mods": { "dashCooldownMult": 0.88 } },
+        { "mods": { "dashCooldownMult": 0.84 } }, { "mods": { "dashCooldownMult": 0.8 } }
+      ] },
+      { "id": "talent.light-legs", "icon": "icon-boon-stride", "branch": "stride", "tier": 1, "ranks": 5, "perRank": { "speedShare": 0.015 } },
+      { "id": "talent.second-dash", "icon": "icon-rune-burning-dash", "branch": "stride", "tier": 2, "ranks": 3, "levels": [
+        { "mods": { "dashCharges": 1 } }, { "mods": { "dashCharges": 1, "dashCooldownCut": 0.3 } }, { "mods": { "dashCharges": 1, "dashCooldownCut": 0.6 } }
+      ] },
+      { "id": "talent.long-momentum", "icon": "icon-boon-breath", "branch": "stride", "tier": 2, "ranks": 5, "levels": [
+        { "mods": { "dodgeExtra": 0.4 } }, { "mods": { "dodgeExtra": 0.8 } }, { "mods": { "dodgeExtra": 1.2 } }, { "mods": { "dodgeExtra": 1.6 } }, { "mods": { "dodgeExtra": 2 } }
+      ] },
+      { "id": "talent.feint", "icon": "icon-boon-edge", "branch": "stride", "tier": 3, "ranks": 3, "levels": [
+        { "mods": { "dashCrit": 0.15 } }, { "mods": { "dashCrit": 0.3 } }, { "mods": { "dashCrit": 0.45 } }
+      ] },
+      { "id": "talent.elusive", "icon": "icon-rune-hunt", "branch": "stride", "tier": 4, "ranks": 1, "levels": [{ "mods": { "dodgeRefill": true } }] },
+
+      { "id": "talent.great-fire", "icon": "icon-altar-glow", "branch": "glow", "tier": 1, "ranks": 5, "perRank": { "glowShare": 0.05 } },
+      { "id": "talent.ember-eye", "icon": "icon-boon-glow", "branch": "glow", "tier": 1, "ranks": 5, "levels": [
+        { "mods": { "litPower": 0.02 } }, { "mods": { "litPower": 0.04 } }, { "mods": { "litPower": 0.06 } }, { "mods": { "litPower": 0.08 } }, { "mods": { "litPower": 0.1 } }
+      ] },
+      { "id": "talent.fog-piercer", "icon": "icon-glass-polished", "branch": "glow", "tier": 2, "ranks": 3, "levels": [
+        { "mods": { "fogResist": 0.25 } }, { "mods": { "fogResist": 0.5 } }, { "mods": { "fogResist": 0.75 } }
+      ] },
+      { "id": "talent.wide-fire", "icon": "icon-find-lantern-glass", "branch": "glow", "tier": 2, "ranks": 5, "perRank": { "zone": 0.03 } },
+      { "id": "talent.halo", "icon": "icon-rune-live-ember", "branch": "glow", "tier": 3, "ranks": 3, "levels": [
+        { "mods": { "haloBurn": 2 } }, { "mods": { "haloBurn": 4 } }, { "mods": { "haloBurn": 6 } }
+      ] },
+      { "id": "talent.beacon", "icon": "icon-rune-last-glow", "branch": "glow", "tier": 4, "ranks": 1, "levels": [{ "mods": { "beaconPulse": 20 } }] }
+    ]
+  }
 }

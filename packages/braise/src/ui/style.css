@@ -294,6 +294,28 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost.unlock { padding: 0 5px; align-items: center; }
 .boost.unlock .boost-icon { width: 24px; height: 22px; border: 0; background: none; }
 .boost.unlock .boost-body { flex: 1; flex-direction: row; gap: 6px; align-items: center; }
+
+/* Le feu de camp : l'arbre de Moon, trois branches en colonnes, quatre étages chacune. */
+.talents-panel { position: absolute; left: 40px; right: 40px; top: 6px; bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
+.talents-panel header { display: flex; justify-content: space-between; align-items: center; }
+.talents-points.bad { color: var(--danger-0); }
+.talent-tree { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; flex: 1; }
+.talent-branch { display: flex; flex-direction: column; gap: 4px; justify-content: space-between; padding-bottom: 6px; }
+.talent-branch h2 { margin: 0; line-height: 10px; }
+.talent-tier { display: flex; gap: 4px; justify-content: center; position: relative; }
+.talent-tier + .talent-tier::before { content: ''; position: absolute; left: 50%; top: -9px; height: 8px; border-left: 1px solid var(--ash-1); }
+.talent { flex: 1; max-width: 50%; display: flex; gap: 5px; padding: 6px 5px; background: var(--night-2); border: 1px solid var(--ash-1); align-items: center; }
+.talent.master { max-width: 70%; border-color: var(--ember-3); }
+.talent.is-focused { background: var(--night-3); border-color: var(--ember-1); }
+.talent.locked > * { opacity: 0.4; }
+.talent.ready .talent-icon { border-color: var(--ember-1); }
+.talent.full .talent-name { color: var(--ember-0); }
+.talent-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: var(--night-0); border: 1px solid var(--ash-1); flex: none; }
+.talent-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.talent-name { color: var(--ash-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.talent-detail { display: flex; flex-direction: column; gap: 2px; min-height: 40px; padding: 4px 6px; background: var(--night-1); border: 1px solid var(--ash-1); }
+.talent-detail b { color: var(--ember-1); }
+.talent-detail .bad { color: var(--danger-0); }
 .boost.unlock .boost-cost, .boost.unlock .boost-line.gold { margin-left: auto; }
 .boost.unlock .boost-icon { border-color: var(--rarity); }
 .boost.unlock .boost-name { color: var(--rarity); }
