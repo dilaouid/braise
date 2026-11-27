@@ -15,10 +15,9 @@ export interface RunResult {
   gems: number;
   braziers: number;
   evolutions: number;
-  /** Ramassé pendant la partie (avec l'Avidité), avant la part gardée. */
-  goldCollected: number;
-  goldKept: number;
-  /** Or dépensé chez les marchands : il n'est pas ramené au camp. */
+  /** L'or qui restait à la fin : il ne sert qu'aux marchands et ne quitte pas la partie. */
+  goldLeft: number;
+  /** Or dépensé chez les marchands. */
   goldSpent: number;
   ashesCollected: number;
   ashesKept: number;
@@ -41,7 +40,6 @@ export function computeResult(run: Run): RunResult {
   const victory = outcome === 'victory';
   const bonus = victory ? tuning.victoryBonus : 1;
   const share = victory ? 1 : tuning.death.keptShare;
-  const goldCollected = Math.round(hero.gold * (1 + hero.stats.greed));
   const ashesCollected = Math.round((tuning.ashes.perMinute * minutes + hero.ashDrops) * (1 + 0.5 * v));
   const rw = run.data.heroTuning.rewards;
   const heroXp = Math.round(
@@ -70,8 +68,7 @@ export function computeResult(run: Run): RunResult {
     gems: hero.gems,
     braziers: run.braziersLit,
     evolutions: run.evolutions,
-    goldCollected,
-    goldKept: Math.round(goldCollected * bonus * share),
+    goldLeft: hero.gold,
     goldSpent: hero.goldSpent,
     ashesCollected,
     ashesKept: Math.round(ashesCollected * bonus * share),

@@ -87,12 +87,12 @@
     "id": "weapon.storm-watch", "icon": "icon-weapon-storm-watch", "damageType": "lightning", "scale": "spi", "aim": "nearest", "behavior": "chain",
     "relic": "relic.copper-coil", "evolution": "weapon.black-storm", "starting": false,
     "levels": [
-      { "damage": 11, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 3, "jumpRange": 80 },
-      { "damage": 11, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 4, "jumpRange": 80 },
-      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 4, "jumpRange": 80 },
-      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 6, "jumpRange": 80 },
-      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 1, "jumps": 6, "jumpRange": 80, "shock": true },
-      { "damage": 15, "cooldown": 1.8, "range": 180, "count": 2, "jumps": 6, "jumpRange": 80, "shock": true }
+      { "damage": 12, "cooldown": 1.7, "range": 190, "count": 1, "jumps": 3, "jumpRange": 85 },
+      { "damage": 12, "cooldown": 1.7, "range": 190, "count": 2, "jumps": 3, "jumpRange": 85 },
+      { "damage": 16, "cooldown": 1.7, "range": 190, "count": 2, "jumps": 4, "jumpRange": 85 },
+      { "damage": 16, "cooldown": 1.7, "range": 190, "count": 2, "jumps": 4, "jumpRange": 85, "splash": 30 },
+      { "damage": 19, "cooldown": 1.7, "range": 190, "count": 2, "jumps": 5, "jumpRange": 85, "splash": 30, "shock": true },
+      { "damage": 22, "cooldown": 1.4, "range": 190, "count": 3, "jumps": 5, "jumpRange": 85, "splash": 40, "shock": true }
     ]
   },
   {

@@ -49,7 +49,7 @@ const PARAM_DEFAULTS: WeaponParams = {
   active: 0, pause: 0, hitInterval: 0.5, orbRadius: 6, turnTime: 2, rings: 1, ringGap: 0, sparkEvery: 0, sparkDamage: 0,
   impactRadius: 0, flight: 0.5, puddleRadius: 0, puddleDuration: 0, puddleDamage: 0, puddleTick: 0.5, puddleGrow: 0,
   knockback: 0, stun: 0, waves: 1, fissures: 0, fissureLength: 0, fissureWidth: 0, fissureDamage: 0,
-  freeze: false, shock: false, band: 0, bite: 0, jumps: 0, jumpRange: 0, jumpsIntoLight: false,
+  freeze: false, shock: false, band: 0, bite: 0, jumps: 0, jumpRange: 0, jumpsIntoLight: false, splash: 0, splashShare: 0.5,
   radiusShare: 0, life: 0, max: 0, scatter: 0, linkRange: 0, linkDamage: 0, linkWidth: 0, width: 0, minLength: 0, crossRadius: 0, crossDamage: 0,
 };
 

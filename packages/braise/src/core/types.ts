@@ -99,7 +99,7 @@ export const EV = {
   pieceDrop: 48,
   /** De la Lueur est brûlée pour une Flamme (a : les points). */
   flameFeed: 49,
-  /** Un éclair frappe (x, y) depuis (a, b) ; c vaut 1 quand il tombe du ciel. */
+  /** Un éclair frappe (x, y) depuis (a, b) ; c : 1 quand il tombe du ciel, + 2 quand il est épais (il éclate). */
   bolt: 50,
   /** Le bord de la lumière touche un Éteint. */
   frost: 51,
@@ -137,6 +137,10 @@ export interface Beacon {
   x: number; y: number;
   /** Secondes de lumière qui lui restent (0 : éteinte). */
   life: number;
+  /** Éteinte, secondes avant qu'on puisse la raviver de nouveau. */
+  rest: number;
+  /** Secondes avant que sa lumière brûle de nouveau les Éteints. */
+  tick: number;
 }
 
 /** La marée de la Dame de Vase. */

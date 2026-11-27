@@ -164,7 +164,6 @@ export interface RunSummary {
 /** Verse le résultat d'une expédition dans la sauvegarde : monnaies, expérience, codex, régions. */
 export function applyRunResult(save: Save, data: GameData, result: RunResult): RunSummary {
   const acc = save.account;
-  acc.gold = Math.min(CURRENCY_CAP, acc.gold + result.goldKept);
   acc.ashes = Math.min(CURRENCY_CAP, acc.ashes + result.ashesKept);
   const cls = data.classes[result.classId];
   const hero = (save.heroes[result.classId] ??= newHero());

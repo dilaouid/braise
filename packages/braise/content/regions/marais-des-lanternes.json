@@ -7,7 +7,7 @@
   "darkness": { "color": "#0b0f1a", "opacity": 0.54 },
   "water": { "threshold": 0.56, "slow": 0.3 },
   "fog": { "glowMult": 0.8 },
-  "beacons": { "count": 14, "sprite": "decor-lanterne-noyee", "radius": 78, "reach": 30, "seconds": 22 },
+  "beacons": { "count": 14, "sprite": "decor-lanterne-noyee", "radius": 88, "reach": 30, "seconds": 15, "rest": 20, "heal": 0.03, "scorch": 0.12, "eliteScorch": 0.015, "tick": 0.5 },
   "waveEnemy": "enemy.drowned",
   "music": { "calm": "music-marais", "boss": "music-dame" },
   "enemies": [

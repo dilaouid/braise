@@ -47,11 +47,13 @@ describe('les armes de Clair-obscur : le contenu', () => {
   it('Guet d\'orage : Foudre, les valeurs du design', () => {
     const w = weapon('weapon.storm-watch');
     expect(w).toMatchObject({ damageType: 2, scale: 'spi', aim: 'nearest', behavior: 'chain' });
-    expect(w.levels[0]).toMatchObject({ damage: 11, cooldown: 1.8, range: 180, count: 1, jumps: 3, jumpRange: 80, shock: false, jumpsIntoLight: false });
-    expect(w.levels.map((l) => l.jumps)).toEqual([3, 4, 4, 6, 6, 6]);
+    expect(w.levels[0]).toMatchObject({ damage: 12, cooldown: 1.7, range: 190, count: 1, jumps: 3, jumpRange: 85, shock: false, jumpsIntoLight: false });
+    expect(w.levels.map((l) => l.count)).toEqual([1, 2, 2, 2, 2, 3]);
+    expect(w.levels.map((l) => l.jumps)).toEqual([3, 3, 4, 4, 5, 5]);
+    expect(w.levels.map((l) => l.splash)).toEqual([0, 0, 0, 30, 30, 40]);
     expect(w.levels.map((l) => l.shock)).toEqual([false, false, false, false, true, true]);
-    expect(w.levels[5]).toMatchObject({ damage: 15, count: 2 });
-    expect(weapon('weapon.black-storm').levels[0]).toMatchObject({ damage: 17, cooldown: 1.6, range: 180, count: 3, jumps: 6, shock: true, jumpsIntoLight: true });
+    expect(w.levels[5]).toMatchObject({ damage: 22, cooldown: 1.4 });
+    expect(weapon('weapon.black-storm').levels[0]).toMatchObject({ damage: 30, cooldown: 1.2, range: 220, count: 4, jumps: 7, shock: true, jumpsIntoLight: true, splash: 48 });
   });
 
   it('Veilleuses : Feu, les valeurs du design', () => {

@@ -641,13 +641,16 @@ export function updateEnemies(run: Run, dt: number): void {
         break;
       }
       case BH.grabber: {
-        // La Main noyée : elle replonge et ressort sous Moon, un peu devant lui s'il marche. Touché, il est retenu.
+        // La Main noyée nage sous l'eau vers Moon : on voit ses remous approcher. Tout près, elle ressort là où il
+        // se tient (jamais devant lui), reste dressée un instant, vulnérable, puis replonge. Touché, il est retenu.
         const g = def.grab!;
-        if (e.state[i] === 0) {
+        const state = e.state[i]!;
+        if (state === 0) {
           e.timer2[i]! -= dt;
-          if (e.timer2[i]! <= 0 && dist < g.reach) {
-            const tx = hero.x + (hero.moving ? hero.faceX * g.lead : 0);
-            const ty = hero.y + (hero.moving ? hero.faceY * g.lead : 0);
+          if (dist > g.rise * 0.5) approach(run, i, dx, dy, g.swim * factor * dt, def.flying, def.radius, dt);
+          if (e.timer2[i]! <= 0 && dist < g.rise && risingHands(run) < g.maxRising) {
+            const tx = hero.x;
+            const ty = hero.y;
             if (isSolidAt(map, tx, ty)) {
               e.timer2[i] = 0.4;
             } else {
@@ -658,10 +661,16 @@ export function updateEnemies(run: Run, dt: number): void {
               emit(run, EV.handRise, tx, ty, g.telegraph, 0);
             }
           }
-        } else {
+        } else if (state === 1) {
           e.timer[i]! -= dt;
           if (e.timer[i]! <= 0) {
             if (strikeCircle(run, e.x[i]!, e.y[i]!, g.radius, g.damage * damageScale(run, def), e.kind[i]!)) mireHero(run, g.slow, 0);
+            e.state[i] = 2;
+            e.timer[i] = g.linger;
+          }
+        } else {
+          e.timer[i]! -= dt;
+          if (e.timer[i]! <= 0) {
             e.state[i] = 0;
             e.timer2[i] = g.cooldown;
           }
@@ -1004,6 +1013,16 @@ export function updateEnemyShots(run: Run, dt: number): void {
   }
 }
 
+/** Le nombre de Mains noyées en train de sortir : au-delà de `maxRising`, les autres attendent sous l'eau. */
+function risingHands(run: Run): number {
+  const e = run.enemies;
+  let n = 0;
+  for (let i = 0; i < e.count; i++) {
+    if (e.state[i] === 1 && run.enemyBehavior[e.kind[i]!] === BH.grabber) n++;
+  }
+  return n;
+}
+
 /** Dégâts de contact des ennemis sur le héros. */
 export function contactDamage(run: Run): void {
   const hero = run.hero;
@@ -1019,6 +1038,8 @@ export function contactDamage(run: Run): void {
     const def = run.data.enemies[e.kind[i]!]!;
     // Un Crapaud en l'air ne touche personne : c'est sa chute qui frappe.
     if (def.leap !== undefined && e.state[i] === 1) continue;
+    // Une Main noyée sous l'eau, ou qui sort, ne touche pas : seul son coup frappe ; dressée, elle touche.
+    if (def.grab !== undefined && e.state[i] !== 2) continue;
     if (def.drain !== undefined && def.drain > drain) drain = def.drain;
     const charging = def.charge !== undefined && e.state[i] === 2;
     const dmg = (charging ? def.charge!.damage : def.damage) * damageScale(run, def);

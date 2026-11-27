@@ -239,6 +239,57 @@ describe('la brume et les lanternes noyées', () => {
     expect(b.life).toBe(0);
   });
 
+  it('éteinte, elle se repose : on ne la ravive pas avant la fin de son repos', () => {
+    const run = makeMarsh();
+    const bc = region.beacons!;
+    const b = run.map.beacons[0]!;
+    b.life = 0.01;
+    place(run, b.x + 8, b.y);
+    updateMarsh(run, DT);
+    expect(b.life).toBe(0);
+    expect(b.rest).toBeCloseTo(bc.rest, 5);
+    for (let k = 0; k < 60; k++) updateMarsh(run, DT);
+    expect(b.life).toBe(0);
+    b.rest = 0.01;
+    updateMarsh(run, DT);
+    updateMarsh(run, DT);
+    expect(b.life).toBeCloseTo(bc.seconds, 1);
+  });
+
+  it('dans la lumière d\'une lanterne, Moon se soigne, sauf saigné', () => {
+    const run = makeMarsh();
+    const b = run.map.beacons[0]!;
+    b.life = 10;
+    place(run, b.x + 30, b.y);
+    run.hero.hp = run.hero.stats.maxHp * 0.5;
+    const before = run.hero.hp;
+    for (let k = 0; k < 60; k++) updateMarsh(run, DT);
+    expect(run.hero.hp - before).toBeCloseTo(region.beacons!.heal * run.hero.stats.maxHp, 0);
+    run.hero.drainT = 5;
+    const drained = run.hero.hp;
+    for (let k = 0; k < 60; k++) updateMarsh(run, DT);
+    expect(run.hero.hp).toBe(drained);
+  });
+
+  it('dans sa lumière, les Éteints brûlent et ralentissent ; pas la Dame', () => {
+    const run = makeMarsh();
+    run.enemies.count = 0;
+    const b = run.map.beacons[0]!;
+    b.life = 10;
+    const far = findSpot(run, false);
+    place(run, far.x, far.y);
+    const weak = spawnEnemy(run, kindOf('enemy.drowned'), b.x + 20, b.y, 1);
+    const boss = spawnEnemy(run, kindOf('boss.mud-lady'), b.x - 20, b.y, 1);
+    const outside = spawnEnemy(run, kindOf('enemy.drowned'), b.x + region.beacons!.radius + 30, b.y, 1);
+    buildGrid(run);
+    updateMarsh(run, DT);
+    const e = run.enemies;
+    expect(e.hp[weak]!).toBeLessThan(e.maxHp[weak]!);
+    expect(e.slowT[weak]!).toBeGreaterThan(0);
+    expect(e.hp[boss]!).toBe(e.maxHp[boss]!);
+    expect(e.hp[outside]!).toBe(e.maxHp[outside]!);
+  });
+
   it('une Lanterne-mère vivante et proche divise encore la Lueur ; morte, elle la rend', () => {
     const run = makeMarsh();
     const dry = findSpot(run, false);
@@ -443,7 +494,7 @@ describe('les Éteints du Marais', () => {
     expect(Math.hypot(run.mires[0]!.x - x, run.mires[0]!.y - y)).toBeLessThan(1);
   });
 
-  it('la Main noyée ressort devant Moon qui marche, et le retient si elle le touche', () => {
+  it('la Main noyée nage vers Moon, ressort là où il se tient, le retient, reste dressée puis replonge', () => {
     const run = makeMarsh();
     const dry = findSpot(run, false);
     place(run, dry.x, dry.y);
@@ -451,21 +502,43 @@ describe('les Éteints du Marais', () => {
     run.enemies.count = 0;
     const kind = kindOf('enemy.drowned-hand');
     const def = data.enemies[kind]!;
+    const g = def.grab!;
     const i = spawnEnemy(run, kind, run.hero.x + 300, run.hero.y, 1);
-    const input = idleInput();
-    input.moveX = 1;
-    stepRun(run, input);
+    // De loin, elle ne surgit pas : elle nage vers lui.
+    updateEnemies(run, DT);
+    expect(run.enemies.state[i]).toBe(0);
+    const before = Math.hypot(run.enemies.x[i]! - run.hero.x, run.enemies.y[i]! - run.hero.y);
+    for (let k = 0; k < 20; k++) updateEnemies(run, DT);
+    expect(Math.hypot(run.enemies.x[i]! - run.hero.x, run.enemies.y[i]! - run.hero.y)).toBeLessThan(before);
+    // Tout près, elle ressort sous lui, pas devant.
+    run.enemies.x[i] = run.hero.x + g.rise - 10;
+    run.enemies.y[i] = run.hero.y;
+    updateEnemies(run, DT);
     expect(run.enemies.state[i]).toBe(1);
-    // Elle est sortie devant lui : il n'a qu'à s'arrêter pour être pris.
-    expect(run.enemies.x[i]! - run.hero.x).toBeGreaterThan(def.grab!.lead - 6);
-    place(run, run.enemies.x[i]!, run.enemies.y[i]!);
-    run.hero.invuln = 0;
-    for (let k = 0; k < Math.ceil(def.grab!.telegraph / DT) + 1; k++) {
+    expect(Math.hypot(run.enemies.x[i]! - run.hero.x, run.enemies.y[i]! - run.hero.y)).toBeLessThan(1);
+    for (let k = 0; k < Math.ceil(g.telegraph / DT) + 1; k++) {
       run.hero.invuln = 0;
       updateEnemies(run, DT);
     }
+    expect(run.enemies.state[i]).toBe(2);
+    expect(run.hero.mireT).toBeCloseTo(g.slow, 1);
+    for (let k = 0; k < Math.ceil(g.linger / DT) + 1; k++) updateEnemies(run, DT);
     expect(run.enemies.state[i]).toBe(0);
-    expect(run.hero.mireT).toBeCloseTo(def.grab!.slow, 1);
+  });
+
+  it('jamais plus de deux Mains noyées ne sortent à la fois', () => {
+    const run = makeMarsh();
+    const dry = findSpot(run, false);
+    place(run, dry.x, dry.y);
+    run.weapons.length = 0;
+    run.enemies.count = 0;
+    const kind = kindOf('enemy.drowned-hand');
+    const g = data.enemies[kind]!.grab!;
+    for (let k = 0; k < 5; k++) spawnEnemy(run, kind, run.hero.x + 20 + k * 4, run.hero.y, 1);
+    updateEnemies(run, DT);
+    let rising = 0;
+    for (let k = 0; k < run.enemies.count; k++) if (run.enemies.state[k] === 1) rising++;
+    expect(rising).toBe(g.maxRising);
   });
 
   it('le Passeur reparaît dans le dos de Moon, puis frappe de sa perche', () => {

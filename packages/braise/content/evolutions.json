@@ -37,7 +37,7 @@
   {
     "id": "weapon.black-storm", "icon": "icon-evo-black-storm", "from": "weapon.storm-watch", "relic": "relic.copper-coil",
     "damageType": "lightning", "scale": "spi", "aim": "nearest", "behavior": "chain",
-    "params": { "damage": 17, "cooldown": 1.6, "range": 180, "count": 3, "jumps": 6, "jumpRange": 80, "shock": true, "jumpsIntoLight": true }
+    "params": { "damage": 30, "cooldown": 1.2, "range": 220, "count": 4, "jumps": 7, "jumpRange": 95, "shock": true, "jumpsIntoLight": true, "splash": 48, "splashShare": 0.6 }
   },
   {
     "id": "weapon.garland", "icon": "icon-evo-garland", "from": "weapon.nightlights", "relic": "relic.hollow-lantern",

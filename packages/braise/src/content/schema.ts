@@ -68,6 +68,9 @@ export const weaponParamsSchema = z
     jumps: z.number().int().nonnegative().optional(),
     jumpRange: z.number().positive().optional(),
     jumpsIntoLight: z.boolean().optional(),
+    /** Rayon de l'éclat d'un éclair à chaque impact : les Éteints voisins prennent `splashShare` des dégâts. */
+    splash: z.number().positive().optional(),
+    splashShare: z.number().positive().max(1).optional(),
     /** Rayon d'une Veilleuse, en part du disque de lumière. */
     radiusShare: z.number().positive().optional(),
     /** Durée d'une Veilleuse ou d'un fil. */
@@ -360,9 +363,15 @@ export const enemySchema = z
       .optional(),
     /** À sa mort, il éclate : un cercle annoncé, qui frappe et laisse (ou non) de la vase. */
     deathBurst: z.object({ radius: z.number(), damage: z.number(), telegraph: z.number(), mire: mireSchema.optional() }).strict().optional(),
-    /** Une main qui replonge et ressort sous le héros : elle le retient `slow` secondes. */
+    /**
+     * Une main qui nage sous l'eau vers le héros (`swim`), ressort là où il se tient quand il est à moins de `rise`,
+     * reste dressée `linger` secondes, puis replonge. Elle le retient `slow` secondes. Jamais plus de `maxRising` à la fois.
+     */
     grab: z
-      .object({ radius: z.number(), telegraph: z.number(), damage: z.number(), slow: z.number(), cooldown: z.number(), lead: z.number(), reach: z.number() })
+      .object({
+        radius: z.number(), telegraph: z.number(), damage: z.number(), slow: z.number(), cooldown: z.number(),
+        swim: z.number(), rise: z.number(), linger: z.number(), maxRising: z.number().int().positive(),
+      })
       .strict()
       .optional(),
     /** Le Passeur : il disparaît dans la brume et reparaît derrière le héros. */
@@ -475,11 +484,16 @@ export const regionSchema = z
     water: z.object({ threshold: z.number().min(0).max(1), slow: z.number().min(0).max(0.9) }).strict().optional(),
     /** La brume : elle réduit la lueur du héros, hors de la lumière d'une lanterne ravivée. */
     fog: z.object({ glowMult: z.number().positive().max(1) }).strict().optional(),
-    /** Les lanternes noyées que le passage du héros ravive. */
+    /**
+     * Les lanternes noyées que le passage du héros ravive pour `seconds` : un refuge. Dans leur lumière, le héros se
+     * soigne (`heal`, part des PV max par seconde) et les Éteints brûlent (`scorch`, part de leurs PV max à chaque
+     * `tick` ; `eliteScorch` pour les élites, rien pour les boss) et ralentissent. Éteinte, elle se repose `rest` secondes.
+     */
     beacons: z
       .object({
         count: z.number().int().positive(), sprite: z.string(), radius: z.number().positive(), reach: z.number().positive(),
-        seconds: z.number().positive(),
+        seconds: z.number().positive(), rest: z.number().nonnegative(), heal: z.number().nonnegative(),
+        scorch: z.number().nonnegative(), eliteScorch: z.number().nonnegative(), tick: z.number().positive(),
       })
       .strict()
       .optional(),

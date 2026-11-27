@@ -1,9 +1,11 @@
-import type { EnemyDef } from '../content/index.ts';
-import { hurtHero } from './combat.ts';
+import { DMG_FIRE, type EnemyDef, type RegionDef } from '../content/index.ts';
+import { hurtEnemy, hurtHero } from './combat.ts';
 import { beaconAt } from './light.ts';
 import { isDeepAt } from './map.ts';
-import { emit } from './stores.ts';
-import { EV, TG_CIRCLE, type Run } from './types.ts';
+import { emit, queryCircle } from './stores.ts';
+import { EV, ST_SLOW, TG_CIRCLE, type Beacon, type Run } from './types.ts';
+
+type BeaconsDef = NonNullable<RegionDef['beacons']>;
 
 /** Au-delà, la plus vieille flaque disparaît. */
 const MAX_MIRES = 48;
@@ -173,6 +175,31 @@ function updateTide(run: Run, dt: number): void {
   }
 }
 
+/** Les Éteints dans la lumière d'une lanterne ravivée brûlent et ralentissent ; les boss n'en ont cure. */
+function scorchAround(run: Run, b: Beacon, bc: BeaconsDef, dt: number): void {
+  b.tick -= dt;
+  if (b.tick > 0) return;
+  b.tick += bc.tick;
+  const e = run.enemies;
+  const n = queryCircle(run, b.x, b.y, bc.radius);
+  const hit: number[] = [];
+  for (let k = 0; k < n; k++) {
+    const i = run.query[k]!;
+    const dx = e.x[i]! - b.x;
+    const dy = e.y[i]! - b.y;
+    if (dx * dx + dy * dy < bc.radius * bc.radius) hit.push(i);
+  }
+  for (const i of hit) {
+    const def = run.data.enemies[e.kind[i]!]!;
+    if (def.rank === 'boss') continue;
+    const share = def.rank === 'elite' ? bc.eliteScorch : bc.scorch;
+    if (share <= 0) continue;
+    hurtEnemy(run, i, Math.max(2, e.maxHp[i]! * share), DMG_FIRE, null, -1);
+    e.status[i]! |= ST_SLOW;
+    e.slowT[i] = Math.max(e.slowT[i]!, bc.tick + 0.2);
+  }
+}
+
 /** Ce que le Marais fait à chaque pas : la vase, les lanternes noyées, la brume, la marée. */
 export function updateMarsh(run: Run, dt: number): void {
   const hero = run.hero;
@@ -194,13 +221,26 @@ export function updateMarsh(run: Run, dt: number): void {
   const bc = run.region.beacons;
   if (bc) {
     for (const b of run.map.beacons) {
-      if (b.life > 0) b.life = Math.max(0, b.life - dt);
-      const dx = hero.x - b.x;
-      const dy = hero.y - b.y;
-      if (dx * dx + dy * dy < bc.reach * bc.reach && b.life < bc.seconds - 1) {
-        if (b.life <= 0) emit(run, EV.beaconLit, b.x, b.y);
-        b.life = bc.seconds;
+      if (b.life > 0) {
+        b.life = Math.max(0, b.life - dt);
+        // Elle vient de s'éteindre : il faut attendre avant de la raviver.
+        if (b.life <= 0) b.rest = bc.rest;
+        else scorchAround(run, b, bc, dt);
+      } else if (b.rest > 0) {
+        b.rest = Math.max(0, b.rest - dt);
+      } else {
+        const dx = hero.x - b.x;
+        const dy = hero.y - b.y;
+        if (dx * dx + dy * dy < bc.reach * bc.reach) {
+          emit(run, EV.beaconLit, b.x, b.y);
+          b.life = bc.seconds;
+          b.tick = 0;
+        }
       }
+    }
+    // Le refuge : dans la lumière d'une lanterne ravivée, Moon se soigne (sauf saigné par une sangsue).
+    if (bc.heal > 0 && hero.hp > 0 && hero.drainT <= 0 && hero.hp < hero.stats.maxHp && beaconAt(run, hero.x, hero.y) !== null) {
+      hero.hp = Math.min(hero.stats.maxHp, hero.hp + bc.heal * hero.stats.maxHp * run.mods.healMult * dt);
     }
   }
 

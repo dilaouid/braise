@@ -561,7 +561,7 @@ export class GameRenderer {
         this.shake = Math.max(this.shake, 1);
         break;
       case EV.burst: this.addFx(FX_BURST, x, y, a, b === DMG_LIGHTNING ? C.frost : C.emberHot, 0, 0.22); break;
-      case EV.bolt: this.addFx(FX_BOLT, x, y, c > 0 ? x + 18 : a, c > 0 ? y - VIEW_H / 2 : b, c, 0.2); break;
+      case EV.bolt: this.addFx(FX_BOLT, x, y, c & 1 ? x + 18 : a, c & 1 ? y - VIEW_H / 2 : b, c, c >= 2 ? 0.26 : 0.2); break;
       case EV.frost: this.addFx(FX_FROST, x, y, 0, 0, 0, 0.25); break;
       case EV.threadCross: this.addFx(FX_RING, x, y, a, C.tealPale, 2, 0.35); break;
       case EV.fissure: this.addFx(FX_FISSURE, x, y, a, b, c, 0.4); break;
@@ -1128,11 +1128,29 @@ export class GameRenderer {
       s.tint = st & ST_FROZEN || st & ST_SLOW ? 0x9fd8ff : st & ST_BURN ? 0xffc79a : 0xffffff;
       s.alpha = 1;
       s.visible = !hidden;
-      if (behavior === BH.grabber && e.state[i] === 1) {
+      if (behavior === BH.grabber && e.state[i] === 0) {
+        // La Main noyée nage sous l'eau : on ne voit que ses remous, des doigts qui affleurent et des bulles.
+        for (let ring = 0; ring < 2; ring++) {
+          const pulse = (time * 1.6 + ring * 0.5 + (e.uid[i]! % 5) * 0.2) % 1;
+          const rr = 8 + pulse * 16;
+          g.ellipse(x, y, rr, rr * 0.45).stroke({ width: ring === 0 ? 2 : 1, color: C.tealPale, alpha: 0.9 * (1 - pulse) });
+        }
+        for (let bub = 0; bub < 2; bub++) {
+          const ph = (time * 1.8 + bub * 0.5 + (e.uid[i]! % 3) * 0.3) % 1;
+          g.rect(Math.round(x + (bub === 0 ? -5 : 4)), Math.round(y - 2 - ph * 6), 2, 2).fill({ color: C.tealPale, alpha: 1 - ph });
+        }
+        g.ellipse(x, y, 9, 4).fill({ color: C.night, alpha: 0.55 });
+        s.scale.y = 0.22;
+        s.alpha = 0.75;
+        s.position.y = Math.round(y + 2);
+      } else if (behavior === BH.grabber && e.state[i] === 1) {
         // La Main noyée sort de terre pendant son annonce.
         const k = 1 - Math.max(0, e.timer[i]!) / def.grab!.telegraph;
-        s.scale.y = 0.15 + 0.85 * k * k;
-        s.alpha = 0.5 + 0.5 * k;
+        s.scale.y = 0.22 + 0.78 * k * k;
+        s.alpha = 0.6 + 0.4 * k;
+      } else if (behavior === BH.grabber && e.state[i] === 2 && e.timer[i]! < 0.3) {
+        // Elle replonge.
+        s.scale.y = 0.22 + 0.78 * (Math.max(0, e.timer[i]!) / 0.3);
       } else if (behavior === BH.leaper && e.state[i] === 1) {
         // Le Crapaud en l'air : son ombre court au sol, lui passe au-dessus.
         const k = 1 - Math.max(0, e.timer[i]!) / def.leap!.telegraph;
@@ -1369,12 +1387,25 @@ export class GameRenderer {
           const fade = Math.min(1, b.life / 3);
           const flick = Math.sin(time * 5 + b.x);
           s.tint = 0xffffff;
-          g.circle(b.x, b.y, bc.radius).fill({ color: C.teal, alpha: 0.05 * fade });
-          g.circle(b.x, b.y, bc.radius).stroke({ width: 1, color: C.teal, alpha: (0.32 + flick * 0.08) * fade });
+          g.circle(b.x, b.y, bc.radius).fill({ color: C.teal, alpha: 0.08 * fade });
+          g.circle(b.x, b.y, bc.radius).stroke({ width: 2, color: C.tealPale, alpha: (0.4 + flick * 0.1) * fade });
+          // Le refuge : des braises montent dans sa lumière, là où les Éteints brûlent.
+          for (let k = 0; k < 6; k++) {
+            const ph = (time * 0.7 + k / 6) % 1;
+            const a = hash(b.x + k * 13) * TAU;
+            const r = bc.radius * (0.25 + 0.65 * hash(b.y + k * 7));
+            g.rect(Math.round(b.x + Math.cos(a) * r), Math.round(b.y + Math.sin(a) * r * 0.6 - ph * 14), 2, 2).fill({ color: C.tealPale, alpha: (1 - ph) * 0.8 * fade });
+          }
           this.light(b.x - camX, b.y - 10 - camY, Math.round((bc.radius + 8) * (0.45 + 0.55 * fade) + flick * 2), 0.12 * fade, C.teal);
+        } else if (b.rest > 0) {
+          // Elle se repose : froide, sans lumière ; un filet de fumée.
+          s.tint = 0x5d6475;
+          const ph = (time * 0.8 + hash(b.x)) % 1;
+          g.rect(Math.round(b.x + Math.sin(time * 2 + b.y) * 2), Math.round(b.y - 18 - ph * 10), 2, 2).fill({ color: 0x9aa3b5, alpha: 0.5 * (1 - ph) });
         } else {
+          // Prête : sa petite flamme bat, pour qu'on ait envie d'y passer.
           s.tint = 0x9aa3b5;
-          this.light(b.x - camX, b.y - 10 - camY, 13 + Math.round(Math.sin(time * 2 + b.y) * 2));
+          this.light(b.x - camX, b.y - 10 - camY, 15 + Math.round(Math.sin(time * 3 + b.y) * 3), 0.1, C.tealPale);
         }
       }
     }
@@ -1669,8 +1700,10 @@ export class GameRenderer {
           break;
         }
         case FX_BOLT: {
-          // Un trait brisé, toujours le même pour un même coup ; celui du ciel est plus épais.
-          const steps = f.c > 0 ? 7 : 4;
+          // Un trait brisé, toujours le même pour un même coup ; celui du ciel est plus épais, et plus encore quand il éclate.
+          const sky = (f.c & 1) === 1;
+          const heavy = f.c >= 2;
+          const steps = sky ? 7 : 4;
           const draw = (width: number, color: number, alpha: number): void => {
             top.moveTo(f.a, f.b);
             for (let s = 1; s < steps; s++) {
@@ -1679,11 +1712,11 @@ export class GameRenderer {
             }
             top.lineTo(f.x, f.y).stroke({ width, color, alpha });
           };
-          draw(f.c > 0 ? 4 : 3, C.spark, 0.45 * fade);
-          draw(1, C.white, 0.9 * fade);
+          draw((sky ? 4 : 3) + (heavy ? 3 : 0), C.spark, (heavy ? 0.6 : 0.45) * fade);
+          draw(heavy ? 2 : 1, C.white, 0.9 * fade);
           if (f.t < 0.12) this.light(f.x - camX, f.y - camY, Math.round(22 * (1 - f.t / 0.12)));
           // L'éclair du ciel perce aussi le noir sur son trajet.
-          for (let s = 1; s < 4 && f.c > 0 && f.t < 0.12; s++) this.light(f.a + ((f.x - f.a) * s) / 4 - camX, f.b + ((f.y - f.b) * s) / 4 - camY, Math.round(20 * (1 - f.t / 0.12)));
+          for (let s = 1; s < 4 && sky && f.t < 0.12; s++) this.light(f.a + ((f.x - f.a) * s) / 4 - camX, f.b + ((f.y - f.b) * s) / 4 - camY, Math.round(20 * (1 - f.t / 0.12)));
           break;
         }
         case FX_TELE_ARC: {

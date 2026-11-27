@@ -470,7 +470,8 @@ function updatePickups(run: Run, dt: number): void {
           healHero(run, 1);
         }
         break;
-      case PK_GOLD: hero.gold += value; break;
+      // L'Avidité grossit l'or ramassé : il ne sert que chez les marchands de la partie.
+      case PK_GOLD: hero.gold += Math.round(value * (1 + hero.stats.greed)); break;
       case PK_ASH: hero.ashDrops += value; break;
       case PK_DROP: hero.flasks = Math.min(hero.stats.flasks, hero.flasks + 1); break;
       case PK_CHEST: run.pendingChests++; break;

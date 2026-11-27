@@ -160,8 +160,7 @@ describe('règles de la partie', () => {
     run.outcome = 'death';
     run.phase = 'dead';
     const res = computeResult(run);
-    expect(res.goldCollected).toBe(137);
-    expect(res.goldKept).toBe(Math.round(137 * 0.5));
+    expect(res.goldLeft).toBe(137);
     expect(res.ashesCollected).toBe(4 * 4 + 23);
     expect(res.ashesKept).toBe(Math.round(39 * 0.5));
   });
@@ -174,7 +173,6 @@ describe('règles de la partie', () => {
     run.outcome = 'victory';
     run.phase = 'victory';
     const res = computeResult(run);
-    expect(res.goldKept).toBe(1200);
     expect(res.ashesKept).toBe(Math.round((60 + 100) * 1.2));
   });
 
@@ -183,7 +181,9 @@ describe('règles de la partie', () => {
     run.hero.gold = 100;
     abandonRun(run);
     expect(run.phase).toBe('dead');
-    expect(computeResult(run).goldKept).toBe(50);
+    const res = computeResult(run);
+    expect(res.outcome).toBe('abandon');
+    expect(res.ashesKept).toBe(Math.round(res.ashesCollected * 0.5));
   });
 
   it('une expédition perdue à 4:00 rapporte au moins 8 Cendres, et le rang le moins cher en coûte 5 au plus', () => {

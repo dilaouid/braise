@@ -1115,7 +1115,7 @@ async function boot(): Promise<void> {
         }
         case EV.lobLand: audio.play('brand', 0.45, 1, 120); break;
         case EV.lamp: audio.play('brand', 0.3, 1.2, 120); break;
-        case EV.bolt: if (c > 0) audio.play('bolt', 0.4, 1, 120); break;
+        case EV.bolt: if (c & 1) audio.play('bolt', c >= 2 ? 0.55 : 0.4, c >= 2 ? 0.85 : 1, 120); break;
         case EV.frost: audio.play('frost', 0.3, 1, 180); break;
         case EV.thread: audio.play('spark', 0.35, 0.8, 120); break;
         case EV.threadCross: audio.play('bolt', 0.5, 0.8, 150); break;

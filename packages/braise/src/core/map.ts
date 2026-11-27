@@ -247,7 +247,7 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
       const y = ty * tile;
       if (beacons.some((b) => Math.hypot(b.x - x, b.y - y) < 9 * tile)) continue;
       if (pois.some((p) => Math.hypot(p.x - x, p.y - y) < 4 * tile)) continue;
-      beacons.push({ x, y, life: 0 });
+      beacons.push({ x, y, life: 0, rest: 0, tick: 0 });
     }
   }
 

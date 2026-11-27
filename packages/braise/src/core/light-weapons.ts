@@ -98,6 +98,23 @@ function strikable(run: Run, x: number, y: number, range: number, skip: number[]
   return best;
 }
 
+/** L'éclat d'un éclair à l'impact : les Éteints autour de la cible, dans le noir comme dans la lumière, prennent une part du coup. */
+function splashBolt(run: Run, target: number, x: number, y: number, radius: number, damage: number, def: WeaponDef, slot: number, flags: number): void {
+  const e = run.enemies;
+  const n = queryCircle(run, x, y, radius);
+  // Copiée : un coup peut tuer, et une mort peut relancer une recherche.
+  const near: number[] = [];
+  for (let k = 0; k < n; k++) {
+    const i = run.query[k]!;
+    if (i === target || e.hp[i]! <= 0 || isDust(run, i)) continue;
+    const dx = e.x[i]! - x;
+    const dy = e.y[i]! - y;
+    if (dx * dx + dy * dy <= radius * radius) near.push(i);
+  }
+  for (const i of near) hurtEnemy(run, i, damage, def.damageType, def.scale, slot, flags);
+  emit(run, EV.burst, x, y, radius, def.damageType);
+}
+
 export function updateChain(run: Run, slot: number, w: WeaponInstance, def: WeaponDef, p: WeaponParams, dt: number): void {
   w.cd -= dt;
   if (w.cd > 0) return;
@@ -119,8 +136,9 @@ export function updateChain(run: Run, slot: number, w: WeaponInstance, def: Weap
       const from = seen.length > 0 ? seen[seen.length - 1]! : -1;
       seen.push(target);
       hurtEnemy(run, target, p.damage, def.damageType, def.scale, slot, flags);
-      // Le premier trait tombe du ciel (c : 1), les suivants partent de la cible d'avant.
-      emit(run, EV.bolt, x, y, from >= 0 ? e.x[from]! : x, from >= 0 ? e.y[from]! : y, from >= 0 ? 0 : 1);
+      // Le premier trait tombe du ciel (c : 1), les suivants partent de la cible d'avant ; un éclair qui éclate est épais (c : + 2).
+      emit(run, EV.bolt, x, y, from >= 0 ? e.x[from]! : x, from >= 0 ? e.y[from]! : y, (from >= 0 ? 0 : 1) + (p.splash > 0 ? 2 : 0));
+      if (p.splash > 0) splashBolt(run, target, x, y, p.splash * (1 + hero.stats.zone), p.damage * p.splashShare, def, slot, flags);
       if (k >= jumps) break;
       target = strikable(run, x, y, p.jumpRange, seen, !p.jumpsIntoLight);
     }

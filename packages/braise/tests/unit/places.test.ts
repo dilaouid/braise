@@ -349,13 +349,13 @@ describe('marchands', () => {
     expect(hero.goldSpent).toBe(10000 - hero.gold);
   });
 
-  it('le bilan compte l\'or dépensé et ne ramène que l\'or restant', () => {
+  it('le bilan compte l\'or dépensé et l\'or laissé, qui ne quitte pas la partie', () => {
     const run = fresh(56);
     run.hero.gold = 40;
     run.hero.goldSpent = 60;
     const res = computeResult(run);
     expect(res.goldSpent).toBe(60);
-    expect(res.goldCollected).toBe(Math.round(40 * (1 + run.hero.stats.greed)));
+    expect(res.goldLeft).toBe(40);
   });
 });
 

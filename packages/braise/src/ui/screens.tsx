@@ -10,13 +10,12 @@ import {
 
 const CLASS = 'class.ash-blade';
 
-/** L'or et les Cendres du compte. */
+/** Les Cendres du compte : l'or, lui, ne quitte pas l'expédition. */
 export function Currencies(): JSX.Element {
   saveRev.value;
   const s = save.value!;
   return (
     <div class="currencies">
-      <span class="currency"><Icon name="icon-gold" /> {fmt(s.account.gold)}</span>
       <span class="currency"><Icon name="icon-ashes" /> {fmt(s.account.ashes)}</span>
     </div>
   );
@@ -440,17 +439,13 @@ export function EndScreen(): JSX.Element | null {
           </div>
           <div class="end-col">
             <p>
-              <span><Icon name="icon-gold" /> {t('end.gold')}</span>
-              <b>{fmt(result.goldKept)} {t('end.kept')}{victory ? '' : ` · ${fmt(result.goldCollected - result.goldKept)} ${t('end.lost')}`}</b>
-            </p>
-            <p>
               <span><Icon name="icon-ashes" /> {t('end.ashes')}</span>
               <b>{fmt(result.ashesKept)} {t('end.kept')}{victory ? '' : ` · ${fmt(result.ashesCollected - result.ashesKept)} ${t('end.lost')}`}</b>
             </p>
-            {result.goldSpent > 0 ? (
+            {result.goldSpent > 0 || result.goldLeft > 0 ? (
               <p>
-                <span><Icon name="icon-gold" /> {t('end.goldSpent')}</span>
-                <b>{fmt(result.goldSpent)}</b>
+                <span><Icon name="icon-gold" /> {t('end.gold')}</span>
+                <b>{t('end.goldUse', { spent: fmt(result.goldSpent), left: fmt(result.goldLeft) })}</b>
               </p>
             ) : null}
             <p class="dim">{victory ? t('end.victoryBonus') : t('end.deathShare')}</p>

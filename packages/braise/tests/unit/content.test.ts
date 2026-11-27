@@ -24,7 +24,7 @@ describe('données du jeu', () => {
   it('chaque niveau d\'arme change au moins une valeur visible', () => {
     const visible = ['arc', 'range', 'strikes', 'count', 'pierce', 'speed', 'spread', 'radius', 'pause', 'impactRadius',
       'puddleRadius', 'puddleDuration', 'waves', 'stun', 'damage', 'cooldown',
-      'band', 'hitInterval', 'jumps', 'shock', 'life', 'radiusShare', 'width'] as const;
+      'band', 'hitInterval', 'jumps', 'shock', 'life', 'radiusShare', 'width', 'splash'] as const;
     for (const w of data.weapons) {
       for (let l = 1; l < w.levels.length; l++) {
         const a = w.levels[l - 1]!;
