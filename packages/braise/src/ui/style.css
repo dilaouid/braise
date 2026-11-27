@@ -295,27 +295,75 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .boost.unlock .boost-icon { width: 24px; height: 22px; border: 0; background: none; }
 .boost.unlock .boost-body { flex: 1; flex-direction: row; gap: 6px; align-items: center; }
 
-/* Le feu de camp : l'arbre de Moon, trois branches en colonnes, quatre étages chacune. */
-.talents-panel { position: absolute; left: 40px; right: 40px; top: 6px; bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
-.talents-panel header { display: flex; justify-content: space-between; align-items: center; }
-.talents-points.bad { color: var(--danger-0); }
-.talent-tree { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; flex: 1; }
-.talent-branch { display: flex; flex-direction: column; gap: 4px; justify-content: space-between; padding-bottom: 6px; }
-.talent-branch h2 { margin: 0; line-height: 10px; }
-.talent-tier { display: flex; gap: 4px; justify-content: center; position: relative; }
-.talent-tier + .talent-tier::before { content: ''; position: absolute; left: 50%; top: -9px; height: 8px; border-left: 1px solid var(--ash-1); }
-.talent { flex: 1; max-width: 50%; display: flex; gap: 5px; padding: 6px 5px; background: var(--night-2); border: 1px solid var(--ash-1); align-items: center; }
-.talent.master { max-width: 70%; border-color: var(--ember-3); }
-.talent.is-focused { background: var(--night-3); border-color: var(--ember-1); }
-.talent.locked > * { opacity: 0.4; }
-.talent.ready .talent-icon { border-color: var(--ember-1); }
-.talent.full .talent-name { color: var(--ember-0); }
-.talent-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: var(--night-0); border: 1px solid var(--ash-1); flex: none; }
-.talent-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.talent-name { color: var(--ash-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.talent-detail { display: flex; flex-direction: column; gap: 2px; min-height: 40px; padding: 4px 6px; background: var(--night-1); border: 1px solid var(--ash-1); }
-.talent-detail b { color: var(--ember-1); }
-.talent-detail .bad { color: var(--danger-0); }
+/* Le feu de camp : l'arbre de Moon monte du foyer. Trois branches, quatre étages, le Maître à la pointe de la flamme. */
+.screen.talents { background: radial-gradient(ellipse 260px 190px at 212px 352px, rgba(217, 72, 15, 0.42), rgba(143, 29, 10, 0.18) 55%, transparent 100%), linear-gradient(rgba(11, 15, 26, 0.94), rgba(19, 12, 14, 0.92)); }
+.talents-glow { position: absolute; left: 20px; width: 384px; bottom: 16px; height: 90px; background: radial-gradient(ellipse 200px 60px at 50% 100%, rgba(255, 176, 32, 0.22), transparent 70%); animation: hearth-breathe 2.4s steps(6) infinite alternate; pointer-events: none; }
+@keyframes hearth-breathe { from { opacity: 0.65; } to { opacity: 1; } }
+.talents-head { position: absolute; left: 24px; top: 9px; display: flex; flex-direction: column; gap: 3px; }
+.talents-head h1 { color: var(--ember-1); text-shadow: 0 1px 0 var(--ember-5); }
+.talents-points { position: absolute; left: 420px; width: 200px; top: 9px; height: 26px; display: flex; gap: 5px; align-items: center; justify-content: center; color: var(--ash-3); background: var(--night-0); border: 1px solid var(--ash-1); }
+.talents-points-n { font-family: var(--font-title); font-size: 15px; line-height: 15px; color: var(--ash-4); }
+.talents-points.has { border-color: var(--ember-3); color: var(--ember-1); box-shadow: 0 0 6px rgba(251, 122, 12, 0.45); }
+.talents-points.has .talents-points-n { color: var(--ember-0); animation: points-glow 1.2s steps(2) infinite; }
+@keyframes points-glow { 50% { color: var(--ember-2); } }
+.talents-points.bad { color: var(--danger-0); border-color: var(--danger-1); padding: 0 4px; text-align: center; }
+
+.talent-tree { position: absolute; left: 20px; top: 40px; width: 384px; height: 296px; }
+.trunk { position: absolute; width: 2px; background: var(--ash-0); }
+.trunk-fill { position: absolute; left: 0; bottom: 0; width: 2px; background: var(--ember-2); box-shadow: 0 0 4px var(--ember-3), 0 0 1px var(--ember-1); }
+.threshold { position: absolute; width: 14px; height: 10px; line-height: 10px; text-align: center; color: var(--ash-2); background: var(--night-0); border: 1px solid var(--ash-0); z-index: 1; }
+.threshold.lit { color: var(--ember-0); border-color: var(--ember-3); background: var(--ember-5); }
+.branch-name { position: absolute; text-align: center; color: var(--ash-3); z-index: 1; }
+.branch-name b { font-weight: normal; color: var(--ember-1); }
+
+.tnode { position: absolute; display: flex; align-items: center; justify-content: center; background: var(--night-0); border: 1px solid var(--ash-1); box-shadow: inset 0 0 0 1px var(--night-1); z-index: 1; }
+.tnode .icon { image-rendering: pixelated; }
+.tnode.locked { border-color: var(--ash-0); }
+.tnode.locked .icon { filter: grayscale(1) brightness(0.45); }
+.tnode.open .icon, .tnode.some:not(.ready) .icon { filter: saturate(0.6) brightness(0.8); }
+.tnode.ready { border-color: var(--ember-3); animation: node-ready 1.4s steps(2) infinite; }
+@keyframes node-ready { 50% { border-color: var(--ember-1); box-shadow: inset 0 0 0 1px var(--night-1), 0 0 5px rgba(251, 122, 12, 0.6); } }
+.tnode.some { border-color: var(--ember-2); background: #2a1410; }
+.tnode.full { border-color: var(--ember-1); background: #3a1a0c; box-shadow: inset 0 0 0 1px var(--ember-4), 0 0 6px rgba(255, 176, 32, 0.55); }
+.tnode.master { border-width: 2px; }
+.tnode.master::before { content: ''; position: absolute; inset: -5px; border: 1px solid var(--ash-0); transform: rotate(45deg); pointer-events: none; }
+.tnode.master.ready::before, .tnode.master.full::before { border-color: var(--ember-3); }
+.tnode-ranks { position: absolute; top: calc(100% + 3px); left: 50%; transform: translateX(-50%); display: flex; gap: 1px; }
+.tnode-ranks i { width: 3px; height: 3px; background: var(--ash-0); }
+.tnode-ranks i.on { background: var(--ember-1); box-shadow: 0 0 2px var(--ember-3); }
+.tnode.is-focused { z-index: 3; }
+
+.hearth { position: absolute; left: 0; right: 0; bottom: 0; height: 52px; background: linear-gradient(transparent, rgba(143, 29, 10, 0.35) 60%, rgba(217, 72, 15, 0.35)); border-bottom: 2px solid var(--ember-4); pointer-events: none; }
+.hearth-flame { position: absolute; bottom: 2px; width: 16px; height: 16px; image-rendering: pixelated; background-repeat: no-repeat; background-position-x: var(--fx); animation: flame-flicker 0.48s steps(4) infinite; transform-origin: 50% 100%; opacity: 0.85; }
+.hearth-flame.big { transform: scale(2); opacity: 1; }
+@keyframes flame-flicker { from { background-position-x: var(--fx); } to { background-position-x: var(--fx-end); } }
+.sparks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.sparks i { position: absolute; bottom: 30px; width: 2px; height: 2px; background: var(--ember-1); animation: spark-rise 4s steps(40) infinite; opacity: 0; }
+.sparks i:nth-child(3n) { background: var(--ember-3); }
+@keyframes spark-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate(4px, -120px); }
+  80% { opacity: 0.6; }
+  100% { transform: translate(-3px, -250px); opacity: 0; }
+}
+
+.tdetail { position: absolute; left: 420px; width: 200px; top: 42px; bottom: 24px; display: flex; flex-direction: column; gap: 6px; border-color: var(--ember-4); }
+.tdetail-head { display: flex; gap: 6px; align-items: center; }
+.tdetail-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex: none; background: var(--night-0); border: 1px solid var(--ash-1); }
+.tdetail-icon.lit { border-color: var(--ember-2); box-shadow: 0 0 5px rgba(251, 122, 12, 0.5); }
+.tdetail-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tdetail-title b { font-weight: normal; color: var(--ember-1); font-family: var(--font-title); font-size: 15px; line-height: 13px; }
+.tdetail-rank { display: flex; gap: 4px; align-items: center; color: var(--ash-4); }
+.tdetail-rank .pip { width: 3px; height: 3px; }
+.tdetail-desc { color: var(--ash-4); padding-bottom: 6px; border-bottom: 1px solid var(--ash-0); }
+.tdetail-values { display: flex; flex-direction: column; gap: 2px; }
+.tdetail-label { color: var(--ash-2); margin-top: 3px; }
+.tdetail-label:first-child { margin-top: 0; }
+.tdetail-next { color: var(--ember-0); }
+.tdetail-next::before { content: '▲ '; color: var(--ember-3); }
+.tdetail .bad { color: var(--danger-0); }
+.tdetail-branch { margin-top: auto; padding-top: 5px; border-top: 1px solid var(--ash-0); color: var(--ash-3); }
 .boost.unlock .boost-cost, .boost.unlock .boost-line.gold { margin-left: auto; }
 .boost.unlock .boost-icon { border-color: var(--rarity); }
 .boost.unlock .boost-name { color: var(--rarity); }

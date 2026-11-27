@@ -1642,24 +1642,6 @@
    "seconds": 1
   },
   {
-   "name": "sfx-ui-move",
-   "id": "577635e5-30e6-4881-8bb1-05d26f4d34c2",
-   "prompt": "a tiny soft wooden tick, user interface cursor move, very short and quiet",
-   "seconds": 0.5
-  },
-  {
-   "name": "sfx-ui-confirm",
-   "id": "efc48473-16be-49db-b2e9-e4b0963e64e5",
-   "prompt": "a soft warm confirm click with a small bell, user interface select",
-   "seconds": 0.5
-  },
-  {
-   "name": "sfx-ui-back",
-   "id": "a9b3eb39-0925-4873-a70f-02494029e953",
-   "prompt": "a soft low muted thud, user interface cancel or back",
-   "seconds": 0.5
-  },
-  {
    "name": "sfx-buy",
    "id": "b75b6d83-d8ca-4bbf-b644-e210f3ecd98f",
    "prompt": "ashes poured into a bowl then a flame catching with a warm low chime, ritual purchase",
@@ -1705,12 +1687,6 @@
    "name": "sfx-enemy-shot",
    "id": "2fd47c12-d194-4865-8ce7-ed69451da962",
    "prompt": "a wet sooty spit projectile launched, short dull plop",
-   "seconds": 0.5
-  },
-  {
-   "name": "sfx-refuse",
-   "id": "c3cb9c97-306c-4af1-8c7f-b20c5c9862c9",
-   "prompt": "a short dull double buzz, user interface action refused",
    "seconds": 0.5
   },
   {

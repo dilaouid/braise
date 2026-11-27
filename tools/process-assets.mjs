@@ -1154,6 +1154,12 @@ for (const list of [manifest.sounds ?? [], manifest.music ?? []]) {
     yaml.push(`  edits: ${JSON.stringify(music ? 'converti en OGG Vorbis stéréo' : 'converti en OGG Vorbis mono, volume normalisé')}`);
   }
 }
+// Les sons d'interface synthétisés par assets/source/sons-interface/generer.py (sans PixelLab).
+for (const name of JSON.parse(readFileSync(join(root, 'source', 'sons-interface', 'sons.json'), 'utf8'))) {
+  yaml.push(`- file: public/audio/${name}.ogg`);
+  yaml.push('  tool: assets/source/sons-interface/generer.py');
+  yaml.push(`  edits: ${JSON.stringify('notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono')}`);
+}
 writeFileSync(join(root, 'provenance.yaml'), `${yaml.join('\n')}\n`);
 
 console.log(`${readdirSync(out).length} sprites écrits dans assets/sprites, ${provenance.length} entrées de provenance.`);

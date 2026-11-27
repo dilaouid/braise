@@ -885,7 +885,7 @@ async function boot(): Promise<void> {
         audio.play('refuse');
         return;
       }
-      audio.play('flame-feed', 0.6);
+      audio.play('ui-ember', 0.8);
       changed();
       persistSoon();
     },

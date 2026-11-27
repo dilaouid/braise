@@ -4,7 +4,7 @@
  * Demande ffmpeg dans le PATH.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,6 +13,8 @@ const src = join(pkg, 'assets', 'source', 'audio');
 const out = join(pkg, 'public', 'audio');
 mkdirSync(out, { recursive: true });
 const index = {};
+/** Les sons synthétisés (assets/source/sons-interface/generer.py) sont déjà à niveau : loudnorm déformerait un son de 70 ms. */
+const synth = new Set(JSON.parse(readFileSync(join(pkg, 'assets', 'source', 'sons-interface', 'sons.json'), 'utf8')));
 let total = 0;
 if (existsSync(src)) {
   for (const file of readdirSync(src).sort()) {
@@ -20,9 +22,9 @@ if (existsSync(src)) {
     if (name === file) continue;
     const music = name.startsWith('music-');
     const target = join(out, `${name}.ogg`);
-    const args = ['-y', '-loglevel', 'error', '-i', join(src, file), '-ac', music ? '2' : '1', '-c:a', 'libvorbis', '-q:a', music ? '4' : '3'];
+    const args = ['-y', '-loglevel', 'error', '-i', join(src, file), '-ac', music ? '2' : '1', '-c:a', 'libvorbis', '-q:a', music ? '4' : synth.has(name) ? '6' : '3'];
     // Les effets sont normalisés : ils sont joués des milliers de fois, à des volumes réglés par le code.
-    if (!music) args.push('-af', 'loudnorm=I=-18:TP=-2:LRA=11');
+    if (!music && !synth.has(name)) args.push('-af', 'loudnorm=I=-18:TP=-2:LRA=11');
     args.push(target);
     execFileSync('ffmpeg', args, { stdio: 'inherit' });
     index[name] = `${name}.ogg`;

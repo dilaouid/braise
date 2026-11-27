@@ -2037,24 +2037,6 @@
   pixellab_id: f3a12e79-1d9a-4f1a-821b-b22e5d563e8d
   prompt: "drinking a potion, a quick gulp followed by a soft warm healing shimmer"
   edits: "converti en OGG Vorbis mono, volume normalisé"
-- file: public/audio/sfx-ui-move.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: 577635e5-30e6-4881-8bb1-05d26f4d34c2
-  prompt: "a tiny soft wooden tick, user interface cursor move, very short and quiet"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
-- file: public/audio/sfx-ui-confirm.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: efc48473-16be-49db-b2e9-e4b0963e64e5
-  prompt: "a soft warm confirm click with a small bell, user interface select"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
-- file: public/audio/sfx-ui-back.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: a9b3eb39-0925-4873-a70f-02494029e953
-  prompt: "a soft low muted thud, user interface cancel or back"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-buy.ogg
   tool: create_sound_effect
   date: 2026-11-23
@@ -2102,12 +2084,6 @@
   date: 2026-11-23
   pixellab_id: 2fd47c12-d194-4865-8ce7-ed69451da962
   prompt: "a wet sooty spit projectile launched, short dull plop"
-  edits: "converti en OGG Vorbis mono, volume normalisé"
-- file: public/audio/sfx-refuse.ogg
-  tool: create_sound_effect
-  date: 2026-11-23
-  pixellab_id: c3cb9c97-306c-4af1-8c7f-b20c5c9862c9
-  prompt: "a short dull double buzz, user interface action refused"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/sfx-totem.ogg
   tool: create_sound_effect
@@ -2325,3 +2301,18 @@
   pixellab_id: 3c8b82a3-0fa1-465f-9608-4f887961cc48
   prompt: "Very slow cinematic cue for arriving at a drowned marsh, about 56 BPM: a low sustained drone holds underneath, a lone woman hums a wordless lullaby far away, isolated celesta notes ring out one at a time with long silences, and water drips in the dark. Still, cold, mournful and uneasy, ending on the drone left alone. 60 BPM."
   edits: "converti en OGG Vorbis stéréo"
+- file: public/audio/sfx-refuse.ogg
+  tool: assets/source/sons-interface/generer.py
+  edits: "notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono"
+- file: public/audio/sfx-ui-back.ogg
+  tool: assets/source/sons-interface/generer.py
+  edits: "notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono"
+- file: public/audio/sfx-ui-confirm.ogg
+  tool: assets/source/sons-interface/generer.py
+  edits: "notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono"
+- file: public/audio/sfx-ui-ember.ogg
+  tool: assets/source/sons-interface/generer.py
+  edits: "notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono"
+- file: public/audio/sfx-ui-move.ogg
+  tool: assets/source/sons-interface/generer.py
+  edits: "notes de lamelle synthétisées, passe-bas, converti en OGG Vorbis mono"
