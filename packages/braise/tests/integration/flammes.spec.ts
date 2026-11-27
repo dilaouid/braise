@@ -161,7 +161,7 @@ test('la porte montre le porteur et son trait', async ({ page }, info) => {
   await expect(carrier).toContainText(FR['class.ash-blade.who']!);
   await expect(carrier.locator('.carrier-bonus')).toHaveText(FR['class.ash-blade.trait.bonus']!);
   await expect(carrier.locator('.carrier-malus')).toHaveText(FR['class.ash-blade.trait.malus']!);
-  await expect(carrier.locator('.carrier-slot.closed')).toHaveCount(2);
+  await expect(page.locator('.door-records')).toContainText(FR['door.runs']!);
   // Le bandeau ne prend pas le focus : la région reste choisie.
   await expectFocus(page, 'region.ash-woods');
   await capture(page, info, SHOTS, 'porte');

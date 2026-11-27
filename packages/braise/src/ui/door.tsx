@@ -7,10 +7,7 @@ import { actions, fmtTime, gameData, holdProgress, lastSeed, replaySeed, save, s
 
 const CLASS = 'class.ash-blade';
 
-/**
- * Le porteur de la lanterne : qui part, et son trait (un bonus, un malus). Moon est seul pour l'instant ;
- * les emplacements fermés annoncent les suivants.
- */
+/** Le porteur de la lanterne : qui part, et son trait (un bonus, un malus). */
 function Carrier(): JSX.Element {
   return (
     <div class="carrier">
@@ -20,8 +17,28 @@ function Carrier(): JSX.Element {
         <span class="carrier-bonus">{t(`${CLASS}.trait.bonus`)}</span>
         <span class="carrier-malus">{t(`${CLASS}.trait.malus`)}</span>
       </div>
-      <span class="carrier-slot closed" title={t('door.carrier.closed')} />
-      <span class="carrier-slot closed" title={t('door.carrier.closed')} />
+    </div>
+  );
+}
+
+/** Une ligne du registre : l'icône et le chiffre, et dessous ce qu'ils comptent, écrit en toutes lettres. */
+function Record({ icon, value, label }: { icon: string; value: string | number; label: string }): JSX.Element {
+  return (
+    <div class="record">
+      <span class="record-value"><Icon name={icon} /> {value}</span>
+      <span class="record-label">{label}</span>
+    </div>
+  );
+}
+
+/** Le registre du compte, en face du porteur : combien de départs, de victoires, et la plus longue nuit tenue. */
+function Records(): JSX.Element {
+  const stats = save.value!.account.stats;
+  return (
+    <div class="door-records">
+      <Record icon="icon-find-boots" value={stats.runs ?? 0} label={t('door.runs')} />
+      <Record icon="sign-crown" value={stats.victories ?? 0} label={t('door.wins')} />
+      <Record icon="sign-hourglass" value={fmtTime(stats.bestSeconds ?? 0)} label={t('door.best')} />
     </div>
   );
 }
@@ -40,16 +57,13 @@ export function DoorScreen(): JSX.Element {
       if (lastSeed.value !== null) replaySeed.value = !replaySeed.value;
     },
   });
-  const stats = s.account.stats;
   return (
     <div class="screen door" ref={ref}>
       <div class="camp-purse"><Currencies /></div>
-      <div class="door-records">
-        <span title={t('door.runs')}><Icon name="icon-find-boots" /> {stats.runs ?? 0}</span>
-        <span title={t('door.wins')}><Icon name="sign-crown" /> {stats.victories ?? 0}</span>
-        <span title={t('door.best')}><Icon name="sign-hourglass" /> {fmtTime(stats.bestSeconds ?? 0)}</span>
+      <div class="door-top">
+        <Carrier />
+        <Records />
       </div>
-      <Carrier />
       <div class="door-cards">
         {regions.map((r, i) => {
           const lit = s.account.regions[r.id]?.lit === true;

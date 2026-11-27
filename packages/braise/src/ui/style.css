@@ -176,8 +176,13 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 
 /* La porte : une carte par région. */
 .screen.door { background: linear-gradient(rgba(11, 15, 26, 0.3) 40%, rgba(11, 15, 26, 0.85) 62%); }
-.door-records { position: absolute; left: 0; right: 0; top: 8px; display: flex; justify-content: center; gap: 16px; color: var(--ash-4); }
-.door-records span { display: inline-flex; align-items: center; gap: 4px; }
+/* En haut : le porteur à gauche, le registre à droite, deux plaques de même hauteur. */
+.door-top { position: absolute; left: 10px; right: 10px; top: 28px; display: flex; justify-content: space-between; align-items: stretch; gap: 10px; }
+.door-records { display: flex; align-items: center; padding: 5px 0; background: rgba(11, 15, 26, 0.82); border: 1px solid var(--ash-1); }
+.record { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 10px; min-width: 62px; }
+.record + .record { border-left: 1px solid var(--ash-0); }
+.record-value { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-title); font-size: 15px; line-height: 14px; color: var(--ember-0); }
+.record-label { color: var(--ash-3); white-space: nowrap; }
 .door-cards { position: absolute; left: 0; right: 0; top: 232px; display: flex; justify-content: center; gap: 9px; }
 .door-card { position: relative; width: 84px; height: 92px; padding-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--night-2); border: 1px solid var(--ash-1); }
 .door-card.is-focused { background: var(--night-3); border-color: var(--ember-1); }
@@ -188,14 +193,13 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .door-fire.lit { filter: none; }
 .door-card .hold-track { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 4px; margin: 0; }
 .door-card .hold-fill { display: block; }
-.carrier { position: absolute; left: 10px; top: 28px; display: flex; align-items: center; gap: 6px; padding: 5px 6px; background: rgba(11, 15, 26, 0.82); border: 1px solid var(--ash-1); max-width: 330px; }
+.carrier { display: flex; align-items: center; gap: 6px; padding: 5px 6px; background: rgba(11, 15, 26, 0.82); border: 1px solid var(--ash-1); max-width: 330px; }
 .carrier-face { display: flex; border: 1px solid var(--ember-3); background: var(--night-0); flex: none; }
 .carrier-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .carrier-name { font-family: var(--font-title); font-size: 15px; line-height: 14px; color: var(--ember-0); }
 .carrier-name em { font-style: normal; font-family: var(--font); font-size: 10px; color: var(--ash-4); margin-left: 4px; }
 .carrier-bonus { color: var(--ember-1); }
 .carrier-malus { color: var(--danger-0); }
-.carrier-slot.closed { width: 22px; height: 22px; border: 1px dashed var(--ash-2); background: rgba(19, 28, 46, 0.75); flex: none; }
 .screen.door .seed { position: absolute; left: 0; right: 0; top: 216px; text-align: center; color: var(--ember-1); }
 
 /* Autel */
