@@ -977,113 +977,113 @@
 - file: sprites/tile-marais-13.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-10.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-4.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-12.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-6.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-8.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-0.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-1.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-11.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-3.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-2.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-5.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-15.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-14.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-9.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/tile-marais-7.png
   tool: create_topdown_tileset
   date: 2026-11-23
-  pixellab_id: e59aa786-24bf-4df9-bcb3-ce2f0a88c60f
-  prompt: "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
+  pixellab_id: 0db76b82-a5a9-4623-9185-d68313feceab
+  prompt: "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines"
   settings: {"tile_size":32,"mode":"pro","view":"low top-down"}
   edits: "palette réduite ; tuile découpée"
 - file: sprites/icon-weapon-scythe.png
@@ -2282,6 +2282,12 @@
   date: 2026-11-27
   pixellab_id: 14f3ce4e-2546-439c-ad14-7d337e0f27b1
   prompt: "a small outdoor wedding crowd: warm laughter and soft applause, a little distant, no music"
+  edits: "converti en OGG Vorbis mono, volume normalisé"
+- file: public/audio/sfx-esquive.ogg
+  tool: create_sound_effect
+  date: 2026-11-27
+  pixellab_id: 17504923-8209-4912-9b2f-001972516d0d
+  prompt: "a fast sharp whoosh of a cloak cutting through the air, followed by a small bright bell-like chime, clear and loud"
   edits: "converti en OGG Vorbis mono, volume normalisé"
 - file: public/audio/music-bois.ogg
   tool: create_music

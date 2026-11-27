@@ -733,7 +733,7 @@ export class GameRenderer {
     }
     // Face à la Dame de Vase, la caméra monte : elle se tient au-dessus de Moon, et on doit la voir en entier.
     const dir0 = run.director;
-    const tall = dir0.bossSpawned && !dir0.bossDead && run.data.enemies[run.region.bossIdx]!.behavior === 'boss-lady';
+    const tall = (dir0.bossSpawned && !dir0.bossDead && run.data.enemies[run.region.bossIdx]!.behavior === 'boss-lady') || (this.sink.t >= 0 && this.sink.t < this.sinkTime + 3);
     this.bossLift += Math.max(-dt * 90, Math.min(dt * 90, (tall ? LADY_LIFT : 0) - this.bossLift));
     focusY -= this.bossLift;
     const mapPx = map.size * map.tile;
@@ -1390,8 +1390,9 @@ export class GameRenderer {
       const dry = Math.min(d.arenaR, floodRadius(run, run.data.enemies[run.region.bossIdx]!));
       const w = d.arenaR - dry;
       if (w > 1) {
-        g.circle(d.arenaX, d.arenaY, dry + w / 2).stroke({ width: w, color: WATER, alpha: 0.74 });
-        g.circle(d.arenaX, d.arenaY, dry + w / 2).stroke({ width: w, color: TEAL_DARK, alpha: 0.12 + Math.sin(time * 3) * 0.03 });
+        // Un disque plein, percé de la part encore au sec : bien moins de triangles qu'un trait aussi large que l'arène.
+        g.circle(d.arenaX, d.arenaY, d.arenaR).fill({ color: WATER, alpha: 0.78 });
+        if (dry > 3) g.circle(d.arenaX, d.arenaY, dry).cut();
         if (dry > 3) {
           g.circle(d.arenaX, d.arenaY, dry).stroke({ width: 2, color: C.tealPale, alpha: 0.85 });
           g.circle(d.arenaX, d.arenaY, dry + 6).stroke({ width: 1, color: C.teal, alpha: 0.5 });

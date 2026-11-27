@@ -214,7 +214,7 @@ export const cineSkip = signal(0);
 /** La cinématique en cours se passe d'un seul appui (déjà vue), sans maintien. */
 export const cineQuick = signal(false);
 /** Le carton d'un boss : son nom et son titre à son arrivée ; « vaincu » et son nom à sa chute. `key` relance l'animation. */
-export const bossCard = signal<{ name: string; title: string; felled: boolean; key: number } | null>(null);
+export const bossCard = signal<{ name: string; title: string; felled: boolean; leaving: boolean; key: number } | null>(null);
 /** Le carton posé après la scène d'un souvenir : son identifiant, et combien sont obtenus à ce moment. */
 export const memoryCard = signal<{ id: string; have: number; total: number } | null>(null);
 

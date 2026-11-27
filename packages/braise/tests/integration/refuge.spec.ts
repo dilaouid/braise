@@ -228,19 +228,27 @@ test('à la souris : un objet, la porte, les réglages', async ({ page }) => {
   await expect(page.locator('.screen.door')).toBeVisible();
 });
 
-test('la porte : une région, quatre cartes fermées, les records', async ({ page }, info) => {
+test('la porte : deux régions, trois cartes fermées, les records', async ({ page }, info) => {
   const pad = await SimPad.install(page);
   await plantSave(page, played());
   await toCamp(page, pad);
   await openDoor(page, pad);
   await expect(page.locator('.door-card')).toHaveCount(5);
-  await expect(page.locator('.door-card.closed')).toHaveCount(4);
+  await expect(page.locator('.door-card.closed')).toHaveCount(3);
   await expect(page.locator('[data-focus="region.ash-woods"]')).toContainText(FR['region.ash-woods.name']!);
+  // Le Cerf est battu dans cette sauvegarde : la route du Marais est ouverte, et le gardien du Bois est nommé.
+  await expect(page.locator('[data-focus="region.drowned-marsh"]')).toContainText(FR['region.drowned-marsh.name']!);
+  await expect(page.locator('.door-card.locked')).toHaveCount(0);
+  await expect(page.locator('[data-focus="region.ash-woods"]')).toContainText(FR['boss.lightless-stag.name']!);
   await expect(page.locator('.door-records')).toContainText('24');
   // La jauge du départ est sur la carte qu'on regarde.
   await expect(page.locator('[data-focus="region.ash-woods"] .hold-fill')).toHaveCount(1);
-  // Les cartes fermées ne prennent pas le focus.
+  // Les cartes fermées ne prennent pas le focus : après le Marais, on ne va pas plus loin.
   await pad.press('RIGHT');
+  await expectFocus(page, 'region.drowned-marsh');
+  await pad.press('RIGHT');
+  await expectFocus(page, 'region.drowned-marsh');
+  await pad.press('LEFT');
   await expectFocus(page, 'region.ash-woods');
   await capture(page, info, SHOTS, '03-porte');
   await pad.press('B');

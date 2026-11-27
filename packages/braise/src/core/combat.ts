@@ -364,6 +364,7 @@ export function reapEnemies(run: Run): boolean {
     if (e.dmgAcc[i]! > 0) emit(run, EV.damageNumber, x, y, e.dmgAcc[i]!, e.dmgFlags[i]!);
     run.hero.kills++;
     run.killsByKind[kind]!++;
+    const first = run.pickups.count;
     if (def.xpChance === undefined || rng.chance(def.xpChance)) addPickup(run, PK_GEM, x, y, def.xp);
     if (def.rank === 'normal') {
       chargeUltimate(run, tuning.ultimate.perKill);
@@ -386,7 +387,6 @@ export function reapEnemies(run: Run): boolean {
       bossKilled = true;
       // Le boss du tutoriel ne laisse rien : on n'en rapporte ni or ni Cendres.
       if (!run.tutorial) {
-        const first = run.pickups.count;
         addPickup(run, PK_CHEST, x, y + 10, 1);
         const loot = def.loot ?? 1;
         addPickup(run, PK_GOLD, x + 12, y, tuning.gold.boss * loot);

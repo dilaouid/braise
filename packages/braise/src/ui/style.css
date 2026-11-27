@@ -509,16 +509,17 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .status-dodge { border-color: var(--ember-1); color: var(--ember-0); }
 
 /* Le carton d'un boss : son nom entre deux filets, qui vient, tient et s'efface. */
-.boss-card { position: absolute; left: 0; right: 0; top: 272px; display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; opacity: 0; animation: boss-card 4.4s linear forwards; }
+.boss-card { position: absolute; left: 0; right: 0; top: 272px; display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; opacity: 1; animation: boss-card 0.6s ease-out; transition: opacity 0.9s linear; }
+.boss-card.leaving { opacity: 0; }
 .boss-card::before { content: ''; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; background: linear-gradient(rgba(11, 15, 26, 0), rgba(11, 15, 26, 0.82) 30%, rgba(11, 15, 26, 0.82) 70%, rgba(11, 15, 26, 0)); z-index: -1; }
-.boss-card-rule { display: block; width: 260px; height: 1px; background: linear-gradient(90deg, rgba(255, 61, 129, 0), var(--danger-0) 50%, rgba(255, 61, 129, 0)); animation: boss-rule 4.4s ease-out forwards; }
+.boss-card-rule { display: block; width: 260px; height: 1px; background: linear-gradient(90deg, rgba(255, 61, 129, 0), var(--danger-0) 50%, rgba(255, 61, 129, 0)); animation: boss-rule 1.4s ease-out; width: 260px; }
 .boss-card-name { font-family: var(--font-title); font-size: 30px; line-height: 26px; letter-spacing: 3px; text-transform: uppercase; color: var(--ash-5); text-shadow: 0 2px 0 var(--night-0), 2px 0 0 var(--night-0), -2px 0 0 var(--night-0), 0 -2px 0 var(--night-0); }
 .boss-card-title { color: var(--danger-0); letter-spacing: 1px; text-shadow: 1px 1px 0 var(--night-0); }
 .boss-card.felled .boss-card-name { color: var(--ember-0); }
 .boss-card.felled .boss-card-title { color: var(--ash-4); }
 .boss-card.felled .boss-card-rule { background: linear-gradient(90deg, rgba(255, 176, 32, 0), var(--ember-1) 50%, rgba(255, 176, 32, 0)); }
-@keyframes boss-card { 0% { opacity: 0; } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes boss-rule { 0% { width: 20px; } 30% { width: 260px; } 100% { width: 300px; } }
+@keyframes boss-card { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes boss-rule { 0% { width: 20px; } 100% { width: 260px; } }
 .hud.talking .boss-card, .hud.talking .statuses { visibility: hidden; }
 
 /* La porte : l'image de la région, son niveau, son gardien, et une route fermée. */

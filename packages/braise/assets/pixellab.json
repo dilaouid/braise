@@ -546,15 +546,16 @@
   },
   {
    "name": "tile-marais",
-   "id": "e59aa786-24bf-4df9-bcb3-ce2f0a88c60f",
+   "id": "0db76b82-a5a9-4623-9185-d68313feceab",
    "tool": "create_topdown_tileset",
    "settings": {
     "tile_size": 32,
     "mode": "pro",
     "view": "low top-down"
    },
-   "prompt": "lower: dark wet marsh ground, muddy brown-black peat with dark green moss tufts and a few rotten wooden planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines",
-   "date": "2026-11-27"
+   "prompt": "lower: marsh ground of muted moss green and olive green swamp grass, mid-tone desaturated green, clearly lighter than the water, even texture of small grass tufts with a little dark mud between them, no planks · upper: black still deep marsh water, flat glassy surface, faint turquoise reflections and tiny thin ripple lines",
+   "date": "2026-11-27",
+   "note": "quatrième essai. L'eau est reprise du premier (e59aa786-24bf-4df9-bcb3-ce2f0a88c60f), dont le sol répétait une planche sur chaque tuile ; le deuxième (9c89bb3d-77c4-42b5-989a-66b2564e0b54) avait un sol gris, le troisième (454e1663-1fd9-4d1c-9dc7-ce52eb007861) un sol presque aussi sombre que l'eau une fois ramené à la palette."
   }
  ],
  "images": [
@@ -1906,6 +1907,13 @@
    "id": "14f3ce4e-2546-439c-ad14-7d337e0f27b1",
    "prompt": "a small outdoor wedding crowd: warm laughter and soft applause, a little distant, no music",
    "seconds": 3.0,
+   "date": "2026-11-27"
+  },
+  {
+   "name": "sfx-esquive",
+   "id": "17504923-8209-4912-9b2f-001972516d0d",
+   "prompt": "a fast sharp whoosh of a cloak cutting through the air, followed by a small bright bell-like chime, clear and loud",
+   "seconds": 0.8,
    "date": "2026-11-27"
   }
  ],

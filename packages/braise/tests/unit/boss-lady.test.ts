@@ -330,4 +330,27 @@ describe('la Dame de Vase', () => {
     expect(run.director.tide).toBeNull();
     expect(run.map.pois.some((p) => p.kind === 'memory')).toBe(true);
   });
+
+  it('elle sombre : son butin et le Souvenir ne paraissent qu\'une fois l\'eau refermée', () => {
+    const { run, i } = makeLady();
+    run.cfg.memory = 'memory.wedding';
+    run.enemies.x[i] = run.hero.x;
+    run.enemies.y[i] = run.hero.y;
+    run.enemies.hp[i] = 0;
+    stepRun(run, idleInput());
+    const poi = run.map.pois.find((p) => p.kind === 'memory')!;
+    expect(poi.progress).toBeCloseTo(-def.sink!, 1);
+    expect(poi.armed).toBe(false);
+    expect(run.pickups.count).toBeGreaterThanOrEqual(4);
+    for (let k = 0; k < run.pickups.count; k++) expect(run.pickups.age[k]).toBeLessThan(0);
+    // Moon est dessus : rien ne se ramasse tant qu'elle n'a pas disparu.
+    run.hero.x = poi.x;
+    run.hero.y = poi.y;
+    for (let k = 0; k < Math.floor((def.sink! - 0.3) / DT); k++) stepRun(run, idleInput());
+    expect(run.phase).toBe('playing');
+    expect(run.pendingChests).toBe(0);
+    expect(run.memoryTaken).toBe(false);
+    for (let k = 0; k < Math.ceil((0.6 + data.tuning.events.memoryArmSeconds) / DT) + 5 && run.phase === 'playing'; k++) stepRun(run, idleInput());
+    expect(run.phase).not.toBe('playing');
+  });
 });

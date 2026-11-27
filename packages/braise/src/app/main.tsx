@@ -124,6 +124,9 @@ async function boot(): Promise<void> {
   /** Les conseils du Marais, dits une fois par expédition : l'eau, la lanterne ravivée, la Lueur étouffée. */
   const told = { water: false, beacon: false, blind: false };
   let bossCardKey = 0;
+  /** Le carton d'un boss s'efface de lui-même (son animation dure autant), puis il est retiré. */
+  const BOSS_CARD_MS = 4400;
+  let bossCardUntil = 0;
 
   /** Le carton d'un boss : son nom et son titre à son arrivée, « Gardien vaincu » à sa chute. */
   function showBossCard(r: Run, kind: number, felled: boolean): void {
@@ -133,7 +136,8 @@ async function boot(): Promise<void> {
       say(t(`${id}.name`), 3500);
       return;
     }
-    bossCard.value = { name: felled ? t('hud.bossFelled') : t(`${id}.name`), title: felled ? t(`${id}.name`) : title ?? '', felled, key: ++bossCardKey };
+    bossCard.value = { name: felled ? t('hud.bossFelled') : t(`${id}.name`), title: felled ? t(`${id}.name`) : title ?? '', felled, leaving: false, key: ++bossCardKey };
+    bossCardUntil = performance.now() + BOSS_CARD_MS;
     if (!felled) audio.play('boss-titre', 0.9);
   }
   let saveTimer = 0;
@@ -1155,7 +1159,7 @@ async function boot(): Promise<void> {
           // Pas de portail en tutoriel : la dernière barrière tombe.
           if (!r.tutorial) {
             showBossCard(r, a, true);
-            sayAfter(t(r.map.pois.some((p) => p.kind === 'memory') ? 'hud.memory' : 'hud.portal'), 6000);
+            say(t(r.map.pois.some((p) => p.kind === 'memory') ? 'hud.memory' : 'hud.portal'), 6000);
           }
           break;
         case EV.tideStart:
@@ -1239,6 +1243,10 @@ async function boot(): Promise<void> {
     }
     const ready = readyEvolution(r);
     const minutes = r.time / 60;
+    // Le carton d'un boss s'efface sur sa dernière seconde, puis il est retiré.
+    const card = bossCard.value;
+    if (card && now >= bossCardUntil) bossCard.value = null;
+    else if (card && !card.leaving && now >= bossCardUntil - 900) bossCard.value = { ...card, leaving: true };
     // Les états du héros, du plus gênant au moins gênant : la vase, la morsure, la Lueur étouffée, l'eau, l'élan.
     const statuses: HudState['statuses'] = [];
     if (h.mireT > 0) statuses.push({ id: 'mire', icon: 'sign-mire' });
@@ -1246,6 +1254,8 @@ async function boot(): Promise<void> {
     if (r.blind < 1) statuses.push({ id: 'dim', icon: 'sign-dim' });
     if (h.wading) statuses.push({ id: 'wade', icon: 'sign-wade' });
     if (h.dodgeT > 0) statuses.push({ id: 'dodge', icon: 'sign-dodge' });
+    // Il patauge : un clapotis à chaque pas, tant qu'il marche.
+    if (h.wading && h.moving && r.phase === 'playing') audio.play('eau', 0.22, 1, 430);
     if (h.wading && !told.water && r.map.waterSlow > 0) {
       told.water = true;
       sayAfter(t('hud.hint.water'), 4200);

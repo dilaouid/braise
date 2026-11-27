@@ -126,7 +126,7 @@ function BossCard(): JSX.Element | null {
   const card = bossCard.value;
   if (!card) return null;
   return (
-    <div class={`boss-card${card.felled ? ' felled' : ''}`} key={card.key}>
+    <div class={`boss-card${card.felled ? ' felled' : ''}${card.leaving ? ' leaving' : ''}`} key={card.key}>
       <i class="boss-card-rule" />
       <span class="boss-card-name">{card.name}</span>
       <span class="boss-card-title">{card.title}</span>
