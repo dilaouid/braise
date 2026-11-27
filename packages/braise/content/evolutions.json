@@ -7,7 +7,7 @@
   {
     "id": "weapon.ardent-swarm", "icon": "icon-evo-ardent-swarm", "from": "weapon.sparks", "relic": "relic.scorched-grimoire",
     "damageType": "fire", "scale": "spi", "aim": "nearest", "behavior": "projectile",
-    "params": { "damage": 16, "cooldown": 1.0, "count": 8, "stagger": 0.11, "homing": 7, "pierce": 1, "speed": 250, "range": 440, "radius": 4, "burn": true, "sprite": "shot-spark" }
+    "params": { "damage": 14, "cooldown": 1.0, "count": 7, "stagger": 0.11, "homing": 7, "pierce": 1, "speed": 250, "range": 320, "fade": 0.5, "radius": 4, "burn": true, "sprite": "shot-spark" }
   },
   {
     "id": "weapon.dawn-rain", "icon": "icon-evo-dawn-rain", "from": "weapon.volley", "relic": "relic.bottomless-quiver",

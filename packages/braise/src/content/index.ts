@@ -45,7 +45,7 @@ export type WeaponParams = { [K in keyof WeaponParamsRaw]-?: NonNullable<WeaponP
 
 const PARAM_DEFAULTS: WeaponParams = {
   damage: 1, cooldown: 1, arc: 0, range: 0, strikes: 1, bleed: false, healEvery: 0,
-  count: 1, pierce: 0, speed: 0, radius: 4, spread: 0, stagger: 0, homing: 0, burn: false,
+  count: 1, pierce: 0, speed: 0, radius: 4, spread: 0, stagger: 0, homing: 0, fade: 0, burn: false,
   endZoneRadius: 0, endZoneDamage: 0, sprite: '',
   active: 0, pause: 0, hitInterval: 0.5, orbRadius: 6, turnTime: 2, rings: 1, ringGap: 0, sparkEvery: 0, sparkDamage: 0,
   impactRadius: 0, flight: 0.5, puddleRadius: 0, puddleDuration: 0, puddleDamage: 0, puddleTick: 0.5, puddleGrow: 0,

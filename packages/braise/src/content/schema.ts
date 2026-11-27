@@ -28,6 +28,8 @@ export const weaponParamsSchema = z
     spread: z.number().optional(),
     stagger: z.number().optional(),
     homing: z.number().optional(),
+    /** Part des dégâts perdue au bout de la portée : le tir faiblit à mesure qu'il vole. */
+    fade: z.number().min(0).max(1).optional(),
     burn: z.boolean().optional(),
     endZoneRadius: z.number().optional(),
     endZoneDamage: z.number().optional(),

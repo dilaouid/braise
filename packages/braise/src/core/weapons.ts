@@ -460,6 +460,9 @@ export function updateShots(run: Run, dt: number): void {
       const slot = s.slot[i]!;
       const w = run.weapons[slot];
       const def = w ? run.data.weapons[w.def]! : null;
+      // Un tir qui s'éteint en volant frappe moins fort de loin.
+      const p = w ? weaponParams(run, w) : null;
+      const fade = p && p.fade > 0 && p.range > 0 ? 1 - p.fade * Math.min(1, Math.max(0, 1 - s.life[i]! / p.range)) : 1;
       for (let k = 0; k < n && !ended; k++) {
         const t = run.query[k]!;
         const uid = e.uid[t]!;
@@ -471,7 +474,7 @@ export function updateShots(run: Run, dt: number): void {
         s.hits[base + (s.hitN[i]! % SHOT_HIT_MEMORY)] = uid;
         s.hitN[i]!++;
         if (def) {
-          hurtEnemy(run, t, s.dmg[i]!, def.damageType, def.scale, slot, s.flags[i]!);
+          hurtEnemy(run, t, s.dmg[i]! * fade, def.damageType, def.scale, slot, s.flags[i]!);
           knockEnemy(run, t, s.x[i]! - s.vx[i]!, s.y[i]! - s.vy[i]!, 14);
         }
         if (s.pierce[i]! <= 0) ended = true;
