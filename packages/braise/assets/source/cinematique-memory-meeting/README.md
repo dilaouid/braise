@@ -1,4 +1,4 @@
-# Souvenir « La rencontre » : sources
+# Souvenir « La promenade » : sources
 
 Illustrations de la scène de souvenir `memory-meeting` (design des Souvenirs §6), générées le 2026-11-24
 avec `create_image_pro`, 640 × 360, fond opaque, les 32 couleurs de `assets/palette.png` (aucun pixel

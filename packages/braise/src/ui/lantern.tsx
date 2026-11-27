@@ -204,6 +204,7 @@ export function LanternScreen(): JSX.Element {
   const summary = lanternChips(data, view);
   return (
     <div class="screen lantern" ref={ref}>
+      <div class="lantern-stage">
       <div class="lantern-ring">
         <Links links={linksOf(data, view)} />
         <span class="lantern-body"><Icon name="lantern-frame" /></span>
@@ -234,6 +235,7 @@ export function LanternScreen(): JSX.Element {
         {faceIndex >= lantern.opened
           ? <ClosedDetail text={closedText(data, lantern, faceIndex)} />
           : shown ? <PieceDetail data={data} face={shown} details={details} /> : owned.length === 0 ? <p>{t('lantern.empty')}</p> : null}
+      </div>
       </div>
       <HelpBar
         items={[

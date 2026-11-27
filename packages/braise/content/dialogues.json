@@ -94,8 +94,7 @@
       {"who":"cream","face":"neutral","text":"dialog.tuto.room5.a.2"}
     ],
     "tuto.room5.b": [
-      {"who":"cream","face":"smug","text":"dialog.tuto.room5.b.1"},
-      {"who":"cream","face":"neutral","text":"dialog.tuto.room5.b.2"}
+      {"who":"cream","face":"smug","text":"dialog.tuto.room5.b.1"}
     ],
     "tuto.room6": [
       {"who":"cream","face":"serious","text":"dialog.tuto.room6.1"}
@@ -136,14 +135,28 @@
     ],
     "scene.after-tutorial.1": [
       {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.1"},
-      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.1.2","emotes":{"moon":"question"}},
-      {"who":"cream","face":"smug","text":"dialog.scene.after-tutorial.1.3","poses":{"cream":"groom"}}
+      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.1.2","poses":{"moon":"startle"},"emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"laugh","text":"dialog.scene.after-tutorial.1.3","poses":{"cream":"groom"},"emotes":{"cream":"note"}},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-tutorial.1.4"},
+      {"who":"moon","face":"sad","text":"dialog.scene.after-tutorial.1.5"},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-tutorial.1.6"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.7"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.1.8","poses":{"moon":"think"}},
+      {"who":"moon","face":"sad","text":"dialog.scene.after-tutorial.1.9"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.10"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.11"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.1.12","emotes":{"moon":"question"}},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.1.13"},
+      {"who":"moon","face":"laugh","text":"dialog.scene.after-tutorial.1.14","poses":{"moon":"laugh","cream":"scratch"},"emotes":{"cream":"exclaim"}},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-tutorial.1.15"},
+      {"who":"moon","face":"laugh","text":"dialog.scene.after-tutorial.1.16"},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-tutorial.1.17"}
     ],
     "scene.after-tutorial.2": [
       {"who":"moon","face":"surprised","text":"dialog.scene.after-tutorial.2.1","emotes":{"moon":"exclaim"}},
       {"who":"cream","face":"neutral","text":"dialog.scene.after-tutorial.2.2"},
       {"who":"moon","face":"think","text":"dialog.scene.after-tutorial.2.3"},
-      {"who":"cream","face":"closed","text":"dialog.scene.after-tutorial.2.4"},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-tutorial.2.4","poses":{"cream":"groom"},"emotes":{"cream":"note"}},
       {"who":"moon","face":"awkward","text":"dialog.scene.after-tutorial.2.5","emotes":{"moon":"drop"}},
       {"who":"cream","face":"smug","text":"dialog.scene.after-tutorial.2.6","poses":{"cream":"laugh"},"emotes":{"cream":"note"}}
     ],
@@ -152,11 +165,30 @@
       {"who":"moon","face":"sad","text":"dialog.scene.after-memory-meeting.1.1"},
       {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.1.2"},
       {"who":"moon","face":"laugh","text":"dialog.scene.after-memory-meeting.1.3","poses":{"moon":"laugh"}},
-      {"who":"cream","face":"closed","text":"dialog.scene.after-memory-meeting.1.4"}
+      {"who":"moon","face":"sad","text":"dialog.scene.after-memory-meeting.1.5"},
+      {"who":"moon","face":"laugh","text":"dialog.scene.after-memory-meeting.1.6","poses":{"moon":"laugh"},"emotes":{"moon":"exclaim"}},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.1.4"},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-meeting.1.7"},
+      {"who":"moon","face":"laugh","text":"dialog.scene.after-memory-meeting.1.8","poses":{"moon":"laugh"},"emotes":{"moon":"note"}},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-memory-meeting.1.9","poses":{"cream":"groom"}}
     ],
     "scene.after-memory-meeting.2": [
       {"who":"moon","face":"resolute","text":"dialog.scene.after-memory-meeting.2.1"},
-      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.2"}
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.2"},
+      {"who":"moon","face":"think","text":"dialog.scene.after-memory-meeting.2.3","poses":{"moon":"think"}},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.4"},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-meeting.2.5","poses":{"moon":"laugh"}},
+      {"who":"cream","face":"serious","text":"dialog.scene.after-memory-meeting.2.6","poses":{"cream":"groom"}},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-meeting.2.7"},
+      {"who":"cream","face":"serious","text":"dialog.scene.after-memory-meeting.2.8"},
+      {"who":"moon","face":"shocked","text":"dialog.scene.after-memory-meeting.2.9","poses":{"moon":"startle"}},
+      {"who":"cream","face":"closed","text":"dialog.scene.after-memory-meeting.2.10"},
+      {"who":"cream","face":"serious","text":"dialog.scene.after-memory-meeting.2.11"},
+      {"who":"moon","face":"sad","text":"dialog.scene.after-memory-meeting.2.12"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.13"},
+      {"who":"cream","face":"neutral","text":"dialog.scene.after-memory-meeting.2.14"},
+      {"who":"moon","face":"neutral","text":"dialog.scene.after-memory-meeting.2.15"},
+      {"who":"cream","face":"smug","text":"dialog.scene.after-memory-meeting.2.16","poses":{"cream":"scratch"}}
     ]
   }
 }

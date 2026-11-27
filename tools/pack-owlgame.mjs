@@ -1,6 +1,6 @@
 /**
  * Construit le paquet OwlLeaf (document 09 §3) : un zip renommé `.owlgame`, qui contient le site
- * construit et un manifeste `owlgame.json` à sa racine. Produit aussi la jaquette à déposer à côté.
+ * construit et un manifeste `owlgame.json` à sa racine. Produit aussi la jaquette et la bannière.
  * À lancer après `pnpm build`.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -30,7 +30,6 @@ function walk(dir) {
   }
 }
 walk(dist);
-mkdirSync(join(out, 'covers'), { recursive: true });
 // Les images et les sons sont déjà compressés : inutile de les compresser encore.
 const zipped = zipSync(files, { level: 6 });
 writeFileSync(join(out, 'Braise.owlgame'), zipped);
@@ -38,13 +37,17 @@ writeFileSync(join(out, 'Braise.owlgame'), zipped);
 // La jaquette : le héros devant le boss, agrandis sans lissage sur un fond de nuit.
 const atlasJson = JSON.parse(readFileSync(join(pkg, 'public', 'atlas', 'atlas.json'), 'utf8'));
 const atlas = PNG.sync.read(readFileSync(join(pkg, 'public', 'atlas', 'atlas.png')));
-const cover = new PNG({ width: 512, height: 512 });
-for (let i = 0; i < cover.data.length; i += 4) {
-  const y = Math.floor(i / 4 / 512);
-  const night = y > 380 ? [0x13, 0x1c, 0x2e] : [0x0b, 0x0f, 0x1a];
-  cover.data[i] = night[0]; cover.data[i + 1] = night[1]; cover.data[i + 2] = night[2]; cover.data[i + 3] = 255;
+function nightScene(width, height, horizon) {
+  const image = new PNG({ width, height });
+  const sky = Buffer.from([0x0b, 0x0f, 0x1a, 255]);
+  const ground = Buffer.from([0x13, 0x1c, 0x2e, 255]);
+  for (let y = 0; y < height; y++) {
+    const rowStart = y * width * 4;
+    image.data.fill(y > horizon ? ground : sky, rowStart, rowStart + width * 4);
+  }
+  return image;
 }
-function blit(name, dx, dy, scale) {
+function blit(image, name, dx, dy, scale) {
   const f = atlasJson.frames[name];
   if (!f) return;
   for (let y = 0; y < f.h * scale; y++) {
@@ -53,18 +56,52 @@ function blit(name, dx, dy, scale) {
       if (atlas.data[si + 3] === 0) continue;
       const tx = dx + x;
       const ty = dy + y;
-      if (tx < 0 || ty < 0 || tx >= 512 || ty >= 512) continue;
-      const di = (ty * 512 + tx) * 4;
-      cover.data[di] = atlas.data[si]; cover.data[di + 1] = atlas.data[si + 1]; cover.data[di + 2] = atlas.data[si + 2];
+      if (tx < 0 || ty < 0 || tx >= image.width || ty >= image.height) continue;
+      const di = (ty * image.width + tx) * 4;
+      atlas.data.copy(image.data, di, si, si + 3);
     }
   }
 }
-blit('boss-cerf#0', 64, 16, 3);
-blit('hero-lame-cendre-rot-0', 160, 250, 4);
-blit('fx-flame#0', 224, 440, 4);
-writeFileSync(join(out, 'covers', 'Braise.png'), PNG.sync.write(cover));
+function writeArt(folder, image) {
+  mkdirSync(join(out, folder), { recursive: true });
+  writeFileSync(join(out, folder, 'Braise.png'), PNG.sync.write(image));
+  console.log(`release/${folder}/Braise.png : à déposer dans /sdcard/Roms/owl/${folder}/.`);
+}
+
+// Les images peintes (assets/source/launcher/) passent avant le montage de repli, agrandies sans lissage.
+function paintedArt(name, factor) {
+  const file = join(pkg, 'assets', 'source', 'launcher', name);
+  if (!existsSync(file)) return null;
+  const src = PNG.sync.read(readFileSync(file));
+  const image = new PNG({ width: src.width * factor, height: src.height * factor });
+  for (let y = 0; y < image.height; y++) {
+    for (let x = 0; x < image.width; x++) {
+      const si = (Math.floor(y / factor) * src.width + Math.floor(x / factor)) * 4;
+      src.data.copy(image.data, (y * image.width + x) * 4, si, si + 4);
+      image.data[(y * image.width + x) * 4 + 3] = 255;
+    }
+  }
+  return image;
+}
+
+const cover = paintedArt('cover.png', 2) ?? nightScene(512, 512, 380);
+if (cover.width === 512 && !existsSync(join(pkg, 'assets', 'source', 'launcher', 'cover.png'))) {
+  blit(cover, 'boss-cerf#0', 64, 16, 3);
+  blit(cover, 'hero-lame-cendre-rot-0', 160, 250, 4);
+  blit(cover, 'fx-flame#0', 224, 440, 4);
+}
+writeArt('covers', cover);
+
+// Owl Leaf superpose les titres et les boutons à gauche de l'image plein écran.
+const painted = paintedArt('banner.png', 2);
+const banner = painted ?? nightScene(1280, 720, 520);
+if (!painted) {
+  blit(banner, 'boss-cerf#0', 728, 28, 4);
+  blit(banner, 'hero-lame-cendre-rot-0', 610, 330, 5);
+  blit(banner, 'fx-flame#0', 812, 510, 5);
+}
+writeArt('banners', banner);
 
 const mb = (zipped.length / 1024 / 1024).toFixed(2);
 console.log(`release/Braise.owlgame : ${Object.keys(files).length} fichiers, ${mb} Mo (version ${version}).`);
-console.log('release/covers/Braise.png : la jaquette, à déposer dans /sdcard/Roms/owl/covers/.');
 if (zipped.length > 40 * 1024 * 1024) console.warn('Attention : le paquet dépasse les 40 Mo visés.');

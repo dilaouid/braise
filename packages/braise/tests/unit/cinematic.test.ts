@@ -85,7 +85,7 @@ describe('cinématique d\'intro (document 15)', () => {
   });
 });
 
-describe('scène de souvenir « La rencontre »', () => {
+describe('scène de souvenir « La promenade »', () => {
   const { cinematic, errors } = compileCinematic(CINEMATICS_RAW['memory-meeting'], RAW.fr, sounds);
 
   it('est valide, et son rire est un son connu', () => {

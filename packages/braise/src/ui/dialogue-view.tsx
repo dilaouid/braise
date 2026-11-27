@@ -25,7 +25,7 @@ export interface DialogueViewProps {
 }
 
 /**
- * La boîte de dialogue : le portrait de Moon à gauche, celui de Cream à droite, le nom, et le texte
+ * La boîte de dialogue : le portrait toujours à gauche, le nom, et le texte
  * qui s'écrit lettre par lettre. Le jeu (`DialogueBox`) et l'éditeur de texte la partagent.
  */
 export function DialogueView(p: DialogueViewProps): JSX.Element {

@@ -201,6 +201,8 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 /* Autel */
 /* Lanterne : l'anneau des quatre faces, la grille des pièces, le détail. Des images et des nombres. */
 .screen.lantern { background: rgba(11, 15, 26, 0.78); }
+/* Le tout est centré dans l'écran, au-dessus de la barre d'aide : mêmes marges à gauche et à droite, en haut et en bas. */
+.lantern-stage { position: absolute; left: -25px; top: 43px; width: 640px; height: 312px; }
 .lantern-ring { position: absolute; left: 24px; top: 8px; width: 300px; height: 246px; }
 .lantern-body { position: absolute; left: 102px; top: 74px; width: 96px; height: 96px; }
 .lantern-links { position: absolute; inset: 0; overflow: visible; }
@@ -224,7 +226,7 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .lantern-face.closed { border-style: dashed; border-color: var(--ash-1); background: rgba(19, 28, 46, 0.6); }
 .lantern-face.off { border-color: var(--ash-2); }
 .lantern-face.off .icon { opacity: 0.35; }
-.lantern-summary { position: absolute; left: 24px; top: 260px; width: 330px; display: flex; align-items: center; gap: 6px; }
+.lantern-summary { position: absolute; left: 70px; top: 260px; width: 284px; display: flex; align-items: center; gap: 6px; }
 .lantern-caption { color: var(--ash-3); flex: none; }
 .lantern-count { position: absolute; left: 372px; top: 4px; color: var(--ash-3); }
 .lantern-grid { position: absolute; left: 372px; top: 18px; display: grid; grid-template-columns: repeat(4, 44px); grid-auto-rows: 44px; gap: 5px; }
@@ -373,23 +375,22 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .portrait { display: inline-block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; }
 .portrait-missing { background: var(--ash-1); }
 
-/* Dialogue : une boîte en bas, le portrait de Moon à gauche, celui de Cream à droite. */
-.dialogue { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 68px; display: flex; gap: 6px; align-items: stretch; }
-.dialogue-cream { flex-direction: row-reverse; }
+/* Dialogue : une boîte en bas, le portrait toujours à gauche, qui que ce soit qui parle. */
+.dialogue { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 78px; display: flex; gap: 6px; align-items: stretch; }
 /* La boîte prend le bas de l'image : ce qu'elle couvrirait à moitié s'efface le temps du dialogue. */
 .hud.talking .hud-bl, .hud.talking .hud-br, .hud.talking .bossbar, .hud.talking .banner { visibility: hidden; }
 .dialogue-face {
-  flex: none; width: 68px; height: 68px; padding: 1px; background: var(--night-0); border: 1px solid var(--ember-2);
+  flex: none; align-self: flex-end; width: 68px; height: 68px; padding: 1px; background: var(--night-0); border: 1px solid var(--ember-2);
   animation: face-in 0.18s steps(3) both;
 }
 .dialogue-cream .dialogue-face { border-color: var(--ember-0); }
 @keyframes face-in { from { transform: translateY(3px); opacity: 0.4; } }
 .dialogue-box {
-  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 5px 9px;
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 5px 9px 17px;
   background: rgba(11, 15, 26, 0.93); border: 1px solid var(--ash-2); white-space: normal; text-align: left;
 }
 .dialogue-name { font-family: var(--font-title); font-size: 15px; line-height: 12px; color: var(--ember-1); }
-.dialogue-cream .dialogue-name { color: var(--ember-0); text-align: right; }
+.dialogue-cream .dialogue-name { color: var(--ember-0); }
 .dialogue-text { font-family: var(--font-title); font-size: 15px; line-height: 15px; color: var(--ash-5); }
 .dialogue-rest { visibility: hidden; }
 .dialogue-next { position: absolute; left: 9px; bottom: 3px; display: flex; align-items: center; gap: 4px; color: var(--ash-3); opacity: 0.45; }
@@ -397,7 +398,6 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .dialogue-skip {
   position: absolute; bottom: 3px; right: 16px; display: flex; align-items: center; gap: 4px; color: var(--ash-3); opacity: 0.6;
 }
-.dialogue-cream .dialogue-skip { right: 90px; }
 .dialogue-skip.active { opacity: 1; color: var(--ash-5); }
 
 /* Montée de niveau */
