@@ -196,6 +196,24 @@ export function advanceNight(run: Run, minutes: number): number {
   return add;
 }
 
+/**
+ * La cloche a sonné : le boss vient dans quelques secondes. Les minutes de Nuit qui restaient comptent comme
+ * jouées pour les récompenses, et rapportent la hâte.
+ */
+export function callBoss(run: Run): void {
+  const d = run.director;
+  const tuning = run.data.tuning;
+  if (d.bossSpawned || d.bellT >= 0) return;
+  d.bellT = tuning.night.bellDelay;
+  run.bossCall = 'bell';
+  run.nightCredit = Math.max(0, tuning.durationMin - nightClock(run));
+  run.haste = Math.round(tuning.night.hasteAshes * run.nightCredit);
+  if (!run.bossWarned) {
+    run.bossWarned = true;
+    emit(run, EV.bossWarning, run.hero.x, run.hero.y);
+  }
+}
+
 /** Le directeur de horde : il dépense un budget de menace qui croît avec la Nuit (document 02 §8). */
 export function updateDirector(run: Run, dt: number): void {
   const d = run.director;
@@ -214,13 +232,22 @@ export function updateDirector(run: Run, dt: number): void {
   run.hpScaleNow = enemyHpScale(tuning.scale, nightClock(run), v, 0);
 
   if (d.bossSpawned) return;
+  // La cloche a sonné : le boss vient à la fin du délai, sauf si la Nuit l'a déjà amené.
+  if (d.bellT >= 0) {
+    d.bellT -= dt;
+    if (d.bellT <= 0) {
+      spawnBoss(run);
+      run.hpScaleNow = enemyHpScale(tuning.scale, nightClock(run), v, 0);
+      return;
+    }
+  }
   // Une minute avant le boss, la partie prévient : la carte va se refermer.
   if (!run.bossWarned && m >= tuning.events.bossWarningMinute) {
     run.bossWarned = true;
     if (m < tuning.durationMin) emit(run, EV.bossWarning, run.hero.x, run.hero.y);
   }
   if (m >= tuning.durationMin) {
-    run.bossCall = 'night';
+    if (run.bossCall === null) run.bossCall = 'night';
     spawnBoss(run);
     run.hpScaleNow = enemyHpScale(tuning.scale, nightClock(run), v, 0);
     return;

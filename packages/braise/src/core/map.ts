@@ -251,5 +251,8 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
     }
   }
 
+  // La cloche, au centre de la clairière de départ. Posée en dernier, sans rien tirer : le reste de la carte ne bouge pas.
+  pois.push({ kind: 'bell', x: center * tile, y: center * tile, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
+
   return { size, tile, solid, corners, props, pois, coverage: covered / interior, waterSlow: water ? water.slow : 0, beacons };
 }

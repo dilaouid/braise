@@ -34,9 +34,14 @@ describe('carte (document 02 §3)', () => {
     }
   });
 
-  it('22 lieux, à 20 tuiles du centre et à bonne distance les uns des autres', () => {
+  it('22 lieux, à 20 tuiles du centre et à bonne distance les uns des autres, et la cloche au centre', () => {
     for (const seed of [1, 2, 3, 4]) {
-      const map = generateMap(new Rng(seed), t, region);
+      const full = generateMap(new Rng(seed), t, region);
+      const bells = full.pois.filter((p) => p.kind === 'bell');
+      expect(bells.length).toBe(1);
+      expect(bells[0]!.x).toBe((full.size * full.tile) / 2);
+      // Les lieux tirés au sort : tout sauf la cloche.
+      const map = { ...full, pois: full.pois.filter((p) => p.kind !== 'bell') };
       expect(map.pois.length).toBe(22);
       expect(map.pois.filter((p) => p.kind === 'brazier').length).toBeGreaterThanOrEqual(2);
       expect(map.pois.filter((p) => p.kind === 'spring').length).toBeGreaterThanOrEqual(1);

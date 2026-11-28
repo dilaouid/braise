@@ -42,7 +42,7 @@ import {
 /** Une couleur par sorte de lieu sur la mini-carte. */
 const MINIMAP_COLORS: Record<Poi['kind'], string> = {
   brazier: '#ffb020', spring: '#4fe0c8', cache: '#ff7a3d', portal: '#fff1c2', memory: '#6fb8ff',
-  totem: '#6cc7ff', smith: '#f4f1e6', herbalist: '#7ee08a', treasure: '#ffe36b',
+  totem: '#6cc7ff', smith: '#f4f1e6', herbalist: '#7ee08a', treasure: '#ffe36b', bell: '#e8d8ff',
 };
 
 const CLASS = 'class.ash-blade';

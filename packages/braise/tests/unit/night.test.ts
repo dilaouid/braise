@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { spawnEnemy } from '../../src/core/combat.ts';
 import { advanceNight, nightClock, updateDirector } from '../../src/core/director.ts';
+import { hashRun } from '../../src/core/bots.ts';
 import { closeChest, closeFind, takeCard } from '../../src/core/levelup.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { enemyHpScale } from '../../src/core/stats.ts';
 import { EV, type Poi, type Run } from '../../src/core/types.ts';
-import { data, makeImmortal, makeRun } from './helpers.ts';
+import { data, makeImmortal, makeRun, makeTutorial } from './helpers.ts';
 
 const STEP = 1 / 60;
 
@@ -134,5 +135,104 @@ describe('le saut de braséro', () => {
     expect(seen).toBe(1);
     seen += count(play(run, 1.1 * 60));
     expect(seen).toBe(2);
+  });
+});
+
+/** La cloche de la carte. */
+function bellOf(run: Run): Poi {
+  return run.map.pois.find((p) => p.kind === 'bell')!;
+}
+
+/** Avance de n pas en tenant le héros à cette place (rien ne le pousse hors du cercle). */
+function hold(run: Run, x: number, y: number, n: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    run.hero.x = x;
+    run.hero.y = y;
+    run.hero.px = x;
+    run.hero.py = y;
+    out.push(...play(run, 1));
+  }
+  return out;
+}
+
+/** Une partie à cette heure de Nuit, sans avance, avec la cloche déjà allumée. */
+function ready(seed: number, night: number): Run {
+  const run = makeRun(seed);
+  makeImmortal(run);
+  run.time = night * 60;
+  run.night = night;
+  run.braziersLit = data.tuning.night.bellBraziers;
+  return run;
+}
+
+describe('la cloche', () => {
+  it('la carte a une cloche au centre, découverte, éteinte', () => {
+    const run = makeRun(9);
+    const bells = run.map.pois.filter((p) => p.kind === 'bell');
+    expect(bells.length).toBe(1);
+    const center = (data.tuning.mapTiles / 2) * data.tuning.tileSize;
+    expect(bells[0]!.x).toBe(center);
+    expect(bells[0]!.y).toBe(center);
+    expect(bells[0]!.discovered).toBe(true);
+    expect(bells[0]!.state).toBe(0);
+  });
+
+  it('le tutoriel n\'a pas de cloche', () => {
+    expect(makeTutorial().map.pois.some((p) => p.kind === 'bell')).toBe(false);
+  });
+
+  it('la cloche s\'allume au 3e braséro', () => {
+    const run = makeRun(9);
+    makeImmortal(run);
+    const bell = bellOf(run);
+    run.braziersLit = 2;
+    play(run, 1);
+    expect(bell.state).toBe(0);
+    run.braziersLit = 3;
+    expect(play(run, 1)).toContain(EV.bellReady);
+    expect(bell.state).toBe(1);
+  });
+
+  it('rester 2 s la sonne ; sortir à 1,9 s remet à zéro', () => {
+    const run = ready(9, 2);
+    const bell = bellOf(run);
+    hold(run, bell.x, bell.y, 114);
+    hold(run, bell.x + 200, bell.y, 1);
+    hold(run, bell.x, bell.y, 114);
+    expect(bell.state).toBe(1);
+    expect(hold(run, bell.x, bell.y, 12)).toContain(EV.bellRung);
+    expect(bell.state).toBe(2);
+    expect(run.bossCall).toBe('bell');
+  });
+
+  it('le boss arrive 3 s après la cloche', () => {
+    const run = ready(9, 8);
+    const bell = bellOf(run);
+    hold(run, bell.x, bell.y, 2 * 60 + 2);
+    expect(bell.state).toBe(2);
+    hold(run, bell.x, bell.y, 2.9 * 60);
+    expect(run.director.bossSpawned).toBe(false);
+    hold(run, bell.x, bell.y, 0.2 * 60);
+    expect(run.director.bossSpawned).toBe(true);
+    expect(run.nightCredit).toBeCloseTo(7, 1);
+    expect(run.haste).toBe(21);
+  });
+
+  it('la Nuit à 15:00 pendant l\'attente : un seul boss', () => {
+    const run = ready(9, 14.9);
+    const bell = bellOf(run);
+    const events = hold(run, bell.x, bell.y, 8 * 60);
+    expect(events.filter((t) => t === EV.bossSpawn).length).toBe(1);
+  });
+
+  it('même graine, même partie', () => {
+    const one = (): number => {
+      const run = ready(42, 6);
+      const bell = bellOf(run);
+      hold(run, bell.x, bell.y, 20 * 60);
+      return hashRun(run);
+    };
+    expect(one()).toBe(one());
   });
 });

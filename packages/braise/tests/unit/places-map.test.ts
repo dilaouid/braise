@@ -19,7 +19,10 @@ describe('carte vivante : placement des lieux', () => {
   it('les 22 lieux sont posés sur 200 graines, hors des obstacles et à bonne distance', () => {
     const apart = data.tuning.events.poiMinApartTiles;
     for (let seed = 1; seed <= 200; seed++) {
-      const m = map(seed);
+      const full = map(seed);
+      expect(count(full.pois, 'bell'), `graine ${seed}, cloche`).toBe(1);
+      // Les lieux tirés au sort : tout sauf la cloche, posée au centre.
+      const m = { ...full, pois: full.pois.filter((p) => p.kind !== 'bell') };
       for (const [kind, n] of Object.entries(EXPECTED)) expect(count(m.pois, kind), `graine ${seed}, ${kind}`).toBe(n);
       expect(m.pois.length).toBe(22);
       for (const p of m.pois) {

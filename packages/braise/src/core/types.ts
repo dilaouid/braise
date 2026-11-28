@@ -127,6 +127,8 @@ export const EV = {
   flaskRefill: 70,
   /** La Nuit avance d'un coup (a : minutes ajoutées). */
   nightJump: 71,
+  /** La cloche s'allume (x, y), puis sonne (x, y). */
+  bellReady: 72, bellRung: 73,
 } as const;
 
 /** Une flaque de vase : le héros qui la traverse est ralenti. */
@@ -259,10 +261,13 @@ export interface PickupStore {
 
 /** Un point d'intérêt de la carte. */
 export interface Poi {
-  kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'memory' | 'totem' | 'smith' | 'herbalist' | 'treasure';
+  kind: 'brazier' | 'spring' | 'cache' | 'portal' | 'memory' | 'totem' | 'smith' | 'herbalist' | 'treasure' | 'bell';
   x: number;
   y: number;
-  /** 0 : intact · 1 : en cours · 2 : terminé (un braséro : consommé) · 3 : braséro allumé, qui attend une arme à faire évoluer. */
+  /**
+   * 0 : intact · 1 : en cours · 2 : terminé (un braséro : consommé) · 3 : braséro allumé, qui attend une arme à faire évoluer.
+   * La cloche : 0 éteinte · 1 allumée, prête à sonner · 2 sonnée.
+   */
   state: number;
   progress: number;
   discovered: boolean;

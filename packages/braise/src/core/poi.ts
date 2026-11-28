@@ -1,6 +1,6 @@
 import { addPickup, healHero, spawnEnemy } from './combat.ts';
 import { recomputeStats } from './levelup.ts';
-import { advanceNight } from './director.ts';
+import { advanceNight, callBoss } from './director.ts';
 import { convergingWave, offerEvolution, updatePlace } from './places.ts';
 import { emit } from './stores.ts';
 import { EV, PK_ASH, PK_GOLD, type Run } from './types.ts';
@@ -84,6 +84,23 @@ export function updatePois(run: Run, dt: number): void {
           addPickup(run, PK_ASH, poi.x - 10, poi.y + 14, ev.cache.ashes);
           run.pendingFinds++;
           emit(run, EV.poiDone, poi.x, poi.y, 2);
+        }
+        break;
+      case 'bell':
+        if (poi.state === 0) {
+          if (run.braziersLit >= run.data.tuning.night.bellBraziers) {
+            poi.state = 1;
+            emit(run, EV.bellReady, poi.x, poi.y);
+          }
+        } else if (poi.state === 1) {
+          // Il faut y rester : on ne la sonne pas par accident en passant.
+          if (dist < ev.bell.radius) poi.progress += dt;
+          else poi.progress = 0;
+          if (poi.progress >= ev.bell.seconds) {
+            poi.state = 2;
+            emit(run, EV.bellRung, poi.x, poi.y);
+            callBoss(run);
+          }
         }
         break;
       case 'portal':
