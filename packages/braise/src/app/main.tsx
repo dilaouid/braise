@@ -1647,7 +1647,7 @@ async function boot(): Promise<void> {
         moon: screen.value === 'title' ? null : camp,
         visible: campVisible(data, current),
         near: atCamp ? focusedId.value : null,
-        doorOpen: screen.value === 'door' && holdProgress.value > 0,
+        doorHold: screen.value === 'door' ? holdProgress.value : 0,
       });
     }
     requestAnimationFrame(frame);

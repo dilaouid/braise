@@ -3,7 +3,7 @@ import { Portrait } from './dialogue.tsx';
 import { HelpBar, Icon, useFocusScope, useHandlers } from './parts.tsx';
 import { Currencies } from './screens.tsx';
 import { bossBeaten, hasMemory, regionOpen } from '../meta/hero.ts';
-import { actions, fmtTime, gameData, holdProgress, lastSeed, replaySeed, save, saveRev, t } from './store.ts';
+import { actions, fmtTime, focusedId, gameData, holdProgress, lastSeed, replaySeed, save, saveRev, t } from './store.ts';
 
 const CLASS = 'class.ash-blade';
 
@@ -92,7 +92,7 @@ export function DoorScreen(): JSX.Element {
               <span class="door-level">{t('door.level', { level: r.level })}</span>
               <span class="door-name">{t(`${r.id}.name`)}</span>
               <span class="door-keeper">{bossBeaten(s, r.id) || lit ? t(`${boss.id}.name`) : t('door.unknown')}</span>
-              <span class="hold-track"><span class="hold-fill" style={{ width: `${Math.round(holdProgress.value * 100)}%` }} /></span>
+              <span class="hold-track"><span class="hold-fill" style={{ width: `${focusedId.value === r.id ? Math.round(holdProgress.value * 100) : 0}%` }} /></span>
               <span class={`door-fire${lit ? ' lit' : ''}`} title={t(lit ? 'door.lit' : 'door.dark')}><Icon name="sign-flame" /></span>
               {found ? <span class="door-memory" title={t('door.memory')}><Icon name="pickup-gem-medium" /></span> : null}
             </button>
