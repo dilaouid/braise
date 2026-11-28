@@ -15,7 +15,9 @@ import { bossBarFrac } from '../core/combat.ts';
 import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCards, takeCard } from '../core/levelup.ts';
 import { feedBlock, feedOffer, feedTarget, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer, unfeedTarget } from '../core/flames.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
+import { journalEntry, newTrack, trackStep, type JournalTrack } from '../core/journal.ts';
 import { computeResult } from '../core/rewards.ts';
+import { flushJournal, journalEntries, recordJournal } from './journal.ts';
 import { abandonRun, clearEvents, createRun, dashChargesMax, dashReady, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
@@ -104,6 +106,9 @@ async function boot(): Promise<void> {
   void audio.load(base);
 
   let run: Run | null = null;
+  /** Le suivi de l'expédition en cours pour le journal des parties (null : tutoriel, ou aucune partie). */
+  let track: JournalTrack | null = null;
+  void flushJournal();
   /** Moon au refuge, et l'objet où la croix ou la souris l'a envoyé (il l'emporte sur l'objet proche). */
   let camp = newCamp();
   let campPinned = false;
@@ -373,6 +378,16 @@ async function boot(): Promise<void> {
   function finishRun(): void {
     if (!run) return;
     if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
+    if (track) {
+      // Avant les gains : le niveau du héros noté est celui avec lequel il est parti.
+      const hero = current.heroes[CLASS];
+      const sum = (o: Record<string, number> | undefined): number => Object.values(o ?? {}).reduce((s, v) => s + v, 0);
+      recordJournal(journalEntry(run, track, {
+        source: 'joueur', date: new Date().toISOString(), build: __BRAISE_BUILD__,
+        heroLevel: hero?.level ?? 1, altarRanks: sum(current.account.altar), talentRanks: sum(hero?.talents),
+      }));
+      track = null;
+    }
     const result = computeResult(run);
     // Le souvenir et les gains sont inscrits et sauvegardés ici : rien ne dépend de la fin de la scène.
     const summary = applyRunResult(current, data, result);
@@ -499,6 +514,7 @@ async function boot(): Promise<void> {
    * le rejouant : les leçons sont réglées pour un héros de niveau 1 sans Autel.
    */
   function startTutorial(replay: boolean): void {
+    track = null;
     const blank = newSave(0);
     blank.heroes[CLASS] = newHero();
     const { sheet } = buildSheet(data, blank, CLASS);
@@ -675,6 +691,9 @@ async function boot(): Promise<void> {
       // La Lanterne, puis les talents de Moon.
       mods: runMods(data, current, CLASS, lantern.mods),
     });
+    track = newTrack(run);
+    // Un navigateur piloté (Playwright, robots de test) ne joue pas comme le joueur.
+    if (navigator.webdriver) track.assisted = true;
     renderer.beginRun(run);
     paused = false;
     acc = 0;
@@ -1522,6 +1541,7 @@ async function boot(): Promise<void> {
           pendUlt = false;
           pendFlask = false;
           stepRun(r, stepInput);
+          if (track) trackStep(r, track);
           processEvents(r);
           acc -= stepMs;
           steps++;
@@ -1637,11 +1657,15 @@ async function boot(): Promise<void> {
   // Une prise pour les tests de parcours et le réglage : rien d'autre ne s'en sert.
   (window as unknown as { __braise?: unknown }).__braise = {
     get run() {
+      // Un outil qui lit la partie peut aussi la modifier : sa fiche n'est plus celle d'une partie jouée à la main.
+      if (track) track.assisted = true;
       return run;
     },
     get save() {
       return current;
     },
+    /** Les fiches du journal des parties gardées dans ce navigateur. */
+    journal: journalEntries,
     /** Moon au refuge. */
     get camp() {
       return camp;
@@ -1690,6 +1714,8 @@ async function boot(): Promise<void> {
      */
     advance(steps: number, stopOnChoice = true): string {
       if (!run) return 'aucune partie';
+      // Le robot a joué : la fiche de cette partie ne compte pas comme une partie du joueur.
+      if (track) track.assisted = true;
       const bot = idleInput();
       const tuto = run.tutorial !== null;
       for (let i = 0; i < steps; i++) {
@@ -1717,6 +1743,7 @@ async function boot(): Promise<void> {
           activeBot(run, bot);
         }
         stepRun(run, bot);
+        if (track) trackStep(run, track);
         for (let k = 0; k < run.evCount; k++) renderer.onEvent(run, run.evType[k]!, run.evX[k]!, run.evY[k]!, run.evA[k]!, run.evB[k]!, run.evC[k]!);
         clearEvents(run);
       }
@@ -1732,6 +1759,7 @@ async function boot(): Promise<void> {
      */
     bossNow(): boolean {
       if (!run || run.tutorial || run.phase !== 'playing' || run.director.bossSpawned) return false;
+      if (track) track.assisted = true;
       run.time = Math.max(run.time, run.data.tuning.durationMin * 60);
       stepRun(run, idleInput());
       processEvents(run);

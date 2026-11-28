@@ -10,8 +10,14 @@
  * (--glevel <1-6> son niveau).
  * --reborn : le Cerf de Cendre remplace le Cerf.
  * --set "weapon.storm-watch:range=120,jumpRange=60;weapon.verge:damage*0.8" essaie d'autres valeurs à tous les niveaux d'une arme.
+ * --journal docs/journal/robot.jsonl : ajoute une fiche par partie, au format du journal des parties jouées à la main
+ * (à comparer avec `pnpm journal`).
  */
+import { appendFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { loadGameData } from '../packages/braise/src/content/index.ts';
+import { journalEntry, newTrack, trackStep } from '../packages/braise/src/core/journal.ts';
+import { buildId } from '../packages/braise/tools/vite-journal.ts';
 import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate, type FeedPolicy } from '../packages/braise/src/core/bots.ts';
 import { glowShareNow } from '../packages/braise/src/core/flames.ts';
 import { NEUTRAL_MODS, mergeMods } from '../packages/braise/src/core/mods.ts';
@@ -137,6 +143,9 @@ if (process.argv.includes('--tutorial')) {
 ${runs} tutoriels · finis : ${finished} · durée hors dialogues : ${fmt(sum / runs)} · face au Guetteur : ${fmt(boss / runs)} · morts par partie : ${(died / runs).toFixed(1)}`);
   process.exit(0);
 }
+const journalFile = arg('journal', '');
+const build = buildId();
+if (journalFile !== '') mkdirSync(dirname(journalFile), { recursive: true });
 const started = Date.now();
 let reachedBoss = 0;
 let victories = 0;
@@ -165,6 +174,7 @@ for (let r = 0; r < runs; r++) {
     unlockedWeapons: unlocked.weapons, unlockedRelics: unlocked.relics, autoSkills: botName !== 'flee', mods, flameRarity, reborn: process.argv.includes('--reborn'),
   });
   if (giveDef >= 0) addWeapon(run, giveDef).level = giveLevel;
+  const track = journalFile === '' ? null : newTrack(run);
   let maxEnemies = 0;
   simulate(run, {
     bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorerBot : activeBot,
@@ -173,9 +183,17 @@ for (let r = 0; r < runs; r++) {
     maxSteps: minutes * 3600,
     onStep: (x) => {
       if (x.enemies.count > maxEnemies) maxEnemies = x.enemies.count;
+      if (track) trackStep(x, track);
     },
   });
   if (!run.outcome) run.outcome = run.phase === 'victory' ? 'victory' : 'death';
+  if (track) {
+    const entry = journalEntry(run, track, {
+      source: `robot:${botName}`, date: new Date().toISOString(), build, heroLevel: level,
+      altarRanks: Object.values(save.account.altar).reduce((s, v) => s + v, 0), talentRanks: 0,
+    });
+    appendFileSync(journalFile, JSON.stringify(entry) + '\n', 'utf8');
+  }
   const res = computeResult(run);
   if (run.director.bossSpawned) reachedBoss++;
   if (run.phase === 'victory') victories++;

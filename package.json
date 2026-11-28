@@ -15,6 +15,7 @@
     "validate": "tsx tools/validate-content.ts",
     "assets": "node tools/fetch-assets.mjs && node tools/process-assets.mjs && node tools/build-atlas.mjs && node tools/build-audio.mjs",
     "sim": "tsx tools/sim-bot.ts",
+    "journal": "tsx tools/journal.ts",
     "pack:owl": "node tools/pack-owlgame.mjs",
     "assets:build": "node tools/process-assets.mjs && node tools/build-atlas.mjs",
     "cinematic": "node tools/build-cinematic.mjs && node tools/build-audio.mjs"
