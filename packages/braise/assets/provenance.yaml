@@ -381,9 +381,9 @@
   edits: "palette réduite ; images assemblées en bande"
 - file: sprites/boss-cerf@6.png
   tool: create_map_object + animate_object
-  date: 2026-11-23
-  pixellab_id: 3be3c7e8-3b87-4608-ad27-5fe588eef3f9
-  prompt: "a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns, hollow chest, mournful, two glowing magenta eyes, standing side view facing right"
+  date: 2026-11-28
+  pixellab_id: 6793c1f4-c0c3-468e-b9cc-f2386d549876
+  prompt: "walking forward slowly and majestically, four-legged gait, the small lanterns swaying gently from the antlers"
   settings: {"width":128,"height":128,"view":"low top-down"}
   edits: "palette réduite ; images assemblées en bande"
 - file: sprites/boss-cerf-cendre@6.png
@@ -633,43 +633,43 @@
   edits: "palette réduite ; images assemblées en bande"
 - file: sprites/boss-cerf-tell-charge@4.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: b4e19493-cae5-49ca-9460-b5b638580e91
+  date: 2026-11-28
+  pixellab_id: a983d14d-2cac-4f52-80b1-940dbd65c334
   prompt: "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge"
   settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-roots@4.png
+- file: sprites/boss-cerf-tell-roots@3.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: d4f3802a-3e49-4af4-bd0d-a6900f7191d4
+  date: 2026-11-28
+  pixellab_id: 1e38aeb5-2b0f-48cb-a1d0-b2686e263d73
   prompt: "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta"
-  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
+  settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[1]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/boss-cerf-tell-stomp@4.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: 14218f28-4b4c-4706-81bd-da18d24704c1
+  date: 2026-11-28
+  pixellab_id: b1771672-3576-4e15-a050-9addf4ca986a
   prompt: "the stag quickly rears up on its hind legs, front hooves raised"
   settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
-- file: sprites/boss-cerf-tell-stalk@2.png
+- file: sprites/boss-cerf-tell-stalk@3.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: c94facfe-932c-42d7-a286-dca363468a57
+  date: 2026-11-28
+  pixellab_id: 60f93b96-ec23-4104-9d72-b89ed9f6fdae
   prompt: "the stag quickly turns its head to stare at the viewer, eyes lighting up magenta, body still"
-  settings: {"width":128,"height":128,"frames":7,"skipped":5,"dropped":[]}
+  settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/boss-cerf-tell-volley@3.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: 37022d57-d2f3-4398-b210-432c3c45b5b9
+  date: 2026-11-28
+  pixellab_id: ae718620-3829-42a5-b0d2-22ff2eecf52f
   prompt: "the stag quickly throws its head back, antlers turning magenta, body still"
   settings: {"width":128,"height":128,"frames":7,"skipped":4,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"
 - file: sprites/boss-cerf-tell-roar@4.png
   tool: animate_image
-  date: 2026-11-25
-  pixellab_id: 00245737-83b2-4032-8084-202315b8276a
+  date: 2026-11-28
+  pixellab_id: 7644ba60-67e8-42c9-8c1d-0a6aca44d2bc
   prompt: "the stag quickly raises its muzzle and opens its jaws wide to roar, body still"
   settings: {"width":128,"height":128,"frames":7,"skipped":3,"dropped":[]}
   edits: "palette réduite ; poussières isolées retirées ; images assemblées en bande"

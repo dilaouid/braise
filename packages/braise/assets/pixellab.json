@@ -166,13 +166,16 @@
   },
   {
    "name": "boss-cerf",
-   "id": "3be3c7e8-3b87-4608-ad27-5fe588eef3f9",
+   "id": "6793c1f4-c0c3-468e-b9cc-f2386d549876",
    "size": [
     128,
     128
    ],
    "animated": true,
-   "prompt": "a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns, hollow chest, mournful, two glowing magenta eyes, standing side view facing right"
+   "skip": 1,
+   "prompt": "walking forward slowly and majestically, four-legged gait, the small lanterns swaying gently from the antlers",
+   "date": "2026-11-28",
+   "note": "Objet importé (import_object) : l'image 0 de l'ancienne marche (3be3c7e8-3b87-4608-ad27-5fe588eef3f9, « a huge majestic stag made of ash-grey wood, enormous antlers hung with many small dark unlit lanterns… », qui avait mis les lanternes en collier) redessinée par edit_image_pro_flash (job bacae04a-217b-4906-91eb-1c2abe8ac465 : collier retiré, lanternes pendues aux bois), puis animate_object v3 de 6 images (7 rendues, la pose de départ écartée)."
   },
   {
    "name": "boss-cerf-cendre",
@@ -1399,57 +1402,60 @@
  "clips": [
   {
    "name": "boss-cerf-tell-charge",
-   "id": "b4e19493-cae5-49ca-9460-b5b638580e91",
-   "pose": "2737d6a1-54ef-4110-84e0-7faafc480376",
+   "id": "a983d14d-2cac-4f52-80b1-940dbd65c334",
+   "pose": "0da89304-ba62-4e4d-88ff-6cdbdce20ac5",
    "frames": 7,
    "skip": 3,
    "prompt": "the stag quickly lowers its head, antlers forward, pawing the ground, ready to charge",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-tell-roots",
-   "id": "d4f3802a-3e49-4af4-bd0d-a6900f7191d4",
-   "pose": "aedfba4d-9702-4f46-a3c4-9e2df521763d",
+   "id": "1e38aeb5-2b0f-48cb-a1d0-b2686e263d73",
+   "pose": "dcc18ee5-d209-4df4-80be-533f77a407dd",
    "frames": 7,
    "skip": 3,
+   "drop": [
+    1
+   ],
    "prompt": "the stag quickly bends its neck down and drives its antlers into the ground, antlers turning magenta",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-tell-stomp",
-   "id": "14218f28-4b4c-4706-81bd-da18d24704c1",
-   "pose": "b9b46de8-a3f0-4db6-98e9-642c0223f232",
+   "id": "b1771672-3576-4e15-a050-9addf4ca986a",
+   "pose": "df1e0d66-8ea4-4286-bb90-a486e21f947f",
    "frames": 7,
    "skip": 3,
    "prompt": "the stag quickly rears up on its hind legs, front hooves raised",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-tell-stalk",
-   "id": "c94facfe-932c-42d7-a286-dca363468a57",
-   "pose": "1d0003fb-ac96-4a2d-b08e-597c0010c43f",
+   "id": "60f93b96-ec23-4104-9d72-b89ed9f6fdae",
+   "pose": "dfffcfb7-00e9-48d2-b72f-700452f61cd6",
    "frames": 7,
-   "skip": 5,
+   "skip": 4,
    "prompt": "the stag quickly turns its head to stare at the viewer, eyes lighting up magenta, body still",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-tell-volley",
-   "id": "37022d57-d2f3-4398-b210-432c3c45b5b9",
-   "pose": "61f379e5-29c6-44a4-af89-883398c27ee1",
+   "id": "ae718620-3829-42a5-b0d2-22ff2eecf52f",
+   "pose": "6e6257dd-a19f-41f2-9c28-2a2d349cdef4",
    "frames": 7,
    "skip": 4,
    "prompt": "the stag quickly throws its head back, antlers turning magenta, body still",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-tell-roar",
-   "id": "00245737-83b2-4032-8084-202315b8276a",
-   "pose": "1538f3b8-d9dc-4bc4-81e2-45bcd2a73082",
+   "id": "7644ba60-67e8-42c9-8c1d-0a6aca44d2bc",
+   "pose": "9ae4e9cf-4cd4-4ebf-ae99-cd43f67f03c7",
    "frames": 7,
    "skip": 3,
    "prompt": "the stag quickly raises its muzzle and opens its jaws wide to roar, body still",
-   "date": "2026-11-25"
+   "date": "2026-11-28"
   },
   {
    "name": "boss-cerf-cendre-tell-charge",
