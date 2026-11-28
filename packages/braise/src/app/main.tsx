@@ -23,27 +23,22 @@ import { tutorialBot } from '../core/tutorial-bot.ts';
 import { advanceScene, finishScene, newScene, sceneLine, stepScene, type SceneState } from '../core/scene.ts';
 import { createTutorialRun } from '../core/tutorial-run.ts';
 import { advanceDialogue, currentLine, skipDialogue, tickDialogue } from '../core/tutorial.ts';
-import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Poi, type Run } from '../core/types.ts';
+import { EV, PK_CHEST, PK_GEM, PK_GOLD, PK_PIECE, PK_RED_GEM, STEP, type Run } from '../core/types.ts';
 import { buyAltarRank, flameRarity, refundAltar, setAltarBoostEnabled } from '../meta/altar.ts';
 import { clearFace, clearLantern, lanternRun, markLanternSeen, placePiece, resolveLantern } from '../meta/lantern.ts';
 import { addTalent, removeTalent, resetTalents } from '../meta/talents.ts';
 import { applyRunResult, bossBeaten, buildSheet, hasMemory, memoryCount, pendingMemory, regionOpen, runMods, unlockedContent } from '../meta/hero.ts';
 import { MIGRATIONS, SAVE_VERSION, newHero, newSave, validateSave, type Save } from '../meta/save.ts';
 import { CinematicPlayer } from '../render/cinematic.ts';
-import { GameRenderer } from '../render/renderer.ts';
+import { GameRenderer, VIEW_H, VIEW_W } from '../render/renderer.ts';
 import { App } from '../ui/app.tsx';
+import { drawMinimap } from '../ui/minimap.ts';
 import { focusRef } from '../ui/parts.tsx';
 import {
   INTRO_SEEN, TUTORIAL_SEEN, UI_SOUNDS, bossCard, chest, forgeState, cineCaption, cineCard, cineQuick, cineSkip, confirm, device, dialogueShown, dialogueState, ending, findState,
   focusedId, campVisible, holdProgress, hud, knowsCream, lastSeed, levelUp, memoryCard, notice, overlay, pauseReason, pauseStats, refs, runExtras, save, saveRev, screen,
   shopState, t, totemState, tutoHud, type Actions, type HudState, type Screen,
 } from '../ui/store.ts';
-
-/** Une couleur par sorte de lieu sur la mini-carte. */
-const MINIMAP_COLORS: Record<Poi['kind'], string> = {
-  brazier: '#ffb020', spring: '#4fe0c8', cache: '#ff7a3d', portal: '#fff1c2', memory: '#6fb8ff',
-  totem: '#6cc7ff', smith: '#f4f1e6', herbalist: '#7ee08a', treasure: '#ffe36b', bell: '#e8d8ff',
-};
 
 const CLASS = 'class.ash-blade';
 const REGION = 'region.ash-woods';
@@ -1374,51 +1369,10 @@ async function boot(): Promise<void> {
     };
   }
 
-  function drawMinimap(r: Run): void {
+  function paintMinimap(r: Run, now: number): void {
     const canvas = document.getElementById('minimap') as HTMLCanvasElement | null;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-    const size = r.map.size * r.map.tile;
-    const k = 48 / size;
-    ctx.clearRect(0, 0, 48, 48);
-    if (r.map.waterSlow > 0) {
-      // L'eau profonde, à gros grains : un point de mini-carte pour deux tuiles et demie.
-      const cs = r.map.size + 1;
-      ctx.fillStyle = 'rgba(31, 158, 150, 0.45)';
-      for (let py = 0; py < 48; py++) {
-        for (let px = 0; px < 48; px++) {
-          const cx = Math.round(((px + 0.5) / 48) * r.map.size);
-          const cy = Math.round(((py + 0.5) / 48) * r.map.size);
-          if (r.map.corners[cy * cs + cx] === 1) ctx.fillRect(px, py, 1, 1);
-        }
-      }
-      for (const b of r.map.beacons) {
-        if (b.life <= 0) continue;
-        ctx.fillStyle = '#b8fff0';
-        ctx.fillRect(Math.round(b.x * k) - 1, Math.round(b.y * k) - 1, 2, 2);
-      }
-    }
-    ctx.fillStyle = '#2c3e5c';
-    const b = r.data.tuning.borderTiles * r.map.tile * k;
-    ctx.fillRect(0, 0, 48, b); ctx.fillRect(0, 48 - b, 48, b); ctx.fillRect(0, 0, b, 48); ctx.fillRect(48 - b, 0, b, 48);
-    for (const poi of r.map.pois) {
-      if (!poi.discovered) continue;
-      ctx.fillStyle = poi.state === 2 ? '#454a5c' : MINIMAP_COLORS[poi.kind];
-      ctx.fillRect(Math.round(poi.x * k) - 1, Math.round(poi.y * k) - 1, 2, 2);
-    }
-    const e = r.enemies;
-    ctx.fillStyle = '#ff3d81';
-    for (let i = 0; i < e.count; i++) {
-      if (r.data.enemies[e.kind[i]!]!.rank !== 'normal') ctx.fillRect(Math.round(e.x[i]! * k) - 1, Math.round(e.y[i]! * k) - 1, 3, 3);
-    }
-    if (r.director.bossSpawned && !r.director.bossDead) {
-      ctx.strokeStyle = '#c2185b';
-      ctx.beginPath();
-      ctx.arc(r.director.arenaX * k, r.director.arenaY * k, r.director.arenaR * k, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.fillStyle = '#fff1c2';
-    ctx.fillRect(Math.round(r.hero.x * k) - 1, Math.round(r.hero.y * k) - 1, 2, 2);
+    if (ctx) drawMinimap(ctx, r, now, VIEW_W, VIEW_H);
   }
 
   /** Les boutons dans les menus : un seul système de focus pour tous les écrans. */
@@ -1665,7 +1619,7 @@ async function boot(): Promise<void> {
       }
       if (now - mapAt > 250) {
         mapAt = now;
-        drawMinimap(r);
+        paintMinimap(r, now);
       }
       if (r.phase === 'victory') {
         if (r.tutorial) finishTutorial();

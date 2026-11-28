@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { RARITIES } from '../content/index.ts';
 import type { Card } from '../core/types.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers, type Glyph } from './parts.tsx';
+import { MINIMAP_SIZE } from './minimap.ts';
 import { SettingsScreen } from './screens.tsx';
 import { Portrait } from './dialogue.tsx';
 import {
@@ -79,7 +80,9 @@ export function Hud(): JSX.Element | null {
           <>
             <span class={`clock ${h.boss ? 'boss' : ''} ${h.clockHot ? 'hot' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
             <span class="vigil">{t('hud.vigil', { vigil: roman(h.vigil) })}</span>
-            <canvas class="minimap" id="minimap" width="48" height="48" />
+            <div class="minimap">
+              <canvas id="minimap" width={MINIMAP_SIZE} height={MINIMAP_SIZE} />
+            </div>
           </>
         )}
         {h.fps > 0 ? <span class="fps">{h.fps} i/s</span> : null}

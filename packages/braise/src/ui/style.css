@@ -416,7 +416,12 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .clock.boss { color: var(--danger-0); }
 .clock.hot { color: var(--ember-2); }
 .vigil { color: var(--ash-3); }
-.minimap { width: 48px; height: 48px; image-rendering: pixelated; border: 1px solid var(--ash-2); background: rgba(11, 15, 26, 0.75); }
+/* La mini-carte : un cadre sombre à double filet, des coins de braise. */
+.minimap { position: relative; margin-top: 2px; padding: 1px; background: var(--night-0); border: 1px solid var(--ash-1); box-shadow: 0 0 0 1px var(--night-0), 0 2px 0 1px rgba(11, 15, 26, 0.6); }
+.minimap canvas { display: block; width: 80px; height: 80px; image-rendering: pixelated; }
+.minimap::before, .minimap::after { content: ''; position: absolute; width: 5px; height: 5px; pointer-events: none; }
+.minimap::before { left: -2px; top: -2px; border-left: 2px solid var(--ember-3); border-top: 2px solid var(--ember-3); }
+.minimap::after { right: -2px; bottom: -2px; border-right: 2px solid var(--ember-3); border-bottom: 2px solid var(--ember-3); }
 .fps { color: var(--ash-3); }
 .hud-bl { position: absolute; left: 6px; bottom: 6px; display: flex; gap: 5px; }
 .ring { position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--ember-2) var(--pct), var(--ash-0) 0); border: 1px solid var(--night-0); }
