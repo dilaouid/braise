@@ -1,9 +1,9 @@
 import type { JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { RARITIES } from '../content/index.ts';
 import type { Card } from '../core/types.ts';
 import { Bar, Btn, ConfirmDialog, HelpBar, Icon, MenuButton, Panel, Pips, useFocusScope, useHandlers, type Glyph } from './parts.tsx';
-import { MINIMAP_SIZE } from './minimap.ts';
+import { BOSS, ELITE, HERO, MINIMAP_SIZE, POI_GLYPHS, drawGlyph, type Glyph as MapIcon } from './minimap.ts';
 import { SettingsScreen } from './screens.tsx';
 import { Portrait } from './dialogue.tsx';
 import {
@@ -423,6 +423,36 @@ export function FindScreen(): JSX.Element | null {
   );
 }
 
+/** Une icône de la mini-carte, dessinée à part, contour compris. */
+function MapGlyph({ glyph }: { glyph: MapIcon }): JSX.Element {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const w = glyph.rows[0]!.length + 2;
+  const h = glyph.rows.length + 2;
+  useEffect(() => {
+    const ctx = ref.current?.getContext('2d');
+    if (ctx) drawGlyph(ctx, glyph, w / 2, h / 2);
+  }, [glyph]);
+  return <canvas class="map-glyph" ref={ref} width={w} height={h} />;
+}
+
+/** Ce que montre la mini-carte : le héros, les ennemis à craindre, puis chaque sorte de lieu. */
+const LEGEND: Array<[MapIcon, string]> = [
+  [HERO, 'minimap.hero'], [ELITE, 'minimap.elite'], [BOSS, 'minimap.boss'],
+  ...(['brazier', 'spring', 'cache', 'treasure', 'totem', 'smith', 'herbalist', 'bell', 'portal', 'memory'] as const)
+    .map((kind): [MapIcon, string] => [POI_GLYPHS[kind], `place.${kind}`]),
+];
+
+function MapLegend(): JSX.Element {
+  return (
+    <div class="map-legend">
+      <h2>{t('minimap.legend')}</h2>
+      <div class="map-legend-grid">
+        {LEGEND.map(([glyph, key]) => <span key={key}><MapGlyph glyph={glyph} />{t(key)}</span>)}
+      </div>
+    </div>
+  );
+}
+
 export function PauseScreen(): JSX.Element {
   const ref = useFocusScope('pause');
   const [view, setView] = useState<'menu' | 'settings' | 'abandon' | 'skip'>('menu');
@@ -452,6 +482,7 @@ export function PauseScreen(): JSX.Element {
             {tuto
               ? <MenuButton id="skip-tutorial" label={t('pause.skipTutorial')} onPress={() => setView('skip')} />
               : <MenuButton id="abandon" label={t('pause.abandon')} onPress={() => setView('abandon')} danger />}
+            {tuto ? null : <MapLegend />}
           </div>
           <div class="pause-info">
             <h2>{t('pause.build')}</h2>

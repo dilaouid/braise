@@ -114,12 +114,12 @@ export const POI_GLYPHS: Record<Poi['kind'], Glyph> = {
 const SPENT = { main: '#454a5c', light: '#6b7285' };
 const OUTLINE = '#0b0f1a';
 
-const ELITE = g('#ff3d81', '#0b0f1a',
+export const ELITE = g('#ff3d81', '#0b0f1a',
   '.###.',
   '#+#+#',
   '#####',
   '.#.#.');
-const BOSS = g('#ff3d81', '#0b0f1a',
+export const BOSS = g('#ff3d81', '#0b0f1a',
   '.#####.',
   '#######',
   '#++#++#',
@@ -127,7 +127,7 @@ const BOSS = g('#ff3d81', '#0b0f1a',
   '###.###',
   '.#####.',
   '.#.#.#.');
-const HERO = g('#fff1c2', '#ffffff',
+export const HERO = g('#fff1c2', '#ffffff',
   '..#..',
   '.#+#.',
   '#+++#',

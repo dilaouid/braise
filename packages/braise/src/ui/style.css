@@ -560,6 +560,10 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .pause-cols { display: flex; gap: 10px; }
 .pause-menu { width: 140px; display: flex; flex-direction: column; gap: 5px; }
 .pause-info { flex: 1; display: flex; flex-direction: column; gap: 4px; white-space: normal; line-height: 11px; }
+.map-legend { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.map-legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 4px; color: var(--ash-4); }
+.map-legend-grid span { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.map-glyph { display: block; flex: none; image-rendering: pixelated; }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 10px; }
 .stats p, .end-col p { display: flex; justify-content: space-between; gap: 6px; }
 .stats span, .end-col p span { color: var(--ash-3); }
