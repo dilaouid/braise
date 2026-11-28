@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { spawnEnemy } from '../../src/core/combat.ts';
-import { advanceNight, nightClock, updateDirector } from '../../src/core/director.ts';
+import { advanceNight, callBoss, nightClock, updateDirector } from '../../src/core/director.ts';
 import { explorerWith, hashRun, simulate } from '../../src/core/bots.ts';
 import { closeChest, closeFind, takeCard } from '../../src/core/levelup.ts';
 import { computeResult, rewardMinutes, type RunResult } from '../../src/core/rewards.ts';
@@ -240,6 +240,17 @@ describe('la cloche', () => {
   });
 });
 
+/** Une fin de partie à cette heure de Nuit, avec ce crédit et cette hâte. */
+function ended(night: number, credit: number, haste: number, outcome: 'victory' | 'death' | 'abandon'): RunResult {
+  const run = makeRun(3);
+  run.time = 400;
+  run.night = night;
+  run.nightCredit = credit;
+  run.haste = haste;
+  run.outcome = outcome;
+  return computeResult(run);
+}
+
 describe('les récompenses de la Nuit', () => {
   it('les minutes de récompense comptent la Nuit', () => {
     const run = makeRun(3);
@@ -247,17 +258,6 @@ describe('les récompenses de la Nuit', () => {
     run.night = 9;
     expect(rewardMinutes(run)).toBe(9);
   });
-
-  /** Une fin de partie à cette heure de Nuit, avec ce crédit et cette hâte. */
-  function ended(night: number, credit: number, haste: number, outcome: 'victory' | 'death'): RunResult {
-    const run = makeRun(3);
-    run.time = 400;
-    run.night = night;
-    run.nightCredit = credit;
-    run.haste = haste;
-    run.outcome = outcome;
-    return computeResult(run);
-  }
 
   it('sonner à 8:00 ne fait rien perdre au temps', () => {
     const waited = ended(15, 0, 0, 'victory');
@@ -312,5 +312,48 @@ describe('le robot et la cloche', () => {
     for (const p of run.map.pois) if (p.kind === 'brazier') p.state = 2;
     simulate(run, { bot: explorerWith('ready'), maxSteps: 30 * 60 });
     expect(bellOf(run).state).toBe(1);
+  });
+});
+
+describe('après la relecture', () => {
+  it('après un boss venu par la Nuit, la cloche allumée est retirée (la flèche ne la montre plus)', () => {
+    const run = ready(9, 14.99);
+    run.hero.x += 300;
+    play(run, 2 * 60);
+    expect(run.director.bossSpawned).toBe(true);
+    expect(run.bossCall).toBe('night');
+    expect(bellOf(run).state).toBe(2);
+  });
+
+  it('pendant le boss, la cloche ne s\'allume pas', () => {
+    const run = makeRun(9);
+    makeImmortal(run);
+    run.time = 15 * 60;
+    play(run, 1);
+    expect(run.director.bossSpawned).toBe(true);
+    run.braziersLit = 3;
+    expect(play(run, 2)).not.toContain(EV.bellReady);
+    expect(bellOf(run).state).toBe(2);
+  });
+
+  it('abandonner après la cloche ne paie ni le crédit de Nuit ni la hâte', () => {
+    const plain = ended(8, 0, 0, 'abandon');
+    const rang = ended(8, 7, 21, 'abandon');
+    expect(rang.ashesCollected).toBe(plain.ashesCollected);
+    expect(rang.heroXp).toBe(plain.heroXp);
+    expect(rang.haste).toBe(0);
+  });
+
+  it('après le boss, ou pendant l\'attente de la cloche, un braséro ne fait plus sauter la Nuit', () => {
+    const fight = makeRun(9);
+    fight.night = 15;
+    updateDirector(fight, STEP);
+    expect(fight.director.bossSpawned).toBe(true);
+    expect(advanceNight(fight, 1)).toBe(0);
+    const wait = makeRun(9);
+    wait.night = 8;
+    callBoss(wait);
+    expect(advanceNight(wait, 1)).toBe(0);
+    expect(wait.night).toBe(8);
   });
 });

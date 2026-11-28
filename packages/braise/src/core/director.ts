@@ -131,6 +131,8 @@ function spawnBoss(run: Run): void {
   d.arenaX = Math.min(max - r, Math.max(min + r, hero.x));
   d.arenaY = Math.min(max - r, Math.max(min + r, hero.y));
   d.bossSpawned = true;
+  // La cloche a fait son temps : allumée mais pas sonnée, elle n'attire plus la flèche ni ne sonne pendant le combat.
+  for (const p of run.map.pois) if (p.kind === 'bell' && p.state < 2) p.state = 2;
   // Les ennemis hors de l'arène disparaissent sans rien laisser.
   const e = run.enemies;
   for (let i = e.count - 1; i >= 0; i--) {
@@ -187,8 +189,10 @@ export function nightClock(run: Run): number {
  * de l'expédition : le boss ne tombe pas sur le héros au moment où il rallume. Renvoie les minutes ajoutées.
  */
 export function advanceNight(run: Run, minutes: number): number {
+  // Une fois le boss appelé (cloche ou Nuit), la Nuit reprend au rythme du chrono : un braséro ne la pousse plus.
+  if (run.director.bossSpawned || run.director.bellT >= 0) return 0;
   const cap = run.data.tuning.durationMin - 0.5;
-  const add = run.director.bossSpawned ? minutes : Math.max(0, Math.min(minutes, cap - run.night));
+  const add = Math.max(0, Math.min(minutes, cap - run.night));
   if (add <= 0) return 0;
   run.night += add;
   run.nightAhead += add;

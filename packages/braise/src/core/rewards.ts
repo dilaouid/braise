@@ -46,11 +46,14 @@ export function computeResult(run: Run): RunResult {
   const hero = run.hero;
   const outcome = run.outcome ?? 'abandon';
   const v = run.cfg.vigil - 1;
-  const minutes = rewardMinutes(run);
+  // Abandonner après la cloche ne paie ni les minutes qu'elle a avancées ni la hâte.
+  const abandoned = outcome === 'abandon';
+  const minutes = abandoned ? run.night : rewardMinutes(run);
+  const haste = abandoned ? 0 : run.haste;
   const victory = outcome === 'victory';
   const bonus = victory ? tuning.victoryBonus : 1;
   const share = victory ? 1 : tuning.death.keptShare;
-  const ashesCollected = Math.round((tuning.ashes.perMinute * minutes + hero.ashDrops) * (1 + 0.5 * v)) + run.haste;
+  const ashesCollected = Math.round((tuning.ashes.perMinute * minutes + hero.ashDrops) * (1 + 0.5 * v)) + haste;
   const rw = run.data.heroTuning.rewards;
   const heroXp = Math.round(
     (rw.perMinute * minutes + rw.perRunLevelSq * hero.level * hero.level + rw.perElite * hero.elites + rw.perBoss * hero.bossKills)
@@ -82,7 +85,7 @@ export function computeResult(run: Run): RunResult {
     goldSpent: hero.goldSpent,
     ashesCollected,
     ashesKept: Math.round(ashesCollected * bonus * share),
-    haste: run.haste,
+    haste,
     heroXp,
     damageByWeapon: run.weapons
       .map((w) => ({ id: run.data.weapons[w.def]!.id, damage: Math.round(w.damageDone) }))
