@@ -16,6 +16,15 @@ function lay(run: Run, x1: number, y1: number, x2: number, y2: number): void {
   layThreads(run, h.x + x1, h.y + y1, h.x + x2, h.y + y2);
 }
 
+/** Sans les éclairs du fil : pour lire seuls le fil et son éclat. */
+function quiet(run: Run): Run {
+  run.data = {
+    ...run.data,
+    weapons: run.data.weapons.map((w) => (w.behavior === 'wake' ? { ...w, levels: w.levels.map((l) => ({ ...l, zapEvery: 0 })) } : w)),
+  };
+  return run;
+}
+
 /** Une vraie ruée vers la droite, jouée pas à pas. */
 function dash(run: Run): void {
   const input = idleInput();
@@ -149,6 +158,57 @@ describe('Sillage', () => {
     }
   });
 
+  it('niveaux 1 et 2 : le fil ne lance aucun éclair', () => {
+    const run = armed('weapon.wake', 2);
+    const i = at(run, 150, 40);
+    lay(run, 100, 0, 200, 0);
+    hold(run, 120);
+    expect(lost(run, i)).toBe(0);
+  });
+
+  it('niveau 3 : le fil foudroie l\'Éteint le plus proche de lui, toutes les 0,9 s', () => {
+    const run = armed('weapon.wake', 3);
+    const near = at(run, 150, 40);
+    const far = at(run, 150, 60);
+    lay(run, 100, 0, 200, 0);
+    hold(run, 1);
+    expect(lost(run, near)).toBe(14);
+    expect(lost(run, far)).toBe(0);
+    hold(run, 54);
+    expect(lost(run, near)).toBe(28);
+  });
+
+  it('niveau 4 : deux éclairs à la fois, sur deux Éteints différents', () => {
+    const run = armed('weapon.wake', 4);
+    const a = at(run, 150, 40);
+    const b = at(run, 150, 60);
+    lay(run, 100, 0, 200, 0);
+    hold(run, 1);
+    expect(lost(run, a)).toBe(16);
+    expect(lost(run, b)).toBe(16);
+  });
+
+  it('niveau 6 : le fil qui se rompt éclate sur toute sa longueur', () => {
+    const run = quiet(armed('weapon.wake', 6));
+    const i = at(run, 150, 30);
+    lay(run, 100, 0, 200, 0);
+    hold(run, 1);
+    expect(lost(run, i)).toBe(0);
+    run.threads[0]!.life = 0.001;
+    hold(run, 1);
+    expect(run.threads).toHaveLength(0);
+    expect(lost(run, i)).toBe(45);
+  });
+
+  it('avant le niveau 6, le fil rompu n\'éclate pas', () => {
+    const run = quiet(armed('weapon.wake', 5));
+    const i = at(run, 150, 30);
+    lay(run, 100, 0, 200, 0);
+    run.threads[0]!.life = 0.001;
+    hold(run, 1);
+    expect(lost(run, i)).toBe(0);
+  });
+
   it('deux fils croisés n\'éclatent pas sans l\'évolution', () => {
     const run = armed('weapon.wake');
     const near = at(run, 150, 40);
@@ -160,8 +220,8 @@ describe('Sillage', () => {
 });
 
 describe('Toile', () => {
-  it('un fil neuf qui en croise un éclate au croisement : 60 dans 48 px', () => {
-    const run = armed('weapon.web');
+  it('un fil neuf qui en croise un éclate au croisement : 130 dans 72 px', () => {
+    const run = quiet(armed('weapon.web'));
     run.hero.stats.projectiles = 0;
     const near = at(run, 180, 40);
     const far = at(run, 150, 90);
@@ -170,21 +230,21 @@ describe('Toile', () => {
     expect(lost(run, near)).toBe(0);
     lay(run, 150, -50, 150, 12);
     hold(run, 1);
-    expect(lost(run, near)).toBe(60);
+    expect(lost(run, near)).toBe(130);
     expect(lost(run, far)).toBe(0);
   });
 
   it('une fois par paire', () => {
-    const run = armed('weapon.web');
+    const run = quiet(armed('weapon.web'));
     const near = at(run, 180, 40);
     lay(run, 100, 0, 200, 0);
     lay(run, 150, -50, 150, 12);
     hold(run, 60);
-    expect(lost(run, near)).toBe(60);
+    expect(lost(run, near)).toBe(130);
   });
 
   it('une ruée qui part d\'où la précédente s\'est arrêtée ne croise rien', () => {
-    const run = armed('weapon.web');
+    const run = quiet(armed('weapon.web'));
     const near = at(run, 200, 40);
     lay(run, 100, 0, 200, 0);
     lay(run, 200, 0, 260, -60);
@@ -195,16 +255,16 @@ describe('Toile', () => {
   });
 
   it('un fil qui traverse le milieu d\'un autre éclate, même près d\'un bout', () => {
-    const run = armed('weapon.web');
+    const run = quiet(armed('weapon.web'));
     const near = at(run, 190, 40);
     lay(run, 100, 0, 200, 0);
     lay(run, 190, -50, 190, 10);
     hold(run, 1);
-    expect(lost(run, near)).toBeGreaterThanOrEqual(60);
+    expect(lost(run, near)).toBeGreaterThanOrEqual(130);
   });
 
   it('deux fils qui ne se croisent pas n\'éclatent pas', () => {
-    const run = armed('weapon.web');
+    const run = quiet(armed('weapon.web'));
     const near = at(run, 150, 40);
     lay(run, 100, 0, 200, 0);
     lay(run, 100, -30, 200, -30);
@@ -213,12 +273,12 @@ describe('Toile', () => {
   });
 
   it('évoluer garde les fils vivants', () => {
-    const run = armed('weapon.wake', 6);
+    const run = quiet(armed('weapon.wake', 6));
     lay(run, 100, 0, 200, 0);
     evolveWeapon(run, run.weapons[0]!);
     const i = at(run, 150);
     hold(run, 1);
     expect(run.threads).toHaveLength(1);
-    expect(lost(run, i)).toBe(30);
+    expect(lost(run, i)).toBe(38);
   });
 });

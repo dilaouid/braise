@@ -168,6 +168,8 @@ export interface Thread {
   slot: number;
   /** Vrai jusqu'à ce que ses croisements soient résolus. */
   fresh: boolean;
+  /** Temps avant les prochains éclairs que le fil lance aux Éteints proches. */
+  zapT: number;
 }
 
 export interface EnemyStore {
@@ -441,6 +443,9 @@ export interface Director {
   bossUid: number;
   bossPhase: number;
   bossSummonT: number;
+  /** La gerbe de vase de la Dame : le temps avant la prochaine, et l'angle de départ, qui tourne d'une gerbe à l'autre. */
+  bossSprayT: number;
+  bossSprayA: number;
   /** Dernière attaque du boss, pour ne pas la répéter ; la suivante imposée (-1 : libre). */
   bossLast: number;
   bossNext: number;

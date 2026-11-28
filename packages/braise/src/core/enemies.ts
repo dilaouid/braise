@@ -3,7 +3,7 @@ import { updateLady } from './boss-lady.ts';
 import { hurtHero, isDust, spawnEnemy, tickStatuses } from './combat.ts';
 import { isDeepAt, isSolidAt, isSolidTile } from './map.ts';
 import { BLIND_RANGE, addMire, drainHero, grantDodge, mireHero, strikeCircle } from './marsh.ts';
-import { addTelegraph, emit, queryCircle, removeEnemyShot, removeTelegraph } from './stores.ts';
+import { addTelegraph, emit, fireEnemyShot, queryCircle, removeEnemyShot, removeTelegraph } from './stores.ts';
 import {
   BH, CAP_ENEMY_SHOTS, EV, MAX_WEAPON_SLOTS, TFX_MIRE, TFX_PUDDLE, TFX_PULL, TG_ARC, TG_CIRCLE, TG_LINE, TG_RING,
   type Run,
@@ -114,16 +114,6 @@ function approach(run: Run, i: number, dirX: number, dirY: number, dist: number,
     }
   }
   if (moveGround(run, i, dirX, dirY, dist, radius)) e.flowT[i] = 0.7;
-}
-
-function fireEnemyShot(run: Run, kind: number, x: number, y: number, dirX: number, dirY: number, speed: number, damage: number, radius: number, life: number): void {
-  const s = run.enemyShots;
-  if (s.count >= CAP_ENEMY_SHOTS) return;
-  const i = s.count++;
-  s.x[i] = x; s.y[i] = y; s.px[i] = x; s.py[i] = y;
-  s.vx[i] = dirX * speed; s.vy[i] = dirY * speed;
-  s.life[i] = life; s.damage[i] = damage; s.radius[i] = radius; s.kind[i] = kind;
-  emit(run, EV.enemyShot, x, y);
 }
 
 function countChildren(run: Run, uid: number): number {

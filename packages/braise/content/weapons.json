@@ -112,11 +112,11 @@
     "relic": "relic.copper-sole", "evolution": "weapon.web", "starting": false,
     "levels": [
       { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 2.5, "max": 3, "minLength": 20 },
-      { "damage": 13, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
-      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20 },
-      { "damage": 19, "hitInterval": 0.6, "width": 14, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
-      { "damage": 19, "hitInterval": 0.6, "width": 22, "life": 3.2, "max": 3, "minLength": 20, "shock": true },
-      { "damage": 26, "hitInterval": 0.6, "width": 22, "life": 4, "max": 3, "minLength": 20, "shock": true }
+      { "damage": 15, "hitInterval": 0.6, "width": 14, "life": 3.5, "max": 4, "minLength": 20 },
+      { "damage": 20, "hitInterval": 0.6, "width": 16, "life": 3.5, "max": 4, "minLength": 20, "zapEvery": 0.9, "zapCount": 1, "zapRange": 70, "zapDamage": 14 },
+      { "damage": 20, "hitInterval": 0.6, "width": 16, "life": 3.5, "max": 4, "minLength": 20, "shock": true, "zapEvery": 0.8, "zapCount": 2, "zapRange": 70, "zapDamage": 16 },
+      { "damage": 24, "hitInterval": 0.5, "width": 26, "life": 4, "max": 5, "minLength": 20, "shock": true, "zapEvery": 0.8, "zapCount": 2, "zapRange": 95, "zapDamage": 18 },
+      { "damage": 30, "hitInterval": 0.5, "width": 26, "life": 5, "max": 5, "minLength": 20, "shock": true, "zapEvery": 0.7, "zapCount": 3, "zapRange": 95, "zapDamage": 22, "snapDamage": 45 }
     ]
   }
 ]

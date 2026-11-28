@@ -265,12 +265,13 @@ describe('sans Lanterne', () => {
   // Empreintes refaites le 2026-11-25 : le trait de Moon (chantier des Flammes) change les dégâts hors de sa
   // lumière. Avant lui, avec les Flammes mais sans mise, elles étaient encore celles d'avant la Lanterne.
   // Refaites le même soir : le directeur garde la sorte tirée jusqu'à pouvoir la payer (horde de fin de partie).
+  // Refaites le 2026-11-28 : les Éteints durcissent plus vite (PV x 10,6 à 15:00 au lieu de x 5,5).
   it('la partie est celle d\'avant le chantier', () => {
-    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([2898618460, 1624074926, 491782209]);
+    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([3001415152, 677029198, 2922802119]);
   }, 60_000);
 
   it('des modificateurs neutres ne changent rien', () => {
-    expect(played(makeModRun({}, 1))).toBe(2898618460);
+    expect(played(makeModRun({}, 1))).toBe(3001415152);
   }, 60_000);
 
   it('le tutoriel est toujours neutre', () => {

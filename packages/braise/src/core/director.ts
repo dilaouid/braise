@@ -1,4 +1,4 @@
-import { LS_EMERGE } from './boss-lady.ts';
+import { LADY_ABOVE, LADY_SIDE, LS_EMERGE } from './boss-lady.ts';
 import { spawnEnemy } from './combat.ts';
 import { isSolidAt } from './map.ts';
 import { enemyHpScale, threatPerSecond } from './stats.ts';
@@ -140,9 +140,9 @@ function spawnBoss(run: Run): void {
   const def = run.data.enemies[kind]!;
   // Le boss ne suit pas l'échelle par minute, seulement celle de la Veillée.
   const hpMult = enemyHpScale(tuning.scale, 0, run.cfg.vigil - 1, 0);
-  let bx = d.arenaX;
-  // Un boss qui sort de l'eau le fait à l'écran : on doit le voir se lever.
-  let by = d.arenaY - (def.emerge !== undefined ? 104 : 180);
+  // Un boss qui sort de l'eau le fait à l'écran, à côté de Moon : on doit le voir se lever en entier.
+  let bx = d.arenaX + (def.emerge !== undefined ? LADY_SIDE : 0);
+  let by = d.arenaY - (def.emerge !== undefined ? LADY_ABOVE : 180);
   const keep = def.emerge !== undefined ? 100 : 140;
   for (let attempt = 0; attempt < 12 && (isSolidAt(run.map, bx, by) || Math.hypot(bx - hero.x, by - hero.y) < keep); attempt++) {
     const a = run.rngSpawn.float() * TAU;
@@ -167,6 +167,8 @@ function spawnBoss(run: Run): void {
     d.bossTell = -1;
     d.bossTellT = -1;
     d.bossSummonT = def.summon?.cooldown ?? 0;
+    d.bossSprayT = def.spray?.every[0] ?? 0;
+    d.bossSprayA = 0;
     emit(run, EV.bossSpawn, bx, by, kind);
   }
 }

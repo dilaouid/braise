@@ -89,6 +89,13 @@ export const weaponParamsSchema = z
     minLength: z.number().nonnegative().optional(),
     crossRadius: z.number().positive().optional(),
     crossDamage: z.number().positive().optional(),
+    /** Toutes les `zapEvery` secondes, chaque fil lance `zapCount` éclairs de `zapDamage` aux Éteints à `zapRange` px de lui. */
+    zapEvery: z.number().positive().optional(),
+    zapCount: z.number().int().positive().optional(),
+    zapRange: z.number().positive().optional(),
+    zapDamage: z.number().positive().optional(),
+    /** Le fil qui se rompt éclate sur toute sa longueur. */
+    snapDamage: z.number().positive().optional(),
   })
   .strict();
 
@@ -434,6 +441,17 @@ export const enemySchema = z
       .object({
         damage: z.number(), telegraph: z.number(), count: z.number().int(), stagger: z.number(), radius: z.number(), scatter: z.number(),
         lead: z.number(), mire: mireSchema,
+      })
+      .strict()
+      .optional(),
+    /**
+     * La gerbe de vase : entre ses coups, des anneaux de `shots` projectiles partent d'elle toutes les `every` secondes
+     * (une valeur par phase), chacun tourné de `turn` radians par rapport au précédent.
+     */
+    spray: z
+      .object({
+        damage: z.number(), speed: z.number(), radius: z.number(), life: z.number(), turn: z.number(),
+        every: z.array(z.number().positive()).length(3), shots: z.array(z.number().int().positive()).length(3),
       })
       .strict()
       .optional(),

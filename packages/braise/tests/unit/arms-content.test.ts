@@ -71,8 +71,16 @@ describe('les armes de Clair-obscur : le contenu', () => {
     expect(w).toMatchObject({ damageType: 2, scale: 'agi', aim: 'placed', behavior: 'wake' });
     expect(w.levels[0]).toMatchObject({ damage: 13, hitInterval: 0.6, width: 14, life: 2.5, max: 3, minLength: 20, shock: false });
     expect(w.levels[3]!.shock).toBe(true);
-    expect(w.levels[5]).toMatchObject({ damage: 26, width: 22, life: 4 });
-    expect(weapon('weapon.web').levels[0]).toMatchObject({ damage: 30, hitInterval: 0.5, width: 22, life: 5, max: 3, shock: true, crossRadius: 48, crossDamage: 60 });
+    // Chaque niveau apporte quelque chose qui se voit : un fil de plus, des éclairs, puis l'éclat du fil rompu.
+    expect(w.levels[1]!.max).toBe(4);
+    expect(w.levels[1]!.zapEvery).toBe(0);
+    expect(w.levels[2]).toMatchObject({ zapEvery: 0.9, zapCount: 1 });
+    expect(w.levels[3]).toMatchObject({ zapCount: 2 });
+    expect(w.levels[4]).toMatchObject({ width: 26, max: 5 });
+    expect(w.levels[5]).toMatchObject({ damage: 30, width: 26, life: 5, zapCount: 3, snapDamage: 45 });
+    expect(weapon('weapon.web').levels[0]).toMatchObject({
+      damage: 38, hitInterval: 0.4, width: 30, life: 6, max: 6, shock: true, crossRadius: 72, crossDamage: 130, zapCount: 4, snapDamage: 80,
+    });
   });
 
   it('les reliques', () => {

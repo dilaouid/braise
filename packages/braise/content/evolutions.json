@@ -47,6 +47,6 @@
   {
     "id": "weapon.web", "icon": "icon-evo-web", "from": "weapon.wake", "relic": "relic.copper-sole",
     "damageType": "lightning", "scale": "agi", "aim": "placed", "behavior": "wake",
-    "params": { "damage": 30, "hitInterval": 0.5, "width": 22, "life": 5, "max": 3, "minLength": 20, "shock": true, "crossRadius": 48, "crossDamage": 60 }
+    "params": { "damage": 38, "hitInterval": 0.4, "width": 30, "life": 6, "max": 6, "minLength": 20, "shock": true, "crossRadius": 72, "crossDamage": 130, "zapEvery": 0.5, "zapCount": 4, "zapRange": 120, "zapDamage": 30, "snapDamage": 80 }
   }
 ]

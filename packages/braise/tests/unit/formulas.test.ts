@@ -26,9 +26,9 @@ describe('formules de l\'expédition (document 02 §11)', () => {
 
   it('échelle des ennemis', () => {
     expect(enemyHpScale(t.scale, 0, 0, 0)).toBe(1);
-    expect(enemyHpScale(t.scale, 15, 0, 0)).toBeCloseTo(5.5, 5);
-    expect(enemyHpScale(t.scale, 15, 2, 0)).toBeCloseTo(14.08, 2);
-    expect(enemyHpScale(t.scale, 15, 0, 20)).toBeCloseTo(25.6, 1);
+    expect(enemyHpScale(t.scale, 15, 0, 0)).toBeCloseTo(10.6, 5);
+    expect(enemyHpScale(t.scale, 15, 2, 0)).toBeCloseTo(27.14, 2);
+    expect(enemyHpScale(t.scale, 15, 0, 20)).toBeCloseTo(49.4, 1);
     expect(enemyDamageScale(t.scale, 15, 0, 0)).toBeCloseTo(1.6, 5);
   });
 

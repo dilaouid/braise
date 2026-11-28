@@ -1,5 +1,5 @@
 import {
-  CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_EVENTS, CAP_PICKUPS, CAP_SHOTS, CAP_TELEGRAPHS, CAP_ZONES, MAX_WEAPON_SLOTS,
+  CAP_ENEMIES, CAP_ENEMY_SHOTS, CAP_EVENTS, CAP_PICKUPS, CAP_SHOTS, CAP_TELEGRAPHS, CAP_ZONES, EV, MAX_WEAPON_SLOTS,
   type EnemyShotStore, type EnemyStore, type PickupStore, type Run, type ShotStore, type TelegraphStore, type TutorialNotes, type ZoneStore,
 } from './types.ts';
 
@@ -167,6 +167,17 @@ export function emit(run: Run, type: number, x: number, y: number, a = 0, b = 0,
   run.evA[i] = a;
   run.evB[i] = b;
   run.evC[i] = c;
+}
+
+/** Un projectile ennemi. Ses dégâts sont ceux de base : l'échelle de l'ennemi s'applique au contact. */
+export function fireEnemyShot(run: Run, kind: number, x: number, y: number, dirX: number, dirY: number, speed: number, damage: number, radius: number, life: number): void {
+  const s = run.enemyShots;
+  if (s.count >= CAP_ENEMY_SHOTS) return;
+  const i = s.count++;
+  s.x[i] = x; s.y[i] = y; s.px[i] = x; s.py[i] = y;
+  s.vx[i] = dirX * speed; s.vy[i] = dirY * speed;
+  s.life[i] = life; s.damage[i] = damage; s.radius[i] = radius; s.kind[i] = kind;
+  emit(run, EV.enemyShot, x, y);
 }
 
 /** Taille d'une cellule de la grille spatiale, en pixels. */

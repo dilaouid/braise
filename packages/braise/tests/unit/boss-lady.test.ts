@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LADY_ABOVE, LADY_RISE, LS_DIVE, LS_EMERGE, LS_IDLE, LS_SURGE, L_DIVE, L_EMBRACE, L_HANDS, L_LANTERNS, L_SCREAM, L_SWEEP, L_TIDE,
+  LADY_ABOVE, LADY_RISE, LADY_SIDE, LS_DIVE, LS_EMERGE, LS_IDLE, LS_SURGE, L_DIVE, L_EMBRACE, L_HANDS, L_LANTERNS, L_SCREAM, L_SWEEP, L_TIDE,
 } from '../../src/core/boss-lady.ts';
 import { bossBarFrac, hurtEnemy, spawnEnemy } from '../../src/core/combat.ts';
 import { contactDamage, insideTelegraph, updateEnemies, updateTelegraphs } from '../../src/core/enemies.ts';
@@ -193,7 +193,7 @@ describe('la Dame de Vase', () => {
     expect(glide.speed).toBeGreaterThan(data.tuning.hero.speed);
     const pace = (gap: number): number => {
       const { run, i } = makeLady();
-      run.enemies.x[i] = run.hero.x;
+      run.enemies.x[i] = run.hero.x + LADY_SIDE;
       run.enemies.y[i] = run.hero.y - LADY_ABOVE - gap;
       run.enemies.timer2[i] = 99;
       const y0 = run.enemies.y[i]!;

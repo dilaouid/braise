@@ -84,8 +84,8 @@ describe('le Cerf de Cendre', () => {
     const { run } = makeAsh();
     const i = reformNow(run);
     expect(i).toBeGreaterThanOrEqual(0);
-    expect(run.enemies.maxHp[i]).toBe(14400);
-    expect(run.enemies.hp[i]).toBe(14400);
+    expect(run.enemies.maxHp[i]).toBe(36000);
+    expect(run.enemies.hp[i]).toBe(36000);
     expect(run.director.bossReformed).toBe(true);
     expect(run.director.bossReformT).toBe(3);
     for (let t = 0; t < 3.1; t += DT) updateEnemies(run, DT);
@@ -107,7 +107,7 @@ describe('le Cerf de Cendre', () => {
     expect(hurtEnemy(run, i, 100000, 0, null, -1)).toBe(0);
     applyBurn(run, i, 5000);
     for (let t = 0; t < 1; t += DT) tickStatuses(run, i, DT);
-    expect(run.enemies.hp[i]).toBe(14400);
+    expect(run.enemies.hp[i]).toBe(36000);
   });
 
   it('pas de contact pendant la poussière', () => {

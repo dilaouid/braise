@@ -75,18 +75,19 @@ describe('règles de la partie', () => {
     expect(survived / seeds.length).toBeGreaterThanOrEqual(5 / 6);
   }, 120000);
 
-  // Le robot choisit ses cartes comme un joueur appliqué (plannedPick) : prendre la première carte au
-  // hasard rendait le taux dépendant des tirages (≈ 53 à 60 % selon les graines). Avec ce choix, il est
-  // d'environ 78 % sur 180 parties, ce qui laisse une marge à 20 parties.
-  it('un robot qui vise ses évolutions atteint le boss dans au moins 60 % des parties, héros niveau 10', () => {
+  // Le robot choisit ses cartes comme un joueur appliqué (plannedPick). Il joue mal : il esquive peu, sans talents
+  // ni boosts de l'Autel. Depuis que les Éteints durcissent bien plus vite (PV × 10,6 à 15:00 au lieu de × 5,5),
+  // un héros de niveau 10 n'atteint plus le boss qu'une partie sur trois (6/20, contre 12/20 avant) ; un héros
+  // de niveau 20 y arrive dans 11 parties sur 20. Le test garde ce dernier, avec une marge.
+  it('un robot qui vise ses évolutions atteint le boss dans au moins 40 % des parties, héros niveau 20', () => {
     let reached = 0;
     const runs = 20;
     for (let k = 0; k < runs; k++) {
-      const run = makeRun(300 + k, makeSave(10), true);
+      const run = makeRun(300 + k, makeSave(20), true);
       simulate(run, { bot: activeBot, pickCard: plannedPick, maxSteps: 15.2 * 60 * 60 });
       if (run.director.bossSpawned) reached++;
     }
-    expect(reached / runs).toBeGreaterThanOrEqual(0.6);
+    expect(reached / runs).toBeGreaterThanOrEqual(0.4);
   }, 300000);
 
   it('une gemme dans la lueur vole vers le héros et donne de l\'expérience', () => {

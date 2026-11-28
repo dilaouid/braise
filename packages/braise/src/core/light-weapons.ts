@@ -4,7 +4,7 @@ import { isLit, litRadius } from './light.ts';
 import { effectiveCooldown } from './stats.ts';
 import { emit, queryCircle } from './stores.ts';
 import {
-  EV, HIT_BURN, HIT_FREEZE, HIT_SHOCK, MAX_WEAPON_SLOTS, type Run, type Thread, type WeaponInstance,
+  EV, HIT_BURN, HIT_FREEZE, HIT_SHOCK, MAX_WEAPON_SLOTS, STEP, type Run, type Thread, type WeaponInstance,
 } from './types.ts';
 import { burstAt, weaponParams } from './weapons.ts';
 
@@ -50,7 +50,32 @@ export function tickLights(run: Run, dt: number): void {
   for (let i = run.threads.length - 1; i >= 0; i--) {
     const t = run.threads[i]!;
     t.life -= dt;
-    if (t.life <= 0) run.threads.splice(i, 1);
+    if (t.life <= 0) {
+      run.threads.splice(i, 1);
+      snapThread(run, t);
+    }
+  }
+}
+
+/** Un fil qui se rompt au bout de sa vie éclate sur toute sa longueur, si son arme le sait. */
+function snapThread(run: Run, t: Thread): void {
+  const w = run.weapons[t.slot];
+  if (!w) return;
+  const def = run.data.weapons[w.def]!;
+  if (def.behavior !== 'wake') return;
+  const p = weaponParams(run, w);
+  if (p.snapDamage <= 0) return;
+  const zone = 1 + run.hero.stats.zone;
+  const n = querySegment(run, t.x1, t.y1, t.x2, t.y2, p.width * 2.4 * zone);
+  // Copiée : un coup peut tuer, et une mort relance des recherches.
+  const hit = run.query.slice(0, n);
+  const flags = p.shock ? HIT_SHOCK : 0;
+  for (const i of hit) hurtEnemy(run, i, p.snapDamage, def.damageType, def.scale, t.slot, flags);
+  const len = Math.hypot(t.x2 - t.x1, t.y2 - t.y1);
+  const bursts = Math.max(2, Math.round(len / 40));
+  for (let k = 0; k <= bursts; k++) {
+    const u = k / bursts;
+    emit(run, EV.burst, t.x1 + (t.x2 - t.x1) * u, t.y1 + (t.y2 - t.y1) * u, p.width * 1.2 * zone, def.damageType);
   }
 }
 
@@ -212,7 +237,7 @@ export function layThreads(run: Run, x1: number, y1: number, x2: number, y2: num
     const p = weaponParams(run, w);
     if (Math.hypot(x2 - x1, y2 - y1) < p.minLength) continue;
     const life = p.life * (1 + run.hero.stats.duration);
-    run.threads.push({ x1, y1, x2, y2, life, maxLife: life, slot, fresh: true });
+    run.threads.push({ x1, y1, x2, y2, life, maxLife: life, slot, fresh: true, zapT: 0 });
     if (run.threads.length > p.max) run.threads.splice(0, run.threads.length - p.max);
     emit(run, EV.thread, x2, y2);
   }
@@ -262,5 +287,43 @@ export function updateWake(run: Run, slot: number, def: WeaponDef, p: WeaponPara
       e.hitCd[c] = p.hitInterval;
       hurtEnemy(run, i, p.damage, def.damageType, def.scale, slot, flags);
     }
+    if (p.zapEvery > 0) zapFromThread(run, t, slot, def, p, flags, zone);
+  }
+}
+
+const zapped: number[] = [];
+
+/** Le fil crépite : à son rythme, il lance des éclairs aux Éteints les plus proches de lui, depuis le point du fil le plus près. */
+function zapFromThread(run: Run, t: Thread, slot: number, def: WeaponDef, p: WeaponParams, flags: number, zone: number): void {
+  t.zapT -= STEP;
+  if (t.zapT > 0) return;
+  t.zapT += p.zapEvery;
+  const e = run.enemies;
+  const range = p.zapRange * zone;
+  const dx = t.x2 - t.x1;
+  const dy = t.y2 - t.y1;
+  const len2 = dx * dx + dy * dy || 1;
+  zapped.length = 0;
+  for (let z = 0; z < p.zapCount; z++) {
+    // Le plus proche du fil parmi ceux pas encore frappés par ce crépitement.
+    const n = querySegment(run, t.x1, t.y1, t.x2, t.y2, range * 2);
+    let best = -1;
+    let bestD = Infinity;
+    for (let q = 0; q < n; q++) {
+      const i = run.query[q]!;
+      if (zapped.includes(i) || e.hp[i]! <= 0 || isDust(run, i)) continue;
+      const d = segmentDistance(e.x[i]!, e.y[i]!, t.x1, t.y1, t.x2, t.y2);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    if (best < 0) break;
+    zapped.push(best);
+    const x = e.x[best]!;
+    const y = e.y[best]!;
+    const u = Math.max(0, Math.min(1, ((x - t.x1) * dx + (y - t.y1) * dy) / len2));
+    emit(run, EV.bolt, x, y, t.x1 + dx * u, t.y1 + dy * u, p.snapDamage > 0 ? 2 : 0);
+    hurtEnemy(run, best, p.zapDamage, def.damageType, def.scale, slot, flags);
   }
 }

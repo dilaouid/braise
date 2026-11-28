@@ -2,7 +2,7 @@ import type { EnemyDef } from '../content/index.ts';
 import { spawnEnemy } from './combat.ts';
 import { isSolidAt } from './map.ts';
 import { startTide } from './marsh.ts';
-import { addTelegraph, emit } from './stores.ts';
+import { addTelegraph, emit, fireEnemyShot } from './stores.ts';
 import { EV, TFX_MIRE, TFX_PUDDLE, TFX_PULL, TG_ARC, TG_CIRCLE, TG_LINE, TG_RING, type Run } from './types.ts';
 
 const TAU = Math.PI * 2;
@@ -38,8 +38,18 @@ export const LADY_TELL = 0.6;
 export const LADY_POSE = [1.5, 1.3, 1.5, 1.1, 1.3, 1.9, 1.7];
 /** La fin de son arrivée, où on la voit sortir de l'eau. */
 export const LADY_RISE = 1.3;
-/** Elle se tient à cette distance au-dessus de Moon : ses coups portent loin, et on la voit en entier. */
-export const LADY_ABOVE = 84;
+/**
+ * Elle se tient à côté de Moon, un peu au-dessus, du côté où elle est déjà : ses coups portent loin, et la caméra,
+ * centrée sur Moon, la voit en entier (son image fait 176 px de haut).
+ */
+export const LADY_SIDE = 120;
+export const LADY_ABOVE = 16;
+
+/** La place qu'elle cherche : à côté de Moon, du côté où elle se trouve. */
+export function ladySpot(heroX: number, heroY: number, ladyX: number, out: { x: number; y: number }): void {
+  out.x = heroX + (ladyX < heroX ? -LADY_SIDE : LADY_SIDE);
+  out.y = heroY - LADY_ABOVE;
+}
 
 function ladyPick(run: Run, phase: number): number {
   const pool = LADY_POOLS[phase - 1]!;
@@ -74,12 +84,41 @@ function summonCortege(run: Run, def: EnemyDef): void {
   const d = run.director;
   const sm = def.summon!;
   const start = run.rngSpawn.float() * TAU;
-  for (let k = 0; k < sm.count; k++) {
-    const a = start + (k * TAU) / sm.count;
+  // Le cortège grossit à chaque phase.
+  const count = sm.count + (d.bossPhase - 1) * 3;
+  for (let k = 0; k < count; k++) {
+    const a = start + (k * TAU) / count;
     const x = d.arenaX + Math.cos(a) * (d.arenaR - 34);
     const y = d.arenaY + Math.sin(a) * (d.arenaR - 34);
     if (!isSolidAt(run.map, x, y)) spawnEnemy(run, def.summonIndex, x, y, run.hpScaleNow);
   }
+}
+
+/**
+ * La gerbe de vase : quoi qu'elle fasse, les lanternes de ses cheveux crachent un anneau de boules de vase à son rythme.
+ * Chaque anneau est tourné par rapport au précédent : une spirale lente qu'il faut lire pour passer entre les boules.
+ * En phase 3, un second anneau suit, décalé d'une demi-maille.
+ */
+function spray(run: Run, i: number, def: EnemyDef, phase: number, dt: number): void {
+  const dir = run.director;
+  const sp = def.spray!;
+  dir.bossSprayT -= dt;
+  if (dir.bossSprayT > 0) return;
+  dir.bossSprayT = sp.every[phase - 1]!;
+  const e = run.enemies;
+  const n = sp.shots[phase - 1]!;
+  const rings = phase === 3 ? 2 : 1;
+  const x = e.x[i]!;
+  const y = e.y[i]! - 70;
+  for (let r = 0; r < rings; r++) {
+    const start = dir.bossSprayA + (r * Math.PI) / n;
+    const speed = sp.speed * (1 - r * 0.25);
+    for (let k = 0; k < n; k++) {
+      const a = start + (k * TAU) / n;
+      fireEnemyShot(run, e.kind[i]!, x, y, Math.cos(a), Math.sin(a), speed, sp.damage, sp.radius, sp.life);
+    }
+  }
+  dir.bossSprayA += sp.turn;
 }
 
 /** Fin d'une attaque : elle souffle, moins longtemps à chaque phase, ou enchaîne en phase 3. */
@@ -248,12 +287,13 @@ export function updateLady(run: Run, i: number, dx: number, dy: number, dist: nu
     if (state === LS_IDLE) e.timer2[i] = Math.min(e.timer2[i]!, 0.2);
   }
   const haste = phase === 3 ? (def.phase3Haste ?? 1) : 1;
-  if (phase >= 2 && !dir.bossHidden) {
+  if (!dir.bossHidden) {
     dir.bossSummonT -= dt;
     if (dir.bossSummonT <= 0) {
       dir.bossSummonT = def.summon!.cooldown;
       summonCortege(run, def);
     }
+    if (def.spray && state !== LS_SURGE) spray(run, i, def, phase, dt);
   }
   if (phase === 3 && !dir.tide) {
     dir.tideCd -= dt;
@@ -265,9 +305,10 @@ export function updateLady(run: Run, i: number, dx: number, dy: number, dist: nu
   }
 
   if (state === LS_IDLE) {
-    // Elle dérive vers sa place, au-dessus de Moon ; distancée, elle glisse sur l'eau plus vite qu'il ne court.
-    const tx = hero.x - e.x[i]!;
-    const ty = hero.y - LADY_ABOVE - e.y[i]!;
+    // Elle dérive vers sa place, à côté de Moon ; distancée, elle glisse sur l'eau plus vite qu'il ne court.
+    ladySpot(hero.x, hero.y, e.x[i]!, spot);
+    const tx = spot.x - e.x[i]!;
+    const ty = spot.y - e.y[i]!;
     const td = Math.hypot(tx, ty);
     if (td > 4) {
       const glide = def.glide && td > def.glide.range ? def.glide.speed / def.speed : 1;

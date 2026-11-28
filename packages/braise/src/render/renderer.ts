@@ -96,8 +96,6 @@ const SURGE_TIME = 0.5;
 /** La Dame vaincue s'enfonce, puis ses lanternes remontent. */
 const SINK_TIME = 3.2;
 const SINK_END = 9;
-/** De combien la caméra monte pendant le combat contre la Dame de Vase, en pixels. */
-const LADY_LIFT = 70;
 /** La fumée d'une barrière ouverte met ce temps à se dissiper. */
 const GATE_FADE = 0.7;
 /** Où sont les pattes sur l'image : Cream tient sur une toile de 48 px, pattes à 33 px du haut. */
@@ -196,7 +194,6 @@ export class GameRenderer {
   private handFrames: Texture[] = [];
   private enemyShotTex: Texture[] = [];
   private surgeT = -1;
-  private bossLift = 0;
   private sinkTime = SINK_TIME;
   private readonly sink: { sprite: Sprite; x: number; y: number; t: number };
   private enemyAnchor: number[] = [];
@@ -415,7 +412,7 @@ export class GameRenderer {
     this.stagTell = data.enemies.map((e) => tells(e).map((n) => a.anim(`${e.sprite}-tell-${n}`)));
     this.stagTellWhite = data.enemies.map((e) => tells(e).map((n) => a.whiteAnim(`${e.sprite}-tell-${n}`)));
     this.bossTellFps = data.enemies.map((e) => (e.behavior === 'boss-lady' ? LADY_TELL_FPS : STAG_TELL_FPS));
-    this.enemyShotTex = data.enemies.map((e) => a.get(e.shot?.slow !== undefined ? 'shot-vase' : 'shot-enemy'));
+    this.enemyShotTex = data.enemies.map((e) => a.get(e.shot?.slow !== undefined || e.spray !== undefined ? 'shot-vase' : 'shot-enemy'));
     this.beaconTexture = run.region.beacons ? a.get(run.region.beacons.sprite) : Texture.EMPTY;
     const bigHand = a.anim('fx-main-dame');
     this.handFrames = bigHand[0] === Texture.EMPTY ? a.anim('enemy-main') : bigHand;
@@ -427,7 +424,6 @@ export class GameRenderer {
     this.sink.t = -1;
     this.sink.sprite.visible = false;
     this.surgeT = -1;
-    this.bossLift = 0;
     this.enemyAnchor = data.enemies.map((e) => SPRITE_ANCHOR[e.sprite] ?? (e.rank === 'boss' ? 0.72 : e.flying ? 0.5 : 0.66));
     this.heroSprite = run.cls.sprite;
     // Les murs du donjon sont posés au pied de leur tuile ; les décors du Bois gardent leur ancre.
@@ -735,11 +731,7 @@ export class GameRenderer {
       // La boîte de dialogue couvre le bas de l'image : les deux sont cadrés un peu plus haut.
       focusY += (Math.max(-maxY, Math.min(maxY, (gy - hy) / 2)) + 30) * k;
     }
-    // Face à la Dame de Vase, la caméra monte : elle se tient au-dessus de Moon, et on doit la voir en entier.
-    const dir0 = run.director;
-    const tall = (dir0.bossSpawned && !dir0.bossDead && run.data.enemies[run.region.bossIdx]!.behavior === 'boss-lady') || (this.sink.t >= 0 && this.sink.t < this.sinkTime + 3);
-    this.bossLift += Math.max(-dt * 90, Math.min(dt * 90, (tall ? LADY_LIFT : 0) - this.bossLift));
-    focusY -= this.bossLift;
+    // Face à la Dame de Vase, la caméra reste sur Moon : c'est elle qui se tient à côté de lui, où on la voit en entier.
     const mapPx = map.size * map.tile;
     let camX = Math.round(Math.min(mapPx - VIEW_W, Math.max(0, focusX - VIEW_W / 2)));
     let camY = Math.round(Math.min(mapPx - VIEW_H, Math.max(0, focusY - VIEW_H / 2 - 8)));
@@ -1605,22 +1597,37 @@ export class GameRenderer {
     for (const t of run.threads) {
       const fade = Math.min(1, t.life / t.maxLife + 0.15);
       const w = run.weapons[t.slot];
-      const width = w ? weaponParams(run, w).width * (1 + run.hero.stats.zone) : 8;
+      const p = w ? weaponParams(run, w) : null;
+      const width = p ? p.width * (1 + run.hero.stats.zone) : 8;
+      // Plus l'arme monte, plus le fil est chargé : des brins en plus quand il crépite, quand il éclate, quand il a évolué.
+      const evolved = p !== null && p.crossRadius > 0;
+      const strands = 1 + (p && p.zapEvery > 0 ? 1 : 0) + (p && p.snapDamage > 0 ? 1 : 0) + (evolved ? 1 : 0);
+      // Un fil qui va éclater clignote dans sa dernière demi-seconde.
+      const blink = p && p.snapDamage > 0 && t.life < 0.5 && Math.floor(time * 16) % 2 === 0 ? 1.6 : 1;
       const dx = t.x2 - t.x1;
       const dy = t.y2 - t.y1;
       const len = Math.hypot(dx, dy) || 1;
-      g.moveTo(t.x1, t.y1).lineTo(t.x2, t.y2).stroke({ width, color: C.frost, alpha: 0.16 * fade });
-      // Le fil grésille : un trait brisé qui change dix fois par seconde.
+      g.moveTo(t.x1, t.y1).lineTo(t.x2, t.y2).stroke({ width, color: evolved ? C.tealPale : C.frost, alpha: (0.14 + 0.05 * strands) * fade * blink });
+      g.moveTo(t.x1, t.y1).lineTo(t.x2, t.y2).stroke({ width: Math.max(2, width * 0.35), color: C.frost, alpha: 0.12 * strands * fade });
+      // Le fil grésille : des traits brisés qui changent dix fois par seconde.
       const beat = Math.floor(time * 10);
       const steps = Math.max(2, Math.round(len / 14));
-      g.moveTo(t.x1, t.y1);
-      for (let s = 1; s < steps; s++) {
-        const u = s / steps;
-        const off = (hash(beat + s * 5 + t.x1) - 0.5) * 8;
-        g.lineTo(t.x1 + dx * u - (dy / len) * off, t.y1 + dy * u + (dx / len) * off);
+      for (let strand = 0; strand < strands; strand++) {
+        const amp = 8 + strand * (width * 0.25);
+        g.moveTo(t.x1, t.y1);
+        for (let s = 1; s < steps; s++) {
+          const u = s / steps;
+          const off = (hash(beat + s * 5 + t.x1 + strand * 31) - 0.5) * amp;
+          g.lineTo(t.x1 + dx * u - (dy / len) * off, t.y1 + dy * u + (dx / len) * off);
+        }
+        g.lineTo(t.x2, t.y2).stroke({ width: strand === 0 && strands > 2 ? 2 : 1, color: strand === 0 ? C.white : C.frost, alpha: (strand === 0 ? 0.95 : 0.7) * fade });
       }
-      g.lineTo(t.x2, t.y2).stroke({ width: 1, color: C.white, alpha: 0.9 * fade });
-      this.light(lightX((t.x1 + t.x2) / 2), lightY((t.y1 + t.y2) / 2), Math.round(24 * fade), 0.05, C.frost);
+      const glow = Math.round((16 + width + strands * 6) * fade);
+      this.light(lightX((t.x1 + t.x2) / 2), lightY((t.y1 + t.y2) / 2), glow, 0.05 + 0.02 * strands, C.frost);
+      if (len > 90) {
+        this.light(lightX(t.x1 + dx * 0.2), lightY(t.y1 + dy * 0.2), Math.round(glow * 0.7), 0.04, C.frost);
+        this.light(lightX(t.x1 + dx * 0.8), lightY(t.y1 + dy * 0.8), Math.round(glow * 0.7), 0.04, C.frost);
+      }
     }
   }
 
