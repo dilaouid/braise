@@ -363,6 +363,7 @@ describe('le boss et la carte', () => {
   it('une alerte est émise une seule fois, à la minute réglée', () => {
     const run = fresh(61);
     run.time = ev.bossWarningMinute * 60 - 0.05;
+    run.night = run.time / 60;
     const input = idleInput();
     let warnings = 0;
     for (let i = 0; i < 30; i++) {
@@ -376,6 +377,7 @@ describe('le boss et la carte', () => {
   it('un lieu dans l\'arène reste utilisable pendant le boss', () => {
     const run = fresh(62);
     run.time = data.tuning.durationMin * 60;
+    run.night = run.time / 60;
     play(run, 2);
     expect(run.director.bossSpawned).toBe(true);
     run.map.pois.push({ kind: 'treasure', x: run.hero.x, y: run.hero.y, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });

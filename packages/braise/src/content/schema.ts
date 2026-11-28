@@ -734,6 +734,23 @@ export const expeditionTuningSchema = z
         /** Délai avant qu'un Souvenir laissé par un boss puisse être pris, en secondes. */
     memoryArmSeconds: z.number().nonnegative(),
     bossWarningMinute: z.number(),
+        /** La cloche qui appelle le boss, au centre de la carte. */
+        bell: z.object({ radius: z.number().positive(), seconds: z.number().positive() }).strict(),
+      })
+      .strict(),
+    /** L'horloge de la Nuit : les braséros la font sauter, la cloche appelle le boss. */
+    night: z
+      .object({
+        /** Minutes de Nuit ajoutées par un braséro rallumé. */
+        brazierJump: z.number().nonnegative(),
+        /** Braséros rallumés pour allumer la cloche. */
+        bellBraziers: z.number().int().positive(),
+        /** Secondes entre deux élites rattrapés par un saut. */
+        eliteGapSeconds: z.number().nonnegative(),
+        /** Cendres par minute de Nuit qui restait quand la cloche sonne. */
+        hasteAshes: z.number().nonnegative(),
+        /** Secondes entre la cloche et le boss. */
+        bellDelay: z.number().nonnegative(),
       })
       .strict(),
     damageNumberInterval: z.number(),

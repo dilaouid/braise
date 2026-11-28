@@ -273,6 +273,7 @@ describe('les dégâts du Cerf et le temps', () => {
     const made = makeStag();
     made.run.cfg.vigil = vigil;
     made.run.time = data.tuning.durationMin * 60;
+    made.run.night = made.run.time / 60;
     made.run.enemies.timer2[made.i] = 99;
     stepRun(made.run, idleInput());
     expect(made.run.enemies.count).toBe(1);

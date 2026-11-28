@@ -162,6 +162,7 @@ describe('Appel', () => {
     run.region = { ...run.region, horde: run.region.horde.map((h) => ({ ...h, weights: h.weights.map(() => 0) })), waves: [] };
     run.director.budget = 0;
     run.time = time;
+    run.night = run.time / 60;
     updateDirector(run, STEP);
     return run.director.budget;
   }
@@ -176,6 +177,7 @@ describe('Appel', () => {
       const run = calm(mods);
       run.region = { ...run.region, horde: run.region.horde.map((h) => ({ ...h, weights: h.weights.map(() => 0) })) };
       run.time = run.region.waves[0]!.at * 60;
+      run.night = run.time / 60;
       updateDirector(run, STEP);
       return run.enemies.count;
     };

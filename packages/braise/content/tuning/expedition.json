@@ -81,7 +81,9 @@
     },
     "treasure": { "count": 4, "radius": 20 },
     "memoryArmSeconds": 1.2,
-    "bossWarningMinute": 14
+    "bossWarningMinute": 14,
+    "bell": { "radius": 40, "seconds": 2 }
   },
+  "night": { "brazierJump": 1.5, "bellBraziers": 3, "eliteGapSeconds": 20, "hasteAshes": 3, "bellDelay": 3 },
   "damageNumberInterval": 0.25
 }

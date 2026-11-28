@@ -56,6 +56,7 @@ describe('Autel du Foyer (document 05 §4)', () => {
     const save = makeSave();
     const run = makeRun(1, save);
     run.time = 240;
+    run.night = run.time / 60;
     run.outcome = 'death';
     applyRunResult(save, data, computeResult(run));
     expect(data.altar.some((b) => canBuyAltarRank(save, data, b.id) === null)).toBe(true);
@@ -93,6 +94,7 @@ describe('héros persistant (document 03)', () => {
     const save = makeSave();
     const run = makeRun(1, save);
     run.time = 240;
+    run.night = run.time / 60;
     run.hero.level = 8;
     run.outcome = 'death';
     const summary = applyRunResult(save, data, computeResult(run));
@@ -104,6 +106,7 @@ describe('héros persistant (document 03)', () => {
     const save = makeSave();
     const run = makeRun(1, save);
     run.time = 900;
+    run.night = run.time / 60;
     run.hero.bossKills = 1;
     run.killsByKind[0] = 12;
     run.outcome = 'victory';

@@ -2,7 +2,7 @@ import { Rng, deriveSeed } from '@owl/kit/rng';
 import type { GameData, RegionDef } from '../content/index.ts';
 import { DAMAGE_TYPES } from '../content/index.ts';
 import { applyBurn, healHero, hurtEnemy, isDust, knockEnemy, reapEnemies } from './combat.ts';
-import { updateDirector } from './director.ts';
+import { nightClock, updateDirector } from './director.ts';
 import {
   clearTelegraphsOf, contactDamage, separateEnemies, updateEnemies, updateEnemyShots, updateFlow, updateTelegraphs,
 } from './enemies.ts';
@@ -94,7 +94,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     telegraphs: createTelegraphStore(), pickups: createPickupStore(),
     director: {
       budget: 0, bank: 0, nextKind: -1, breathT: 0, second: 0, waveIdx: 0, waveWarned: false, waveAngle: 0,
-      eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()),
+      eliteIdx: 0, eliteOrder: rngSpawn.shuffle(region.eliteIdx.slice()), eliteGapT: 0, bellT: -1,
       bossSpawned: false, bossUid: 0, bossPhase: 0, bossSummonT: 0, bossSprayT: 0, bossSprayA: 0, bossLast: -1, bossNext: -1, bossTell: -1, bossTellT: -1, bossDead: false,
       bossReformed: false, bossReformT: 0, bossShed: 0, bossHidden: false, tide: null, tideCd: 0,
       arenaX: 0, arenaY: 0, arenaR: 0,
@@ -108,6 +108,7 @@ export function createRun(data: GameData, cfg: RunConfig, opts: RunOverrides = {
     flames: [], glowBurned: 0, finds: [], findPool: rngDraw.shuffle(data.finds.map((_, i) => i)),
     pendingFinds: 0, find: -1, findGold: 0, totemOffers: [], shopPoi: -1,
     smithBuys: 0, serviceBuys: SERVICES.map(() => 0), extraFlasks: 0, bossWarned: false,
+    night: 0, nightAhead: 0, nightCredit: 0, haste: 0, bossCall: null,
     gridStart: new Int32Array(gridCols * gridCols + 1),
     gridItems: new Int32Array(CAP_ENEMIES),
     gridCursor: new Int32Array(gridCols * gridCols),
@@ -543,9 +544,11 @@ export function stepRun(run: Run, input: StepInput): void {
   const tuning = run.data.tuning;
   run.tick++;
   run.time += dt;
+  // La Nuit : le chrono, plus l'avance prise par les braséros. Sans braséro, la partie est celle du chrono, au bit près.
+  run.night = run.time / 60 + run.nightAhead;
   // Le tutoriel ne durcit pas avec le temps.
   run.dmgScaleFlat = run.tutorial ? 1 : enemyDamageScale(tuning.scale, 0, run.cfg.vigil - 1, 0);
-  run.dmgScale = run.tutorial ? 1 : enemyDamageScale(tuning.scale, Math.min(run.time / 60, tuning.durationMin), run.cfg.vigil - 1, 0);
+  run.dmgScale = run.tutorial ? 1 : enemyDamageScale(tuning.scale, nightClock(run), run.cfg.vigil - 1, 0);
 
   updateDirector(run, dt);
   moveHero(run, input, dt);

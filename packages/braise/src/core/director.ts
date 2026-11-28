@@ -173,7 +173,16 @@ function spawnBoss(run: Run): void {
   }
 }
 
-/** Le directeur de horde : il dépense un budget de menace qui croît avec le temps (document 02 §8). */
+/**
+ * La minute qui fait la difficulté : la Nuit, plafonnée à la fin de l'expédition. Une fois le boss là, c'est
+ * toujours la fin de l'expédition : le combat est le même, qu'on ait sonné tôt ou non.
+ */
+export function nightClock(run: Run): number {
+  const end = run.data.tuning.durationMin;
+  return run.director.bossSpawned ? end : Math.min(run.night, end);
+}
+
+/** Le directeur de horde : il dépense un budget de menace qui croît avec la Nuit (document 02 §8). */
 export function updateDirector(run: Run, dt: number): void {
   const d = run.director;
   const tuning = run.data.tuning;
@@ -181,14 +190,14 @@ export function updateDirector(run: Run, dt: number): void {
   const enemies = run.data.enemies;
   const e = run.enemies;
   const rng = run.rngSpawn;
-  const m = run.time / 60;
+  const m = run.night;
   const v = run.cfg.vigil - 1;
   // Le tutoriel n'a pas de horde : ses ennemis viennent du script.
   if (run.tutorial) {
     run.hpScaleNow = 1;
     return;
   }
-  run.hpScaleNow = enemyHpScale(tuning.scale, Math.min(m, tuning.durationMin), v, 0);
+  run.hpScaleNow = enemyHpScale(tuning.scale, nightClock(run), v, 0);
 
   if (d.bossSpawned) return;
   // Une minute avant le boss, la partie prévient : la carte va se refermer.
@@ -197,7 +206,9 @@ export function updateDirector(run: Run, dt: number): void {
     if (m < tuning.durationMin) emit(run, EV.bossWarning, run.hero.x, run.hero.y);
   }
   if (m >= tuning.durationMin) {
+    run.bossCall = 'night';
     spawnBoss(run);
+    run.hpScaleNow = enemyHpScale(tuning.scale, nightClock(run), v, 0);
     return;
   }
 
@@ -217,13 +228,13 @@ export function updateDirector(run: Run, dt: number): void {
   // Vagues scriptées de la région, annoncées une seconde avant.
   const wave = region.waves[d.waveIdx];
   if (wave) {
-    const at = wave.at * 60;
-    if (!d.waveWarned && run.time >= at - tuning.director.waveWarning) {
+    const at = wave.at;
+    if (!d.waveWarned && m >= at - tuning.director.waveWarning / 60) {
       d.waveWarned = true;
       d.waveAngle = rng.float() * TAU;
       emit(run, EV.waveWarning, run.hero.x, run.hero.y, d.waveAngle, wave.shape === 'circle' ? 1 : 0);
     }
-    if (run.time >= at) {
+    if (m >= at) {
       spawnWave(run, wave.shape, wave.enemy, wave.count, d.waveAngle);
       d.waveIdx++;
       d.waveWarned = false;

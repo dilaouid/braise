@@ -439,6 +439,10 @@ export interface Director {
   waveAngle: number;
   eliteIdx: number;
   eliteOrder: number[];
+  /** Secondes avant qu'un élite rattrapé par un saut de Nuit puisse venir. */
+  eliteGapT: number;
+  /** Secondes avant le boss appelé par la cloche (-1 : pas d'appel). */
+  bellT: number;
   bossSpawned: boolean;
   bossUid: number;
   bossPhase: number;
@@ -651,6 +655,16 @@ export interface Run {
   /** Fioles achetées à l'Herboriste. */
   extraFlasks: number;
   bossWarned: boolean;
+  /** L'horloge de la Nuit, en minutes : elle avance avec le temps et saute quand un braséro se rallume. */
+  night: number;
+  /** Minutes d'avance de la Nuit sur le chrono, prises par les braséros. */
+  nightAhead: number;
+  /** Minutes de Nuit comptées comme jouées quand la cloche a sonné (récompenses). */
+  nightCredit: number;
+  /** Cendres de hâte gagnées en sonnant la cloche. */
+  haste: number;
+  /** Qui a fait venir le boss : la cloche, ou la Nuit arrivée à son terme. */
+  bossCall: 'bell' | 'night' | null;
   // Grille spatiale
   gridStart: Int32Array;
   gridItems: Int32Array;

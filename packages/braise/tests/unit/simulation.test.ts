@@ -138,6 +138,7 @@ describe('règles de la partie', () => {
     const run = makeRun(4, makeSave(1));
     makeImmortal(run);
     run.time = 14 * 60;
+    run.night = run.time / 60;
     run.director.waveIdx = 99;
     const input = idleInput();
     let max = 0;
@@ -157,6 +158,7 @@ describe('règles de la partie', () => {
     run.hero.gold = 137;
     run.hero.ashDrops = 23;
     run.time = 240;
+    run.night = run.time / 60;
     run.hero.hp = 0;
     run.outcome = 'death';
     run.phase = 'dead';
@@ -171,6 +173,7 @@ describe('règles de la partie', () => {
     run.hero.gold = 1000;
     run.hero.ashDrops = 100;
     run.time = 900;
+    run.night = run.time / 60;
     run.outcome = 'victory';
     run.phase = 'victory';
     const res = computeResult(run);
@@ -190,6 +193,7 @@ describe('règles de la partie', () => {
   it('une expédition perdue à 4:00 rapporte au moins 8 Cendres, et le rang le moins cher en coûte 5 au plus', () => {
     const run = makeRun(6);
     run.time = 240;
+    run.night = run.time / 60;
     run.outcome = 'death';
     expect(computeResult(run).ashesKept).toBeGreaterThanOrEqual(8);
     expect(Math.min(...data.altar.map((b) => b.baseCost))).toBeLessThanOrEqual(5);
@@ -201,6 +205,7 @@ describe('boss', () => {
     const run = makeRun(8, makeSave(1));
     makeImmortal(run);
     run.time = 15 * 60 - 0.05;
+    run.night = run.time / 60;
     return run;
   }
 

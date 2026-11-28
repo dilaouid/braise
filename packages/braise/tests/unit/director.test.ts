@@ -16,6 +16,7 @@ function hordeRun(weights: Record<number, number>, seed = 1): Run {
   run.region = { ...run.region, waves: [], horde: [{ from: 0, to: 15, weights: table }] };
   run.director.eliteIdx = 99;
   run.time = 10 * 60;
+  run.night = run.time / 60;
   return run;
 }
 

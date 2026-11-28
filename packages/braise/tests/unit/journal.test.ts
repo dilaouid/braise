@@ -71,6 +71,7 @@ describe('journal des parties', () => {
     const run = makeRun(8, makeSave(1));
     makeImmortal(run);
     run.time = 15 * 60 - 0.05;
+    run.night = run.time / 60;
     const track = newTrack(run);
     const input = idleInput();
     for (let i = 0; i < 120; i++) {

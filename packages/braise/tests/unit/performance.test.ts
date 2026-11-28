@@ -17,6 +17,7 @@ describe('performance (document 02 §15)', () => {
     }
     run.weapons[0]!.level = 6;
     run.time = 8 * 60;
+    run.night = run.time / 60;
     for (let i = 0; i < 350; i++) {
       const a = (i / 350) * Math.PI * 2;
       const r = 60 + (i % 7) * 30;

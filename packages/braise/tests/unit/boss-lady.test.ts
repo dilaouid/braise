@@ -332,6 +332,7 @@ describe('la Dame de Vase', () => {
     makeImmortal(run);
     run.weapons.length = 0;
     run.time = data.tuning.durationMin * 60;
+    run.night = run.time / 60;
     stepRun(run, idleInput());
     const d = run.director;
     expect(d.bossSpawned).toBe(true);
