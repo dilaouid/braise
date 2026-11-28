@@ -323,6 +323,16 @@
    "prompt": "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   },
   {
+   "name": "camp-feu",
+   "id": "11d45124-14f1-473d-a618-5929c1755b07",
+   "size": [
+    48,
+    48
+   ],
+   "prompt": "a stone fire ring with a stack of unburnt split firewood logs laid in a teepee shape, unlit, cold grey stones, top-down prop",
+   "date": "2026-11-28"
+  },
+  {
    "name": "decor-roseaux",
    "id": "664023e3-d069-4f6a-b7e5-ff3d1d844aea",
    "size": [

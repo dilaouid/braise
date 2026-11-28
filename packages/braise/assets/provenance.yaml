@@ -498,6 +498,13 @@
   prompt: "a slim cream-coloured cat curled up asleep in a ball against a small lit iron lantern glowing warm orange, pale cream fur, cosy, top-down prop"
   settings: {"width":48,"height":48,"view":"low top-down"}
   edits: "palette réduite"
+- file: sprites/camp-feu.png
+  tool: create_map_object
+  date: 2026-11-28
+  pixellab_id: 11d45124-14f1-473d-a618-5929c1755b07
+  prompt: "a stone fire ring with a stack of unburnt split firewood logs laid in a teepee shape, unlit, cold grey stones, top-down prop"
+  settings: {"width":48,"height":48,"view":"low top-down"}
+  edits: "palette réduite"
 - file: sprites/decor-roseaux.png
   tool: create_map_object
   date: 2026-11-27

@@ -45,7 +45,8 @@ export interface CampView {
   visible: ReadonlySet<string>;
   /** L'objet au focus : il s'éclaire un peu. */
   near: string | null;
-  doorOpen: boolean;
+  /** Le maintien de « Partir », de 0 à 1 : la porte s'entrouvre, le refuge s'assombrit, une lueur sort. */
+  doorHold: number;
 }
 
 interface Fx {
@@ -257,6 +258,8 @@ export class GameRenderer {
   campDef: CampDef = { speed: 0, bounds: { x: 0, y: 0, rx: 1, ry: 1 }, objects: [] };
   /** La porte, l'Autel, les Souvenirs et la lanterne seule, par identifiant d'objet. */
   private readonly campObjects = new Map<string, Sprite>();
+  /** La porte ouverte, posée sur la porte fermée : son opacité suit le maintien. */
+  private doorOpenSprite!: Sprite;
   private campBuilt = false;
   /** Cream pendant une scène de route (Moon reprend `campHero`), leurs bulles, et la flamme qui prend. */
   private sceneCream!: Sprite;
@@ -1881,7 +1884,7 @@ export class GameRenderer {
     prop('decor-arbre', 30, 300); prop('decor-rochers', 500, 300); prop('decor-souche', 150, 290); prop('decor-ruine', 470, 110);
     prop('decor-arbre', 250, 52); prop('decor-arbre', 410, 60); prop('decor-rochers', 90, 210);
     const fire = this.campPlace('fire');
-    prop('poi-brasero', fire.x, fire.y);
+    prop('camp-feu', fire.x, fire.y);
     for (const [id, look] of Object.entries(CAMP_LOOKS)) {
       const at = this.campPlace(id);
       const s = new Sprite(a.get(look.sprite));
@@ -1890,6 +1893,14 @@ export class GameRenderer {
       s.zIndex = at.y;
       this.camp.addChild(s);
       this.campObjects.set(id, s);
+      if (id === 'door') {
+        this.doorOpenSprite = new Sprite(a.get('camp-door-open'));
+        this.doorOpenSprite.anchor.set(0.5, 1);
+        this.doorOpenSprite.position.copyFrom(s.position);
+        this.doorOpenSprite.zIndex = at.y + 0.1;
+        this.doorOpenSprite.alpha = 0;
+        this.camp.addChild(this.doorOpenSprite);
+      }
     }
     this.campFlame = new Sprite(this.flameFrames[0]!);
     this.campFlame.anchor.set(0.5, 1);
@@ -1944,8 +1955,12 @@ export class GameRenderer {
     }
   }
 
-  private drawCampObjects(visible: ReadonlySet<string>, cream: boolean, doorOpen = false, near: string | null = null): void {
-    this.campObjects.get('door')!.texture = this.atlas.get(doorOpen ? 'camp-door-open' : 'camp-door');
+  private drawCampObjects(visible: ReadonlySet<string>, cream: boolean, doorHold = 0, near: string | null = null, t = 0): void {
+    // La porte s'ouvre au rythme du maintien : la porte ouverte apparaît par-dessus, d'un fondu lent.
+    const hold = Math.max(0, Math.min(1, doorHold));
+    const open = hold * hold * (3 - 2 * hold);
+    this.doorOpenSprite.alpha = open;
+    this.doorOpenSprite.visible = visible.has('door');
     for (const [id, look] of Object.entries(CAMP_LOOKS)) {
       const present = visible.has(id);
       // La lanterne est déjà dessinée dans le sprite de Cream couché.
@@ -1954,6 +1969,12 @@ export class GameRenderer {
       const at = this.campPlace(id);
       const focused = near === id;
       this.light(at.x, at.y - look.up, look.radius + (focused ? 10 : 0), look.warm + (focused ? 0.14 : 0), look.tint);
+      if (id === 'door' && open > 0) {
+        // Ce qu'il y a derrière : une lueur pâle qui grandit et qui vacille, sur la porte et alentour.
+        const flicker = 1 + Math.sin(t * 9) * 0.04 + Math.sin(t * 5.3) * 0.03;
+        this.light(at.x, at.y - look.up, Math.round((look.radius + 70 * open) * flicker), 0.1 + 0.4 * open, C.emberPale);
+        this.light(at.x, at.y - look.up, Math.round((18 + 22 * open) * flicker), 0.45 * open, C.emberWhite);
+      }
     }
   }
 
@@ -1974,7 +1995,9 @@ export class GameRenderer {
     const frames = walk[0] === Texture.EMPTY ? [this.atlas.get(`${heroSprite}-rot-${moon.facing}`)] : walk;
     this.campHero.texture = frames[Math.floor(t * (moon.moving ? 12 : 5)) % frames.length]!;
     this.light(moon.x, moon.y - 10, 56 + Math.round(Math.sin(t * 2.7)), 0.1);
-    this.drawCampObjects(view.visible, cream, view.doorOpen, view.near);
+    // Le refuge s'assombrit à mesure que la porte s'ouvre : la lueur n'en ressort que plus.
+    this.darkness.alpha = Math.min(0.94, this.darkness.alpha + view.doorHold * 0.36);
+    this.drawCampObjects(view.visible, cream, view.doorHold, view.near, t);
     if (view.near === 'cream') {
       const at = this.campPlace('cream');
       this.light(at.x, at.y - 10, 34, 0.14);
