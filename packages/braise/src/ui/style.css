@@ -364,6 +364,7 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .tdetail-values { display: flex; flex-direction: column; gap: 2px; }
 .tdetail-label { color: var(--ash-2); margin-top: 3px; }
 .tdetail-label:first-child { margin-top: 0; }
+.tdetail-nextrank { display: flex; flex-direction: column; gap: 1px; margin-bottom: 2px; }
 .tdetail-next { color: var(--ember-0); }
 .tdetail-next::before { content: '▲ '; color: var(--ember-3); }
 .tdetail .bad { color: var(--danger-0); }

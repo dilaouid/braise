@@ -128,7 +128,8 @@ function Detail(): JSX.Element {
   const rank = talentRank(cls, h, node.id);
   const open = tierOpen(cls, h, node, data.heroTuning);
   const now = talentEffects(node, rank, t);
-  const next = rank < node.ranks ? talentEffects(node, rank + 1, t) : null;
+  // Tous les rangs qu'il reste à prendre, chacun avec ce qu'il donnerait.
+  const nexts = Array.from({ length: node.ranks - rank }, (_, i) => ({ rank: rank + 1 + i, lines: talentEffects(node, rank + 1 + i, t) }));
   const holds = rank > 0 && canRemoveTalent(cls, h, data.heroTuning, node.id) === 'holds';
   return (
     <div class="tdetail panel">
@@ -145,7 +146,14 @@ function Detail(): JSX.Element {
         <span class="tdetail-label">{t('talents.now')}</span>
         {now.length > 0 ? now.map((line) => <span key={line} class="gold">{line}</span>) : <span class="dim">{t('talents.none')}</span>}
         <span class="tdetail-label">{t('talents.next')}</span>
-        {next ? next.map((line) => <span key={line} class="tdetail-next">{line}</span>) : <span class="dim">{t('talents.maxed')}</span>}
+        {nexts.length > 0
+          ? nexts.map((n) => (
+              <span key={n.rank} class="tdetail-nextrank">
+                <span class="dim">{t('talents.nextRank', { rank: n.rank })}</span>
+                {n.lines.map((line) => <span key={line} class="tdetail-next">{line}</span>)}
+              </span>
+            ))
+          : <span class="dim">{t('talents.maxed')}</span>}
       </div>
       {open ? null : <span class="bad">{t('talents.locked', { points: tierThreshold(node.tier, data.heroTuning) })}</span>}
       {holds ? <span class="dim">{t('talents.holds')}</span> : null}
