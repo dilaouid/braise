@@ -268,12 +268,14 @@ describe('sans Lanterne', () => {
   // lumière. Avant lui, avec les Flammes mais sans mise, elles étaient encore celles d'avant la Lanterne.
   // Refaites le même soir : le directeur garde la sorte tirée jusqu'à pouvoir la payer (horde de fin de partie).
   // Refaites le 2026-11-28 : les Éteints durcissent plus vite (PV x 10,6 à 15:00 au lieu de x 5,5).
+  // Refaites le même jour : la cloche est un lieu de plus dans l'empreinte. Sans elle, l'empreinte est restée la même
+  // (vérifié) : la partie n'a pas changé.
   it('la partie est celle d\'avant le chantier', () => {
-    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([3001415152, 677029198, 2922802119]);
+    expect([1, 2, 3].map((seed) => played(makeRun(seed)))).toEqual([3545558000, 4240612286, 2690399871]);
   }, 60_000);
 
   it('des modificateurs neutres ne changent rien', () => {
-    expect(played(makeModRun({}, 1))).toBe(3001415152);
+    expect(played(makeModRun({}, 1))).toBe(3545558000);
   }, 60_000);
 
   it('le tutoriel est toujours neutre', () => {

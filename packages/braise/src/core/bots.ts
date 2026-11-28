@@ -222,7 +222,7 @@ function nextPlace(run: Run): Poi | null {
   const ready = evolvableWeapons(run).length > 0;
   let foundD = Infinity;
   for (const poi of run.map.pois) {
-    if (poi.state === 2 || poi.kind === 'portal' || poi.kind === 'memory') continue;
+    if (poi.state === 2 || poi.kind === 'portal' || poi.kind === 'memory' || poi.kind === 'bell') continue;
     // Un braséro déjà allumé n'a rien à donner tant qu'aucune arme n'est prête à évoluer.
     if (poi.state === 3 && !ready) continue;
     if (poi.kind === 'spring' && hero.hp > hero.stats.maxHp * 0.6) continue;
