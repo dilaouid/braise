@@ -899,8 +899,8 @@ export class GameRenderer {
           }
         }
       } else if (poi.kind === 'bell') {
-        // La cloche : le braséro teinté en attendant son dessin. Éteinte et grise, puis pâle et qui pulse.
-        s.texture = this.atlas.get('poi-brasero');
+        // La cloche : éteinte elle est grise, allumée elle se teinte de pâle et pulse.
+        s.texture = this.atlas.get('poi-cloche');
         if (poi.state === 1) {
           const pulse = Math.sin(time * 3);
           s.tint = 0xe8d8ff;

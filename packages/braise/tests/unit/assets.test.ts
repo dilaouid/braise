@@ -78,7 +78,7 @@ describe('assets (documents 10 et 11)', () => {
       'pickup-coffre', 'pickup-call', 'shot-spark', 'shot-arrow', 'shot-brand', 'shot-enemy', 'fx-flame', 'fx-puff', 'fx-firefly',
       'font-digits', 'ui-arrow', 'poi-brasero', 'poi-source', 'poi-cache', 'poi-portail', 'icon-gold', 'icon-ashes', 'icon-flask', 'icon-dash');
     // La carte vivante : lieux, Flammes des totems, trouvailles, services de l'Herboriste.
-    need.push('poi-totem', 'poi-ferrailleur', 'poi-herboriste', 'poi-tresor',
+    need.push('poi-totem', 'poi-ferrailleur', 'poi-herboriste', 'poi-tresor', 'poi-cloche',
       'icon-boon-wisdom', 'icon-boon-stride', 'icon-boon-glow', 'icon-boon-edge', 'icon-boon-breath', 'icon-boon-vein',
       'icon-find-boots', 'icon-find-lantern-glass', 'icon-find-holed-coin', 'icon-find-purse', 'icon-find-notebook', 'icon-find-scarf',
       'icon-find-flask', 'icon-find-cards', 'icon-find-flint', 'icon-find-winder', 'icon-find-blanket', 'icon-find-door-nail',

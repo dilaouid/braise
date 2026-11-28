@@ -428,6 +428,13 @@
   prompt: "a wide stone brazier bowl on a short pedestal, unlit, filled with cold grey ashes and charred logs, no fire, top-down prop"
   settings: {"width":48,"height":48,"view":"low top-down"}
   edits: "palette réduite"
+- file: sprites/poi-cloche.png
+  tool: create_map_object
+  date: 2026-11-28
+  pixellab_id: 9e86fef4-b919-47ff-b7f2-2ea5c9da6a05
+  prompt: "an old cracked bronze church bell hanging from a squat weathered dark wooden A-frame with a short frayed rope, bell dusted with grey ash and a hairline crack, cold desaturated bronze and grey tones, top-down prop"
+  settings: {"width":48,"height":64,"view":"low top-down"}
+  edits: "palette réduite"
 - file: sprites/poi-source.png
   tool: create_map_object
   date: 2026-11-23

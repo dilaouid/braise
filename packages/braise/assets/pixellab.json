@@ -232,6 +232,16 @@
    "prompt": "a wide stone brazier bowl on a short pedestal, unlit, filled with cold grey ashes and charred logs, no fire, top-down prop"
   },
   {
+   "name": "poi-cloche",
+   "id": "9e86fef4-b919-47ff-b7f2-2ea5c9da6a05",
+   "size": [
+    48,
+    64
+   ],
+   "date": "2026-11-28",
+   "prompt": "an old cracked bronze church bell hanging from a squat weathered dark wooden A-frame with a short frayed rope, bell dusted with grey ash and a hairline crack, cold desaturated bronze and grey tones, top-down prop"
+  },
+  {
    "name": "poi-source",
    "id": "e2509fb6-2886-4d5c-9869-6e910b7b59e2",
    "size": [
