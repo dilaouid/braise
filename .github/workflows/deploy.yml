@@ -28,6 +28,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # Le paquet OwlLeaf et latest.json, publiés sous /owl/ : Owl Player s'y met à jour.
+      - run: pnpm pack:owl --site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/braise/dist

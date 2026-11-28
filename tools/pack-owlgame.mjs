@@ -3,11 +3,13 @@
  * construit et un manifeste `owlgame.json` à sa racine. Produit aussi la jaquette et la bannière.
  * À lancer après `pnpm build`.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
 import { PNG } from 'pngjs';
+import { buildId } from '../packages/braise/tools/vite-journal.ts';
+import { commitTime, latestJson, owlManifest } from './owlgame-release.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = join(root, 'packages', 'braise');
@@ -18,13 +20,17 @@ if (!existsSync(join(dist, 'index.html'))) {
   process.exit(1);
 }
 const version = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')).version;
-const manifest = { format: 1, id: 'braise', title: 'Braise', version, entry: 'index.html', orientation: 'landscape', saves: true };
+const build = buildId(pkg);
+const builtAt = commitTime(root);
+const manifest = owlManifest({ version, build, builtAt });
 if (!/^[a-z0-9-]{1,32}$/.test(manifest.id)) throw new Error('Identifiant de paquet invalide');
 
 const files = { 'owlgame.json': new TextEncoder().encode(JSON.stringify(manifest, null, 2)) };
+// `dist/owl/` est le paquet publié avec le site (`--site`) : il ne doit jamais s'emballer lui-même.
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
+    if (dir === dist && name === 'owl') continue;
     if (statSync(path).isDirectory()) walk(path);
     else files[relative(dist, path).replaceAll('\\', '/')] = new Uint8Array(readFileSync(path));
   }
@@ -32,7 +38,17 @@ function walk(dir) {
 walk(dist);
 // Les images et les sons sont déjà compressés : inutile de les compresser encore.
 const zipped = zipSync(files, { level: 6 });
+mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'Braise.owlgame'), zipped);
+writeFileSync(join(out, 'latest.json'), JSON.stringify(latestJson({ build, builtAt, bytes: zipped }), null, 2));
+
+// Avec `--site` (la CI) : le paquet et latest.json sont publiés avec le site, sous /owl/.
+if (process.argv.includes('--site')) {
+  const site = join(dist, 'owl');
+  mkdirSync(site, { recursive: true });
+  for (const name of ['Braise.owlgame', 'latest.json']) copyFileSync(join(out, name), join(site, name));
+  console.log('dist/owl/ : Braise.owlgame et latest.json, publiés avec le site.');
+}
 
 // La jaquette : le héros devant le boss, agrandis sans lissage sur un fond de nuit.
 const atlasJson = JSON.parse(readFileSync(join(pkg, 'public', 'atlas', 'atlas.json'), 'utf8'));
@@ -103,5 +119,5 @@ if (!painted) {
 writeArt('banners', banner);
 
 const mb = (zipped.length / 1024 / 1024).toFixed(2);
-console.log(`release/Braise.owlgame : ${Object.keys(files).length} fichiers, ${mb} Mo (version ${version}).`);
+console.log(`release/Braise.owlgame : ${Object.keys(files).length} fichiers, ${mb} Mo (version ${version}, build ${build}).`);
 if (zipped.length > 40 * 1024 * 1024) console.warn('Attention : le paquet dépasse les 40 Mo visés.');
