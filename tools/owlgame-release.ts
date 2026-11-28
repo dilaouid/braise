@@ -19,16 +19,33 @@ export function owlManifest(o: { version: string; build: string; builtAt: number
 }
 
 export function latestJson(o: { build: string; builtAt: number; bytes: Uint8Array }) {
+  const sha256 = createHash('sha256').update(o.bytes).digest('hex');
   return {
     format: 1 as const,
     id: ID,
     build: o.build,
     builtAt: o.builtAt,
     size: o.bytes.length,
-    sha256: createHash('sha256').update(o.bytes).digest('hex'),
-    // Pages garde les fichiers en cache quelques minutes : l'adresse change à chaque version.
-    url: `${PACKAGE}?b=${encodeURIComponent(o.build)}`,
+    sha256,
+    // Pages garde les fichiers en cache quelques minutes : l'adresse change avec le contenu, même pour un
+    // commit réemballé (le zip porte l'heure de fabrication).
+    url: `${PACKAGE}?h=${sha256.slice(0, 16)}`,
   };
+}
+
+/**
+ * La date que le lecteur compare. Le site (CI) prend celle du commit. Un paquet local, poussé par adb pour
+ * essayer quelque chose, prend aussi l'heure de sa fabrication : seul un commit plus récent le remplace.
+ */
+export function packageBuiltAt(o: { commitTime: number; now: number; site: boolean }): number {
+  return o.site ? o.commitTime : Math.max(o.commitTime, o.now);
+}
+
+/** Sans commit ni date, un paquet publié ne déclencherait jamais de mise à jour : la CI s'arrête plutôt. */
+export function assertPublishable(o: { build: string; builtAt: number }): void {
+  if (o.build === '?' || o.builtAt <= 0) {
+    throw new Error(`Paquet impubliable : build « ${o.build} », builtAt ${o.builtAt}. Git est-il disponible ?`);
+  }
 }
 
 /** La date du commit `HEAD`, en secondes ; 0 sans git. */

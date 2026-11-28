@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
 import { PNG } from 'pngjs';
 import { buildId } from '../packages/braise/tools/vite-journal.ts';
-import { commitTime, latestJson, owlManifest } from './owlgame-release.ts';
+import { assertPublishable, commitTime, latestJson, owlManifest, packageBuiltAt } from './owlgame-release.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = join(root, 'packages', 'braise');
@@ -21,7 +21,9 @@ if (!existsSync(join(dist, 'index.html'))) {
 }
 const version = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')).version;
 const build = buildId(pkg);
-const builtAt = commitTime(root);
+const site = process.argv.includes('--site');
+const builtAt = packageBuiltAt({ commitTime: commitTime(root), now: Math.floor(Date.now() / 1000), site });
+if (site) assertPublishable({ build, builtAt });
 const manifest = owlManifest({ version, build, builtAt });
 if (!/^[a-z0-9-]{1,32}$/.test(manifest.id)) throw new Error('Identifiant de paquet invalide');
 
@@ -43,7 +45,7 @@ writeFileSync(join(out, 'Braise.owlgame'), zipped);
 writeFileSync(join(out, 'latest.json'), JSON.stringify(latestJson({ build, builtAt, bytes: zipped }), null, 2));
 
 // Avec `--site` (la CI) : le paquet et latest.json sont publiés avec le site, sous /owl/.
-if (process.argv.includes('--site')) {
+if (site) {
   const site = join(dist, 'owl');
   mkdirSync(site, { recursive: true });
   for (const name of ['Braise.owlgame', 'latest.json']) copyFileSync(join(out, name), join(site, name));
