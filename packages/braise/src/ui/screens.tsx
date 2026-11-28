@@ -442,6 +442,12 @@ export function EndScreen(): JSX.Element | null {
               <span><Icon name="icon-ashes" /> {t('end.ashes')}</span>
               <b>{fmt(result.ashesKept)} {t('end.kept')}{victory ? '' : ` · ${fmt(result.ashesCollected - result.ashesKept)} ${t('end.lost')}`}</b>
             </p>
+            {result.haste > 0 ? (
+              <p>
+                <span><Icon name="icon-ashes" /> {t('end.haste')}</span>
+                <b>+{fmt(result.haste)}</b>
+              </p>
+            ) : null}
             {result.goldSpent > 0 || result.goldLeft > 0 ? (
               <p>
                 <span><Icon name="icon-gold" /> {t('end.gold')}</span>

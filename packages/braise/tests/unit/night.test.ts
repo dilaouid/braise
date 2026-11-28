@@ -3,6 +3,7 @@ import { spawnEnemy } from '../../src/core/combat.ts';
 import { advanceNight, nightClock, updateDirector } from '../../src/core/director.ts';
 import { hashRun } from '../../src/core/bots.ts';
 import { closeChest, closeFind, takeCard } from '../../src/core/levelup.ts';
+import { computeResult, rewardMinutes, type RunResult } from '../../src/core/rewards.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { enemyHpScale } from '../../src/core/stats.ts';
 import { EV, type Poi, type Run } from '../../src/core/types.ts';
@@ -234,5 +235,39 @@ describe('la cloche', () => {
       return hashRun(run);
     };
     expect(one()).toBe(one());
+  });
+});
+
+describe('les récompenses de la Nuit', () => {
+  it('les minutes de récompense comptent la Nuit', () => {
+    const run = makeRun(3);
+    run.time = 300;
+    run.night = 9;
+    expect(rewardMinutes(run)).toBe(9);
+  });
+
+  /** Une fin de partie à cette heure de Nuit, avec ce crédit et cette hâte. */
+  function ended(night: number, credit: number, haste: number, outcome: 'victory' | 'death'): RunResult {
+    const run = makeRun(3);
+    run.time = 400;
+    run.night = night;
+    run.nightCredit = credit;
+    run.haste = haste;
+    run.outcome = outcome;
+    return computeResult(run);
+  }
+
+  it('sonner à 8:00 ne fait rien perdre au temps', () => {
+    const waited = ended(15, 0, 0, 'victory');
+    const rang = ended(8, 7, 21, 'victory');
+    expect(rang.ashesCollected).toBe(waited.ashesCollected + 21);
+    expect(rang.heroXp).toBe(waited.heroXp);
+    expect(rang.haste).toBe(21);
+    expect(waited.haste).toBe(0);
+  });
+
+  it('la hâte est perdue à moitié en cas de mort', () => {
+    const rang = ended(8, 7, 21, 'death');
+    expect(rang.ashesKept).toBe(Math.round(rang.ashesCollected * data.tuning.death.keptShare));
   });
 });

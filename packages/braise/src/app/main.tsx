@@ -16,7 +16,7 @@ import { banishCard, closeChest, closeFind, readyEvolution, rerollCards, skipCar
 import { feedBlock, feedOffer, feedTarget, glowShareNow, offerCost, openRarity, takeFlame, unfeedOffer, unfeedTarget } from '../core/flames.ts';
 import { buyItem, canBuy, closeForge, closeShop, shopItems, takeEvolution } from '../core/places.ts';
 import { journalEntry, newTrack, trackStep, type JournalTrack } from '../core/journal.ts';
-import { computeResult } from '../core/rewards.ts';
+import { computeResult, rewardMinutes } from '../core/rewards.ts';
 import { flushJournal, journalEntries, recordJournal } from './journal.ts';
 import { abandonRun, clearEvents, createRun, dashChargesMax, dashReady, idleInput, skillCooldown, stepRun } from '../core/run.ts';
 import { tutorialBot } from '../core/tutorial-bot.ts';
@@ -1295,7 +1295,7 @@ async function boot(): Promise<void> {
       }
     }
     const ready = readyEvolution(r);
-    const minutes = r.time / 60;
+    const minutes = rewardMinutes(r);
     // Le carton d'un boss s'efface sur sa dernière seconde, puis il est retiré.
     const card = bossCard.value;
     if (card && now >= bossCardUntil) bossCard.value = null;
@@ -1320,7 +1320,7 @@ async function boot(): Promise<void> {
     return {
       hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss, statuses,
       flasks: h.flasks, maxFlasks: h.stats.flasks, flaskBlocked: r.mods.noFlask, gold: h.gold,
-      ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops), kills: h.kills, vigil: r.cfg.vigil,
+      ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops) + r.haste, kills: h.kills, vigil: r.cfg.vigil,
       weapons: r.weapons.map((w) => {
         const def = r.data.weapons[w.def]!;
         const evolvable = !def.evolved && w.level >= def.levels.length && r.relics.some((x) => x.def === def.relic);

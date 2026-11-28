@@ -21,6 +21,8 @@ export interface RunResult {
   goldSpent: number;
   ashesCollected: number;
   ashesKept: number;
+  /** Cendres de hâte, déjà comprises dans `ashesCollected` : la cloche sonnée avant la fin de la Nuit. */
+  haste: number;
   heroXp: number;
   damageByWeapon: Array<{ id: string; damage: number }>;
   killsByEnemy: Record<string, number>;
@@ -30,17 +32,25 @@ export interface RunResult {
   lantern: { kept: string | null; lost: string | null; placed: number; reborn: boolean };
 }
 
+/**
+ * Les minutes qui paient les récompenses « par minute » : celles de la Nuit, plus celles qui restaient quand la
+ * cloche a sonné. Une partie raccourcie par la cloche ne rapporte pas moins pour le temps.
+ */
+export function rewardMinutes(run: Run): number {
+  return run.night + run.nightCredit;
+}
+
 /** Calcule les récompenses de fin d'expédition (document 02 §11 et document 05 §5). */
 export function computeResult(run: Run): RunResult {
   const tuning = run.data.tuning;
   const hero = run.hero;
   const outcome = run.outcome ?? 'abandon';
   const v = run.cfg.vigil - 1;
-  const minutes = run.time / 60;
+  const minutes = rewardMinutes(run);
   const victory = outcome === 'victory';
   const bonus = victory ? tuning.victoryBonus : 1;
   const share = victory ? 1 : tuning.death.keptShare;
-  const ashesCollected = Math.round((tuning.ashes.perMinute * minutes + hero.ashDrops) * (1 + 0.5 * v));
+  const ashesCollected = Math.round((tuning.ashes.perMinute * minutes + hero.ashDrops) * (1 + 0.5 * v)) + run.haste;
   const rw = run.data.heroTuning.rewards;
   const heroXp = Math.round(
     (rw.perMinute * minutes + rw.perRunLevelSq * hero.level * hero.level + rw.perElite * hero.elites + rw.perBoss * hero.bossKills)
@@ -72,6 +82,7 @@ export function computeResult(run: Run): RunResult {
     goldSpent: hero.goldSpent,
     ashesCollected,
     ashesKept: Math.round(ashesCollected * bonus * share),
+    haste: run.haste,
     heroXp,
     damageByWeapon: run.weapons
       .map((w) => ({ id: run.data.weapons[w.def]!.id, damage: Math.round(w.damageDone) }))
