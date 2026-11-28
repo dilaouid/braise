@@ -214,10 +214,25 @@ export const activeBot: Bot = (run, input) => {
   input.dash = touching >= 3 || (hurt && touching >= 1);
 };
 
-/** Le lieu que l'explorateur vise : le plus proche qui a encore quelque chose à donner. */
-function nextPlace(run: Run): Poi | null {
+/**
+ * Quand l'explorateur sonne la cloche allumée : `ready`, quand aucune évolution n'attend et qu'il a plus de 60 %
+ * de sa vie ; `asap`, dès qu'elle s'allume ; `never`, jamais (le boss vient avec la Nuit).
+ */
+export type RingPolicy = 'ready' | 'asap' | 'never';
+
+/** Vrai si l'explorateur doit aller sonner maintenant. */
+function wantsBell(run: Run, ring: RingPolicy): boolean {
+  if (ring === 'never') return false;
+  if (ring === 'asap') return true;
+  return evolvableWeapons(run).length === 0 && run.hero.hp > run.hero.stats.maxHp * 0.6;
+}
+
+/** Le lieu que l'explorateur vise : la cloche s'il veut sonner, sinon le plus proche qui a encore quelque chose à donner. */
+function nextPlace(run: Run, ring: RingPolicy): Poi | null {
   const hero = run.hero;
   const ev = run.data.tuning.events;
+  const bell = run.map.pois.find((p) => p.kind === 'bell');
+  if (bell && bell.state === 1 && wantsBell(run, ring)) return bell;
   let found: Poi | null = null;
   const ready = evolvableWeapons(run).length > 0;
   let foundD = Infinity;
@@ -248,10 +263,18 @@ function nextPlace(run: Run): Poi | null {
  * Un joueur qui explore : il se bat comme le robot actif, mais va de lieu en lieu tant qu'il est en
  * forme, reste dans les cercles à charger, et s'arrête chez les marchands quand il a de quoi payer.
  */
-export const explorerBot: Bot = (run, input) => {
+export function explorerWith(ring: RingPolicy): Bot {
+  return (run, input) => explore(run, input, ring);
+}
+
+/** L'explorateur par défaut : il sonne la cloche quand il est prêt. */
+export const explorerBot: Bot = explorerWith('ready');
+
+function explore(run: Run, input: StepInput, ring: RingPolicy): void {
   const hero = run.hero;
   const d = run.director;
-  const target = d.bossSpawned ? null : nextPlace(run);
+  // Après la cloche, plus rien à visiter : il attend le boss où il est.
+  const target = d.bossSpawned || d.bellT >= 0 ? null : nextPlace(run, ring);
   anchor.on = target !== null;
   if (target) {
     anchor.x = target.x;
@@ -286,7 +309,7 @@ export const explorerBot: Bot = (run, input) => {
     input.moveY = uy;
     return;
   }
-};
+}
 
 /** Vrai si le héros est dans le tracé d'une attaque annoncée. */
 function inTelegraph(run: Run): boolean {

@@ -4,6 +4,7 @@
  * Tutoriel : pnpm sim -- --tutorial --runs 10 (le robot de tutoriel joue le script livré).
  * Une pièce de Lanterne seule : pnpm sim -- --piece rune.call --plevel 3 (son effet à ce niveau, et son malus).
  * Robots : active, flee, explorer (va de lieu en lieu et achète). --no-places retire totems, marchands et trésors.
+ * Cloche : --ring <ready|asap|never> dit quand l'explorateur la sonne (par défaut ready : aucune évolution en attente).
  * Trait : --trait 0.15,-0.05 essaie d'autres valeurs (dans la lumière, hors de la lumière).
  * Flammes : --rarity <0-4> (rareté la plus haute ouverte, 1 par défaut) et --feed <never|smart|max> (mise de Lueur aux totems).
  * Armes de l'Autel : --unlock <all|aucune|wake,verge,storm-watch,nightlights> les ouvre, --give weapon.wake donne une arme de plus au départ
@@ -18,7 +19,7 @@ import { dirname } from 'node:path';
 import { loadGameData } from '../packages/braise/src/content/index.ts';
 import { journalEntry, newTrack, trackStep } from '../packages/braise/src/core/journal.ts';
 import { buildId } from '../packages/braise/tools/vite-journal.ts';
-import { BOT_TUNE, activeBot, explorerBot, fleeBot, plannedPick, simulate, type FeedPolicy } from '../packages/braise/src/core/bots.ts';
+import { BOT_TUNE, activeBot, explorerWith, fleeBot, plannedPick, simulate, type FeedPolicy, type RingPolicy } from '../packages/braise/src/core/bots.ts';
 import { glowShareNow } from '../packages/braise/src/core/flames.ts';
 import { NEUTRAL_MODS, mergeMods } from '../packages/braise/src/core/mods.ts';
 import { computeResult } from '../packages/braise/src/core/rewards.ts';
@@ -45,6 +46,8 @@ const ardor = Number(arg('altar', '0'));
 const verbose = process.argv.includes('--verbose');
 const flameRarity = Number(arg('rarity', '1'));
 const feed = arg('feed', 'never') as FeedPolicy;
+const ring = arg('ring', 'ready') as RingPolicy;
+const explorer = explorerWith(ring);
 if (!['never', 'smart', 'max'].includes(feed)) throw new Error(`Politique de mise inconnue : ${feed}`);
 
 BOT_TUNE.calm = Number(arg('calm', String(BOT_TUNE.calm)));
@@ -166,6 +169,10 @@ let totalBuys = 0;
 let totalSpent = 0;
 let totalGold = 0;
 let bossSeconds = 0;
+/** L'arrivée du boss : temps réel et heure de Nuit cumulés, et combien sont venus par la cloche. */
+let bossAtSum = 0;
+let bossNightSum = 0;
+let bellCalls = 0;
 const hurtBy = new Float64Array(data.enemies.length);
 
 for (let r = 0; r < runs; r++) {
@@ -176,13 +183,20 @@ for (let r = 0; r < runs; r++) {
   if (giveDef >= 0) addWeapon(run, giveDef).level = giveLevel;
   const track = journalFile === '' ? null : newTrack(run);
   let maxEnemies = 0;
+  let bossAt = -1;
   simulate(run, {
-    bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorerBot : activeBot,
+    bot: botName === 'flee' ? fleeBot : botName === 'explorer' ? explorer : activeBot,
     pickCard: botName === 'explorer' ? plannedPick : undefined,
     feed,
     maxSteps: minutes * 3600,
     onStep: (x) => {
       if (x.enemies.count > maxEnemies) maxEnemies = x.enemies.count;
+      if (bossAt < 0 && x.director.bossSpawned) {
+        bossAt = x.time;
+        bossAtSum += x.time;
+        bossNightSum += x.night;
+        if (x.bossCall === 'bell') bellCalls++;
+      }
       if (track) trackStep(x, track);
     },
   });
@@ -211,7 +225,7 @@ for (let r = 0; r < runs; r++) {
   totalBuys += run.smithBuys + run.serviceBuys.reduce((a, b) => a + b, 0);
   totalSpent += run.hero.goldSpent;
   totalGold += run.hero.gold + run.hero.goldSpent;
-  if (run.phase === 'victory') bossSeconds += run.time - data.tuning.durationMin * 60;
+  if (run.phase === 'victory' && bossAt >= 0) bossSeconds += run.time - bossAt;
   for (let k = 0; k < hurtBy.length; k++) hurtBy[k]! += run.damageByKind[k]!;
   const total = res.damageByWeapon.reduce((s, w) => s + w.damage, 0) || 1;
   for (const w of res.damageByWeapon) {
@@ -229,6 +243,12 @@ for (let r = 0; r < runs; r++) {
 
 console.log(`\n${runs} parties · robot « ${botName} » · héros niveau ${level} · Autel ${ardor}${pieceId ? ` · ${pieceId} ${pieceLevel}` : ''} · ${((Date.now() - started) / 1000).toFixed(1)} s`);
 console.log(`boss atteint : ${Math.round((100 * reachedBoss) / runs)} %   victoires : ${Math.round((100 * victories) / runs)} %`);
+if (reachedBoss > 0) {
+  console.log(
+    `boss : arrivé en ${fmt(bossAtSum / reachedBoss)} réelles, à ${fmt((60 * bossNightSum) / reachedBoss)} de Nuit`
+    + ` · appelé à la cloche ${Math.round((100 * bellCalls) / reachedBoss)} %${botName === 'explorer' ? ` (cloche : ${ring})` : ''}`,
+  );
+}
 console.log(`temps moyen : ${fmt(totalTime / runs)}   niveau de partie moyen : ${(totalLevel / runs).toFixed(1)}   battus : ${Math.round(totalKills / runs)}`);
 console.log(
   `lieux${noPlaces ? ' (retirés)' : ''} : totems ${(totalBoons / runs).toFixed(1)} · trouvailles ${(totalFinds / runs).toFixed(1)} · achats ${(totalBuys / runs).toFixed(1)}`

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { activeBot, simulate } from '../../src/core/bots.ts';
 import { spawnEnemy } from '../../src/core/combat.ts';
+import { callBoss } from '../../src/core/director.ts';
 import { journalEntry, newTrack, trackStep, type JournalMeta } from '../../src/core/journal.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
 import { data, makeImmortal, makeRun, makeSave } from './helpers.ts';
@@ -88,5 +89,38 @@ describe('journal des parties', () => {
     expect(entry.boss?.hpLeft).toBe(0);
     expect(entry.boss?.hpMax).toBeGreaterThan(1000);
     expect(entry.boss?.seconds).toBeGreaterThan(1);
+  });
+});
+
+describe('journal : la cloche', () => {
+  it('une partie où la cloche a sonné à 8:00 de Nuit', () => {
+    const run = makeRun(8, makeSave(1));
+    makeImmortal(run);
+    run.time = 8 * 60;
+    run.night = 8;
+    const track = newTrack(run);
+    callBoss(run);
+    const input = idleInput();
+    for (let i = 0; i < 4 * 60; i++) {
+      stepRun(run, input);
+      trackStep(run, track);
+    }
+    const entry = journalEntry(run, track, META);
+    expect(entry.bossCall).toBe('bell');
+    expect(entry.nightAtBoss).not.toBeNull();
+    expect(Math.abs(entry.nightAtBoss! - 8.05)).toBeLessThanOrEqual(0.1);
+    expect(entry.haste).toBe(21);
+    expect(entry.minutes.every((m) => typeof m.night === 'number')).toBe(true);
+  });
+
+  it('sans cloche ni boss : rien d\'appelé', () => {
+    const run = makeRun(8, makeSave(1));
+    const track = newTrack(run);
+    stepRun(run, idleInput());
+    trackStep(run, track);
+    const entry = journalEntry(run, track, META);
+    expect(entry.bossCall).toBeNull();
+    expect(entry.nightAtBoss).toBeNull();
+    expect(entry.haste).toBe(0);
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnEnemy } from '../../src/core/combat.ts';
 import { advanceNight, nightClock, updateDirector } from '../../src/core/director.ts';
-import { hashRun } from '../../src/core/bots.ts';
+import { explorerWith, hashRun, simulate } from '../../src/core/bots.ts';
 import { closeChest, closeFind, takeCard } from '../../src/core/levelup.ts';
 import { computeResult, rewardMinutes, type RunResult } from '../../src/core/rewards.ts';
 import { idleInput, stepRun } from '../../src/core/run.ts';
@@ -271,5 +271,46 @@ describe('les récompenses de la Nuit', () => {
   it('la hâte est perdue à moitié en cas de mort', () => {
     const rang = ended(8, 7, 21, 'death');
     expect(rang.ashesKept).toBe(Math.round(rang.ashesCollected * data.tuning.death.keptShare));
+  });
+});
+
+describe('le robot et la cloche', () => {
+  /** Une partie où 3 braséros sont déjà rallumés : la cloche s'allume au premier pas. */
+  function lit(seed: number): Run {
+    const run = makeRun(seed);
+    makeImmortal(run);
+    let n = 0;
+    for (const p of run.map.pois) {
+      if (p.kind === 'brazier' && n < 3) {
+        p.state = 3;
+        n++;
+      }
+    }
+    run.braziersLit = 3;
+    return run;
+  }
+
+  it('l\'explorateur « asap » va sonner dès que la cloche s\'allume', () => {
+    const run = lit(11);
+    simulate(run, { bot: explorerWith('asap'), maxSteps: 90 * 60 });
+    expect(run.bossCall).toBe('bell');
+  });
+
+  it('« never » ne sonne jamais', () => {
+    const run = lit(11);
+    simulate(run, { bot: explorerWith('never'), maxSteps: 90 * 60 });
+    expect(run.bossCall).not.toBe('bell');
+  });
+
+  it('« ready » attend qu\'aucune évolution ne soit en attente', () => {
+    const run = lit(11);
+    // La Fauchée au maximum avec sa relique : une évolution attend. Les braséros allumés sont loin.
+    const scythe = run.weapons[0]!;
+    const def = data.weapons[scythe.def]!;
+    scythe.level = def.levels.length;
+    run.relics.push({ def: def.relic, level: 1 });
+    for (const p of run.map.pois) if (p.kind === 'brazier') p.state = 2;
+    simulate(run, { bot: explorerWith('ready'), maxSteps: 30 * 60 });
+    expect(bellOf(run).state).toBe(1);
   });
 });

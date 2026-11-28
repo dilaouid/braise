@@ -23,6 +23,8 @@ export interface JournalMinute {
   alive: number;
   /** Les armes portées à la fin de la minute, « identifiant:niveau ». */
   weapons: string[];
+  /** L'heure de la Nuit à la fin de la minute, en minutes (à une décimale). */
+  night: number;
 }
 
 /** Le combat de boss, s'il a eu lieu. */
@@ -76,6 +78,12 @@ export interface JournalEntry {
   weapons: Array<{ id: string; level: number; damage: number }>;
   minutes: JournalMinute[];
   boss: JournalBoss | null;
+  /** Qui a fait venir le boss : la cloche, la Nuit, ou personne. */
+  bossCall: 'bell' | 'night' | null;
+  /** L'heure de la Nuit à l'arrivée du boss, en minutes (à une décimale). */
+  nightAtBoss: number | null;
+  /** Cendres de hâte gagnées en sonnant la cloche. */
+  haste: number;
 }
 
 /** Ce que la partie ne garde pas elle-même, relevé pas à pas. */
@@ -92,7 +100,7 @@ export interface JournalTrack {
   prev: { hurt: number; dashT: number; flasks: number; skillCd: number; ultT: number; byKind: Float32Array };
   /** Le début de la minute en cours. */
   minute: { m: number; hurt: number; hits: number; kills: number };
-  boss: { uid: number; kind: number; at: number; hpMax: number; hp: number; end: number; heroHp: number; hurt0: number; hits0: number; byKind0: Float32Array } | null;
+  boss: { uid: number; kind: number; at: number; night: number; hpMax: number; hp: number; end: number; heroHp: number; hurt0: number; hits0: number; byKind0: Float32Array } | null;
 }
 
 /** Un suivi neuf, à créer avec la partie. */
@@ -113,6 +121,7 @@ function closeMinute(run: Run, t: JournalTrack): void {
     m: w.m, level: hero.level, hp: Math.round(Math.max(0, hero.hp)), maxHp: Math.round(hero.stats.maxHp),
     hurt: Math.round(hero.damageTaken - w.hurt), hits: t.hits - w.hits, kills: hero.kills - w.kills, alive: run.enemies.count,
     weapons: run.weapons.map((x) => `${run.data.weapons[x.def]!.id}:${x.level}`),
+    night: Math.round(run.night * 10) / 10,
   });
 }
 
@@ -154,7 +163,7 @@ export function trackStep(run: Run, t: JournalTrack): void {
       // Le premier boss compte ; un boss reformé garde la fiche du premier.
       if (!t.boss) {
         t.boss = {
-          uid: d.bossUid, kind: e.kind[i]!, at: run.time, hpMax: e.maxHp[i]!, hp: e.hp[i]!, end: -1,
+          uid: d.bossUid, kind: e.kind[i]!, at: run.time, night: run.night, hpMax: e.maxHp[i]!, hp: e.hp[i]!, end: -1,
           heroHp: hero.hp, hurt0: hero.damageTaken, hits0: t.hits, byKind0: run.damageByKind.slice(),
         };
       } else {
@@ -210,6 +219,9 @@ export function journalEntry(run: Run, t: JournalTrack, meta: JournalMeta): Jour
     actions: { dashes: t.dashes, flasks: t.flasks, skills: t.skills, ultimates: t.ultimates },
     weapons: run.weapons.map((w) => ({ id: run.data.weapons[w.def]!.id, level: w.level, damage: Math.round(w.damageDone) })),
     minutes: t.minutes,
+    bossCall: run.bossCall,
+    nightAtBoss: b ? Math.round(b.night * 10) / 10 : null,
+    haste: run.haste,
     boss: b && {
       id: run.data.enemies[b.kind]!.id, at: Math.round(b.at * 10) / 10, hpMax: Math.round(b.hpMax), hpLeft: Math.round(b.hp),
       seconds: Math.round(((b.end >= 0 ? b.end : run.time) - b.at) * 10) / 10, heroHpStart: Math.round(b.heroHp),
