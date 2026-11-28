@@ -147,11 +147,11 @@ function Detail(): JSX.Element {
         {now.length > 0 ? now.map((line) => <span key={line} class="gold">{line}</span>) : <span class="dim">{t('talents.none')}</span>}
         <span class="tdetail-label">{t('talents.next')}</span>
         {nexts.length > 0
-          ? nexts.map((n) => (
-              <span key={n.rank} class="tdetail-nextrank">
-                <span class="dim">{t('talents.nextRank', { rank: n.rank })}</span>
-                {n.lines.map((line) => <span key={line} class="tdetail-next">{line}</span>)}
-              </span>
+          ? nexts.map((n, i) => (
+              <div key={n.rank} class={`tnext ${i === 0 ? 'first' : ''}`}>
+                <span class="tnext-rank">{n.rank}</span>
+                <span class="tnext-lines">{n.lines.map((line) => <span key={line}>{line}</span>)}</span>
+              </div>
             ))
           : <span class="dim">{t('talents.maxed')}</span>}
       </div>
