@@ -429,14 +429,16 @@ export const enemySchema = z
       .optional(),
     /** Un balayage en secteur devant elle (`arc` : l'ouverture, en radians ; `gap` : le délai du second balayage). */
     sweep: z.object({ damage: z.number(), telegraph: z.number(), radius: z.number(), arc: z.number(), gap: z.number() }).strict().optional(),
-    /** Des lanternes noyées jetées autour du héros : elles frappent et laissent de la vase. */
+    /** Des lanternes noyées jetées autour du héros : elles frappent et laissent de la vase. La deuxième tombe `lead` px devant lui. */
     lanterns: z
       .object({
         damage: z.number(), telegraph: z.number(), count: z.number().int(), stagger: z.number(), radius: z.number(), scatter: z.number(),
-        mire: mireSchema,
+        lead: z.number(), mire: mireSchema,
       })
       .strict()
       .optional(),
+    /** Distancée de plus de `range` px, elle glisse sur l'eau à `speed` px/s pour revenir sur le héros. */
+    glide: z.object({ range: z.number().positive(), speed: z.number().positive() }).strict().optional(),
     /** Elle plonge, suit le héros sous l'eau, puis resurgit. */
     dive: z
       .object({

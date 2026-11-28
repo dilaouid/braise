@@ -144,7 +144,8 @@ function ladyStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
       break;
     }
     case L_LANTERNS: {
-      // Des lanternes noyées retombent autour de Moon : chacune frappe et laisse sa vase.
+      // Des lanternes noyées retombent autour de Moon : la première sur lui, la deuxième là où il va, les autres autour.
+      // Chacune frappe et laisse sa vase.
       const ln = def.lanterns!;
       const n = ln.count + (phase - 1) * 2;
       const t = tele(run, ln.telegraph, haste);
@@ -152,7 +153,10 @@ function ladyStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
       for (let k = 0; k < n; k++) {
         let px = hero.x;
         let py = hero.y;
-        if (k > 0) {
+        if (k === 1 && hero.moving) {
+          px += hero.faceX * ln.lead;
+          py += hero.faceY * ln.lead;
+        } else if (k > 0) {
           const a = run.rngSpawn.float() * TAU;
           const r = 44 + run.rngSpawn.float() * ln.scatter;
           px += Math.cos(a) * r;
@@ -212,6 +216,7 @@ function ladyStart(run: Run, i: number, def: EnemyDef, attack: number, dx: numbe
 
 /**
  * La Dame de Vase. Elle dérive vers Moon sans jamais courir : ses coups portent loin. Trois phases, à deux tiers et un tiers de sa vie.
+ * Elle ne se laisse pas distancer, et ses mains et ses lanternes visent là où va Moon.
  * Phase 1 : les mains de vase, le balayage du voile, les lanternes noyées. Phase 2 : elle plonge et resurgit, elle étreint,
  * le cortège des Noyés sort de l'eau. Phase 3 : la marée, et les enchaînements.
  */
@@ -260,12 +265,13 @@ export function updateLady(run: Run, i: number, dx: number, dy: number, dist: nu
   }
 
   if (state === LS_IDLE) {
-    // Elle dérive vers sa place, au-dessus de Moon.
+    // Elle dérive vers sa place, au-dessus de Moon ; distancée, elle glisse sur l'eau plus vite qu'il ne court.
     const tx = hero.x - e.x[i]!;
     const ty = hero.y - LADY_ABOVE - e.y[i]!;
     const td = Math.hypot(tx, ty);
     if (td > 4) {
-      const step = Math.min(td, speed);
+      const glide = def.glide && td > def.glide.range ? def.glide.speed / def.speed : 1;
+      const step = Math.min(td, speed * glide);
       e.x[i]! += (tx / td) * step;
       e.y[i]! += (ty / td) * step;
     }
@@ -284,7 +290,7 @@ export function updateLady(run: Run, i: number, dx: number, dy: number, dist: nu
       ladyStart(run, i, def, attack, dx, dy, haste);
     }
   } else if (state === LS_HANDS) {
-    // Une main sous Moon, puis une autre : à partir de la phase 2, une sur deux l'attend là où il va.
+    // Une main sous Moon, puis une autre qui l'attend là où il va.
     const hands = def.hands!;
     e.timer[i]! -= dt;
     if (e.timer[i]! <= 0) {
@@ -294,7 +300,7 @@ export function updateLady(run: Run, i: number, dx: number, dy: number, dist: nu
         e.timer[i] = hands.interval * haste;
         let tx = hero.x;
         let ty = hero.y;
-        if (phase >= 2 && (e.counter[i]! & 1) === 1 && hero.moving) {
+        if ((e.counter[i]! & 1) === 1 && hero.moving) {
           tx += hero.faceX * 46;
           ty += hero.faceY * 46;
         }

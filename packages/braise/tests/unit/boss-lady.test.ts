@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LADY_RISE, LS_DIVE, LS_EMERGE, LS_IDLE, LS_SURGE, L_DIVE, L_EMBRACE, L_HANDS, L_LANTERNS, L_SCREAM, L_SWEEP, L_TIDE,
+  LADY_ABOVE, LADY_RISE, LS_DIVE, LS_EMERGE, LS_IDLE, LS_SURGE, L_DIVE, L_EMBRACE, L_HANDS, L_LANTERNS, L_SCREAM, L_SWEEP, L_TIDE,
 } from '../../src/core/boss-lady.ts';
 import { bossBarFrac, hurtEnemy, spawnEnemy } from '../../src/core/combat.ts';
 import { contactDamage, insideTelegraph, updateEnemies, updateTelegraphs } from '../../src/core/enemies.ts';
@@ -166,6 +166,42 @@ describe('la Dame de Vase', () => {
     for (let k = 0; k < Math.ceil((ln.telegraph + ln.count * ln.stagger) / DT) + 2; k++) updateTelegraphs(run, DT);
     expect(run.mires).toHaveLength(ln.count);
     expect(run.mires[0]!.radius).toBe(ln.mire.radius);
+  });
+
+  it('dès la phase 1, une main sur deux et la deuxième lanterne attendent Moon là où il va', () => {
+    const { run, i } = makeLady();
+    const hero = run.hero;
+    hero.moving = true;
+    hero.faceX = 1;
+    hero.faceY = 0;
+    attackNow(run, i, L_HANDS);
+    const hands = def.hands!;
+    const ahead: number[] = [];
+    for (let k = 0; k < Math.ceil((hands.count * hands.interval + 0.3) / DT); k++) {
+      const before = run.telegraphs.count;
+      updateEnemies(run, DT);
+      if (run.telegraphs.count > before) ahead.push(Math.round(run.telegraphs.x[run.telegraphs.count - 1]! - hero.x));
+    }
+    expect(ahead.filter((x) => x > 40)).toHaveLength(Math.floor(hands.count / 2));
+    attackNow(run, i, L_LANTERNS);
+    expect(run.telegraphs.x[1]! - hero.x).toBeCloseTo(def.lanterns!.lead, 0);
+    expect(run.telegraphs.y[1]! - hero.y).toBeCloseTo(0, 3);
+  });
+
+  it('distancée, elle glisse sur l\'eau plus vite que Moon ne court ; près de lui, elle dérive', () => {
+    const glide = def.glide!;
+    expect(glide.speed).toBeGreaterThan(data.tuning.hero.speed);
+    const pace = (gap: number): number => {
+      const { run, i } = makeLady();
+      run.enemies.x[i] = run.hero.x;
+      run.enemies.y[i] = run.hero.y - LADY_ABOVE - gap;
+      run.enemies.timer2[i] = 99;
+      const y0 = run.enemies.y[i]!;
+      updateEnemies(run, DT);
+      return (run.enemies.y[i]! - y0) / DT;
+    };
+    expect(pace(glide.range + 60)).toBeCloseTo(glide.speed, 0);
+    expect(pace(glide.range - 40)).toBeCloseTo(def.speed, 0);
   });
 
   it('la plongée : sous l\'eau rien ne la touche et elle ne touche rien ; elle suit Moon, puis resurgit en frappant', () => {
