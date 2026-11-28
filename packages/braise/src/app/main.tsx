@@ -128,7 +128,11 @@ async function boot(): Promise<void> {
   /** Un bandeau qui attend la fin de celui affiché. */
   let bannerNext: { text: string; ms: number } | null = null;
   /** Les conseils du Marais, dits une fois par expédition : l'eau, la lanterne ravivée, la Lueur étouffée. */
-  const told = { water: false, beacon: false, blind: false };
+  const told = { water: false, beacon: false, blind: false, bell: false };
+  /** L'horloge du HUD défile quand la Nuit saute : d'où elle part, et quand (-1 : elle ne défile pas). */
+  const CLOCK_ROLL_MS = 800;
+  let clockFrom = 0;
+  let clockAt = -1;
   let bossCardKey = 0;
   /** Le carton d'un boss s'efface de lui-même (son animation dure autant), puis il est retiré. */
   const BOSS_CARD_MS = 4400;
@@ -705,6 +709,8 @@ async function boot(): Promise<void> {
     told.water = false;
     told.beacon = false;
     told.blind = false;
+    told.bell = false;
+    clockAt = -1;
     audio.play('ui-confirm');
     audio.playMusic(run.region.music.calm);
     setScreen('run');
@@ -1265,6 +1271,18 @@ async function boot(): Promise<void> {
         case EV.totemDone: audio.play('totem', 0.9); break;
         case EV.shopOpen: audio.play('shop-open', 0.8); break;
         case EV.shopBuy: audio.play('shop-buy', 0.9); break;
+        case EV.nightJump:
+          clockFrom = (r.night - a) * 60;
+          clockAt = performance.now();
+          audio.play('wave', 0.6, 0.7);
+          // Le braséro dit « rallumé » juste après : la Nuit attend son tour.
+          sayAfter(t('hud.nightJump'), 3000);
+          break;
+        case EV.bellReady:
+          audio.play('buy', 0.8);
+          sayAfter(t('hud.bellReady'), 4200);
+          break;
+        case EV.bellRung: audio.play('wave', 1, 0.5); break;
         case EV.bossWarning: say(FR[`${r.cfg.regionId}.bossWarning`] ?? t('hud.bossWarning'), 5000); break;
         case EV.flameCall: say(t('hud.flameCall')); break;
         case EV.hunt: say(t('hud.hunt', { n: Math.round(a * 100) })); break;
@@ -1313,12 +1331,30 @@ async function boot(): Promise<void> {
       told.water = true;
       sayAfter(t('hud.hint.water'), 4200);
     }
+    // La cloche allumée : la première fois que Moon entre dans son cercle, on lui dit d'y rester.
+    if (!told.bell && !r.tutorial) {
+      const bell = r.map.pois.find((p) => p.kind === 'bell');
+      if (bell && bell.state === 1 && Math.hypot(bell.x - h.x, bell.y - h.y) < tuning.events.bell.radius) {
+        told.bell = true;
+        say(t('hud.bell'), 3000);
+      }
+    }
+    // L'horloge montre la Nuit ; quand elle saute, elle défile jusqu'à sa nouvelle heure.
+    let clock = r.night * 60;
+    let clockHot = false;
+    if (clockAt >= 0) {
+      const k = (now - clockAt) / CLOCK_ROLL_MS;
+      if (k < 1) {
+        clock = clockFrom + (clock - clockFrom) * k;
+        clockHot = true;
+      } else clockAt = -1;
+    }
     if (r.blind < 1 && !told.blind) {
       told.blind = true;
       say(t('hud.blind'), 4200);
     }
     return {
-      hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: r.time, boss, statuses,
+      hp: h.hp, maxHp: h.stats.maxHp, level: h.level, xp: h.xp, xpNext: h.xpNext, time: clock, clockHot, boss, statuses,
       flasks: h.flasks, maxFlasks: h.stats.flasks, flaskBlocked: r.mods.noFlask, gold: h.gold,
       ashes: Math.round(tuning.ashes.perMinute * minutes + h.ashDrops) + r.haste, kills: h.kills, vigil: r.cfg.vigil,
       weapons: r.weapons.map((w) => {
@@ -1754,13 +1790,14 @@ async function boot(): Promise<void> {
       held = on;
     },
     /**
-     * Amène le boss tout de suite : l'horloge de la partie saute à la fin, le directeur referme l'arène
+     * Amène le boss tout de suite : la Nuit saute à la fin, le directeur referme l'arène
      * et fait apparaître le boss au pas suivant, comme en jeu. Le boss est mis à 1 PV. Rend vrai s'il est là.
      */
     bossNow(): boolean {
       if (!run || run.tutorial || run.phase !== 'playing' || run.director.bossSpawned) return false;
       if (track) track.assisted = true;
-      run.time = Math.max(run.time, run.data.tuning.durationMin * 60);
+      run.nightAhead = Math.max(run.nightAhead, run.data.tuning.durationMin - run.time / 60);
+      run.night = run.time / 60 + run.nightAhead;
       stepRun(run, idleInput());
       processEvents(run);
       const e = run.enemies;

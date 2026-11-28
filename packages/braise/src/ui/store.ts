@@ -20,6 +20,8 @@ export interface HudState {
   xp: number;
   xpNext: number;
   time: number;
+  /** L'horloge défile : la Nuit vient de sauter. */
+  clockHot: boolean;
   boss: { name: string; frac: number; phase: number } | null;
   /** Les états du héros : la vase, la morsure, la Lueur étouffée, l'eau profonde, l'élan d'une esquive juste. */
   statuses: Array<{ id: 'mire' | 'drain' | 'dim' | 'wade' | 'dodge'; icon: string }>;

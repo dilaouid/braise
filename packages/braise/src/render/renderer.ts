@@ -898,6 +898,22 @@ export class GameRenderer {
             this.light(lightX(poi.x), lightY(poi.y - 8), 24 + frac * 50);
           }
         }
+      } else if (poi.kind === 'bell') {
+        // La cloche : le braséro teinté en attendant son dessin. Éteinte et grise, puis pâle et qui pulse.
+        s.texture = this.atlas.get('poi-brasero');
+        if (poi.state === 1) {
+          const pulse = Math.sin(time * 3);
+          s.tint = 0xe8d8ff;
+          g.circle(poi.x, poi.y, ev.bell.radius).stroke({ width: 1, color: C.frost, alpha: 0.4 + pulse * 0.12 });
+          if (poi.progress > 0) {
+            const frac = Math.min(1, poi.progress / ev.bell.seconds);
+            g.moveTo(poi.x, poi.y).arc(poi.x, poi.y, ev.bell.radius, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2).closePath()
+              .fill({ color: C.frost, alpha: 0.18 });
+          }
+          this.light(lightX(poi.x), lightY(poi.y - 6), 70 + Math.round(pulse * 4));
+        } else {
+          s.tint = 0x6b7285;
+        }
       } else if (poi.kind === 'spring') {
         s.texture = this.atlas.get('poi-source');
         if (poi.state === 2) s.tint = 0x7f8a9a;
@@ -1832,7 +1848,9 @@ export class GameRenderer {
     } else for (const poi of run.map.pois) {
       // Les marchands ne sont jamais « à faire » : la flèche ne les montre pas.
       if (poi.state === 2 || poi.kind === 'smith' || poi.kind === 'herbalist') continue;
-      if (poi.kind === 'portal' || poi.kind === 'memory') {
+      // Une cloche éteinte n'est pas à faire ; allumée, elle passe avant tout, comme le portail.
+      if (poi.kind === 'bell' && poi.state === 0) continue;
+      if (poi.kind === 'portal' || poi.kind === 'memory' || poi.kind === 'bell') {
         target = poi;
         break;
       }

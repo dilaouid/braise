@@ -96,6 +96,9 @@ function sampleNoise(grid: Float32Array, cells: number, u: number, v: number): n
   return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
 }
 
+/** La cloche est à tant de tuiles au nord du point de départ. */
+const BELL_NORTH_TILES = 3;
+
 /**
  * Génère la carte d'une expédition à partir du flux « carte » :
  * bordure, amas d'obstacles, points d'intérêt, terrain.
@@ -251,8 +254,9 @@ export function generateMap(rng: Rng, tuning: ExpeditionTuning, region: RegionDe
     }
   }
 
-  // La cloche, au centre de la clairière de départ. Posée en dernier, sans rien tirer : le reste de la carte ne bouge pas.
-  pois.push({ kind: 'bell', x: center * tile, y: center * tile, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
+  // La cloche, dans la clairière de départ, un peu au nord de Moon (sur lui, son dessin le cacherait). Posée en
+  // dernier, sans rien tirer : le reste de la carte ne bouge pas.
+  pois.push({ kind: 'bell', x: center * tile, y: (center - BELL_NORTH_TILES) * tile, state: 0, progress: 0, discovered: true, guardUid: 0, offers: null, armed: true });
 
   return { size, tile, solid, corners, props, pois, coverage: covered / interior, waterSlow: water ? water.slow : 0, beacons };
 }

@@ -77,7 +77,7 @@ export function Hud(): JSX.Element | null {
       <div class="hud-tr">
         {tuto ? <span class="vigil place">{t('hud.tutorial')}</span> : (
           <>
-            <span class={`clock ${h.boss ? 'boss' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
+            <span class={`clock ${h.boss ? 'boss' : ''} ${h.clockHot ? 'hot' : ''}`}>{h.boss ? t('hud.boss') : fmtTime(h.time)}</span>
             <span class="vigil">{t('hud.vigil', { vigil: roman(h.vigil) })}</span>
             <canvas class="minimap" id="minimap" width="48" height="48" />
           </>

@@ -42,12 +42,13 @@ export function updatePois(run: Run, dt: number): void {
             poi.state = 3;
             poi.armed = true;
             run.braziersLit++;
-            // Rallumer fait avancer la Nuit : la horde, les vagues et les élites arrivent plus tôt.
-            if (!run.tutorial) advanceNight(run, run.data.tuning.night.brazierJump);
             // Le braséro rembourse de la Lueur brûlée : la lanterne regrandit tout de suite.
             recomputeStats(run);
             addPickup(run, PK_ASH, poi.x - 14, poi.y + 22, run.data.tuning.ashes.brazier);
             emit(run, EV.poiDone, poi.x, poi.y, 0);
+            // Rallumer fait avancer la Nuit : la horde, les vagues et les élites arrivent plus tôt. Annoncé après
+            // le braséro, pour que l'écran dise l'un puis l'autre.
+            if (!run.tutorial) advanceNight(run, run.data.tuning.night.brazierJump);
             if (inside) offerEvolution(run, poi, index);
           }
         } else if (!inside) {

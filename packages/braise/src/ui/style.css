@@ -414,6 +414,7 @@ h2 { font-size: 10px; color: var(--ember-1); margin-top: 4px; }
 .hud-tr { position: absolute; right: 6px; top: 7px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .clock { font-family: var(--font-title); font-size: 15px; line-height: 13px; }
 .clock.boss { color: var(--danger-0); }
+.clock.hot { color: var(--ember-2); }
 .vigil { color: var(--ash-3); }
 .minimap { width: 48px; height: 48px; image-rendering: pixelated; border: 1px solid var(--ash-2); background: rgba(11, 15, 26, 0.75); }
 .fps { color: var(--ash-3); }

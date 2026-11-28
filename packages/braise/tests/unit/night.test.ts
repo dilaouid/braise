@@ -168,13 +168,15 @@ function ready(seed: number, night: number): Run {
 }
 
 describe('la cloche', () => {
-  it('la carte a une cloche au centre, découverte, éteinte', () => {
+  it('la carte a une cloche au centre, un peu au nord du départ, découverte, éteinte', () => {
     const run = makeRun(9);
     const bells = run.map.pois.filter((p) => p.kind === 'bell');
     expect(bells.length).toBe(1);
     const center = (data.tuning.mapTiles / 2) * data.tuning.tileSize;
     expect(bells[0]!.x).toBe(center);
-    expect(bells[0]!.y).toBe(center);
+    // Pas sur Moon au départ : son dessin le cacherait.
+    expect(bells[0]!.y).toBe(center - 3 * data.tuning.tileSize);
+    expect(Math.hypot(bells[0]!.x - run.hero.x, bells[0]!.y - run.hero.y)).toBeGreaterThan(data.tuning.events.bell.radius);
     expect(bells[0]!.discovered).toBe(true);
     expect(bells[0]!.state).toBe(0);
   });
