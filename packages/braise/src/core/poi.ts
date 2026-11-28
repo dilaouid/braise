@@ -1,5 +1,6 @@
 import { addPickup, healHero, spawnEnemy } from './combat.ts';
 import { recomputeStats } from './levelup.ts';
+import { advanceNight } from './director.ts';
 import { convergingWave, offerEvolution, updatePlace } from './places.ts';
 import { emit } from './stores.ts';
 import { EV, PK_ASH, PK_GOLD, type Run } from './types.ts';
@@ -41,6 +42,8 @@ export function updatePois(run: Run, dt: number): void {
             poi.state = 3;
             poi.armed = true;
             run.braziersLit++;
+            // Rallumer fait avancer la Nuit : la horde, les vagues et les élites arrivent plus tôt.
+            if (!run.tutorial) advanceNight(run, run.data.tuning.night.brazierJump);
             // Le braséro rembourse de la Lueur brûlée : la lanterne regrandit tout de suite.
             recomputeStats(run);
             addPickup(run, PK_ASH, poi.x - 14, poi.y + 22, run.data.tuning.ashes.brazier);

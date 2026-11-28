@@ -125,6 +125,8 @@ export const EV = {
   bossHum: 69,
   /** Une fiole s'est remplie seule (Second souffle). */
   flaskRefill: 70,
+  /** La Nuit avance d'un coup (a : minutes ajoutées). */
+  nightJump: 71,
 } as const;
 
 /** Une flaque de vase : le héros qui la traverse est ralenti. */

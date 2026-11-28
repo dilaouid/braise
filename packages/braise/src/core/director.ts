@@ -182,6 +182,20 @@ export function nightClock(run: Run): number {
   return run.director.bossSpawned ? end : Math.min(run.night, end);
 }
 
+/**
+ * Fait avancer la Nuit d'un coup (un braséro rallumé). Avant le boss, elle s'arrête une demi-minute avant la fin
+ * de l'expédition : le boss ne tombe pas sur le héros au moment où il rallume. Renvoie les minutes ajoutées.
+ */
+export function advanceNight(run: Run, minutes: number): number {
+  const cap = run.data.tuning.durationMin - 0.5;
+  const add = run.director.bossSpawned ? minutes : Math.max(0, Math.min(minutes, cap - run.night));
+  if (add <= 0) return 0;
+  run.night += add;
+  run.nightAhead += add;
+  emit(run, EV.nightJump, run.hero.x, run.hero.y, add);
+  return add;
+}
+
 /** Le directeur de horde : il dépense un budget de menace qui croît avec la Nuit (document 02 §8). */
 export function updateDirector(run: Run, dt: number): void {
   const d = run.director;
@@ -225,7 +239,12 @@ export function updateDirector(run: Run, dt: number): void {
     d.budget += threat * tuning.director.emptyBurstSeconds;
   }
 
-  // Vagues scriptées de la région, annoncées une seconde avant.
+  // Vagues scriptées de la région, annoncées une seconde avant. Un saut de Nuit qui en passe plusieurs ne
+  // garde que la dernière.
+  while (region.waves[d.waveIdx + 1] !== undefined && m >= region.waves[d.waveIdx + 1]!.at) {
+    d.waveIdx++;
+    d.waveWarned = false;
+  }
   const wave = region.waves[d.waveIdx];
   if (wave) {
     const at = wave.at;
@@ -241,11 +260,13 @@ export function updateDirector(run: Run, dt: number): void {
     }
   }
 
-  // Élites.
+  // Élites. Jamais sautés : ceux qu'un saut de Nuit a dépassés arrivent un par un.
+  if (d.eliteGapT > 0) d.eliteGapT -= dt;
   const eliteAt = tuning.eliteMinutes[d.eliteIdx];
-  if (eliteAt !== undefined && m >= eliteAt) {
+  if (eliteAt !== undefined && m >= eliteAt && d.eliteGapT <= 0) {
     spawnElite(run, d.eliteOrder[d.eliteIdx % d.eliteOrder.length]!);
     d.eliteIdx++;
+    d.eliteGapT = tuning.night.eliteGapSeconds;
   }
 
   // Achats : parmi les sortes entrées, selon les poids de la tranche.
